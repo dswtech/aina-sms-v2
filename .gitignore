@@ -1,0 +1,27 @@
+# Local source material and sensitive working files
+_doc_sources/
+.env
+.env.*
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Build output and caches
+/public/build/
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/.phpunit.cache/
+/coverage/
+/dist/
+
+# IDE and operating-system files
+/.idea/
+/.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
