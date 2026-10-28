@@ -53,9 +53,23 @@ Branch Manager dapat melihat pencapaian, forecast, dan laporan seluruh tim. Bran
 
 ## Memudahkan pekerjaan Sales
 
-Sales dapat memasukkan calon pelanggan, memperbarui perkembangan transaksi, melihat follow-up yang harus dilakukan, membaca arahan Supervisor, membalas komentar, serta melihat target dan pencapaiannya sendiri.
+Sales mempunyai “Buku Pelanggan Saya” yang berfungsi seperti phonebook kerja. Isinya bukan hanya nama dan nomor telepon, tetapi juga kapan terakhir dihubungi, transaksi yang sedang berjalan, hasil pembicaraan yang tercatat, dan kapan harus follow-up lagi.
+
+Dari profil pelanggan, Sales dapat langsung menelepon, membuka WhatsApp, mencatat hasil komunikasi, menjadwalkan follow-up, melihat riwayat, atau membuat peluang transaksi baru. Satu pelanggan dapat mempunyai lebih dari satu transaksi, misalnya ketika membeli lagi di kemudian hari, tanpa membuat identitas pelanggan berulang.
+
+Daftar kerja membantu Sales melihat pelanggan yang harus dihubungi hari ini, belum pernah dihubungi, sedang aktif, sudah lama tidak aktif, pernah membeli, berpotensi repeat order, atau berpotensi memberikan referral.
+
+Sales juga dapat memasukkan calon pelanggan, memperbarui perkembangan transaksi, membaca arahan Supervisor, membalas komentar, serta melihat target dan pencapaiannya sendiri.
 
 Sales hanya melihat dan mengelola pelanggan yang ditugaskan kepadanya.
+
+Data pelanggan tetap menjadi aset dealer, bukan phonebook pribadi Sales. Bila tanggung jawab berpindah, pelanggan dapat ditugaskan kepada Sales lain tanpa menghilangkan riwayat. Aplikasi tidak memindahkan seluruh kontak ke phonebook pribadi dan tidak menyediakan ekspor massal pada tahap awal.
+
+## Memahami sumber dan model yang menghasilkan penjualan
+
+Menu Analisis membantu Supervisor membandingkan dari mana lead berasal dan model kendaraan apa yang paling banyak bergerak menuju SPK, DO, atau Delivery. Setiap angka dapat dibuka untuk melihat daftar transaksi pembentuknya sesuai hak akses.
+
+Analisis Sumber dan Model masuk tahap awal. Analisis Area dibuat setelah data wilayah sudah rapi, sedangkan analisis pembiayaan/MSCP dibuat bersama modul leasing.
 
 ## Memasukkan data lama
 
@@ -65,4 +79,4 @@ Data pelanggan dapat dimasukkan satu per satu atau melalui file CSV. Aplikasi ak
 
 Aplikasi ini menjadi pusat kendali Supervisor Sales untuk mengetahui apa yang sedang dikerjakan tim, pelanggan mana yang harus segera ditangani, siapa yang membutuhkan coaching, transaksi mana yang berpeluang closing, dan apakah target bulan ini kemungkinan tercapai.
 
-Tujuan akhirnya adalah mengurangi pekerjaan manual, mencegah lead terlupakan, membuat coaching lebih terarah, dan membantu tim mengambil keputusan lebih cepat.
+Tujuan akhirnya adalah mengurangi pekerjaan manual, menjaga hubungan pelanggan, mencegah lead terlupakan, membuat coaching lebih terarah, dan membantu tim mengambil keputusan lebih cepat.

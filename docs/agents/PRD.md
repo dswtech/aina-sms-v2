@@ -13,7 +13,7 @@
 |---|---|
 | Nama kerja | DealDrive Supervisor |
 | Cakupan | Fondasi dan MVP inti |
-| Requirement | 63 aktif |
+| Requirement | 80 aktif |
 | Prasyarat | Tidak ada aplikasi sebelumnya di repository |
 | Aturan ID | ID asli dipertahankan dan tidak boleh digunakan ulang |
 
@@ -21,11 +21,11 @@
 
 ## 1. Ringkasan Eksekutif
 
-Produk ini adalah web app internal dealer mobil untuk menyatukan pekerjaan Admin, Branch Manager, Supervisor, dan Sales dalam mengelola calon pelanggan serta proses penjualan. Nilai utamanya adalah memberi visibilitas yang sama kepada pihak yang tepat tanpa mengandalkan rekap spreadsheet atau permintaan pembaruan melalui chat satu per satu.
+Produk ini adalah web app internal dealer mobil untuk menyatukan pekerjaan Admin, Branch Manager, Supervisor, dan Sales dalam mengelola hubungan pelanggan serta proses penjualan. Nilai utamanya adalah memberi visibilitas yang sama kepada pihak yang tepat tanpa mengandalkan rekap spreadsheet atau permintaan pembaruan melalui chat satu per satu.
 
-Sales mencatat lead dan memperbarui perkembangannya. Supervisor melihat pipeline tim, menemukan lead yang stagnan, memberi coaching pada transaksi yang memerlukan arahan, dan memantau target. Branch Manager membaca kinerja serta forecast lintas tim. Admin mengelola akun dan struktur organisasi.
+Sales mempunyai “Buku Pelanggan Saya” sebagai phonebook kerja: bukan hanya daftar nomor, tetapi tempat melihat riwayat hubungan, transaksi, kontak terakhir, dan tindak lanjut berikutnya. Sales mencatat lead dan memperbarui perkembangannya. Supervisor melihat pipeline tim, menemukan lead yang stagnan, memberi coaching pada transaksi yang memerlukan arahan, dan memantau target. Branch Manager membaca kinerja serta forecast lintas tim. Admin mengelola akun dan struktur organisasi.
 
-MVP juga menyediakan weighted sales forecasting. Forecast bukan janji penjualan, melainkan perkiraan berbobot yang membantu Supervisor dan Branch Manager melihat risiko kekurangan target lebih awal.
+MVP juga menyediakan weighted sales forecasting serta Analisis Sumber dan Model. Forecast bukan janji penjualan, melainkan perkiraan berbobot yang membantu Supervisor dan Branch Manager melihat risiko kekurangan target lebih awal. Analisis membantu dealer memahami asal lead dan model kendaraan yang menghasilkan kemajuan penjualan.
 
 ## 2. Latar Belakang & Permasalahan
 
@@ -42,11 +42,13 @@ UI referensi yang diperiksa membuktikan pola filter, tabel transaksi, status, pa
 | Sasaran | Ukuran keberhasilan |
 |---|---|
 | Memberi visibilitas pipeline tim | Supervisor dapat melihat seluruh lead tim beserta tahap dan aktivitas terakhir dari satu layar. |
+| Membantu Sales mengelola relasi pelanggan | Sales dapat mengetahui siapa yang harus dihubungi, percakapan terakhir, dan langkah berikutnya dari Buku Pelanggan Saya. |
 | Mencegah lead terlupakan | Lead tanpa aktivitas lebih dari tiga hari ditandai dan dapat difilter. |
 | Mempercepat pembaruan lapangan | Sales dapat memperbarui satu lead dalam waktu maksimal 60 detik pada ponsel. |
 | Mendokumentasikan coaching | Arahan dan balasan terkait transaksi tersimpan dalam timeline yang dapat diaudit. |
 | Memberi peringatan target lebih awal | Dashboard menampilkan target, realisasi, forecast, dan gap per Sales serta tim. |
 | Mengurangi pekerjaan rekap | Branch Manager dapat membaca kinerja lintas tim tanpa meminta rekap manual dari setiap Supervisor. |
+| Menjelaskan pola penjualan | Supervisor dan Branch Manager dapat membandingkan sumber lead dan model kendaraan berdasarkan periode yang sama. |
 
 ### 3.2 Batasan
 
@@ -87,6 +89,10 @@ Kewenangan selalu ditentukan server dari user yang login dan hubungan organisasi
 | Forecast | Perkiraan hasil akhir dari realisasi ditambah nilai berbobot transaksi aktif. |
 | Conversation | Timeline komentar Sales/Supervisor dan aktivitas sistem pada satu transaksi. |
 | Coaching | Arahan Supervisor yang terkait dengan keadaan nyata sebuah transaksi. |
+| Customer | Identitas orang atau badan yang menjadi pusat hubungan pelanggan dan dapat mempunyai lebih dari satu transaksi. |
+| Buku Pelanggan Saya | Daftar pelanggan yang sedang ditugaskan kepada seorang Sales, dilengkapi riwayat, kontak terakhir, dan tindak lanjut berikutnya. |
+| Customer assignment | Penugasan pengelolaan hubungan pelanggan kepada Sales; data tetap merupakan aset dealer dan bukan milik pribadi Sales. |
+| Next follow-up | Waktu dan rencana tindakan berikutnya untuk menjaga pelanggan tidak terlupakan. |
 
 ### Target, realisasi, dan forecast
 
@@ -128,7 +134,17 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | 2 | Supervisor | Membaca gap dan transaksi berpeluang closing. | Supervisor menentukan prioritas follow-up dan coaching. |
 | 3 | Branch Manager | Membaca forecast lintas tim. | Risiko pencapaian dapat dibahas sebelum akhir periode. |
 
-### 6.4 Jalur yang tidak berakhir normal
+### 6.4 Hubungan pelanggan dan peluang baru
+
+| # | Pelaku | Tindakan | Keadaan sesudahnya |
+|---:|---|---|---|
+| 1 | Sales/Supervisor | Membuka atau mencari pelanggan sebelum membuat lead. | Sistem menampilkan kemungkinan data pelanggan yang sudah ada. |
+| 2 | Sales | Membuka Buku Pelanggan Saya. | Sales melihat pelanggan yang ditugaskan, kontak terakhir, dan tindak lanjut berikutnya. |
+| 3 | Sales | Menghubungi pelanggan melalui telepon/WhatsApp lalu mencatat hasilnya. | Aktivitas hubungan dan waktu kontak terakhir diperbarui. |
+| 4 | Sales | Menjadwalkan follow-up atau membuat peluang baru untuk pelanggan lama. | Satu pelanggan dapat mempunyai beberapa transaksi tanpa menggandakan identitasnya. |
+| 5 | Supervisor/Admin | Menugaskan ulang pelanggan bila terjadi perpindahan tanggung jawab. | Sales baru memperoleh akses dan riwayat penugasan lama tetap dapat diaudit. |
+
+### 6.5 Jalur yang tidak berakhir normal
 
 - Lead duplikat diperingatkan sebelum disimpan; pengguna dapat membatalkan atau melanjutkan bila memang pelanggan mempunyai transaksi berbeda.
 - Perubahan tahap yang tidak diizinkan ditolak dan tidak membuat riwayat baru.
@@ -175,6 +191,14 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | CRM-05 | **Admin dapat membaca data yang diperlukan untuk audit dan dukungan.** Akses tersebut tidak menghapus batas akses role operasional lain. | M |
 | CRM-06 | **Lead dapat dicari dan difilter berdasarkan periode, tahap, Sales, sumber, dan status stagnan.** Filter harus mempertahankan konteks ketika detail ditutup. | M |
 | CRM-07 | **Data kontak sensitif tidak muncul pada dashboard agregat Branch Manager.** Branch Manager melihat metrik, bukan daftar kontak pelanggan pada MVP. | S |
+| CRM-08 | **Customer disimpan terpisah dari transaksi dan dapat mempunyai lebih dari satu transaksi.** Peluang repeat order atau kebutuhan baru tidak boleh membuat identitas pelanggan terduplikasi. | M |
+| CRM-09 | **Sales mempunyai layar “Buku Pelanggan Saya” yang hanya memuat pelanggan yang ditugaskan kepadanya.** Daftar dapat dicari berdasarkan nama atau nomor telepon dan difilter berdasarkan kebutuhan tindak lanjut. | M |
+| CRM-10 | **Setiap item Buku Pelanggan menampilkan informasi kerja minimum.** Informasi mencakup identitas kontak, status hubungan, transaksi aktif, kontak terakhir, dan tindak lanjut berikutnya. | M |
+| CRM-11 | **Sales dapat melakukan aksi cepat dari profil pelanggan.** Aksi minimum adalah telepon, membuka percakapan WhatsApp melalui tautan perangkat, mencatat aktivitas, menjadwalkan follow-up, membuat transaksi baru, dan melihat riwayat. | M |
+| CRM-12 | **Profil pelanggan menyatukan riwayat transaksi dan aktivitas hubungan yang boleh dibaca pengguna.** Conversation coaching tetap berada pada transaksi dan mengikuti batas akses coaching. | M |
+| CRM-13 | **Data pelanggan merupakan aset dealer, sedangkan Sales menerima penugasan pengelolaan.** Penugasan ulang tidak menghapus riwayat Sales sebelumnya, aktivitas, atau transaksi. | M |
+| CRM-14 | **Supervisor dapat melihat pelanggan timnya, Admin dapat mengelola penugasan dan audit, dan Branch Manager hanya menerima agregat.** Nomor telepon, alamat, dan catatan hubungan tidak dikirim kepada Branch Manager. | M |
+| CRM-15 | **Sistem mencatat izin atau penolakan pelanggan untuk dihubungi pada kanal yang relevan.** Sinkronisasi otomatis ke kontak pribadi, broadcast massal, dan ekspor phonebook tidak disediakan pada MVP. | S |
 
 ### 7.4 Sales Pipeline (`PIP`)
 
@@ -222,7 +246,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | DSH-03 | **Dashboard menampilkan daftar tindakan yang membutuhkan perhatian.** Minimal mencakup stagnant lead, komentar belum dibaca, dan transaksi berpeluang closing. | M |
 | DSH-04 | **Branch Manager melihat agregat seluruh tim dan dapat membandingkan tim.** Tampilan tidak membuka conversation atau kontak pelanggan. | M |
 | DSH-05 | **Admin dapat memeriksa dashboard untuk dukungan dan audit.** Akses Admin tidak mengubah angka atau kepemilikan transaksi. | S |
-| DSH-06 | **Ekspor laporan PDF/CSV lengkap ditunda ke fase berikutnya.** MVP memprioritaskan kebenaran dashboard sebelum otomatisasi distribusi laporan. | C |
+| DSH-06 | **Ekspor dashboard lengkap dan distribusi laporan terjadwal ditunda ke fase berikutnya.** Ekspor agregat khusus menu Analisis tetap mengikuti ANL-08. | C |
 
 ### 7.8 Sales Forecasting (`FCT`)
 
@@ -248,6 +272,20 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | UIX-07 | **PWA dan offline sync tidak disediakan pada MVP.** Kehilangan koneksi harus ditampilkan, bukan menyimpan perubahan lokal tersembunyi. | W |
 | UIX-08 | **Aplikasi native Android/iOS tidak dibangun pada MVP.** Satu web app responsif menjadi basis kode tunggal. | W |
 
+### 7.10 Analisis Penjualan (`ANL`)
+
+| ID | Kebutuhan | Prioritas |
+|---|---|---|
+| ANL-01 | **MVP menyediakan menu Analisis dengan tampilan Sumber dan Model.** Menu menggunakan filter periode yang konsisten dengan dashboard. | M |
+| ANL-02 | **Analisis Sumber menampilkan jumlah dan porsi transaksi menurut sumber lead serta perjalanan tahapnya.** Pengguna dapat melihat sumber yang menghasilkan lead dan kemajuan penjualan. | M |
+| ANL-03 | **Analisis Model menampilkan jumlah dan porsi transaksi menurut model kendaraan.** Tahap SPK, DO, dan Delivery dapat dibandingkan untuk periode terpilih. | M |
+| ANL-04 | **Analisis menampilkan jumlah, porsi, dan conversion rate dengan penyebut yang dijelaskan.** Angka harus dapat direkonsiliasi ke transaksi sumber. | M |
+| ANL-05 | **Filter tanggal mempunyai mode Akuisisi dan Pencapaian.** Akuisisi memakai tanggal pembuatan lead dan dapat menampilkan conversion; Pencapaian memakai tanggal kejadian tahap dan tidak menampilkan conversion lintas-kohort yang menyesatkan. | M |
+| ANL-06 | **Pengguna dapat membuka drilldown berupa daftar transaksi yang sudah membawa filter analisis.** Menutup detail mempertahankan periode, mode tanggal, dan dimensi yang dipilih. | S |
+| ANL-07 | **Cakupan Analisis mengikuti role.** Supervisor melihat timnya, Admin melihat dealer, dan Branch Manager melihat drilldown tersanitasi tanpa nomor telepon, alamat, catatan hubungan, atau coaching. | M |
+| ANL-08 | **Analisis dapat diekspor sebagai CSV dan PDF agregat.** Ekspor tidak memuat kontak pelanggan atau isi coaching. | S |
+| ANL-09 | **Analisis Area dan MSCP ditunda sampai prasyarat datanya tersedia.** Area memerlukan lokasi terstruktur; MSCP memerlukan modul leasing dan definisi Market Share Credit Portion yang disetujui. | W |
+
 ## 8. Gambaran Model Data
 
 | Entitas | Peran | Catatan |
@@ -258,9 +296,12 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | Team membership | Penempatan user ke tim dan peran | Periode keanggotaan menjaga riwayat perpindahan. |
 | Invitation | Undangan aktivasi akun | Token disimpan aman, sekali pakai, dan kedaluwarsa. |
 | Customer | Identitas pelanggan | Nomor telepon dinormalisasi untuk peringatan duplikat. |
+| Customer assignment history | Riwayat Sales penanggung jawab pelanggan | Menjaga jejak perpindahan tanpa menjadikan data sebagai milik pribadi Sales. |
 | Sale/Lead | Peluang penjualan | Menyimpan tahap aktif, pemilik, sumber, dan kendaraan yang diminati. |
 | Stage history | Riwayat perpindahan pipeline | Append-only untuk kejadian tahap. |
 | Activity | Follow-up dan system event | Menjadi dasar aktivitas terakhir dan stagnant. |
+| Follow-up plan | Rencana tindakan berikutnya | Mencakup waktu, kanal, status, dan hubungan ke customer/transaksi bila ada. |
+| Contact preference | Izin atau penolakan kanal komunikasi | Mencegah tindak lanjut yang bertentangan dengan preferensi pelanggan. |
 | Comment | Pesan coaching pada transaksi | Tidak dihapus permanen. |
 | Comment revision | Versi lama komentar | Menyimpan isi sebelum edit dan waktu perubahan. |
 | Notification | Status notifikasi in-app | Email delivery dicatat terpisah dari status baca. |
@@ -281,6 +322,8 @@ Nilai berikut tidak mempunyai tabel sumber tersendiri: status stagnant, conversi
 | Revisi komentar wajib mempertahankan versi sebelumnya. | Arahan kerja dapat diubah tanpa jejak dan menimbulkan sengketa yang tidak dapat dibuktikan. | Transaksi aplikasi, revision table, dan feature test. | CVS-06, CVS-07 |
 | Isi coaching tidak boleh masuk email. | Informasi internal tersebar ke inbox di luar kontrol akses aplikasi. | Template email tanpa body komentar dan test render email. | CVS-09 |
 | Password dan secret tidak boleh dikirim ke client. | Credential dapat disalin dari browser atau bundle dan tidak dapat dianggap rahasia lagi. | Konfigurasi server, serializer allowlist, dan security test. | IAM-06 |
+| Customer adalah aset dealer, bukan phonebook pribadi Sales. | Data dapat dibawa keluar, hilang saat Sales pindah, atau digunakan tanpa pengawasan. | Assignment history, policy server, larangan bulk export/sinkronisasi pribadi, dan audit. | CRM-13, CRM-14, CRM-15 |
+| Branch Manager hanya menerima data pelanggan tersanitasi. | Kontak dan catatan hubungan tersebar ke role yang hanya memerlukan agregat. | Query projection/allowlist, export agregat, dan feature test negatif. | CRM-07, CRM-14, ANL-07, ANL-08 |
 
 Aturan jendela edit komentar lima menit hanya dapat ditegakkan lapisan aplikasi karena bergantung pada waktu, pelaku, dan intent operasi. Database tetap menjaga revision record ketika edit yang sah dilakukan.
 
@@ -314,13 +357,18 @@ Angka di atas adalah target acceptance produk v1.0 dan harus dievaluasi kembali 
 
 ## 12. Tahapan Rilis
 
+Urutan detail, dependensi, dan checklist gerbang fase berada di [`roadmap.md`](roadmap.md). Tahap berikut tidak dimulai penuh sebelum gerbang kritis tahap sebelumnya lulus.
+
 | Fase | Cakupan minimum | Gerbang keluar |
 |---|---|---|
-| 1 — Fondasi akses | Aplikasi, login, undangan, role, dealer, tim, dan penempatan pengguna. | Seluruh matriks akses role lulus feature test; tidak ada registrasi publik atau secret di client. |
-| 2 — CRM dan pipeline | Lead CRUD, filter, penugasan, riwayat tahap, activity, stagnant, dan dialog adaptif. | Alur Lead sampai Delivery/Lost lulus; akses lintas tim ditolak; viewport 390/768/1440 lulus pemeriksaan. |
-| 3 — Coaching dan notifikasi | Conversation timeline, reply, edit lima menit, audit revision, in-app notification, dan email metadata. | Test akses, edit boundary, revision, non-deletion, queue retry, dan email tanpa isi coaching lulus. |
-| 4 — Dashboard dan forecast | Target, realisasi, weighted forecast, gap, tindakan prioritas, serta dashboard Branch Manager. | Angka dashboard direkonsiliasi dengan data sumber; bobot forecast disetujui; target performa dashboard tercapai. |
-| 5 — Operasional lanjutan | Leasing, dokumen, delivery calendar, ekspor laporan, dan pembelajaran bobot historis. | Memerlukan PRD/ADR tambahan; bukan bagian acceptance MVP. |
+| 0 — Persiapan produk | Persetujuan PRD, alur per role, model data, matriks akses, wireframe utama, keputusan package, dan backlog. | Keputusan penghambat dicatat; rencana test tersedia; package belum dipasang tanpa persetujuan. |
+| 1 — Fondasi akses | Bootstrap aplikasi, login, undangan, role, dealer, tim, penempatan pengguna, shell responsif, dan fondasi audit/test. | Seluruh matriks akses role lulus feature test; tidak ada registrasi publik atau secret di client. |
+| 2 — Buku Pelanggan dan pipeline | Customer master, Buku Pelanggan Saya, aksi cepat, follow-up, lead/transaksi, penugasan, riwayat tahap, activity, stagnant, dan dialog adaptif. | Customer–transaksi tidak terduplikasi; alur Lead sampai Delivery/Lost lulus; akses lintas tim ditolak; viewport utama lulus. |
+| 3 — Pekerjaan harian dan coaching | Prioritas follow-up, conversation timeline, reply, edit lima menit, audit revision, in-app notification, dan email metadata. | Test akses, edit boundary, revision, non-deletion, queue retry, dan email tanpa isi coaching lulus. |
+| 4 — Target, dashboard, dan forecast | Target, realisasi, weighted forecast, gap, tindakan prioritas, serta dashboard Branch Manager. | Angka dashboard direkonsiliasi dengan data sumber; bobot forecast disetujui; target performa dashboard tercapai. |
+| 5 — Analisis dan laporan | Analisis Sumber dan Model, mode tanggal Akuisisi/Pencapaian, drilldown, serta ekspor agregat CSV/PDF. | Metrik dan drilldown merekonsiliasi data sumber; sanitasi Branch Manager dan ekspor lulus test. |
+| 6 — Import, hardening, dan pilot | CSV import, keamanan, aksesibilitas, performa, rekonsiliasi data, pelatihan, dan pilot pengguna. | UAT per role lulus, temuan kritis ditutup, runbook operasional siap, dan keputusan go-live diberikan. |
+| 7 — Pasca-MVP | Analisis Area, leasing/MSCP, dokumen, delivery calendar, laporan terjadwal, dan pembelajaran bobot historis. | Memerlukan kebutuhan dan acceptance tambahan; bukan bagian acceptance MVP awal. |
 
 ## 13. Ukuran Keberhasilan
 
@@ -333,6 +381,9 @@ Angka di atas adalah target acceptance produk v1.0 dan harus dievaluasi kembali 
 | Ketepatan laporan | Target, realisasi, forecast, dan jumlah per tahap merekonsiliasi 100% dengan transaksi sumber untuk periode yang sama. |
 | Pengurangan rekap manual | Branch Manager dapat memperoleh tampilan kinerja lintas tim tanpa meminta spreadsheet terpisah dari Supervisor. |
 | Keamanan | Tidak ada akses lintas role/tim pada seluruh skenario negatif dalam test suite dan audit pra-rilis. |
+| Kedisiplinan follow-up | Minimal 90% pelanggan aktif mempunyai next follow-up atau hasil kontak yang tercatat. |
+| Pemanfaatan Buku Pelanggan | Sales dapat menemukan pelanggan, memahami kontak terakhir, dan memulai tindakan berikutnya dalam maksimal 30 detik pada uji penggunaan. |
+| Ketepatan Analisis | Jumlah per Sumber dan Model serta drilldown merekonsiliasi 100% dengan transaksi sumber pada periode dan mode tanggal yang sama. |
 
 Baseline penggunaan dikumpulkan setelah dua minggu pertama; target yang bergantung baseline dinilai pada akhir bulan pertama.
 
@@ -362,3 +413,7 @@ Keputusan teknis yang mahal dibalik harus ditutup melalui ADR baru. Keputusan pr
 | Environment client membawa secret | Credential masuk bundle publik. | Tidak memakai client env; konfigurasi aman dikirim server melalui allowlist. |
 | Email provider gagal | Undangan atau coaching terlambat diketahui. | Queue dengan retry, status kegagalan, notifikasi in-app tetap menjadi sumber utama. |
 | Requirement bercabang antar dokumen | Developer mengikuti aturan lama atau berbeda. | Satu ID satu tempat, manifest dokumen, dan link ke sumber kanonik. |
+| Buku Pelanggan dianggap milik pribadi Sales | Data dibawa keluar atau hilang ketika tanggung jawab berpindah. | Tetapkan data sebagai aset dealer, simpan assignment history, batasi ekspor, dan audit akses. |
+| Data pelanggan diduplikasi untuk setiap transaksi | Riwayat hubungan terpecah dan tindak lanjut menjadi membingungkan. | Pisahkan Customer dari transaksi, normalisasi nomor telepon, dan tampilkan kandidat duplikat. |
+| Tindak lanjut mengabaikan izin pelanggan | Pelanggan terganggu dan dealer menanggung risiko reputasi/kepatuhan. | Simpan preferensi kanal/opt-out, tampilkan peringatan, dan jangan menyediakan broadcast massal pada MVP. |
+| Conversion mode Pencapaian menyesatkan | Tahap dari kohort berbeda dibandingkan seolah-olah berasal dari lead yang sama. | Tampilkan conversion hanya pada mode Akuisisi; mode Pencapaian fokus pada jumlah dan porsi event. |

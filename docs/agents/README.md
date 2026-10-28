@@ -16,6 +16,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 | [`PRD.md`](PRD.md) | PRD | Menetapkan apa yang dibangun, untuk siapa, batasan, requirement, dan ukuran keberhasilan. |
 | [`knowledge.md`](knowledge.md) | Glosarium & katalog | Menjelaskan istilah domain, tahap pipeline, dan peta kewenangan tanpa menyalin requirement. |
 | [`memory.md`](memory.md) | Runbook/handoff | Mencatat keadaan terverifikasi, keputusan aktif, keputusan terbuka, dan langkah berikutnya. |
+| [`roadmap.md`](roadmap.md) | Roadmap | Menetapkan urutan pembangunan, dependensi, test wajib, dan gerbang keluar setiap fase. |
 | [`ringkasan-untuk-supervisor.md`](ringkasan-untuk-supervisor.md) | Panduan | Menjelaskan produk dalam bahasa operasional yang mudah dipahami Supervisor. |
 | [`adr/ADR-001-laravel-inertia-monolith.md`](adr/ADR-001-laravel-inertia-monolith.md) | ADR | Menetapkan satu aplikasi Laravel–Inertia dibandingkan SPA/API terpisah. |
 | [`adr/ADR-002-postgresql.md`](adr/ADR-002-postgresql.md) | ADR | Menetapkan PostgreSQL sebagai database utama. |

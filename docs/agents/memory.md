@@ -15,7 +15,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Produk adalah responsive web app internal untuk satu dealer dengan banyak tim.
 - Hierarki: Admin → Branch Manager → Supervisor → Sales.
 - Branch Manager membaca dashboard, forecast, dan laporan tanpa mengubah transaksi atau membaca coaching.
-- MVP mencakup autentikasi, tim, lead pipeline, conversation/coaching, impor CSV, dashboard, dan weighted forecasting.
+- MVP mencakup autentikasi, tim, Buku Pelanggan, lead pipeline, conversation/coaching, impor CSV, dashboard, weighted forecasting, serta Analisis Sumber dan Model.
 - UI referensi menggunakan filter rentang tanggal, tabel transaksi, status, pagination, serta dialog detail bertab.
 - Implementasi referensi mempunyai kelemahan pada mobile; yang diambil adalah pola interaksi, bukan responsivitasnya.
 - Tidak ada package yang telah dipasang dan tidak ada database yang telah dibuat atau diubah.
@@ -33,6 +33,11 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Conversation: timeline kronologis, reply sederhana, teks saja.
 - Komentar dapat diedit oleh penulis selama lima menit; revisi lama tetap tersimpan dan komentar tidak dihapus permanen.
 - Komentar baru memicu notifikasi in-app dan email. Email hanya memuat metadata aman dan tautan, bukan isi coaching.
+- Customer dipisahkan dari transaksi; satu Customer dapat mempunyai beberapa peluang penjualan.
+- “Buku Pelanggan Saya” menjadi phonebook kerja Sales dengan kontak terakhir, next follow-up, riwayat, dan aksi cepat.
+- Data Customer merupakan aset dealer. Sales hanya menerima assignment; reassignment mempertahankan riwayat dan tidak ada bulk export atau sinkronisasi phonebook pribadi pada MVP.
+- Menu Analisis menggunakan nama “Analisis”, bukan “Mapping”. Sumber dan Model masuk MVP; Area serta MSCP ditunda sampai data prasyarat tersedia.
+- Roadmap kanonik pembangunan berada di [`roadmap.md`](roadmap.md), dimulai dari fondasi akses lalu Customer/pipeline sebelum coaching, forecast, dan analisis.
 
 ## Keputusan terbuka
 
@@ -45,10 +50,10 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review dan setujui PRD serta ADR awal.
-2. Minta persetujuan pengguna sebelum memasang package atau membuat starter project.
-3. Setelah persetujuan, scaffold aplikasi berdasarkan ADR-001 tanpa menyentuh database shared.
-4. Rancang database, kontrak server, wireframe per role, dan checklist pembangunan dari requirement PRD.
+1. Selesaikan Fase 0 pada [`roadmap.md`](roadmap.md): review PRD, alur, model data, matriks akses, wireframe, dan test map.
+2. Minta persetujuan pengguna atas package sebelum membuat starter project.
+3. Setelah persetujuan, mulai Fase 1 berdasarkan ADR-001 tanpa menjalankan write pada database non-test.
+4. Setelah matriks akses lulus, kerjakan vertical slice Customer → assignment → transaksi → aktivitas → next follow-up.
 
 ## Larangan memory
 

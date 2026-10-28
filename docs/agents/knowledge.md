@@ -36,6 +36,22 @@ Hierarki kewenangan: `Admin → Branch Manager → Supervisor → Sales`.
 | Stagnant lead | Lead yang tidak memiliki aktivitas dalam ambang waktu yang ditetapkan produk. |
 | Pipeline | Urutan tahap yang menunjukkan perjalanan calon pelanggan menuju penjualan atau lost. |
 
+## Customer dan Buku Pelanggan
+
+| Istilah | Arti |
+|---|---|
+| Customer | Identitas orang atau badan yang dapat mempunyai nol, satu, atau beberapa transaksi sepanjang hubungannya dengan dealer. |
+| Transaksi | Satu peluang penjualan untuk Customer tertentu; bukan salinan identitas Customer. |
+| Buku Pelanggan Saya | Phonebook kerja berisi Customer yang sedang ditugaskan kepada Sales, dilengkapi konteks hubungan dan tindak lanjut. |
+| Customer assignment | Penugasan pengelolaan Customer kepada Sales. Data tetap milik dealer dan riwayat penugasan tidak dihapus saat berpindah. |
+| Kontak terakhir | Aktivitas komunikasi terakhir yang tercatat dan dapat dilihat pengguna sesuai kewenangannya. |
+| Next follow-up | Waktu dan rencana tindakan berikutnya untuk Customer atau transaksi. |
+| Contact preference | Pilihan kanal yang diizinkan atau ditolak Customer, termasuk opt-out. |
+| Repeat order | Peluang transaksi baru dari Customer yang pernah membeli. |
+| Referral | Calon pelanggan baru yang diperkenalkan oleh Customer lain; identitas kedua pihak tetap dicatat terpisah. |
+
+Buku Pelanggan bukan sinkronisasi kontak pribadi. Nomor pelanggan tidak diekspor massal atau disalin otomatis ke phonebook perangkat pada MVP.
+
 ## Target dan forecasting
 
 | Istilah | Arti |
@@ -60,6 +76,19 @@ Bobot forecast belum ditetapkan. Nilai final harus diputuskan Product Owner bers
 | In-app notification | Pemberitahuan di dalam aplikasi yang mempunyai status belum dibaca atau sudah dibaca. |
 
 Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan Admin untuk audit. Branch Manager tidak membaca isi coaching.
+
+## Analisis penjualan
+
+| Istilah | Arti |
+|---|---|
+| Analisis Sumber | Perbandingan jumlah, porsi, dan perjalanan transaksi berdasarkan asal lead. |
+| Analisis Model | Perbandingan hasil pipeline berdasarkan model kendaraan. |
+| Mode Akuisisi | Filter berdasarkan tanggal lead dibuat; cocok untuk membaca conversion satu kelompok lead. |
+| Mode Pencapaian | Filter berdasarkan tanggal kejadian tahap; cocok untuk membaca jumlah event pada periode, bukan conversion antar-kohort. |
+| Porsi | Persentase kontribusi suatu kategori terhadap total pada filter yang sama. |
+| Drilldown | Daftar transaksi sumber yang membentuk satu angka analisis. |
+| Area | Dimensi lokasi Customer yang memerlukan data lokasi terstruktur sebelum dianalisis. |
+| MSCP | Market Share Credit Portion; analisis porsi pembiayaan yang baru tersedia setelah modul leasing mempunyai data yang sah. |
 
 ## Prinsip akses data
 
