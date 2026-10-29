@@ -3,22 +3,24 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.1 |
-| Diperbarui | 29 Oktober 2026 |
+| Versi | v1.4 |
+| Diperbarui | 30 Oktober 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
 
-- Repository belum berisi source aplikasi; hanya sumber diskusi dan paket dokumentasi agent.
+- Fondasi aplikasi Laravel monolith dengan Inertia, React, TypeScript, Tailwind CSS, dan shadcn/ui telah tersedia di repository sesuai [`adr/ADR-001-laravel-inertia-monolith.md`](adr/ADR-001-laravel-inertia-monolith.md).
 - Produk adalah responsive web app internal untuk satu dealer dengan banyak tim.
 - Hierarki: Admin → Branch Manager → Supervisor → Sales.
 - Branch Manager membaca dashboard, forecast, dan laporan tanpa mengubah transaksi atau membaca coaching.
 - MVP mencakup autentikasi, tim, Buku Pelanggan, lead pipeline, conversation/coaching, impor CSV, dashboard, weighted forecasting, serta Analisis Sumber dan Model.
 - UI referensi menggunakan filter rentang tanggal, tabel transaksi, status, pagination, serta dialog detail bertab.
 - Implementasi referensi mempunyai kelemahan pada mobile; yang diambil adalah pola interaksi, bukan responsivitasnya.
-- Tidak ada package yang telah dipasang dan tidak ada database yang telah dibuat atau diubah.
+- Dependency PHP dan frontend telah dipasang; pemeriksaan backend, frontend, type-check, dan production build lulus pada 29 Oktober 2026.
+- Fondasi akses Fase 1 telah memakai autentikasi username, empat role server-side, status akun aktif, dan shell responsif; rencana implementasi berada di [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
+- PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
 
 ## Keputusan aktif
 
@@ -39,6 +41,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Menu Analisis menggunakan nama “Analisis”, bukan “Mapping”. Sumber dan Model masuk MVP; Area serta MSCP ditunda sampai data prasyarat tersedia.
 - Roadmap kanonik pembangunan berada di [`roadmap.md`](roadmap.md), dimulai dari fondasi akses lalu Customer/pipeline sebelum coaching, forecast, dan analisis.
 - Arah navigasi dan wireframe Fase 0 telah dipilih; keputusan kanonik berada di [`../design/aina-sms-navigation/direction-approved.md`](../design/aina-sms-navigation/direction-approved.md).
+- Prototipe terpilih telah diperluas menjadi runtime lokal lengkap dengan hash route, data sesi, alur empat role, autentikasi, state, dan aksesibilitas; status verifikasi berada di [`../design/aina-sms-navigation/verification.md`](../design/aina-sms-navigation/verification.md).
 
 ## Keputusan terbuka
 
@@ -51,10 +54,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Selesaikan perluasan serta review prototipe terpilih di [`../design/aina-sms-navigation/`](../design/aina-sms-navigation/) sebagai bagian gerbang Fase 0.
-2. Minta persetujuan pengguna atas package sebelum membuat starter project.
-3. Setelah persetujuan, mulai Fase 1 berdasarkan ADR-001 tanpa menjalankan write pada database non-test.
-4. Setelah matriks akses lulus, kerjakan vertical slice Customer → assignment → transaksi → aktivitas → next follow-up.
+1. Lanjutkan Fase 1 dengan undangan pengguna serta pengelolaan tim dan penempatan berdasarkan [`roadmap.md`](roadmap.md).
+2. Setelah matriks akses dan struktur organisasi lengkap, kerjakan vertical slice Customer → assignment → transaksi → aktivitas → next follow-up.
 
 ## Larangan memory
 

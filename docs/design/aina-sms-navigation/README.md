@@ -15,11 +15,14 @@ Paket desain Fase 0 untuk nama kerja **DealDrive Supervisor**.
 - [`design-demos/dir-2.html`](design-demos/dir-2.html) — Today-First Workspace.
 - [`design-demos/dir-3.html`](design-demos/dir-3.html) — Customer Hub.
 - [`design-demos/approved.html`](design-demos/approved.html) — prototipe terpilih yang diperluas.
-- `design-demos/screenshots/` — render desktop, tablet, dan mobile.
+- [`design-demos/approved-enhancements.css`](design-demos/approved-enhancements.css) — komponen form, state, dan layout tambahan.
+- [`design-demos/approved-enhancements.js`](design-demos/approved-enhancements.js) — hash router, store sesi, otorisasi role, dan seluruh interaksi.
+- [`design-demos/prototype-contract.test.js`](design-demos/prototype-contract.test.js) — pemeriksaan kontrak statis tanpa dependency.
+- `design-demos/screenshots/` — render checkpoint arah; capture runtime final menunggu inspeksi browser yang dicatat di `verification.md`.
 
 ## Status
 
-Arah kombinasi telah disetujui. Prototipe terpilih memakai Shell 1, Beranda Sales 2, serta Beranda role lain, Buku Pelanggan, dan Transaksi dari arah 1.
+Arah kombinasi telah disetujui. Prototipe terpilih memakai Shell 1, Beranda Sales 2, serta Beranda role lain, Buku Pelanggan, dan Transaksi dari arah 1. Seluruh menu MVP kini mempunyai halaman dan alur mid-fi yang dapat digunakan dengan data sintetis dalam memori; reload mengembalikan kondisi awal.
 
 ## Sumber kebenaran
 

@@ -3,8 +3,8 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Aturan eksekusi agent |
-| Versi | v1.0 |
-| Tanggal | 28 Oktober 2026 |
+| Versi | v1.1 |
+| Tanggal | 30 Oktober 2026 |
 | Status | Berlaku |
 
 Seluruh aturan berikut wajib dibaca sebelum eksekusi.
@@ -23,6 +23,14 @@ Seluruh aturan berikut wajib dibaca sebelum eksekusi.
 - Konfigurasi yang diperlukan frontend harus berasal dari konfigurasi server yang aman atau konstanta publik yang tidak sensitif.
 - Jangan membaca, menampilkan, menyalin, atau mengubah `.env` tanpa perintah eksplisit pengguna.
 - File contoh environment hanya boleh memuat nama variabel dan nilai dummy yang tidak dapat digunakan sebagai credential.
+
+### Credential production tidak boleh dibuat secara eksplisit
+
+- Jangan membuat, menetapkan, atau mengubah credential production secara eksplisit melalui source code, migration, seeder, fixture, SQL, argumen command line, dokumentasi, maupun nilai default/fallback.
+- Larangan ini mencakup password pengguna, shared password, API key, access token, encryption key, credential database, dan secret lain yang dapat memberikan akses ke sistem production.
+- Akun pengguna production wajib dibuat melalui alur undangan atau aktivasi yang membuat pemilik akun menetapkan credential-nya sendiri. Secret mesin wajib dibuat dan disimpan melalui secret manager atau mekanisme provisioning aman yang telah disetujui.
+- Seeder dan akun contoh hanya boleh digunakan pada environment local atau test, wajib mempunyai guard environment, dan tidak boleh dipromosikan atau dijalankan pada production.
+- Perintah eksplisit pengguna bukan pengecualian untuk membuat credential production secara hardcoded. Tolak mekanisme tersebut dan tawarkan alur undangan, aktivasi, reset, atau secret manager yang aman.
 
 ## 3. Keselamatan database
 
