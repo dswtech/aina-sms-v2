@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\Dealer;
+use App\Models\Team;
+use App\Models\TeamMembership;
 use App\Models\User;
 use App\Support\UsernameGenerator;
 use Illuminate\Database\Seeder;
@@ -22,18 +25,26 @@ class DevelopmentUserSeeder extends Seeder
         DB::table('users')->where('role', 'sales_supervisor')->update(['role' => UserRole::Supervisor->value]);
 
         $password = Hash::make('password');
+        $dealer = Dealer::query()->firstOrCreate(
+            ['name' => 'AINA Development Dealer'],
+            [
+                'public_id' => (string) Str::uuid(),
+                'timezone' => 'Asia/Jakarta',
+                'is_active' => true,
+            ],
+        );
 
-        $this->upsertUser([
+        $admin = $this->upsertUser([
             'name' => 'Super Hero',
             'username' => 'superhero',
             'role' => UserRole::Admin,
-        ], $password);
+        ], $password, $dealer->id);
 
         $this->upsertUser([
             'name' => 'Bima Pratama',
             'username' => UsernameGenerator::fromName('Bima Pratama'),
             'role' => UserRole::BranchManager,
-        ], $password);
+        ], $password, $dealer->id);
 
         $teams = [
             [
@@ -79,18 +90,30 @@ class DevelopmentUserSeeder extends Seeder
 
         foreach ($teams as $team) {
             $supervisorName = $team['supervisor'];
+            $teamModel = Team::query()->firstOrCreate(
+                [
+                    'dealer_id' => $dealer->id,
+                    'name' => 'Tim '.$supervisorName,
+                ],
+                [
+                    'public_id' => (string) Str::uuid(),
+                    'is_active' => true,
+                ],
+            );
             $supervisor = $this->upsertUser([
                 'name' => $supervisorName,
                 'username' => UsernameGenerator::fromName($supervisorName),
                 'role' => UserRole::Supervisor,
-            ], $password);
+            ], $password, $dealer->id);
+            $this->upsertMembership($teamModel, $supervisor, UserRole::Supervisor, $admin);
 
             foreach ($team['sales'] as $salesName) {
-                $this->upsertUser([
+                $sales = $this->upsertUser([
                     'name' => $salesName,
                     'username' => UsernameGenerator::fromName($salesName),
                     'role' => UserRole::Sales,
-                ], $password, $supervisor->id);
+                ], $password, $dealer->id);
+                $this->upsertMembership($teamModel, $sales, UserRole::Sales, $admin);
             }
         }
     }
@@ -98,20 +121,37 @@ class DevelopmentUserSeeder extends Seeder
     /**
      * @param  array{name: string, username: string, role: UserRole}  $account
      */
-    private function upsertUser(array $account, string $password, ?int $supervisorId = null): User
+    private function upsertUser(array $account, string $password, int $dealerId): User
     {
         $user = User::query()->firstOrNew(['username' => $account['username']]);
         $user->public_id ??= (string) Str::uuid();
         $user->fill([
+            'dealer_id' => $dealerId,
             'name' => $account['name'],
             'email' => $account['username'].'@aina.test',
             'email_verified_at' => now(),
             'password' => $password,
             'role' => $account['role'],
             'is_active' => true,
-            'supervisor_id' => $supervisorId,
+            'supervisor_id' => null,
         ])->save();
 
         return $user;
+    }
+
+    private function upsertMembership(Team $team, User $user, UserRole $role, User $admin): void
+    {
+        TeamMembership::query()->firstOrCreate(
+            [
+                'team_id' => $team->id,
+                'user_id' => $user->id,
+                'ended_at' => null,
+            ],
+            [
+                'role' => $role,
+                'assigned_by_id' => $admin->id,
+                'started_at' => now(),
+            ],
+        );
     }
 }

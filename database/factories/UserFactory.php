@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\UserRole;
+use App\Models\Dealer;
 use App\Models\User;
 use App\Support\UsernameGenerator;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -27,6 +28,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'dealer_id' => Dealer::factory(),
             'public_id' => (string) Str::uuid(),
             'name' => fake()->name(),
             'username' => UsernameGenerator::fromName(fake()->unique()->name()),

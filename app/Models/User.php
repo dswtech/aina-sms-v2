@@ -8,12 +8,15 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $dealer_id
  * @property string $public_id
  * @property string $name
  * @property string|null $username
@@ -30,12 +33,36 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['public_id', 'name', 'username', 'email', 'password', 'role', 'is_active', 'supervisor_id'])]
+#[Fillable(['dealer_id', 'public_id', 'name', 'username', 'email', 'password', 'role', 'is_active', 'supervisor_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * @return BelongsTo<Dealer, $this>
+     */
+    public function dealer(): BelongsTo
+    {
+        return $this->belongsTo(Dealer::class);
+    }
+
+    /**
+     * @return HasMany<TeamMembership, $this>
+     */
+    public function teamMemberships(): HasMany
+    {
+        return $this->hasMany(TeamMembership::class);
+    }
+
+    /**
+     * @return HasMany<TeamMembership, $this>
+     */
+    public function activeTeamMemberships(): HasMany
+    {
+        return $this->teamMemberships()->whereNull('ended_at');
+    }
 
     /**
      * Get the attributes that should be cast.

@@ -42,10 +42,10 @@
 
 **Hasil:** satu dealer memiliki banyak tim dan penempatan Supervisor/Sales mempunyai riwayat efektif.
 
-- [ ] Tulis feature test migration/model untuk `Dealer`, `Team`, `TeamMembership`, status aktif, dan histori membership.
-- [ ] Tambahkan migration, model, factory, relasi, cast, dan scope membership aktif.
-- [ ] Perbarui development seeder agar membuat satu dealer, tiga tim, tiga Supervisor, dan delapan Sales per tim tanpa credential production.
-- [ ] Jalankan Pest fokus dan suite backend.
+- [x] Tulis feature test migration/model untuk `Dealer`, `Team`, `TeamMembership`, status aktif, dan histori membership.
+- [x] Tambahkan migration, model, factory, relasi, cast, dan scope membership aktif.
+- [x] Perbarui development seeder agar membuat satu dealer, tiga tim, tiga Supervisor, dan delapan Sales per tim tanpa credential production.
+- [x] Jalankan Pest fokus dan suite backend.
 
 ## Task 3 — Policy dan organizational scope
 
