@@ -34,7 +34,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['dealer_id', 'public_id', 'name', 'username', 'email', 'password', 'role', 'is_active', 'supervisor_id'])]
+#[Fillable(['dealer_id', 'public_id', 'name', 'username', 'email', 'email_verified_at', 'password', 'role', 'is_active', 'supervisor_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {

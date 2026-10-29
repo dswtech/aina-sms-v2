@@ -1,6 +1,14 @@
 <?php
 
+use App\Http\Controllers\Auth\InvitationController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('activate/{token}', [InvitationController::class, 'show'])
+    ->middleware('guest')
+    ->name('invitations.show');
+Route::post('activate/{token}', [InvitationController::class, 'accept'])
+    ->middleware(['guest', 'throttle:6,1'])
+    ->name('invitations.accept');
 
 Route::get('/', fn () => auth()->check()
     ? redirect()->route('dashboard')
@@ -35,6 +43,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ->name('imports.index');
 
     Route::middleware('role:admin')->group(function () {
+        Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
         Route::inertia('users', 'module-status', ['module' => 'users'])->name('users.index');
         Route::inertia('teams', 'module-status', ['module' => 'teams'])->name('teams.index');
         Route::inertia('dealer-settings', 'module-status', ['module' => 'dealer-settings'])->name('dealer-settings.edit');

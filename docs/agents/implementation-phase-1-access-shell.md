@@ -60,11 +60,11 @@
 
 **Hasil:** Admin dapat membuat undangan dengan role/penempatan tetap; penerima menetapkan password sendiri melalui token sekali pakai.
 
-- [ ] Tulis feature test create, delivery, valid activation, token hash, expiry, already-used, revoked, invalid role/team, dan inactive target.
-- [ ] Tambahkan `Invitation`, migration, factory, form request, controller, policy, notification, dan route aktivasi publik bertoken.
-- [ ] Buat halaman aktivasi dan state invalid/kedaluwarsa/terpakai tanpa registrasi publik.
-- [ ] Pastikan acceptance membuat user/membership dalam satu transaksi dan tidak menyimpan password pada invitation/audit.
-- [ ] Jalankan Pest fokus, mail assertions, type-check, dan build.
+- [x] Tulis feature test create, delivery, valid activation, token hash, expiry, already-used, revoked, invalid role/team, dan inactive target.
+- [x] Tambahkan `Invitation`, migration, factory, form request, controller, policy, notification, dan route aktivasi publik bertoken.
+- [x] Buat halaman aktivasi dan state invalid/kedaluwarsa/terpakai tanpa registrasi publik.
+- [x] Pastikan acceptance membuat user/membership dalam satu transaksi dan tidak menyimpan password pada invitation/audit.
+- [x] Jalankan Pest fokus, mail assertions, type-check, dan build.
 
 ## Task 5 — Admin Pengguna & Undangan
 
