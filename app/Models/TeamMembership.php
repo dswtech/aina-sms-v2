@@ -49,6 +49,34 @@ class TeamMembership extends Model
     }
 
     /**
+     * @param  Builder<TeamMembership>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $actor): void
+    {
+        if (! $actor->is_active || $actor->dealer_id === null) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereHas('team', fn (Builder $query) => $query->where('dealer_id', $actor->dealer_id));
+
+        if (in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)) {
+            return;
+        }
+
+        if ($actor->role === UserRole::Supervisor) {
+            $query->whereIn('team_id', $actor->activeTeamMemberships()
+                ->where('role', UserRole::Supervisor)
+                ->select('team_id'));
+
+            return;
+        }
+
+        $query->where('user_id', $actor->id);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

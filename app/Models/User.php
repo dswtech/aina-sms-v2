@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,6 +63,39 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activeTeamMemberships(): HasMany
     {
         return $this->teamMemberships()->whereNull('ended_at');
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $actor): void
+    {
+        if (! $actor->is_active || $actor->dealer_id === null) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where('dealer_id', $actor->dealer_id);
+
+        if (in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)) {
+            return;
+        }
+
+        if ($actor->role === UserRole::Supervisor) {
+            $query->where(function (Builder $query) use ($actor): void {
+                $query->whereKey($actor->id)
+                    ->orWhereHas('activeTeamMemberships', function (Builder $query) use ($actor): void {
+                        $query->whereIn('team_id', $actor->activeTeamMemberships()
+                            ->where('role', UserRole::Supervisor)
+                            ->select('team_id'));
+                    });
+            });
+
+            return;
+        }
+
+        $query->whereKey($actor->id);
     }
 
     /**

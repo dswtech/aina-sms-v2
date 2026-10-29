@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,6 +50,26 @@ class Team extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * @param  Builder<Team>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $actor): void
+    {
+        if (! $actor->is_active || $actor->dealer_id === null) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where('dealer_id', $actor->dealer_id);
+
+        if (in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)) {
+            return;
+        }
+
+        $query->active()->whereIn('id', $actor->activeTeamMemberships()->select('team_id'));
     }
 
     /**

@@ -51,10 +51,10 @@
 
 **Hasil:** request langsung dibatasi oleh dealer, tim, role, dan membership aktif.
 
-- [ ] Tulis matriks feature test Admin, Branch Manager, Supervisor lintas tim, Sales, user nonaktif, dan membership berakhir.
-- [ ] Implementasikan policy serta query scope untuk user, team, membership, dan invitation.
-- [ ] Pastikan client tidak dapat memperluas scope melalui `dealer_id`, `team_id`, atau user ID request.
-- [ ] Jalankan seluruh negative authorization suite.
+- [x] Tulis matriks feature test Admin, Branch Manager, Supervisor lintas tim, Sales, user nonaktif, dan membership berakhir.
+- [x] Implementasikan policy serta query scope untuk user, team, dan membership. Policy invitation ditambahkan bersama modelnya pada Task 4 agar tidak membuat abstraksi prematur.
+- [x] Pastikan client tidak dapat memperluas scope melalui `dealer_id`, `team_id`, atau user ID request.
+- [x] Jalankan seluruh negative authorization suite.
 
 ## Task 4 — Undangan dan aktivasi akun
 
