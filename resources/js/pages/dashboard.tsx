@@ -5,6 +5,11 @@ import { roleLabels } from '@/lib/navigation';
 import { dashboard } from '@/routes';
 import type { UserRole } from '@/types';
 
+const jakartaDateFormatter = new Intl.DateTimeFormat('id-ID', {
+    dateStyle: 'full',
+    timeZone: 'Asia/Jakarta',
+});
+
 const operationalCopy: Record<
     Exclude<UserRole, 'sales'>,
     {
@@ -280,7 +285,7 @@ export default function Dashboard() {
                         </p>
                     </div>
                     <p className="text-sm font-medium text-muted-foreground">
-                        Kamis, 30 Oktober 2026
+                        {jakartaDateFormatter.format(new Date())}
                     </p>
                 </header>
 

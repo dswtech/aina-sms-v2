@@ -17,7 +17,7 @@ class EnsureUserIsActive
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'email' => 'Akun Anda tidak aktif. Hubungi Admin dealer.',
+                'username' => 'Akun Anda tidak aktif. Hubungi Admin dealer.',
             ]);
         }
 

@@ -1,5 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
-import { MoreHorizontal } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, MoreHorizontal } from 'lucide-react';
 import {
     Sheet,
     SheetClose,
@@ -16,6 +16,7 @@ import {
     roleLabels,
 } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
+import { logout } from '@/routes';
 
 export function MobileBottomNav() {
     const { auth } = usePage().props;
@@ -109,6 +110,21 @@ export function MobileBottomNav() {
                                     </Link>
                                 </SheetClose>
                             ))}
+                            <SheetClose asChild>
+                                <Link
+                                    href={logout()}
+                                    as="button"
+                                    onClick={() => router.flushAll()}
+                                    className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-destructive transition-colors outline-none hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring"
+                                    data-test="mobile-logout-button"
+                                >
+                                    <LogOut
+                                        aria-hidden="true"
+                                        className="size-5"
+                                    />
+                                    Keluar
+                                </Link>
+                            </SheetClose>
                         </div>
                     </SheetContent>
                 </Sheet>

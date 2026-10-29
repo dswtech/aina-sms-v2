@@ -2,6 +2,7 @@
 _doc_sources/
 .env
 .env.*
+!.env.example
 
 # Dependencies
 /vendor/
@@ -46,6 +47,7 @@ _doc_sources/
 /boost.json
 /opencode.json
 /opencode.jsonc
+/graphify-out/
 
 # IDE and operating-system files
 /.idea/
