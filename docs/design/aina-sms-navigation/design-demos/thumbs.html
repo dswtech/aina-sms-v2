@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eksplorasi Struktur — DealDrive Supervisor</title>
+  <style>
+    :root{color-scheme:light;--ink:#0f172a;--muted:#64748b;--line:#dbe4f0;--paper:#fff;--wash:#f6f8fc;--blue:#2563eb;--blue-soft:#eff6ff;--teal:#0f6b7a;--danger:#b42318;--r:14px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box} body{margin:0;background:var(--wash);color:var(--ink)} button,a{font:inherit} a{color:inherit} :focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+    header{max-width:1240px;margin:auto;padding:52px 24px 22px} .eyebrow{color:var(--blue);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.intro{max-width:760px}.intro h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.04em;line-height:1.03;margin:10px 0 14px}.intro p{color:#475569;line-height:1.65;margin:0}.notice{display:flex;align-items:center;gap:10px;margin-top:24px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;width:fit-content;font-size:14px}.dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+    main{max-width:1240px;margin:auto;padding:18px 24px 64px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.candidate{background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}.candidate.selected{border-color:#93b4f6}.meta{padding:18px 18px 16px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.meta h2{font-size:20px;letter-spacing:-.02em;margin:2px 0 5px}.meta p{color:var(--muted);font-size:13px;line-height:1.5;margin:0;max-width:440px}.badge{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:750;color:#475569}.selected .badge{border-color:#bfdbfe;background:var(--blue-soft);color:#1d4ed8}.canvas{height:300px;margin:0 14px 14px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#f8fafc;position:relative}.bar{height:20px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:4px;padding:0 8px}.bar i{width:5px;height:5px;background:#cbd5e1;border-radius:50%}.screen{height:280px;display:grid}.sidebar{padding:14px 10px;border-right:1px solid #e2e8f0;background:#edf4f8}.logo{height:12px;width:72%;background:#183b56;border-radius:3px;margin:2px 0 18px}.navline{height:8px;background:#cbd5e1;border-radius:3px;margin:10px 0}.navline.active{background:#287e98}.content{padding:16px;background:#fff}.tiny-title{height:14px;width:42%;background:#172033;border-radius:3px;margin-bottom:15px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{height:52px;background:#f4f7fb;border:1px solid #e2e8f0;border-radius:6px}.rows{margin-top:12px;border-top:1px solid #e2e8f0}.row{height:28px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:8px}.row:before{content:"";width:24px;height:7px;border-radius:3px;background:#d3ddea}.row:after{content:"";width:48%;height:6px;border-radius:3px;background:#e5eaf1}
+    .operational .screen{grid-template-columns:105px 1fr;padding:8px;background:#dce8ee}.operational .content{border-radius:8px}.today .screen{grid-template-columns:82px 1fr}.today .sidebar{background:#fff}.today .content{background:#f8fafc}.lanes{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px}.lane{border:1px solid #dbe4f0;border-radius:8px;padding:8px;background:#fff}.lane:first-child{background:#eff6ff;border-color:#bfdbfe}.task{height:34px;background:#fff;border:1px solid #dbe4f0;border-left:3px solid #2563eb;border-radius:5px;margin-top:7px}.hub .screen{grid-template-columns:80px 130px 1fr}.hub .sidebar{background:#fff}.listpane{padding:10px;border-right:1px solid #e2e8f0;background:#f8fafc}.person{height:43px;border-bottom:1px solid #e2e8f0;padding:7px}.person:before,.person:after{content:"";display:block;border-radius:3px;background:#cbd5e1;height:6px;width:70%;margin-bottom:6px}.person:after{width:45%;background:#e2e8f0}.person.active{background:#eaf2ff;border-left:3px solid #2563eb}.coaching .screen{grid-template-columns:75px 150px 1fr}.message{height:46px;border-bottom:1px solid #e2e8f0;padding:8px}.bubble{height:35px;width:75%;border-radius:10px 10px 10px 2px;background:#eaf2ff;margin:10px 0}.liquid .screen{padding:28px;background:#e9f2ff}.glass-card{height:190px;border:1px solid #fff;background:rgba(255,255,255,.62);box-shadow:0 18px 45px rgba(37,99,235,.18);border-radius:26px;padding:24px}.glass-card:before{content:"";display:block;width:44%;height:16px;background:#476aa0;border-radius:5px;margin-bottom:20px}.blocks .screen{grid-template-columns:110px 1fr;background:#f5efe4}.blocks .sidebar{background:#173f4a}.blocks .logo{background:#e8d9b8}.blocks .navline{background:#72919a}.blocks .content{margin:12px;background:#fffdf7;border:2px solid #173f4a;box-shadow:6px 6px 0 #d4a552}.blocks .metric{border:2px solid #173f4a;background:#e8d9b8;border-radius:0}
+    .actions{display:flex;gap:9px;padding:0 18px 18px}.open{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;background:var(--ink);color:#fff;padding:0 14px;font-weight:750;font-size:13px}.open:hover{background:#1e3a5f}.note{font-size:12px;color:var(--muted);align-self:center}.formline{margin:26px 0 0;padding:18px;border-left:4px solid var(--blue);background:#fff;color:#334155;line-height:1.55}.formline strong{color:var(--ink)}
+    @media(max-width:760px){header{padding-top:32px}.grid{grid-template-columns:1fr}.canvas{height:260px}.screen{height:240px}.candidate:nth-child(n+5) .canvas{height:220px}.candidate:nth-child(n+5) .screen{height:200px}.hub .screen,.coaching .screen{grid-template-columns:60px 100px 1fr}.meta{flex-direction:column}.badge{order:-1}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="intro">
+      <div class="eyebrow">Checkpoint arah struktur · Fase 0</div>
+      <h1>Enam cara mengatur pekerjaan yang sama.</h1>
+      <p>Semua thumbnail memakai konteks DealDrive Supervisor, data contoh yang sama, dan kebutuhan lintas perangkat yang sama. Tiga kandidat utama dapat dibuka dan diuji sebagai prototipe penuh.</p>
+    </div>
+    <div class="notice"><span class="dot"></span> Data di seluruh prototipe bersifat fiktif untuk review desain.</div>
+  </header>
+  <main>
+    <section class="grid" aria-label="Kandidat arah desain">
+      <article class="candidate selected operational">
+        <div class="meta"><div><h2>01 · Operational Sidebar</h2><p>Menu eksplisit, ringkasan padat, dan lembar kerja konsisten untuk empat role.</p></div><span class="badge">Dikembangkan</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><aside class="sidebar"><div class="logo"></div><div class="navline active"></div><div class="navline"></div><div class="navline"></div><div class="navline"></div></aside><div class="content"><div class="tiny-title"></div><div class="metrics"><div class="metric"></div><div class="metric"></div><div class="metric"></div></div><div class="rows"><div class="row"></div><div class="row"></div><div class="row"></div><div class="row"></div></div></div></div></div>
+        <div class="actions"><a class="open" href="dir-1.html">Buka prototipe</a><span class="note">Form: sidebar + framed sheet</span></div>
+      </article>
+      <article class="candidate selected today">
+        <div class="meta"><div><h2>02 · Today-First Workspace</h2><p>Tindakan Sekarang, Hari Ini, dan Nanti menjadi urutan utama, terutama di mobile.</p></div><span class="badge">Dikembangkan</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><aside class="sidebar"><div class="logo"></div><div class="navline active"></div><div class="navline"></div><div class="navline"></div></aside><div class="content"><div class="tiny-title"></div><div class="lanes"><div class="lane"><div class="navline active"></div><div class="task"></div><div class="task"></div><div class="task"></div></div><div class="lane"><div class="navline"></div><div class="task"></div><div class="task"></div></div><div class="lane"><div class="navline"></div><div class="task"></div></div></div></div></div></div>
+        <div class="actions"><a class="open" href="dir-2.html">Buka prototipe</a><span class="note">Form: time lanes + action rail</span></div>
+      </article>
+      <article class="candidate selected hub">
+        <div class="meta"><div><h2>03 · Customer Hub</h2><p>Pelanggan menjadi jangkar; transaksi dan aktivitas mengikuti konteks yang dipilih.</p></div><span class="badge">Dikembangkan</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><aside class="sidebar"><div class="logo"></div><div class="navline active"></div><div class="navline"></div><div class="navline"></div></aside><div class="listpane"><div class="person active"></div><div class="person"></div><div class="person"></div><div class="person"></div><div class="person"></div></div><div class="content"><div class="tiny-title"></div><div class="metrics"><div class="metric"></div><div class="metric"></div></div><div class="rows"><div class="row"></div><div class="row"></div><div class="row"></div></div></div></div></div>
+        <div class="actions"><a class="open" href="dir-3.html">Buka prototipe</a><span class="note">Form: three-region workspace</span></div>
+      </article>
+      <article class="candidate coaching">
+        <div class="meta"><div><h2>04 · Coaching Desk</h2><p>Inbox coaching berdampingan dengan transaksi; disimpan sebagai pola turunan Supervisor.</p></div><span class="badge">Pola turunan</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><aside class="sidebar"><div class="logo"></div><div class="navline active"></div><div class="navline"></div></aside><div class="listpane"><div class="message"></div><div class="message"></div><div class="message"></div><div class="message"></div></div><div class="content"><div class="tiny-title"></div><div class="bubble"></div><div class="bubble" style="margin-left:20%"></div><div class="bubble"></div></div></div></div>
+        <div class="actions"><span class="note">Tidak dibuka sebagai shell utama; konsep akan hidup di detail transaksi.</span></div>
+      </article>
+      <article class="candidate liquid">
+        <div class="meta"><div><h2>05 · Liquid Layers</h2><p>Eksperimen kedalaman dan fokus modal. Ditolak karena mengurangi kejernihan operasional.</p></div><span class="badge">Ditolak</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><div class="glass-card"><div class="metrics"><div class="metric"></div><div class="metric"></div><div class="metric"></div></div><div class="rows"><div class="row"></div><div class="row"></div></div></div></div></div>
+        <div class="actions"><span class="note">Alasan: glass, bayangan, dan lapisan dekoratif tidak mendukung baseline.</span></div>
+      </article>
+      <article class="candidate blocks">
+        <div class="meta"><div><h2>06 · Block-Print Sections</h2><p>Eksperimen blok tegas dan ritme kolom. Shell ditolak; pengelompokan bagian dipinjam.</p></div><span class="badge">Ditolak</span></div>
+        <div class="canvas" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="screen"><aside class="sidebar"><div class="logo"></div><div class="navline"></div><div class="navline"></div><div class="navline"></div></aside><div class="content"><div class="tiny-title"></div><div class="metrics"><div class="metric"></div><div class="metric"></div><div class="metric"></div></div><div class="rows"><div class="row"></div><div class="row"></div><div class="row"></div></div></div></div></div>
+        <div class="actions"><span class="note">Alasan: metafora cetak terlalu dominan untuk aplikasi lintas role.</span></div>
+      </article>
+    </section>
+    <p class="formline"><strong>Tiga bentuk final checkpoint:</strong> sidebar + framed sheet, time lanes + action rail, dan three-region workspace. Pilih satu arah atau kombinasi setelah mencoba navigasi, filter, dan detail transaksinya.</p>
+  </main>
+</body>
+</html>

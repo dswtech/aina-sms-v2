@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arah 2 — Today-First Workspace · DealDrive Supervisor</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #10213a;
+      --muted: #60708a;
+      --line: #dbe5f2;
+      --line-strong: #bfd0e7;
+      --blue: #175cd3;
+      --blue-strong: #0e47a8;
+      --blue-soft: #eaf2ff;
+      --blue-pale: #f4f8ff;
+      --canvas: #f7f9fc;
+      --paper: #ffffff;
+      --warning: #8a4b08;
+      --warning-soft: #fff5e8;
+      --success: #12633d;
+      --success-soft: #ecf8f1;
+      --danger: #a12d2d;
+      --danger-soft: #fff1f1;
+      --radius: 12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--canvas); font-size: 14px; line-height: 1.5; }
+    button, input, select { font: inherit; }
+    button, select, input { min-height: 44px; }
+    button { color: inherit; }
+    button, [role="button"] { touch-action: manipulation; }
+    :focus-visible { outline: 3px solid #78a7f5; outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    [hidden] { display: none !important; }
+
+    .app { min-height: 100vh; display: grid; grid-template-columns: 224px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100vh; padding: 20px 14px; border-right: 1px solid var(--line); background: var(--paper); display: flex; flex-direction: column; gap: 20px; }
+    .brand { padding: 0 8px; }
+    .brand strong { display: block; font-size: 16px; letter-spacing: -.01em; }
+    .brand small { display: block; color: var(--muted); margin-top: 2px; }
+    .review-tag, .sample-tag { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 999px; color: #3f5573; background: var(--blue-pale); font-size: 12px; font-weight: 650; }
+    .nav { display: grid; gap: 4px; }
+    .nav-button { min-height: 44px; width: 100%; padding: 9px 11px; border: 0; border-radius: 9px; background: transparent; text-align: left; cursor: pointer; font-weight: 620; color: #43546d; }
+    .nav-button:hover { background: #f3f6fa; }
+    .nav-button.active { background: var(--blue-soft); color: var(--blue-strong); }
+    .sidebar-note { margin-top: auto; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #fbfcfe; color: var(--muted); font-size: 12px; }
+    .sidebar-note strong { display: block; color: var(--ink); margin-bottom: 3px; }
+
+    .workspace { min-width: 0; }
+    .topbar { min-height: 68px; padding: 10px 28px; border-bottom: 1px solid var(--line); background: rgba(247,249,252,.96); display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 10; }
+    .topbar-title strong { display: block; font-size: 14px; }
+    .topbar-title span { color: var(--muted); font-size: 12px; }
+    .review-controls { display: flex; align-items: center; gap: 8px; }
+    .role-field { display: flex; align-items: center; gap: 8px; }
+    .role-field label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    select, input { border: 1px solid var(--line-strong); border-radius: 9px; background: var(--paper); color: var(--ink); padding: 8px 11px; }
+    .icon-button { width: 44px; padding: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); cursor: pointer; display: grid; place-items: center; }
+    .icon-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .dot { position: absolute; width: 7px; height: 7px; margin: -20px 0 0 20px; border-radius: 50%; background: var(--blue); border: 1px solid white; }
+
+    main { width: min(1180px, 100%); margin: 0 auto; padding: 28px; }
+    .page { animation: enter .16s ease-out; }
+    @keyframes enter { from { opacity: .5; transform: translateY(3px); } }
+    .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .eyebrow { margin: 0 0 5px; color: var(--blue-strong); font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font-size: clamp(24px, 3vw, 32px); line-height: 1.18; letter-spacing: -.03em; }
+    h2 { margin-bottom: 5px; font-size: 18px; letter-spacing: -.015em; }
+    h3 { margin-bottom: 4px; font-size: 15px; }
+    .subtle { color: var(--muted); }
+    .page-head p { margin-bottom: 0; }
+    .primary, .secondary, .ghost, .chip { min-height: 44px; border-radius: 9px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+    .primary { border: 1px solid var(--blue); background: var(--blue); color: white; }
+    .primary:hover { background: var(--blue-strong); }
+    .secondary { border: 1px solid var(--line-strong); background: var(--paper); }
+    .secondary:hover, .ghost:hover { background: var(--blue-pale); }
+    .ghost { border: 1px solid transparent; background: transparent; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .day-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); overflow: clip; background: var(--paper); }
+    .day-column { min-width: 0; padding: 16px; }
+    .day-column + .day-column { border-left: 1px solid var(--line); }
+    .day-column.active { background: var(--blue-pale); box-shadow: inset 3px 0 0 var(--blue); }
+    .column-head { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .column-head h2 { margin: 0; }
+    .count { min-width: 27px; height: 27px; border-radius: 99px; background: #e6edf7; display: grid; place-items: center; font-size: 12px; font-weight: 800; }
+    .active .count { color: var(--blue-strong); background: #d5e6ff; }
+    .task { width: 100%; min-height: 118px; margin-top: 8px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: stretch; }
+    .task:hover { border-color: #8eb4ed; background: #fbfdff; }
+    .task-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .task-name { font-size: 15px; font-weight: 750; }
+    .time { color: var(--blue-strong); font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .task p { margin: 5px 0 11px; color: var(--muted); }
+    .task-meta { margin-top: auto; display: flex; justify-content: space-between; gap: 8px; color: #4d5e76; font-size: 12px; }
+    .status { display: inline-flex; align-items: center; min-height: 25px; padding: 2px 8px; border-radius: 999px; background: var(--blue-soft); color: var(--blue-strong); font-size: 12px; font-weight: 750; }
+    .status.warn { background: var(--warning-soft); color: var(--warning); }
+    .status.ok { background: var(--success-soft); color: var(--success); }
+    .empty-slot { min-height: 118px; margin-top: 8px; padding: 16px; border: 1px dashed var(--line-strong); border-radius: 10px; display: grid; place-content: center; text-align: center; color: var(--muted); }
+
+    .home-lower { display: grid; grid-template-columns: 1.35fr .65fr; gap: 16px; margin-top: 16px; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); padding: 17px; }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .panel-head p, .panel-head h2 { margin-bottom: 0; }
+    .progress-line { height: 8px; margin: 16px 0 10px; border-radius: 999px; background: #e8eef6; overflow: hidden; }
+    .progress-line > span { display: block; width: 60%; height: 100%; background: var(--blue); }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .metric { min-width: 0; padding: 11px 0; }
+    .metric strong { display: block; font-size: 22px; letter-spacing: -.03em; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .quick-action { min-height: 72px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); text-align: left; cursor: pointer; font-weight: 720; }
+    .quick-action span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; font-weight: 500; }
+    .quick-action:hover { border-color: #8eb4ed; background: var(--blue-pale); }
+
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-bottom: 14px; }
+    .search { flex: 1 1 260px; position: relative; }
+    .search input { width: 100%; padding-left: 38px; }
+    .search svg { position: absolute; left: 12px; top: 12px; width: 19px; height: 19px; fill: none; stroke: var(--muted); stroke-width: 1.8; pointer-events: none; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { min-height: 40px; padding: 7px 12px; border: 1px solid var(--line-strong); background: var(--paper); }
+    .chip[aria-pressed="true"] { border-color: #82ace9; background: var(--blue-soft); color: var(--blue-strong); }
+    .list { display: grid; gap: 9px; }
+    .record { min-width: 0; border: 1px solid var(--line); border-radius: 11px; background: var(--paper); display: grid; grid-template-columns: minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(140px, .9fr) auto; align-items: center; gap: 14px; padding: 14px 15px; }
+    .record:hover { border-color: #9bbce9; }
+    .record-main strong { display: block; font-size: 15px; }
+    .record-main span, .record-cell span { display: block; color: var(--muted); font-size: 12px; }
+    .record-cell strong { display: block; font-size: 13px; }
+    .record .secondary { white-space: nowrap; }
+    .empty-search { padding: 36px 20px; border: 1px dashed var(--line-strong); border-radius: var(--radius); text-align: center; color: var(--muted); }
+
+    .role-placeholder { max-width: 720px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+    .role-placeholder .menu-preview { margin: 18px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .menu-preview li { padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfe; }
+
+    .mobile-nav { display: none; }
+    dialog { color: var(--ink); }
+    dialog::backdrop { background: rgba(17, 32, 54, .48); }
+    .detail-dialog { width: min(940px, calc(100vw - 48px)); max-height: calc(100vh - 48px); padding: 0; border: 0; border-radius: 15px; background: var(--paper); overflow: hidden; }
+    .detail-shell { max-height: calc(100vh - 48px); display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; }
+    .detail-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; }
+    .detail-head h2 { margin: 1px 0 2px; font-size: 21px; }
+    .detail-head p { margin: 0; color: var(--muted); }
+    .close-button { flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); cursor: pointer; font-size: 22px; }
+    .active-leg { margin: 14px 20px 0; padding: 13px 14px; border-left: 4px solid var(--blue); border-radius: 7px; background: var(--blue-pale); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .active-leg strong { display: block; }
+    .active-leg span { color: var(--muted); font-size: 12px; }
+    .tabs { padding: 10px 20px 0; border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; }
+    .tab { min-height: 44px; padding: 9px 12px; border: 0; border-bottom: 3px solid transparent; background: transparent; cursor: pointer; font-weight: 700; color: var(--muted); white-space: nowrap; }
+    .tab[aria-selected="true"] { color: var(--blue-strong); border-bottom-color: var(--blue); }
+    .tab-content { min-height: 0; overflow-y: auto; padding: 20px; }
+    .summary-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; }
+    .fact-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .fact { padding: 13px; border: 1px solid var(--line); border-radius: 9px; }
+    .fact span { display: block; color: var(--muted); font-size: 12px; }
+    .fact strong { display: block; margin-top: 2px; }
+    .note { padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfe; }
+    .note p:last-child { margin-bottom: 0; }
+    .timeline { margin: 0; padding: 0; list-style: none; }
+    .timeline li { position: relative; padding: 0 0 20px 26px; }
+    .timeline li::before { content: ""; position: absolute; left: 4px; top: 6px; width: 9px; height: 9px; border: 2px solid var(--blue); border-radius: 50%; background: white; }
+    .timeline li::after { content: ""; position: absolute; left: 9px; top: 17px; bottom: 0; width: 1px; background: var(--line-strong); }
+    .timeline li:last-child::after { display: none; }
+    .timeline p { margin: 4px 0 0; color: var(--muted); }
+    .timeline time { color: var(--muted); font-size: 12px; }
+    .detail-foot { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+
+    .more-dialog { width: min(420px, calc(100vw - 24px)); padding: 0; border: 0; border-radius: 15px; background: var(--paper); }
+    .more-dialog header { padding: 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .more-dialog h2 { margin: 0; }
+    .more-list { padding: 10px; display: grid; gap: 4px; }
+    .more-list button { border: 0; border-radius: 9px; background: transparent; padding: 10px 12px; text-align: left; cursor: pointer; font-weight: 650; }
+    .more-list button:hover { background: var(--blue-pale); }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 80; max-width: 360px; padding: 12px 14px; border: 1px solid #9bbce9; border-radius: 10px; background: var(--paper); color: var(--ink); box-shadow: 0 12px 30px rgba(20,45,80,.14); }
+
+    @media (max-width: 860px) {
+      .app { display: block; }
+      .sidebar { display: none; }
+      .topbar { padding: 8px 16px; min-height: 64px; }
+      .topbar-title span { display: none; }
+      main { padding: 22px 18px 96px; }
+      .mobile-nav { position: fixed; inset: auto 0 0; z-index: 30; min-height: 72px; padding: 7px max(8px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); border-top: 1px solid var(--line); background: rgba(255,255,255,.98); display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); }
+      .mobile-nav button { min-width: 0; min-height: 54px; padding: 5px 3px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; }
+      .mobile-nav button.active { color: var(--blue-strong); background: var(--blue-pale); }
+      .mobile-nav svg { display: block; width: 19px; height: 19px; margin: 0 auto 2px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .day-strip { grid-template-columns: 1fr; }
+      .day-column + .day-column { border-left: 0; border-top: 1px solid var(--line); }
+      .day-column.active { box-shadow: inset 3px 0 0 var(--blue); }
+      .home-lower { grid-template-columns: 1fr; }
+      .record { grid-template-columns: 1fr auto; }
+      .record-cell { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .role-placeholder .menu-preview { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      body { font-size: 16px; }
+      .topbar { gap: 8px; }
+      .topbar-title strong { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .review-tag, .role-field label { display: none; }
+      .role-field select { width: 132px; font-size: 13px; }
+      main { padding: 18px 16px 92px; }
+      .page-head { align-items: flex-start; flex-direction: column; }
+      .page-head .button-row, .page-head .primary { width: 100%; }
+      .day-column { padding: 13px; }
+      .task { min-height: 112px; }
+      .metric-row { gap: 5px; }
+      .metric strong { font-size: 19px; }
+      .quick-grid { grid-template-columns: 1fr; }
+      .record { grid-template-columns: minmax(0,1fr); gap: 9px; padding: 13px; }
+      .record .secondary { width: 100%; }
+      .record-cell { grid-column: auto; }
+      .chips { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: 3px; }
+      .chip { flex: 0 0 auto; }
+      .detail-dialog { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
+      .detail-shell { height: 100dvh; max-height: none; }
+      .detail-head { padding: 12px; }
+      .active-leg { margin: 10px 12px 0; align-items: flex-start; flex-direction: column; }
+      .tabs { padding: 8px 12px 0; }
+      .tab-content { padding: 15px 12px; }
+      .summary-grid, .fact-grid { grid-template-columns: 1fr; }
+      .detail-foot { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+      .detail-foot .secondary, .detail-foot .primary { flex: 1; }
+      .more-dialog { width: 100vw; max-width: none; margin: auto 0 0; border-radius: 15px 15px 0 0; }
+      .toast { left: 12px; right: 12px; bottom: 84px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <div class="brand">
+        <strong>DealDrive Supervisor</strong>
+        <small>Nama kerja</small>
+      </div>
+      <span class="review-tag">Prototipe arah 2</span>
+      <nav class="nav" id="desktopNav"></nav>
+      <div class="sidebar-note">
+        <strong>Today-First Workspace</strong>
+        Antrean tindakan menjadi pintu masuk; struktur data tetap satu langkah dari navigasi.
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-title">
+          <strong id="roleTitle">Ruang kerja Sales</strong>
+          <span>Rina Pratama · Tim Anggrek</span>
+        </div>
+        <div class="review-controls">
+          <span class="review-tag">Khusus review</span>
+          <div class="role-field">
+            <label for="roleSelect">Role</label>
+            <select id="roleSelect" aria-label="Pilih role untuk review">
+              <option value="sales">Sales</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="branch">Branch Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="icon-button" id="notificationButton" type="button" aria-label="Buka notifikasi">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            <span class="dot" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page" id="page-home" data-page="home">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Kamis, 29 Oktober · Data contoh</p>
+              <h1>Mulai dari yang paling dekat</h1>
+              <p class="subtle">Tiga langkah berikutnya sudah diurutkan menurut waktu follow-up.</p>
+            </div>
+            <button class="primary" type="button" data-toast="Form catat aktivitas akan dibuka dari konteks pelanggan.">Catat aktivitas</button>
+          </div>
+
+          <div class="day-strip" aria-label="Antrean tindak lanjut">
+            <section class="day-column active" aria-labelledby="nowTitle">
+              <div class="column-head"><h2 id="nowTitle">Sekarang</h2><span class="count">2</span></div>
+              <button class="task" type="button" data-open-detail="Budi Santoso">
+                <span class="task-top"><span class="task-name">Budi Santoso</span><span class="time">09.30</span></span>
+                <p>Konfirmasi jadwal test drive Model A.</p>
+                <span class="task-meta"><span class="status warn">Terlambat 25 mnt</span><span>Hot Prospect</span></span>
+              </button>
+              <button class="task" type="button" data-open-detail="Sari Wijaya">
+                <span class="task-top"><span class="task-name">Sari Wijaya</span><span class="time">10.30</span></span>
+                <p>Kirim rangkuman simulasi untuk Model B.</p>
+                <span class="task-meta"><span class="status">Berikutnya</span><span>Prospect</span></span>
+              </button>
+            </section>
+            <section class="day-column" aria-labelledby="todayTitle">
+              <div class="column-head"><h2 id="todayTitle">Hari ini</h2><span class="count">2</span></div>
+              <button class="task" type="button" data-open-detail="Andi Permana">
+                <span class="task-top"><span class="task-name">Andi Permana</span><span class="time">14.00</span></span>
+                <p>Tanyakan keputusan warna Model C.</p>
+                <span class="task-meta"><span class="status ok">Terjadwal</span><span>SPK</span></span>
+              </button>
+              <button class="task" type="button" data-open-detail="Maya Lestari">
+                <span class="task-top"><span class="task-name">Maya Lestari</span><span class="time">16.15</span></span>
+                <p>Follow-up setelah kunjungan showroom.</p>
+                <span class="task-meta"><span class="status ok">Terjadwal</span><span>Lead</span></span>
+              </button>
+            </section>
+            <section class="day-column" aria-labelledby="laterTitle">
+              <div class="column-head"><h2 id="laterTitle">Nanti</h2><span class="count">0</span></div>
+              <div class="empty-slot"><span><strong>Antrean berikutnya kosong</strong><br>Follow-up baru akan muncul di sini.</span></div>
+            </section>
+          </div>
+
+          <div class="home-lower">
+            <section class="panel" aria-labelledby="targetTitle">
+              <div class="panel-head">
+                <div><h2 id="targetTitle">Arah bulan ini</h2><p class="subtle">Oktober · Data contoh</p></div>
+                <span class="status">60% target</span>
+              </div>
+              <div class="progress-line" aria-label="6 dari 10 unit"><span></span></div>
+              <div class="metric-row">
+                <div class="metric"><strong>10</strong><span>Target</span></div>
+                <div class="metric"><strong>6</strong><span>Realisasi</span></div>
+                <div class="metric"><strong>8,1</strong><span>Forecast</span></div>
+              </div>
+            </section>
+            <section class="panel" aria-labelledby="quickTitle">
+              <div class="panel-head"><div><h2 id="quickTitle">Aksi cepat</h2><p class="subtle">Hanya tindakan langsung</p></div></div>
+              <div class="quick-grid">
+                <button class="quick-action" type="button" data-toast="Form pelanggan baru belum diperluas pada checkpoint ini.">Pelanggan baru<span>Catat identitas dan kebutuhan</span></button>
+                <button class="quick-action" type="button" data-nav-target="customers">Cari pelanggan<span>Buka buku pelanggan</span></button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page" id="page-customers" data-page="customers" hidden>
+          <div class="page-head">
+            <div><p class="eyebrow">Buku Pelanggan Saya · Data contoh</p><h1>Siapa yang perlu langkah berikutnya?</h1><p class="subtle">Urutan awal mengikuti kebutuhan follow-up, bukan alfabet.</p></div>
+            <button class="primary" type="button" data-toast="Form pelanggan baru belum diperluas pada checkpoint ini.">Tambah pelanggan</button>
+          </div>
+          <div class="toolbar">
+            <label class="search">
+              <span class="sr-only">Cari nama atau nomor telepon</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="customerSearch" type="search" placeholder="Cari nama atau nomor telepon">
+            </label>
+            <div class="chips" aria-label="Filter tindak lanjut">
+              <button class="chip" type="button" data-filter="all" aria-pressed="true">Semua</button>
+              <button class="chip" type="button" data-filter="late" aria-pressed="false">Terlambat</button>
+              <button class="chip" type="button" data-filter="today" aria-pressed="false">Hari ini</button>
+              <button class="chip" type="button" data-filter="scheduled" aria-pressed="false">Terjadwal</button>
+            </div>
+          </div>
+          <div class="list" id="customerList">
+            <article class="record" data-name="Budi Santoso 0812 555 0101" data-status="late">
+              <div class="record-main"><strong>Budi Santoso</strong><span>0812 555 0101 · Model A</span></div>
+              <div class="record-cell"><span>Langkah berikutnya</span><strong>Test drive · 09.30</strong></div>
+              <div class="record-cell"><span>Kontak terakhir</span><strong>Kemarin · WhatsApp</strong></div>
+              <button class="secondary" type="button" data-open-detail="Budi Santoso">Buka transaksi</button>
+            </article>
+            <article class="record" data-name="Sari Wijaya 0813 555 0102" data-status="today">
+              <div class="record-main"><strong>Sari Wijaya</strong><span>0813 555 0102 · Model B</span></div>
+              <div class="record-cell"><span>Langkah berikutnya</span><strong>Kirim simulasi · 10.30</strong></div>
+              <div class="record-cell"><span>Kontak terakhir</span><strong>2 hari lalu · Telepon</strong></div>
+              <button class="secondary" type="button" data-open-detail="Sari Wijaya">Buka transaksi</button>
+            </article>
+            <article class="record" data-name="Andi Permana 0814 555 0103" data-status="scheduled">
+              <div class="record-main"><strong>Andi Permana</strong><span>0814 555 0103 · Model C</span></div>
+              <div class="record-cell"><span>Langkah berikutnya</span><strong>Konfirmasi warna · 14.00</strong></div>
+              <div class="record-cell"><span>Kontak terakhir</span><strong>Hari ini · Showroom</strong></div>
+              <button class="secondary" type="button" data-open-detail="Andi Permana">Buka transaksi</button>
+            </article>
+            <article class="record" data-name="Maya Lestari 0815 555 0104" data-status="today">
+              <div class="record-main"><strong>Maya Lestari</strong><span>0815 555 0104 · Model A</span></div>
+              <div class="record-cell"><span>Langkah berikutnya</span><strong>Follow-up · 16.15</strong></div>
+              <div class="record-cell"><span>Kontak terakhir</span><strong>3 hari lalu · Showroom</strong></div>
+              <button class="secondary" type="button" data-open-detail="Maya Lestari">Buka transaksi</button>
+            </article>
+          </div>
+          <div class="empty-search" id="emptySearch" hidden><strong>Tidak ada pelanggan yang cocok.</strong><br>Ubah pencarian atau filter tindak lanjut.</div>
+        </section>
+
+        <section class="page" id="page-transactions" data-page="transactions" hidden>
+          <div class="page-head">
+            <div><p class="eyebrow">Transaksi Saya · Data contoh</p><h1>Peluang aktif</h1><p class="subtle">Tahap tetap terlihat, tetapi tindakan berikutnya menjadi urutan utama.</p></div>
+          </div>
+          <div class="list">
+            <article class="record"><div class="record-main"><strong>Budi Santoso</strong><span>TRX-1024 · Model A</span></div><div class="record-cell"><span>Tahap</span><strong>Hot Prospect</strong></div><div class="record-cell"><span>Berikutnya</span><strong>Test drive · terlambat</strong></div><button class="secondary" type="button" data-open-detail="Budi Santoso">Lihat detail</button></article>
+            <article class="record"><div class="record-main"><strong>Sari Wijaya</strong><span>TRX-1021 · Model B</span></div><div class="record-cell"><span>Tahap</span><strong>Prospect</strong></div><div class="record-cell"><span>Berikutnya</span><strong>Kirim simulasi · 10.30</strong></div><button class="secondary" type="button" data-open-detail="Sari Wijaya">Lihat detail</button></article>
+            <article class="record"><div class="record-main"><strong>Andi Permana</strong><span>TRX-1018 · Model C</span></div><div class="record-cell"><span>Tahap</span><strong>SPK</strong></div><div class="record-cell"><span>Berikutnya</span><strong>Konfirmasi warna · 14.00</strong></div><button class="secondary" type="button" data-open-detail="Andi Permana">Lihat detail</button></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-role" data-page="role" hidden>
+          <div class="role-placeholder">
+            <p class="eyebrow">Preview struktur role</p>
+            <h1 id="placeholderTitle">Beranda role</h1>
+            <p class="subtle">Checkpoint ini sengaja memakai konten Sales yang sama untuk membandingkan arah struktur. Layar role ini akan diperluas setelah satu arah dipilih.</p>
+            <ul class="menu-preview" id="roleMenuPreview"></ul>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Navigasi mobile"></nav>
+
+  <dialog class="detail-dialog" id="detailDialog" aria-labelledby="detailTitle">
+    <div class="detail-shell">
+      <header class="detail-head">
+        <div><span class="sample-tag">Data contoh</span><h2 id="detailTitle">Budi Santoso · Model A</h2><p id="detailSubtitle">TRX-1024 · Hot Prospect</p></div>
+        <button class="close-button" type="button" data-close-detail aria-label="Tutup detail">×</button>
+      </header>
+      <div>
+        <div class="active-leg"><div><strong>Langkah aktif: konfirmasi test drive</strong><span>Hubungi pelanggan, lalu catat hasil tanpa harus mengubah tahap.</span></div><span class="status warn">Terlambat</span></div>
+        <div class="tabs" role="tablist" aria-label="Bagian detail transaksi">
+          <button class="tab" type="button" role="tab" id="tab-summary" aria-controls="panel-summary" aria-selected="true" data-tab="summary">Ringkasan</button>
+          <button class="tab" type="button" role="tab" id="tab-timeline" aria-controls="panel-timeline" aria-selected="false" data-tab="timeline">Timeline</button>
+          <button class="tab" type="button" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false" data-tab="history">Riwayat tahap</button>
+        </div>
+      </div>
+      <div class="tab-content">
+        <section id="panel-summary" role="tabpanel" aria-labelledby="tab-summary">
+          <div class="summary-grid">
+            <div><h3>Kondisi peluang</h3><div class="fact-grid"><div class="fact"><span>Pelanggan</span><strong id="detailCustomer">Budi Santoso</strong></div><div class="fact"><span>Kendaraan</span><strong>Model A</strong></div><div class="fact"><span>Sumber</span><strong>Walk-in showroom</strong></div><div class="fact"><span>Estimasi pembelian</span><strong>November 2026</strong></div></div></div>
+            <div><h3>Catatan terakhir</h3><div class="note"><p>Pelanggan ingin mencoba unit bersama pasangan sebelum memilih warna.</p><p class="subtle">Dicatat Rina · kemarin, 16.20</p></div></div>
+          </div>
+        </section>
+        <section id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline" hidden>
+          <ol class="timeline"><li><strong>Rina menjadwalkan test drive</strong><p>Menunggu konfirmasi jam dari pelanggan.</p><time>Kemarin · 16.20</time></li><li><strong>Supervisor memberi arahan</strong><p>Pastikan kebutuhan keluarga dibahas saat test drive.</p><time>27 Oktober · 09.10</time></li><li><strong>Tahap berubah ke Hot Prospect</strong><p>Prospect → Hot Prospect oleh Rina.</p><time>26 Oktober · 14.05</time></li></ol>
+        </section>
+        <section id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <ol class="timeline"><li><strong>Hot Prospect</strong><p>Dari Prospect oleh Rina Pratama.</p><time>26 Oktober · 14.05</time></li><li><strong>Prospect</strong><p>Dari Lead setelah kunjungan showroom.</p><time>23 Oktober · 11.30</time></li><li><strong>Lead</strong><p>Transaksi dibuat dari walk-in showroom.</p><time>21 Oktober · 15.10</time></li></ol>
+        </section>
+      </div>
+      <footer class="detail-foot"><button class="secondary" type="button" data-close-detail>Kembali</button><button class="primary" type="button" data-toast="Form catat hasil belum diperluas pada checkpoint ini.">Catat hasil</button></footer>
+    </div>
+  </dialog>
+
+  <dialog class="more-dialog" id="moreDialog" aria-labelledby="moreTitle">
+    <header><h2 id="moreTitle">Lainnya</h2><button class="close-button" type="button" id="closeMore" aria-label="Tutup menu lainnya">×</button></header>
+    <div class="more-list" id="moreList"></div>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    const roleMenus = {
+      sales: ['Beranda', 'Buku Pelanggan Saya', 'Transaksi', 'Notifikasi', 'Profil'],
+      supervisor: ['Beranda', 'Pelanggan Tim', 'Transaksi', 'Target', 'Analisis', 'Import Data', 'Notifikasi', 'Profil'],
+      branch: ['Beranda', 'Kinerja Tim', 'Analisis', 'Notifikasi', 'Profil'],
+      admin: ['Beranda', 'Pelanggan', 'Transaksi', 'Pengguna & Undangan', 'Tim & Penempatan', 'Analisis', 'Import Data', 'Pengaturan Dealer', 'Notifikasi', 'Profil']
+    };
+    const roleLabels = { sales: 'Sales', supervisor: 'Supervisor', branch: 'Branch Manager', admin: 'Admin' };
+    const pageFor = label => label === 'Beranda' ? 'home' : (label.includes('Pelanggan') ? 'customers' : (label === 'Transaksi' ? 'transactions' : 'role'));
+    const iconFor = key => ({ home: '<path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3Z"/>', customers: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 11l2 2 4-4"/>', transactions: '<path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/>', more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>' })[key];
+
+    const desktopNav = document.querySelector('#desktopNav');
+    const mobileNav = document.querySelector('#mobileNav');
+    const roleSelect = document.querySelector('#roleSelect');
+    const detailDialog = document.querySelector('#detailDialog');
+    const moreDialog = document.querySelector('#moreDialog');
+    const toast = document.querySelector('#toast');
+    let currentPage = 'home';
+    let currentRole = 'sales';
+    let savedScroll = 0;
+    let toastTimer;
+
+    function renderNavigation() {
+      const menu = roleMenus[currentRole];
+      desktopNav.innerHTML = menu.map((label, index) => `<button class="nav-button ${index === 0 ? 'active' : ''}" type="button" data-menu-label="${label}" data-nav-target="${pageFor(label)}">${label}</button>`).join('');
+      const primary = currentRole === 'branch' ? menu.slice(0, 3) : currentRole === 'admin' ? ['Beranda', 'Pengguna & Undangan', 'Tim & Penempatan'] : menu.slice(0, 3);
+      mobileNav.innerHTML = primary.map(label => {
+        const key = pageFor(label);
+        return `<button type="button" data-menu-label="${label}" data-nav-target="${key}"><svg viewBox="0 0 24 24" aria-hidden="true">${iconFor(key === 'role' ? 'transactions' : key)}</svg>${label.replace('Buku Pelanggan Saya','Pelanggan').replace('Pengguna & Undangan','Pengguna').replace('Tim & Penempatan','Tim')}</button>`;
+      }).join('') + `<button type="button" data-open-more><svg viewBox="0 0 24 24" aria-hidden="true">${iconFor('more')}</svg>Lainnya</button>`;
+      document.querySelector('#moreList').innerHTML = menu.slice(3).map(label => `<button type="button" data-menu-label="${label}" data-nav-target="${pageFor(label)}">${label}</button>`).join('');
+      updateActiveNav();
+    }
+
+    function updateActiveNav(label) {
+      document.querySelectorAll('[data-nav-target]').forEach(button => {
+        const matchesPage = button.dataset.navTarget === currentPage;
+        const matchesLabel = !label || button.dataset.menuLabel === label;
+        button.classList.toggle('active', matchesPage && matchesLabel);
+        if (matchesPage && matchesLabel) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+      });
+    }
+
+    function showPage(page, label) {
+      if (currentRole !== 'sales') page = 'role';
+      currentPage = page;
+      document.querySelectorAll('.page').forEach(section => { section.hidden = section.dataset.page !== page; });
+      if (page === 'role') {
+        document.querySelector('#placeholderTitle').textContent = `${label || 'Beranda'} · ${roleLabels[currentRole]}`;
+        document.querySelector('#roleMenuPreview').innerHTML = roleMenus[currentRole].map(item => `<li>${item}</li>`).join('');
+      }
+      updateActiveNav(label);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function selectRole(role) {
+      currentRole = role;
+      document.querySelector('#roleTitle').textContent = `Ruang kerja ${roleLabels[role]}`;
+      renderNavigation();
+      showPage(role === 'sales' ? 'home' : 'role', 'Beranda');
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.hidden = false;
+      toastTimer = setTimeout(() => { toast.hidden = true; }, 3200);
+    }
+
+    function openDetail(name) {
+      savedScroll = window.scrollY;
+      const model = name === 'Sari Wijaya' ? 'Model B' : name === 'Andi Permana' ? 'Model C' : 'Model A';
+      document.querySelector('#detailTitle').textContent = `${name} · ${model}`;
+      document.querySelector('#detailCustomer').textContent = name;
+      document.querySelector('#detailSubtitle').textContent = name === 'Andi Permana' ? 'TRX-1018 · SPK' : name === 'Sari Wijaya' ? 'TRX-1021 · Prospect' : 'TRX-1024 · Hot Prospect';
+      detailDialog.showModal();
+      document.querySelector('[data-tab="summary"]').click();
+    }
+
+    function closeDetail() {
+      detailDialog.close();
+      requestAnimationFrame(() => window.scrollTo({ top: savedScroll, behavior: 'auto' }));
+    }
+
+    document.addEventListener('click', event => {
+      const nav = event.target.closest('[data-nav-target]');
+      if (nav) { if (moreDialog.open) moreDialog.close(); showPage(nav.dataset.navTarget, nav.dataset.menuLabel); }
+      const detail = event.target.closest('[data-open-detail]');
+      if (detail) openDetail(detail.dataset.openDetail);
+      if (event.target.closest('[data-close-detail]')) closeDetail();
+      if (event.target.closest('[data-open-more]')) moreDialog.showModal();
+      const action = event.target.closest('[data-toast]');
+      if (action) showToast(action.dataset.toast);
+      const chip = event.target.closest('[data-filter]');
+      if (chip) {
+        document.querySelectorAll('[data-filter]').forEach(item => item.setAttribute('aria-pressed', String(item === chip)));
+        filterCustomers();
+      }
+    });
+
+    roleSelect.addEventListener('change', () => selectRole(roleSelect.value));
+    document.querySelector('#notificationButton').addEventListener('click', () => {
+      if (currentRole === 'sales') showPage('role', 'Notifikasi'); else showPage('role', 'Notifikasi');
+    });
+    document.querySelector('#closeMore').addEventListener('click', () => moreDialog.close());
+    document.querySelector('#customerSearch').addEventListener('input', filterCustomers);
+    detailDialog.addEventListener('click', event => { if (event.target === detailDialog) closeDetail(); });
+    moreDialog.addEventListener('click', event => { if (event.target === moreDialog) moreDialog.close(); });
+
+    function filterCustomers() {
+      const query = document.querySelector('#customerSearch').value.trim().toLowerCase();
+      const activeFilter = document.querySelector('[data-filter][aria-pressed="true"]').dataset.filter;
+      let visible = 0;
+      document.querySelectorAll('#customerList .record').forEach(record => {
+        const matchesQuery = record.dataset.name.toLowerCase().includes(query);
+        const matchesStatus = activeFilter === 'all' || record.dataset.status === activeFilter;
+        record.hidden = !(matchesQuery && matchesStatus);
+        if (!record.hidden) visible += 1;
+      });
+      document.querySelector('#emptySearch').hidden = visible !== 0;
+    }
+
+    document.querySelectorAll('[data-tab]').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('[data-tab]').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+      ['summary','timeline','history'].forEach(name => { document.querySelector(`#panel-${name}`).hidden = name !== tab.dataset.tab; });
+    }));
+    document.querySelector('[data-nav-target="customers"]')?.addEventListener('click', () => {});
+    renderNavigation();
+  </script>
+</body>
+</html>

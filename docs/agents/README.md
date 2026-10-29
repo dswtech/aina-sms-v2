@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [`../../PRODUCT.md`](../../PRODUCT.md) | Konteks produk | Merangkum fakta produk untuk workflow desain tanpa menggantikan requirement kanonik di PRD. |
+| [`../../DESIGN.md`](../../DESIGN.md) | Sistem desain | Mencatat keputusan visual terpilih dan aturan implementasi UI. |
 | [`PRD.md`](PRD.md) | PRD | Menetapkan apa yang dibangun, untuk siapa, batasan, requirement, dan ukuran keberhasilan. |
 | [`knowledge.md`](knowledge.md) | Glosarium & katalog | Menjelaskan istilah domain, tahap pipeline, dan peta kewenangan tanpa menyalin requirement. |
 | [`memory.md`](memory.md) | Runbook/handoff | Mencatat keadaan terverifikasi, keputusan aktif, keputusan terbuka, dan langkah berikutnya. |

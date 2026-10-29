@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arah 1 — Operational Sidebar · DealDrive Supervisor</title>
+  <style>
+    :root{--ink:#0f172a;--muted:#526175;--line:#dbe4f0;--soft:#eef4fb;--canvas:#e9f0f8;--paper:#fff;--blue:#1769e0;--blue-dark:#0f4faa;--blue-soft:#e8f1ff;--red:#b42318;--amber:#a15c00;--green:#08783e;--radius:12px;--sidebar:228px}
+    *{box-sizing:border-box}
+    html{color-scheme:light;overflow-x:hidden}
+    body{margin:0;min-width:320px;overflow-x:hidden;background:var(--canvas);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.5}
+    button,input,select{font:inherit;color:inherit}
+    button,a,select,input{outline:none}
+    :focus-visible{outline:3px solid #79aef7;outline-offset:2px}
+    button{cursor:pointer}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .shell{min-height:100dvh;padding:8px;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);gap:8px}
+    .sidebar{position:sticky;top:8px;height:calc(100dvh - 16px);display:flex;flex-direction:column;padding:18px 12px;background:#dfeaf6;border:1px solid #c9d8e9;border-radius:14px}
+    .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;font-weight:760;letter-spacing:-.01em}
+    .brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--blue);color:white;font-weight:850}
+    .eyebrow{margin:0 0 3px;color:var(--muted);font-size:12px;font-weight:750}
+    .nav{display:grid;gap:3px}
+    .nav button{min-height:44px;display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:transparent;text-align:left;font-weight:620;color:#334155}
+    .nav button:hover{background:rgba(255,255,255,.62)}
+    .nav button[aria-current="page"]{background:white;color:var(--blue-dark);border-left:3px solid var(--blue)}
+    .icon{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .side-foot{margin-top:auto;padding:14px 8px 4px;border-top:1px solid #c6d6e7}
+    .side-foot strong,.side-foot span{display:block}
+    .side-foot span{color:var(--muted);font-size:12px}
+    .paper{min-width:0;min-height:calc(100dvh - 16px);overflow:hidden;background:var(--paper);border:1px solid #d4dfeb;border-radius:14px}
+    .topbar{min-height:66px;display:flex;align-items:center;gap:12px;padding:10px 24px;border-bottom:1px solid var(--line)}
+    .topbar .spacer{flex:1}
+    .review-label{display:block;color:var(--muted);font-size:11px;font-weight:700}
+    .role-select{min-width:170px;height:44px;padding:0 34px 0 12px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+    .icon-btn{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;background:white}
+    .avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#dbeafe;color:var(--blue-dark);font-weight:780}
+    main{max-width:1240px;margin:0 auto;padding:24px 28px 52px}
+    .direction-note{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,.7fr);gap:18px;margin-bottom:28px;padding:16px 18px;border:1px solid #bfd3ec;border-left:4px solid var(--blue);border-radius:var(--radius);background:#f7faff}
+    .direction-note h2{margin:0 0 4px;font-size:16px}
+    .direction-note p{margin:0;color:#475569}
+    .direction-form{align-self:center;color:var(--muted);font-size:12px}
+    .direction-form strong{color:var(--ink)}
+    .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px}
+    h1{margin:0;font-size:clamp(24px,3vw,32px);line-height:1.15;letter-spacing:-.035em}
+    .subtitle{max-width:680px;margin:7px 0 0;color:var(--muted);font-size:15px}
+    .primary,.secondary{min-height:44px;padding:0 16px;border-radius:9px;font-weight:700}
+    .primary{border:1px solid var(--blue);background:var(--blue);color:#fff}
+    .primary:hover{background:var(--blue-dark)}
+    .secondary{border:1px solid #cbd5e1;background:#fff;color:#334155}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:22px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+    .stat{min-width:0;padding:16px 18px;background:#fff;border-right:1px solid var(--line)}
+    .stat:last-child{border-right:0}
+    .stat span{display:block;color:var(--muted);font-size:12px;font-weight:650}
+    .stat strong{display:block;margin-top:5px;font-size:24px;line-height:1.2;letter-spacing:-.025em}
+    .stat small{display:block;margin-top:4px;color:var(--muted)}
+    .workspace-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,.75fr);gap:18px}
+    .panel{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden}
+    .panel-head{min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+    .panel-head h2{margin:0;font-size:16px}
+    .text-button{min-height:44px;padding:0 10px;border:0;background:transparent;color:var(--blue-dark);font-weight:700}
+    .queue{margin:0;padding:0;list-style:none}
+    .queue-item{display:grid;grid-template-columns:74px minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;min-height:76px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:#fff;text-align:left}
+    .queue-item:last-child{border-bottom:0}
+    .queue-item:hover{background:#f8fafc}
+    .time{color:var(--blue-dark);font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+    .person{min-width:0}
+    .person strong,.person span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .person span{color:var(--muted);font-size:13px}
+    .tag{display:inline-flex;align-items:center;min-height:26px;padding:3px 9px;border-radius:999px;background:var(--blue-soft);color:var(--blue-dark);font-size:12px;font-weight:720;white-space:nowrap}
+    .tag.warn{background:#fff3df;color:var(--amber)}
+    .tag.danger{background:#ffebe8;color:var(--red)}
+    .attention{padding:6px 16px 14px}
+    .attention-item{padding:13px 0;border-bottom:1px solid var(--line)}
+    .attention-item:last-child{border-bottom:0}
+    .attention-item strong,.attention-item span{display:block}
+    .attention-item span{margin-top:4px;color:var(--muted);font-size:13px}
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .search{position:relative;flex:1;min-width:170px}
+    .search svg{position:absolute;left:13px;top:13px;color:var(--muted)}
+    .search input,.filter{width:100%;height:44px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+    .search input{padding:0 12px 0 42px}
+    .filter{width:auto;min-width:180px;padding:0 34px 0 12px}
+    .table-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th{height:42px;padding:0 14px;background:#f8fafc;color:#526175;font-size:12px;text-align:left;letter-spacing:.025em}
+    td{height:68px;padding:10px 14px;border-top:1px solid var(--line);vertical-align:middle}
+    tbody tr{cursor:pointer}
+    tbody tr:hover{background:#f8fafc}
+    tbody tr:focus{outline:3px solid #79aef7;outline-offset:-3px}
+    .name-cell strong,.name-cell span{display:block}
+    .name-cell span{color:var(--muted);font-size:12px}
+    .muted{color:var(--muted)}
+    .empty{padding:36px;text-align:center;color:var(--muted)}
+    .cards{display:none}
+    .customer-card{width:100%;min-height:114px;padding:15px;border:0;border-bottom:1px solid var(--line);background:white;text-align:left}
+    .customer-card:last-child{border-bottom:0}
+    .card-top,.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .card-bottom{margin-top:15px;color:var(--muted);font-size:13px}
+    .placeholder{max-width:720px;padding:26px;border:1px dashed #a9bbcf;border-radius:var(--radius);background:#f8fafc}
+    .placeholder h2{margin:0 0 8px;font-size:18px}
+    .placeholder p{margin:0;color:var(--muted)}
+    .prototype-note{display:inline-flex;align-items:center;min-height:26px;padding:3px 9px;margin-left:8px;border:1px solid #bfd3ec;border-radius:999px;color:var(--blue-dark);font-size:11px;font-weight:750}
+    dialog{width:min(1040px,calc(100vw - 48px));max-height:calc(100dvh - 48px);padding:0;border:1px solid #bdcad9;border-radius:14px;background:#fff;color:var(--ink);box-shadow:0 20px 60px rgba(15,23,42,.18)}
+    dialog::backdrop{background:rgba(15,23,42,.46)}
+    .dialog-head{display:flex;align-items:center;gap:14px;min-height:70px;padding:12px 20px;border-bottom:1px solid var(--line)}
+    .dialog-head .title{min-width:0;flex:1}
+    .dialog-head h2{margin:0;font-size:20px}
+    .dialog-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+    .detail-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;min-height:520px}
+    .detail-main{min-width:0;padding:0 22px 28px}
+    .tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line)}
+    .tab{min-height:50px;padding:0 13px;border:0;border-bottom:3px solid transparent;background:white;color:var(--muted);font-weight:700;white-space:nowrap}
+    .tab[aria-selected="true"]{border-color:var(--blue);color:var(--blue-dark)}
+    .tab-panel{padding-top:22px}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .detail-field{padding:14px;border:1px solid var(--line);border-radius:9px}
+    .detail-field span,.detail-field strong{display:block}
+    .detail-field span{color:var(--muted);font-size:12px}
+    .detail-field strong{margin-top:4px}
+    .next-action{margin-top:14px;padding:16px;border-left:4px solid var(--blue);background:var(--blue-soft)}
+    .next-action span,.next-action strong{display:block}
+    .next-action span{color:var(--blue-dark);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+    .timeline{margin:0;padding:0;list-style:none}
+    .timeline li{position:relative;margin-left:8px;padding:0 0 22px 27px;border-left:2px solid #cbd5e1}
+    .timeline li::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border:2px solid white;border-radius:50%;background:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+    .timeline li:last-child{border-left-color:transparent}
+    .timeline strong,.timeline span{display:block}
+    .timeline span{color:var(--muted);font-size:13px}
+    .detail-aside{padding:20px;background:#f8fafc;border-left:1px solid var(--line)}
+    .detail-aside h3{margin:0 0 14px;font-size:14px}
+    .contact-line{margin-bottom:16px}
+    .contact-line span,.contact-line strong{display:block}
+    .contact-line span{color:var(--muted);font-size:12px}
+    .mobile-nav,.more-sheet{display:none}
+    .toast{position:fixed;right:22px;bottom:22px;z-index:20;max-width:340px;padding:12px 16px;border-radius:9px;background:#0f172a;color:white;opacity:0;pointer-events:none;transform:translateY(8px);transition:.18s ease}
+    .toast.show{opacity:1;transform:none}
+    @media(max-width:900px){
+      .shell{display:block;padding:0}.sidebar{display:none}.paper{min-height:100dvh;border:0;border-radius:0}.topbar{padding:8px 16px}.topbar .brand-mobile{display:flex!important;align-items:center;gap:8px;font-weight:760}.role-select{min-width:132px;max-width:146px}.avatar{display:none}main{padding:20px 18px 96px}.direction-note{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}.workspace-grid{grid-template-columns:1fr}.detail-layout{grid-template-columns:1fr}.detail-aside{border-left:0;border-top:1px solid var(--line)}
+      .mobile-nav{position:fixed;left:0;right:0;bottom:0;z-index:12;display:grid;grid-template-columns:repeat(4,1fr);min-height:72px;padding-bottom:env(safe-area-inset-bottom);border-top:1px solid #cbd5e1;background:white}.mobile-nav button{min-height:64px;display:grid;place-items:center;align-content:center;gap:3px;padding:6px;border:0;background:white;color:var(--muted);font-size:11px;font-weight:700}.mobile-nav button[aria-current="page"]{color:var(--blue-dark)}.mobile-nav .icon{width:20px;height:20px}
+      .more-sheet{position:fixed;inset:0;z-index:30;background:rgba(15,23,42,.42);align-items:flex-end}.more-sheet.open{display:flex}.more-card{width:100%;max-height:82dvh;overflow:auto;padding:12px 18px calc(22px + env(safe-area-inset-bottom));border-radius:16px 16px 0 0;background:white}.sheet-handle{width:44px;height:4px;margin:0 auto 14px;border-radius:4px;background:#cbd5e1}.more-card h2{margin:0 0 12px}.more-list{display:grid;gap:5px}.more-list button{min-height:48px;padding:0 12px;border:0;border-radius:9px;background:#f8fafc;text-align:left;font-weight:650}
+    }
+    @media(max-width:640px){
+      .topbar{gap:7px}.topbar .brand-mobile span:last-child{display:none}.role-select{max-width:126px;min-width:0}.page-head{align-items:flex-start;flex-direction:column}.page-head .primary{width:100%}.direction-note{margin-bottom:22px}.stats{grid-template-columns:1fr 1fr}.stat{padding:13px}.stat strong{font-size:21px}.toolbar{align-items:stretch;flex-direction:column}.filter{width:100%}.table-wrap table{display:none}.cards{display:block}.table-wrap{overflow:hidden}.queue-item{grid-template-columns:60px minmax(0,1fr)}.queue-item .tag{grid-column:2;justify-self:start}.panel-head{padding-inline:13px}dialog{width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0}.dialog-head{position:sticky;top:0;z-index:2;background:white;padding:10px 14px}.detail-main{padding:0 16px 24px}.detail-grid{grid-template-columns:1fr}.detail-aside{padding:18px 16px}.toast{left:14px;right:14px;bottom:86px;max-width:none}
+    }
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <div class="brand"><span class="brand-mark">DS</span><span>DealDrive<br>Supervisor</span></div>
+      <nav class="nav" id="desktopNav"></nav>
+      <div class="side-foot"><strong>Rina Pratama</strong><span id="sideRole">Sales · Tim Anggrek</span><span>Data contoh</span></div>
+    </aside>
+    <section class="paper">
+      <header class="topbar">
+        <div class="brand-mobile" style="display:none"><span class="brand-mark">DS</span><span>DealDrive</span></div>
+        <div><span class="review-label">Khusus review · bukan UI produksi</span><label class="sr-only" for="roleSelect">Pilih role</label><select class="role-select" id="roleSelect"><option>Sales</option><option>Supervisor</option><option>Branch Manager</option><option>Admin</option></select></div>
+        <span class="spacer"></span>
+        <button class="icon-btn" id="notificationButton" aria-label="Buka notifikasi"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
+        <span class="avatar" aria-hidden="true">RP</span>
+      </header>
+      <main id="mainContent" tabindex="-1"></main>
+    </section>
+  </div>
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Navigasi mobile"></nav>
+  <div class="more-sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreTitle">
+    <section class="more-card"><div class="sheet-handle"></div><div class="page-head"><h2 id="moreTitle">Lainnya</h2><button class="icon-btn" id="closeMore" aria-label="Tutup menu"><svg class="icon" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="more-list" id="moreList"></div></section>
+  </div>
+
+  <dialog id="transactionDialog" aria-labelledby="transactionTitle">
+    <header class="dialog-head"><button class="icon-btn" id="closeDialog" aria-label="Kembali ke daftar"><svg class="icon" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button><div class="title"><h2 id="transactionTitle">Budi Santoso · Model A</h2><p>Transaksi TX-0148 · Data contoh</p></div><span class="tag">Hot Prospect</span></header>
+    <div class="detail-layout">
+      <section class="detail-main">
+        <div class="tabs" role="tablist" aria-label="Detail transaksi"><button class="tab" role="tab" aria-selected="true" data-tab="summary">Ringkasan</button><button class="tab" role="tab" aria-selected="false" data-tab="timeline">Timeline</button><button class="tab" role="tab" aria-selected="false" data-tab="history">Riwayat tahap</button></div>
+        <div class="tab-panel" id="tabPanel"></div>
+      </section>
+      <aside class="detail-aside"><h3>Pelanggan</h3><div class="contact-line"><span>Nama</span><strong>Budi Santoso</strong></div><div class="contact-line"><span>Telepon</span><strong>0812 •••• 4821</strong></div><div class="contact-line"><span>Sales</span><strong>Rina Pratama</strong></div><div class="contact-line"><span>Sumber</span><strong>Walk-in dealer</strong></div><button class="secondary" id="recordAction">Catat follow-up</button></aside>
+    </div>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const icon = (name) => {
+      const paths={home:'<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/>',customers:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 8a3 3 0 0 1 0 6M18 17a5 5 0 0 1 3 3"/>',transactions:'<path d="M4 7h16M4 12h16M4 17h10"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',analysis:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',import:'<path d="M12 3v12m0-12 4 4m-4-4L8 7M4 16v4h16v-4"/>',users:'<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M2 20a6 6 0 0 1 12 0M14 16a5 5 0 0 1 7 4"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-5L9 6a7 7 0 0 0-1.7 1L5 6 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.3-1a7 7 0 0 0 1.7 1l.5 3h5l.5-3a7 7 0 0 0 1.7-1l2.3 1 2-3.5-2.1-1.5a7 7 0 0 0 .1-1Z"/>',more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'};
+      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name]||paths.transactions}</svg>`;
+    };
+    const menus={
+      Sales:[['Beranda','home','home'],['Buku Pelanggan Saya','customers','customers'],['Transaksi','transactions','transactions'],['Notifikasi','notifications','bell'],['Profil','profile','profile']],
+      Supervisor:[['Beranda','home','home'],['Pelanggan Tim','customers','customers'],['Transaksi','transactions','transactions'],['Target','targets','target'],['Analisis','analysis','analysis'],['Import Data','imports','import'],['Notifikasi','notifications','bell'],['Profil','profile','profile']],
+      'Branch Manager':[['Beranda','home','home'],['Kinerja Tim','performance','target'],['Analisis','analysis','analysis'],['Notifikasi','notifications','bell'],['Profil','profile','profile']],
+      Admin:[['Beranda','home','home'],['Pelanggan','customers','customers'],['Transaksi','transactions','transactions'],['Pengguna & Undangan','users','users'],['Tim & Penempatan','teams','users'],['Analisis','analysis','analysis'],['Import Data','imports','import'],['Pengaturan Dealer','settings','settings'],['Notifikasi','notifications','bell'],['Profil','profile','profile']]
+    };
+    const customers=[
+      {name:'Budi Santoso',model:'Model A',stage:'Hot Prospect',next:'Hari ini · 10.30',last:'Kemarin · WhatsApp',tone:'warn'},
+      {name:'Sari Wijaya',model:'Model B',stage:'Prospect',next:'Hari ini · 14.00',last:'2 hari lalu · Telepon',tone:''},
+      {name:'Andi Permana',model:'Model C',stage:'Lead',next:'Terlambat 1 hari',last:'4 hari lalu · Kunjungan',tone:'danger'},
+      {name:'Maya Lestari',model:'Model A',stage:'SPK',next:'Besok · 09.00',last:'Hari ini · WhatsApp',tone:''}
+    ];
+    let state={role:'Sales',page:'home',query:'',filter:'all'};
+    const main=document.querySelector('#mainContent'),desktopNav=document.querySelector('#desktopNav'),mobileNav=document.querySelector('#mobileNav');
+    const note=`<section class="direction-note" aria-label="Kartu arah"><div><p class="eyebrow">Arah 1 · Operational Sidebar</p><h2>Navigasi eksplisit, kapasitas operasional tinggi</h2><p>Role dan entitas selalu terlihat; lembar kerja utama berubah tanpa kehilangan orientasi.</p></div><div class="direction-form"><strong>Form:</strong> ruang kerja operasional · 10cm/1m · tenang dan sigap · 3–5 item utama · motif langkah berikutnya</div></section>`;
+    function navButton(item){const [label,page,ic]=item;return `<button data-page="${page}" ${state.page===page?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`}
+    function renderNav(){
+      const list=menus[state.role];desktopNav.innerHTML=list.map(navButton).join('');
+      const primary=state.role==='Branch Manager'?list.slice(0,3):state.role==='Admin'?[list[0],list[3],list[4]]:list.slice(0,3);
+      mobileNav.innerHTML=primary.map(navButton).join('')+`<button data-more="true">${icon('more')}<span>Lainnya</span></button>`;
+      document.querySelector('#sideRole').textContent=`${state.role}${state.role==='Sales'?' · Tim Anggrek':''}`;
+      bindNavigation();
+    }
+    function bindNavigation(){
+      document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>go(btn.dataset.page)));
+      document.querySelector('[data-more]')?.addEventListener('click',openMore);
+    }
+    function go(page){state.page=page;closeMore();renderNav();renderPage();main.focus({preventScroll:true});}
+    function pageHead(title,sub,action=''){return `<header class="page-head"><div><p class="eyebrow">${state.role} · Data contoh</p><h1>${title}</h1><p class="subtitle">${sub}</p></div>${action}</header>`}
+    function home(){
+      if(state.role!=='Sales') return placeholder('Beranda '+state.role,'Checkpoint ini membandingkan alur Sales dengan konten yang sama. Menu role sudah diperiksa; dashboard lengkap akan dibuat setelah arah dipilih.');
+      return note+pageHead('Selamat pagi, Rina','Empat pelanggan membutuhkan langkah berikutnya. Mulai dari tindak lanjut yang paling mendesak.','<button class="primary" id="addLead">Tambah lead</button>')+`<section class="stats" aria-label="Ringkasan kinerja"><div class="stat"><span>Target Oktober</span><strong>8 unit</strong><small>Data contoh</small></div><div class="stat"><span>Realisasi</span><strong>5 unit</strong><small>63% target</small></div><div class="stat"><span>Pipeline aktif</span><strong>12</strong><small>3 perlu perhatian</small></div><div class="stat"><span>Follow-up hari ini</span><strong>4</strong><small>1 terlambat</small></div></section><div class="workspace-grid"><section class="panel"><header class="panel-head"><h2>Tindak lanjut berikutnya</h2><button class="text-button" data-page="customers">Lihat semua</button></header><ul class="queue">${customers.slice(0,3).map((c,i)=>`<li><button class="queue-item" data-open-detail><span class="time">${['10.30','14.00','Terlambat'][i]}</span><span class="person"><strong>${c.name}</strong><span>${c.model} · ${c.last}</span></span><span class="tag ${c.tone}">${c.stage}</span></button></li>`).join('')}</ul></section><aside class="panel"><header class="panel-head"><h2>Perlu perhatian</h2></header><div class="attention"><div class="attention-item"><strong>Andi belum dihubungi 4 hari</strong><span>Transaksi Lead · follow-up terlambat</span></div><div class="attention-item"><strong>1 arahan belum dibaca</strong><span>Dari Supervisor · transaksi Budi</span></div><div class="attention-item"><strong>Gap target 3 unit</strong><span>8 hari tersisa pada periode ini</span></div></div></aside></div>`;
+    }
+    function customerRows(data){return data.map(c=>`<tr tabindex="0" data-open-detail><td class="name-cell"><strong>${c.name}</strong><span>${c.model}</span></td><td><span class="tag ${c.tone}">${c.stage}</span></td><td>${c.next}</td><td class="muted">${c.last}</td></tr>`).join('')}
+    function customerCards(data){return data.map(c=>`<button class="customer-card" data-open-detail><span class="card-top"><strong>${c.name}</strong><span class="tag ${c.tone}">${c.stage}</span></span><span class="card-bottom"><span>${c.model}</span><span>${c.next}</span></span></button>`).join('')}
+    function customersPage(){
+      if(state.role==='Branch Manager') return placeholder('Akses tidak tersedia','Branch Manager tidak memiliki menu pelanggan atau data kontak operasional. Analisis tersedia dalam bentuk agregat tersanitasi.');
+      const label=state.role==='Sales'?'Buku Pelanggan Saya':state.role==='Supervisor'?'Pelanggan Tim':'Pelanggan';
+      return note+pageHead(label,'Cari pelanggan dan lanjutkan dari konteks terakhir tanpa kehilangan filter.','<button class="primary" id="addCustomer">Tambah pelanggan</button>')+`<div class="toolbar"><label class="search"><span class="sr-only">Cari pelanggan</span>${icon('search')}<input id="searchInput" type="search" placeholder="Cari nama atau model" value="${state.query}"></label><label><span class="sr-only">Filter tindak lanjut</span><select id="filterSelect" class="filter"><option value="all">Semua follow-up</option><option value="today" ${state.filter==='today'?'selected':''}>Hari ini</option><option value="late" ${state.filter==='late'?'selected':''}>Terlambat</option></select></label></div><section class="table-wrap" aria-live="polite"><table><thead><tr><th>Pelanggan</th><th>Tahap</th><th>Langkah berikutnya</th><th>Kontak terakhir</th></tr></thead><tbody id="customerTable"></tbody></table><div class="cards" id="customerCards"></div><div class="empty" id="emptyState" hidden>Tidak ada pelanggan yang cocok dengan filter.</div></section>`;
+    }
+    function transactionsPage(){
+      if(state.role==='Branch Manager') return placeholder('Akses tidak tersedia','Branch Manager tidak memiliki transaksi operasional. Gunakan Kinerja Tim atau Analisis untuk data agregat tersanitasi.');
+      return note+pageHead('Transaksi','Pipeline aktif dengan tahap dan tindak lanjut yang dapat dipindai.','<button class="primary" id="addTransaction">Transaksi baru</button>')+`<section class="panel"><header class="panel-head"><h2>Pipeline aktif</h2><span class="tag">12 transaksi</span></header><ul class="queue">${customers.map((c,i)=>`<li><button class="queue-item" data-open-detail><span class="time">TX-${148+i}</span><span class="person"><strong>${c.name}</strong><span>${c.model} · ${c.next}</span></span><span class="tag ${c.tone}">${c.stage}</span></button></li>`).join('')}</ul></section>`;
+    }
+    function placeholder(title,copy){return note+pageHead(title,copy)+`<section class="placeholder"><span class="tag">Checkpoint arah</span><h2>${title}</h2><p>${copy} Konten penuh sengaja belum dibuat sebelum satu arah struktur disetujui.</p></section>`}
+    function renderPage(){
+      const output=state.page==='home'?home():state.page==='customers'?customersPage():state.page==='transactions'?transactionsPage():placeholder((menus[state.role].find(x=>x[1]===state.page)||['Halaman berikutnya'])[0],'Tujuan navigasi ini tersedia untuk memeriksa struktur role.');
+      main.innerHTML=output;bindPage();
+    }
+    function bindPage(){
+      document.querySelectorAll('[data-open-detail]').forEach(el=>{el.addEventListener('click',openDetail);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail()}})});
+      document.querySelectorAll('main [data-page]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.page)));
+      document.querySelectorAll('#addLead,#addCustomer,#addTransaction').forEach(el=>el?.addEventListener('click',()=>showToast('Aksi contoh — form akan dirinci setelah arah dipilih.')));
+      if(state.page==='customers'){document.querySelector('#searchInput')?.addEventListener('input',e=>{state.query=e.target.value;updateCustomers()});document.querySelector('#filterSelect')?.addEventListener('change',e=>{state.filter=e.target.value;updateCustomers()});updateCustomers()}
+    }
+    function updateCustomers(){
+      const q=state.query.trim().toLowerCase();const data=customers.filter(c=>(!q||(c.name+' '+c.model).toLowerCase().includes(q))&&(state.filter==='all'||state.filter==='today'&&c.next.startsWith('Hari ini')||state.filter==='late'&&c.next.startsWith('Terlambat')));
+      const table=document.querySelector('#customerTable'),cards=document.querySelector('#customerCards'),empty=document.querySelector('#emptyState');if(!table)return;table.innerHTML=customerRows(data);cards.innerHTML=customerCards(data);empty.hidden=data.length>0;document.querySelectorAll('[data-open-detail]').forEach(el=>{el.addEventListener('click',openDetail);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail()}})})
+    }
+    const tabContent={summary:`<div class="detail-grid"><div class="detail-field"><span>Tahap saat ini</span><strong>Hot Prospect</strong></div><div class="detail-field"><span>Kendaraan</span><strong>Model A</strong></div><div class="detail-field"><span>Estimasi pembelian</span><strong>Oktober 2026</strong></div><div class="detail-field"><span>Aktivitas terakhir</span><strong>WhatsApp · kemarin</strong></div></div><div class="next-action"><span>Langkah berikutnya</span><strong>Konfirmasi jadwal test drive hari ini pukul 10.30</strong></div>`,timeline:`<ol class="timeline"><li><strong>Arahan Supervisor</strong><span>Pastikan preferensi warna sebelum jadwal test drive · hari ini 08.10</span></li><li><strong>Rina mencatat follow-up</strong><span>Pelanggan meminta dihubungi kembali pagi ini · kemarin 16.42</span></li><li><strong>Tahap menjadi Hot Prospect</strong><span>Diubah oleh Rina · 2 hari lalu</span></li></ol>`,history:`<ol class="timeline"><li><strong>Hot Prospect</strong><span>26 Oktober 2026 · Rina Pratama</span></li><li><strong>Prospect</strong><span>23 Oktober 2026 · Rina Pratama</span></li><li><strong>Lead</strong><span>20 Oktober 2026 · dibuat dari walk-in dealer</span></li></ol>`};
+    function openDetail(){const d=document.querySelector('#transactionDialog');setTab('summary');d.showModal()}
+    function setTab(name){document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.tab===name)));document.querySelector('#tabPanel').innerHTML=tabContent[name]}
+    function openMore(){const list=menus[state.role];document.querySelector('#moreList').innerHTML=list.map(x=>`<button data-page="${x[1]}">${x[0]}</button>`).join('')+`<button data-page="profile">Akun Rina Pratama</button>`;document.querySelector('#moreSheet').classList.add('open');document.querySelector('#moreList button')?.focus();document.querySelectorAll('#moreList [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)))}
+    function closeMore(){document.querySelector('#moreSheet').classList.remove('open')}
+    let toastTimer;function showToast(text){const t=document.querySelector('#toast');t.textContent=text;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
+    document.querySelector('#roleSelect').addEventListener('change',e=>{state.role=e.target.value;state.page='home';renderNav();renderPage();showToast(`Mode review ${state.role}. Konten lengkap menunggu pilihan arah.`)});
+    document.querySelector('#notificationButton').addEventListener('click',()=>go('notifications'));
+    document.querySelector('#closeMore').addEventListener('click',closeMore);document.querySelector('#moreSheet').addEventListener('click',e=>{if(e.target.id==='moreSheet')closeMore()});
+    document.querySelector('#closeDialog').addEventListener('click',()=>document.querySelector('#transactionDialog').close());document.querySelector('#transactionDialog').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));document.querySelector('#recordAction').addEventListener('click',()=>showToast('Follow-up contoh siap dicatat.'));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMore()});
+    renderNav();renderPage();
+  </script>
+</body>
+</html>

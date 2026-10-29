@@ -1,0 +1,1470 @@
+{
+ "url": "docs/design/aina-sms-navigation/design-demos/dir-2.html",
+ "at": "2026-10-28T23:05:07.562Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    0.72
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 900,
+     "screens": 1,
+     "words": 156,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 6,
+     "sections": 12,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 32,
+     "vw": 2.2,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 114,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "lines": 1,
+     "size": 32,
+     "font": "Inter"
+    },
+    "headings": [
+     {
+      "text": "Mulai dari yang paling dekat",
+      "words": 5,
+      "chars": 28,
+      "lines": 1,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Inter",
+      "weight": 700,
+      "tracking": -0.03,
+      "leading": 1.18,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.29,
+      "top": 114,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      14,
+      15,
+      16,
+      18,
+      22,
+      32
+     ],
+     "sizeCount": 7,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 12,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.9
+     },
+     "measureChars": 33,
+     "max": {
+      "size": 32,
+      "vw": 2.2,
+      "font": "Inter",
+      "text": "Mulai dari yang paling dekat"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 1,
+     "microLabelShare": 0.033,
+     "microSamples": [
+      "Kamis, 29 Oktober · Data contoh"
+     ],
+     "upperShare": 0.04,
+     "centerShare": 0.08,
+     "smallText": 10
+    },
+    "eyebrows": [
+     {
+      "text": "Kamis, 29 Oktober · Data contoh",
+      "above": "Mulai dari yang paling dekat",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 96
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f7f9fc",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.45,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [],
+     "textColors": [
+      {
+       "color": "#60708a",
+       "share": 0.54
+      },
+      {
+       "color": "#10213a",
+       "share": 0.22
+      },
+      {
+       "color": "#0e47a8",
+       "share": 0.08
+      },
+      {
+       "color": "#43546d",
+       "share": 0.05
+      },
+      {
+       "color": "#3f5573",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#eaf2ff",
+      "hsl": {
+       "h": 217,
+       "s": 1,
+       "l": 0.96
+      },
+      "fg": "#0e47a8"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": 9,
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Beranda",
+      "Catat aktivitas"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "aside.sidebar 224px",
+      "header.topbar 1216px",
+      "section.day-column 374px",
+      "section.day-column 374px"
+     ],
+     "outlinedBoxes": 11,
+     "dashed": 1,
+     "blurred": 0,
+     "roundedBoxes": 11,
+     "boxRadius": 10,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 900,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 900,
+    "margins": {
+     "left": 14,
+     "right": 46
+    },
+    "sections": [
+     {
+      "sel": "div.day-strip",
+      "tag": "div",
+      "top": 199,
+      "height": 330,
+      "words": 57,
+      "media": 0,
+      "middle": 33,
+      "heading": {
+       "text": "Sekarang",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 287,
+      "right": 124,
+      "textLeft": 287,
+      "textRight": 124,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.home-lower",
+      "tag": "div",
+      "top": 545,
+      "height": 194,
+      "words": 30,
+      "media": 0,
+      "middle": 196,
+      "heading": {
+       "text": "10",
+       "size": 22,
+       "tag": "strong"
+      },
+      "left": 288,
+      "right": 64,
+      "textLeft": 288,
+      "textRight": 90,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Mulai dari yang paling dekat",
+      "size": 32,
+      "top": 114,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 270,
+      "n": 2
+     },
+     {
+      "x": 287,
+      "n": 2
+     },
+     {
+      "x": 662,
+      "n": 1
+     },
+     {
+      "x": 1036,
+      "n": 1
+     },
+     {
+      "x": 1052,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.17,
+    "voidBox": {
+     "x": 240,
+     "y": 720,
+     "w": 1200,
+     "h": 180
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f7f9fc",
+    "sidebar": {
+     "w": 224,
+     "tag": "aside",
+     "links": 5,
+     "share": 0.16
+    },
+    "topbar": {
+     "h": 68
+    },
+    "canvas": {
+     "left": 28,
+     "right": 41
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 32,
+     "vw": 2.2,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 114,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 1,
+    "layout": {
+     "panels": 4,
+     "firstScreen": 4,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 13,
+     "radii": [
+      [
+       10,
+       5
+      ],
+      [
+       12,
+       4
+      ],
+      [
+       0,
+       2
+      ],
+      [
+       9,
+       2
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#bfd0e7 on #ffffff (1.57:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 6,
+     "tabularShare": 0,
+     "kpiMax": 22
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.32,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      21,
+      22,
+      32
+     ]
+    },
+    "title": {
+     "text": "Mulai dari yang paling dekat",
+     "size": 32,
+     "top": 114
+    },
+    "colourShare": 0.011
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.83,
+    0.93
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 1531,
+     "screens": 1.5,
+     "words": 127,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 6,
+     "sections": 12,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 104,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "lines": 1,
+     "size": 24,
+     "font": "Inter"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      11,
+      12,
+      14,
+      15,
+      18,
+      22,
+      24
+     ],
+     "sizeCount": 7,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 14,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.8
+     },
+     "measureChars": 59,
+     "max": {
+      "size": 24,
+      "vw": 3.1,
+      "font": "Inter",
+      "text": "Mulai dari yang paling dekat"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 1,
+     "microLabelShare": 0.041,
+     "microSamples": [
+      "Kamis, 29 Oktober · Data contoh"
+     ],
+     "upperShare": 0.05,
+     "centerShare": 0.14,
+     "smallText": 6
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f7f9fc",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.45,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 179,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f4f8ff",
+       "top": 180,
+       "hsl": {
+        "h": 218,
+        "s": 1,
+        "l": 0.98
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#60708a",
+       "share": 0.55
+      },
+      {
+       "color": "#10213a",
+       "share": 0.23
+      },
+      {
+       "color": "#0e47a8",
+       "share": 0.1
+      },
+      {
+       "color": "#4d5e76",
+       "share": 0.04
+      },
+      {
+       "color": "#12633d",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#10213a"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 4,
+     "inHero": 2,
+     "radius": 9,
+     "height": 72,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Catat aktivitas",
+      "Beranda"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "header.topbar 768px",
+      "section.day-column 730px",
+      "section.day-column 730px",
+      "nav#mobileNav.mobile-nav 768px"
+     ],
+     "outlinedBoxes": 8,
+     "dashed": 1,
+     "blurred": 0,
+     "roundedBoxes": 8,
+     "boxRadius": 10,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 0,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 1531,
+    "margins": {
+     "left": 18,
+     "right": 18
+    },
+    "sections": [
+     {
+      "sel": "div.day-strip",
+      "tag": "div",
+      "top": 179,
+      "height": 862,
+      "words": 57,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Sekarang",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 35,
+      "right": 35,
+      "textLeft": 35,
+      "textRight": 49,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.home-lower",
+      "tag": "div",
+      "top": 1057,
+      "height": 378,
+      "words": 30,
+      "media": 0,
+      "middle": 8,
+      "heading": {
+       "text": "10",
+       "size": 22,
+       "tag": "strong"
+      },
+      "left": 36,
+      "right": 36,
+      "textLeft": 36,
+      "textRight": 44,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Mulai dari yang paling dekat",
+      "size": 24,
+      "top": 104,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 35,
+      "n": 5
+     },
+     {
+      "x": 18,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f7f9fc",
+    "sidebar": null,
+    "topbar": {
+     "h": 64
+    },
+    "canvas": {
+     "left": 16,
+     "right": 16
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 104,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 1,
+    "layout": {
+     "panels": 3,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 13,
+     "radii": [
+      [
+       10,
+       5
+      ],
+      [
+       12,
+       3
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       9,
+       2
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#bfd0e7 on #ffffff (1.57:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 6,
+     "tabularShare": 0,
+     "kpiMax": 22
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.32,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      21,
+      22,
+      24
+     ]
+    },
+    "title": {
+     "text": "Mulai dari yang paling dekat",
+     "size": 24,
+     "top": 104
+    },
+    "colourShare": 0.012
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.85,
+    0.87
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 1667,
+     "screens": 2,
+     "words": 124,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 6,
+     "sections": 12,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "lines": 1,
+     "size": 24,
+     "font": "Inter"
+    },
+    "headings": [
+     {
+      "text": "Mulai dari yang paling dekat",
+      "words": 5,
+      "chars": 28,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Inter",
+      "weight": 700,
+      "tracking": -0.03,
+      "leading": 1.18,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 100,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      11,
+      12,
+      14,
+      15,
+      16,
+      18,
+      19,
+      24
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 16,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.8
+     },
+     "measureChars": 45,
+     "max": {
+      "size": 24,
+      "vw": 6.2,
+      "font": "Inter",
+      "text": "Mulai dari yang paling dekat"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 1,
+     "microLabelShare": 0.042,
+     "microSamples": [
+      "Kamis, 29 Oktober · Data contoh"
+     ],
+     "upperShare": 0.05,
+     "centerShare": 0.14,
+     "smallText": 5
+    },
+    "eyebrows": [
+     {
+      "text": "Kamis, 29 Oktober · Data contoh",
+      "above": "Mulai dari yang paling dekat",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 82
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f7f9fc",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.45,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 262,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f4f8ff",
+       "top": 263,
+       "hsl": {
+        "h": 218,
+        "s": 1,
+        "l": 0.98
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#60708a",
+       "share": 0.56
+      },
+      {
+       "color": "#10213a",
+       "share": 0.23
+      },
+      {
+       "color": "#0e47a8",
+       "share": 0.11
+      },
+      {
+       "color": "#4d5e76",
+       "share": 0.04
+      },
+      {
+       "color": "#12633d",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#10213a"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 4,
+     "inHero": 2,
+     "radius": 9,
+     "height": 72,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Catat aktivitas",
+      "Beranda"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "header.topbar 390px",
+      "section.day-column 356px",
+      "section.day-column 356px",
+      "nav#mobileNav.mobile-nav 390px"
+     ],
+     "outlinedBoxes": 8,
+     "dashed": 1,
+     "blurred": 0,
+     "roundedBoxes": 8,
+     "boxRadius": 10,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 0,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 1667,
+    "margins": {
+     "left": 16,
+     "right": 16
+    },
+    "sections": [
+     {
+      "sel": "div.page-head",
+      "tag": "div",
+      "top": 82,
+      "height": 158,
+      "words": 22,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Mulai dari yang paling dekat",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 16,
+      "textLeft": 16,
+      "textRight": 22,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.day-strip",
+      "tag": "div",
+      "top": 262,
+      "height": 834,
+      "words": 57,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Sekarang",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 30,
+      "right": 30,
+      "textLeft": 30,
+      "textRight": 44,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.home-lower",
+      "tag": "div",
+      "top": 1112,
+      "height": 463,
+      "words": 30,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Arah bulan ini",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 34,
+      "right": 34,
+      "textLeft": 34,
+      "textRight": 42,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Mulai dari yang paling dekat",
+      "size": 24,
+      "top": 100,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 30,
+      "n": 5
+     },
+     {
+      "x": 16,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 16,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f7f9fc",
+    "sidebar": null,
+    "topbar": {
+     "h": 64
+    },
+    "canvas": {
+     "left": 16,
+     "right": 16
+    },
+    "hero": {
+     "text": "Mulai dari yang paling dekat",
+     "words": 5,
+     "chars": 28,
+     "lines": 1,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Inter",
+     "weight": 700,
+     "tracking": -0.03,
+     "leading": 1.18,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 1,
+    "layout": {
+     "panels": 3,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 13,
+     "radii": [
+      [
+       10,
+       5
+      ],
+      [
+       12,
+       3
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       9,
+       2
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#bfd0e7 on #ffffff (1.57:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 6,
+     "tabularShare": 0,
+     "kpiMax": 19
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.31,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      21,
+      24
+     ]
+    },
+    "title": {
+     "text": "Mulai dari yang paling dekat",
+     "size": 24,
+     "top": 100
+    },
+    "colourShare": 0.058
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "1 tiny uppercase letter-spaced label(s): \"Kamis, 29 Oktober · Data contoh\"",
+   "fix": "Prefer sentence case at body size.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "radius-mix",
+   "width": 1440,
+   "message": "Panels use 4 corner radii (10, 12, 0, 9px).",
+   "fix": "One radius for panels, one for controls, full round only for pills and avatars.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "tabular",
+   "width": 1440,
+   "message": "Only 0% of the figures use tabular numerals.",
+   "fix": "Set font-variant-numeric: tabular-nums on tables, KPIs and anything that updates, so digits keep their width.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\desktop-fold.jpg",
+   "pages": [
+    "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\tablet-fold.jpg",
+   "pages": [
+    "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\mobile-fold.jpg",
+   "pages": [
+    "D:\\projects\\vibes\\aina-sms\\docs\\design\\aina-sms-navigation\\design-demos\\screenshots\\dir-2\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

@@ -3,8 +3,8 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.0 |
-| Diperbarui | 28 Oktober 2026 |
+| Versi | v1.1 |
+| Diperbarui | 29 Oktober 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
@@ -38,6 +38,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Data Customer merupakan aset dealer. Sales hanya menerima assignment; reassignment mempertahankan riwayat dan tidak ada bulk export atau sinkronisasi phonebook pribadi pada MVP.
 - Menu Analisis menggunakan nama “Analisis”, bukan “Mapping”. Sumber dan Model masuk MVP; Area serta MSCP ditunda sampai data prasyarat tersedia.
 - Roadmap kanonik pembangunan berada di [`roadmap.md`](roadmap.md), dimulai dari fondasi akses lalu Customer/pipeline sebelum coaching, forecast, dan analisis.
+- Arah navigasi dan wireframe Fase 0 telah dipilih; keputusan kanonik berada di [`../design/aina-sms-navigation/direction-approved.md`](../design/aina-sms-navigation/direction-approved.md).
 
 ## Keputusan terbuka
 
@@ -50,7 +51,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Selesaikan Fase 0 pada [`roadmap.md`](roadmap.md): review PRD, alur, model data, matriks akses, wireframe, dan test map.
+1. Selesaikan perluasan serta review prototipe terpilih di [`../design/aina-sms-navigation/`](../design/aina-sms-navigation/) sebagai bagian gerbang Fase 0.
 2. Minta persetujuan pengguna atas package sebelum membuat starter project.
 3. Setelah persetujuan, mulai Fase 1 berdasarkan ADR-001 tanpa menjalankan write pada database non-test.
 4. Setelah matriks akses lulus, kerjakan vertical slice Customer → assignment → transaksi → aktivitas → next follow-up.
