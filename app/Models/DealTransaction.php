@@ -49,6 +49,11 @@ use InvalidArgumentException;
 ])]
 class DealTransaction extends Model
 {
+    protected $attributes = [
+        'current_stage' => 'lead',
+        'source' => 'walk_in',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (DealTransaction $deal): void {
@@ -104,6 +109,22 @@ class DealTransaction extends Model
     public function stageHistories(): HasMany
     {
         return $this->hasMany(StageHistory::class)->orderBy('created_at');
+    }
+
+    /**
+     * @return HasMany<CustomerActivity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(CustomerActivity::class);
+    }
+
+    /**
+     * @return HasMany<FollowUp, $this>
+     */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
     }
 
     /**

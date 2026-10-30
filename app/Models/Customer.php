@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\ActivityType;
 use App\Enums\UserRole;
 use App\Support\PhoneNormalizer;
+use Carbon\CarbonInterface;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +14,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -27,10 +28,11 @@ use Illuminate\Support\Str;
  * @property string|null $address
  * @property string|null $contact_channel_preference
  * @property bool $opt_out
- * @property Carbon|null $last_contact_at
+ * @property CarbonInterface|null $last_contact_at
  * @property string|null $notes
  * @property-read CustomerAssignment|null $activeAssignment
  * @property-read User|null $assignedSales
+ * @property-read FollowUp|null $nextFollowUp
  */
 #[Fillable([
     'public_id',
@@ -94,6 +96,67 @@ class Customer extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(DealTransaction::class);
+    }
+
+    /**
+     * @return HasMany<CustomerActivity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(CustomerActivity::class)->orderBy('occurred_at', 'desc');
+    }
+
+    /**
+     * @return HasMany<FollowUp, $this>
+     */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
+    }
+
+    /**
+     * @return HasOne<FollowUp, $this>
+     */
+    public function nextFollowUp(): HasOne
+    {
+        return $this->hasOne(FollowUp::class)
+            ->where('status', 'pending')
+            ->orderBy('scheduled_at', 'asc');
+    }
+
+    public function logActivity(User $actor, ActivityType $type, string $notes, ?DealTransaction $deal = null, ?CarbonInterface $occurredAt = null): CustomerActivity
+    {
+        $at = $occurredAt ?? now();
+
+        return DB::transaction(function () use ($actor, $type, $notes, $deal, $at): CustomerActivity {
+            $activity = $this->activities()->create([
+                'deal_transaction_id' => $deal?->id,
+                'user_id' => $actor->id,
+                'type' => $type,
+                'notes' => $notes,
+                'occurred_at' => $at,
+            ]);
+
+            $this->update(['last_contact_at' => $at]);
+
+            if ($deal !== null) {
+                $deal->update(['last_activity_at' => $at]);
+            }
+
+            return $activity;
+        });
+    }
+
+    public function scheduleFollowUp(User $actor, User $assignedTo, CarbonInterface $scheduledAt, string $planNotes, ?DealTransaction $deal = null): FollowUp
+    {
+        return $this->followUps()->create([
+            'deal_transaction_id' => $deal?->id,
+            'assigned_to_id' => $assignedTo->id,
+            'created_by_id' => $actor->id,
+            'scheduled_at' => $scheduledAt,
+            'plan_notes' => $planNotes,
+            'status' => 'pending',
+        ]);
     }
 
     /**
