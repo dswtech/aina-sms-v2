@@ -58,7 +58,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Mulai vertical slice Fase 2: Customer → assignment → transaksi → aktivitas → next follow-up berdasarkan [`roadmap.md`](roadmap.md).
+1. Eksekusi vertical slice Fase 2 berdasarkan rencana implementasi [`implementation-phase-2-customer-slice.md`](implementation-phase-2-customer-slice.md): Customer → assignment → transaksi → aktivitas → next follow-up → mobile.
 2. Pertahankan matriks akses dan audit Fase 1 sebagai invariant saat menambahkan data operasional.
 
 ## Larangan memory
