@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.5 |
+| Versi | v1.6 |
 | Diperbarui | 30 Oktober 2026 |
 | Status | Aktif |
 
@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PRD v1.0 disetujui sebagai baseline produk pada 30 Oktober 2026.
+- Skill proyek `aina-sms-workflow` ditetapkan di [`.agents/skills/aina-sms-workflow/SKILL.md`](../../.agents/skills/aina-sms-workflow/SKILL.md) sebagai patokan kerja agent.
 - Fondasi aplikasi Laravel monolith dengan Inertia, React, TypeScript, Tailwind CSS, dan shadcn/ui telah tersedia di repository sesuai [`adr/ADR-001-laravel-inertia-monolith.md`](adr/ADR-001-laravel-inertia-monolith.md).
 - Produk adalah responsive web app internal untuk satu dealer dengan banyak tim.
 - Hierarki: Admin → Branch Manager → Supervisor → Sales.
@@ -22,6 +24,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Fondasi akses Fase 1 telah memakai autentikasi username, empat role server-side, status akun aktif, dan shell responsif; rencana implementasi berada di [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - Fase 1 telah menyelesaikan dealer, tim, histori penempatan, scope organisasi, undangan sekali pakai, lifecycle Admin, dan audit aman. Gerbang PostgreSQL terisolasi, Pest, static analysis, frontend, build, serta browser tiga viewport telah lulus sesuai [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
+- Branch kerja aktif berada di `codex/phase-2-customer-slice` yang dibuat bersih dari `origin/main` tanpa residu atau cache lokal.
 
 ## Keputusan aktif
 

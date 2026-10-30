@@ -3,11 +3,12 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | PRD — Sistem Pengelolaan Sales Dealer |
-| Versi | v1.0 (Draft untuk review) |
+| Versi | v1.0 |
 | Tanggal | 28 Oktober 2026 |
+| Disetujui | 30 Oktober 2026 |
 | Disusun oleh | Product Owner dan Product Engineering |
 | Audiens | Product Owner, operasional dealer, engineering, dan QA |
-| Status | Menunggu persetujuan — lihat Bagian 14 |
+| Status | Disetujui sebagai baseline produk |
 
 | Item | Keterangan |
 |---|---|
