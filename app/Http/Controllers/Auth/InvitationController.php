@@ -6,12 +6,12 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AcceptInvitationRequest;
 use App\Http\Requests\Auth\StoreInvitationRequest;
-use App\Models\AuditLog;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Notifications\InvitationCreated;
+use App\Support\AuditRecorder;
 use App\Support\UsernameGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,17 +45,16 @@ class InvitationController extends Controller
                 'expires_at' => now()->addDays(7),
             ]);
 
-            AuditLog::query()->create([
-                'dealer_id' => $invitation->dealer_id,
-                'actor_id' => $actor->id,
-                'action' => 'invitation.created',
-                'subject_type' => 'invitation',
-                'subject_public_id' => $invitation->public_id,
-                'metadata' => [
+            AuditRecorder::record(
+                $actor,
+                'invitation.created',
+                $invitation,
+                after: [
+                    'state' => $invitation->state(),
                     'role' => $invitation->role->value,
-                    'team_id' => $invitation->team_id,
+                    'team_public_id' => $invitation->team?->public_id,
                 ],
-            ]);
+            );
 
             return $invitation;
         });
@@ -139,6 +138,13 @@ class InvitationController extends Controller
             }
 
             $invitation->update(['accepted_at' => now()]);
+            AuditRecorder::record(
+                $user,
+                'invitation.accepted',
+                $invitation,
+                before: ['state' => 'valid'],
+                after: ['state' => $invitation->state()],
+            );
         });
 
         return redirect()->route('login')->with('status', 'Akun aktif. Silakan masuk dengan username Anda.');

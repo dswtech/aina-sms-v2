@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTeamMembershipRequest;
-use App\Models\AuditLog;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Support\AuditRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +36,7 @@ class TeamMembershipController extends Controller
                 return;
             }
 
+            $previousTeamPublicId = $current?->team()->value('public_id');
             $current?->update(['ended_at' => now()]);
             TeamMembership::query()->create([
                 'team_id' => $team->id,
@@ -44,9 +45,14 @@ class TeamMembershipController extends Controller
                 'assigned_by_id' => $actor->id,
                 'started_at' => now(),
             ]);
-            $this->audit($actor, $user, $current === null ? 'membership.assigned' : 'membership.reassigned', [
-                'team_public_id' => $team->public_id,
-            ]);
+            AuditRecorder::record(
+                $actor,
+                $current === null ? 'membership.assigned' : 'membership.reassigned',
+                $user,
+                before: ['team_public_id' => $previousTeamPublicId],
+                after: ['team_public_id' => $team->public_id],
+                context: ['role' => $user->role->value],
+            );
         });
 
         return back()->with('status', 'Penempatan berhasil diperbarui.');
@@ -64,25 +70,18 @@ class TeamMembershipController extends Controller
                 return;
             }
 
+            $teamPublicId = $membership->team()->value('public_id');
             $membership->update(['ended_at' => now()]);
-            $this->audit($request->user(), $lockedUser, 'membership.ended', [
-                'team_id' => $membership->team_id,
-            ]);
+            AuditRecorder::record(
+                $request->user(),
+                'membership.ended',
+                $lockedUser,
+                before: ['team_public_id' => $teamPublicId],
+                after: ['team_public_id' => null],
+                context: ['role' => $lockedUser->role->value],
+            );
         });
 
         return back()->with('status', 'Penempatan aktif ditutup.');
-    }
-
-    /** @param array<string, mixed> $metadata */
-    private function audit(User $actor, User $subject, string $action, array $metadata): void
-    {
-        AuditLog::query()->create([
-            'dealer_id' => $subject->dealer_id,
-            'actor_id' => $actor->id,
-            'action' => $action,
-            'subject_type' => 'user',
-            'subject_public_id' => $subject->public_id,
-            'metadata' => $metadata,
-        ]);
     }
 }

@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserStatusRequest;
-use App\Models\AuditLog;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\AuditRecorder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,15 +94,16 @@ class UserController extends Controller
         }
 
         DB::transaction(function () use ($active, $request, $user): void {
+            $before = ['is_active' => $user->is_active];
             $user->update(['is_active' => $active]);
-            AuditLog::query()->create([
-                'dealer_id' => $user->dealer_id,
-                'actor_id' => $request->user()->id,
-                'action' => $active ? 'user.reactivated' : 'user.deactivated',
-                'subject_type' => 'user',
-                'subject_public_id' => $user->public_id,
-                'metadata' => ['role' => $user->role->value],
-            ]);
+            AuditRecorder::record(
+                $request->user(),
+                $active ? 'user.reactivated' : 'user.deactivated',
+                $user,
+                before: $before,
+                after: ['is_active' => $user->is_active],
+                context: ['role' => $user->role->value],
+            );
         });
 
         return back()->with('status', $active ? 'Akun diaktifkan kembali.' : 'Akun dinonaktifkan.');

@@ -6,10 +6,10 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTeamRequest;
 use App\Http\Requests\Admin\UpdateTeamRequest;
-use App\Models\AuditLog;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\AuditRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +69,10 @@ class TeamController extends Controller
                 'name' => $request->validated('name'),
                 'is_active' => true,
             ]);
-            $this->audit($actor, $team, 'team.created');
+            AuditRecorder::record($actor, 'team.created', $team, after: [
+                'name' => $team->name,
+                'is_active' => $team->is_active,
+            ]);
 
             return $team;
         });
@@ -81,8 +84,9 @@ class TeamController extends Controller
     {
         $validated = $request->validated();
         $wasActive = $team->is_active;
+        $before = ['name' => $team->name, 'is_active' => $team->is_active];
 
-        DB::transaction(function () use ($request, $team, $validated, $wasActive): void {
+        DB::transaction(function () use ($before, $request, $team, $validated, $wasActive): void {
             $team->update($validated);
             $action = array_key_exists('is_active', $validated) && $wasActive !== $team->is_active
                 ? ($team->is_active ? 'team.reactivated' : 'team.deactivated')
@@ -97,21 +101,15 @@ class TeamController extends Controller
                     ->update(['revoked_at' => now()]);
             }
 
-            $this->audit($request->user(), $team, $action);
+            AuditRecorder::record(
+                $request->user(),
+                $action,
+                $team,
+                before: $before,
+                after: ['name' => $team->name, 'is_active' => $team->is_active],
+            );
         });
 
         return back()->with('status', 'Tim berhasil diperbarui.');
-    }
-
-    private function audit(User $actor, Team $team, string $action): void
-    {
-        AuditLog::query()->create([
-            'dealer_id' => $team->dealer_id,
-            'actor_id' => $actor->id,
-            'action' => $action,
-            'subject_type' => 'team',
-            'subject_public_id' => $team->public_id,
-            'metadata' => ['name' => $team->name],
-        ]);
     }
 }

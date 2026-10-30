@@ -88,10 +88,10 @@
 
 **Hasil:** perubahan akun/undangan/tim/penempatan dapat ditelusuri tanpa secret atau password.
 
-- [ ] Tulis feature test actor, action, subject, before/after aman, timestamp, dan redaction field sensitif.
-- [ ] Tambahkan `AuditLog` serta recorder kecil tanpa package baru; gunakan pada aksi Admin Fase 1.
-- [ ] Batasi shared Inertia auth props pada allowlist aman.
-- [ ] Jalankan test audit dan pemeriksaan tidak ada secret di props/bundle.
+- [x] Tulis feature test actor, action, subject, before/after aman, timestamp, dan redaction field sensitif.
+- [x] Tambahkan `AuditLog` serta recorder kecil tanpa package baru; gunakan pada aksi Admin Fase 1.
+- [x] Batasi shared Inertia auth props pada allowlist aman.
+- [x] Jalankan test audit dan pemeriksaan tidak ada secret di props/bundle.
 
 ## Task 8 — PostgreSQL, browser, dan gerbang Fase 1
 
