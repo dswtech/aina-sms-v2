@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DealDrive Supervisor — Prototipe Terpilih</title>
+  <link rel="stylesheet" href="approved-enhancements.css">
   <style>
     :root{color-scheme:light;--ink:#0f172a;--muted:#526175;--faint:#6b7788;--line:#dbe4f0;--control:#c4d0df;--ground:#e9f0f8;--soft:#f5f8fc;--paper:#fff;--blue:#1769e0;--blue-dark:#0f4faa;--blue-soft:#e8f1ff;--red:#b42318;--red-soft:#fff0ee;--amber:#92400e;--amber-soft:#fffbeb;--green:#08783e;--green-soft:#e8f8ef;--sidebar:228px;--r:12px;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
     [hidden]{display:none!important}
@@ -30,7 +31,7 @@
     <strong>Prototipe terpilih · khusus review</strong>
     <div class="review-controls">
       <label for="surfaceSelect">Permukaan</label>
-      <select id="surfaceSelect"><option value="app">Aplikasi</option><option value="login">Login</option><option value="invite">Aktivasi undangan</option><option value="states">Galeri state</option></select>
+      <select id="surfaceSelect"><option value="app">Aplikasi</option><option value="login">Login</option><option value="forgot">Lupa password</option><option value="reset">Reset password</option><option value="invite">Aktivasi undangan</option><option value="invite-expired">Undangan kedaluwarsa</option><option value="invite-used">Undangan terpakai</option><option value="states">Galeri state</option></select>
       <label for="stateSelect">State</label>
       <select id="stateSelect"><option value="normal">Normal</option><option value="loading">Loading</option><option value="empty">Empty</option><option value="error">Error</option><option value="stale">Stale</option><option value="offline">Offline</option><option value="denied">Access denied</option></select>
     </div>
@@ -55,7 +56,7 @@
   <div class="overlay" id="detailOverlay" aria-hidden="true"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><header class="dialog-head"><div><h2 id="detailTitle">Detail transaksi</h2><p id="detailSubtitle">Data contoh</p></div><button class="icon-btn" id="closeDetail" aria-label="Tutup detail"><svg class="icon" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="dialog-tabs" id="detailTabs"></div><div class="dialog-body" id="detailBody"></div></section></div>
   <div class="toast" id="toast" role="status" hidden></div>
 
-  <script>
+  <script type="text/plain" id="legacyPrototypeScript">
     const menus={Sales:['Beranda','Buku Pelanggan Saya','Transaksi','Notifikasi','Profil'],Supervisor:['Beranda','Pelanggan Tim','Transaksi','Target','Analisis','Import Data','Notifikasi','Profil'],'Branch Manager':['Beranda','Kinerja Tim','Analisis','Notifikasi','Profil'],Admin:['Beranda','Pelanggan','Transaksi','Pengguna & Undangan','Tim & Penempatan','Analisis','Import Data','Pengaturan Dealer','Notifikasi','Profil']};
     const mobilePrimary={Sales:['Beranda','Buku Pelanggan Saya','Transaksi'],Supervisor:['Beranda','Pelanggan Tim','Transaksi'],'Branch Manager':['Beranda','Kinerja Tim','Analisis'],Admin:['Beranda','Pengguna & Undangan','Tim & Penempatan']};
     const people={Sales:['Rina Pratama','Sales · Tim Anggrek','RP'],Supervisor:['Dian Kurnia','Supervisor · Tim Anggrek','DK'],'Branch Manager':['Arief Nugroho','Branch Manager · Cabang Utama','AN'],Admin:['Nadia Putri','Admin dealer','NP']};
@@ -105,5 +106,6 @@
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#detailOverlay').classList.contains('open'))closeOverlay();else closeMore()}if(e.key==='Tab'&&$('#detailOverlay').classList.contains('open'))trapFocus($('#detailOverlay'),e);else if(e.key==='Tab'&&$('#moreOverlay').classList.contains('open'))trapFocus($('#moreOverlay'),e);if((e.key==='Enter'||e.key===' ')&&e.target.matches('tr[data-customer],tr[data-open-tx]')){e.preventDefault();e.target.click()}});
     $('#roleSelect').addEventListener('change',e=>{state.role=e.target.value;state.page='Beranda';state.query='';state.filter='all';render()});$('#notificationButton').addEventListener('click',()=>navigate('Notifikasi'));$('#closeDetail').addEventListener('click',closeOverlay);$('#closeMore').addEventListener('click',closeMore);$('#moreOverlay').addEventListener('click',e=>{if(e.target===$('#moreOverlay'))closeMore()});$('#detailOverlay').addEventListener('click',e=>{if(e.target===$('#detailOverlay'))closeOverlay()});$('#surfaceSelect').addEventListener('change',handleSurface);$('#stateSelect').addEventListener('change',renderStates);$('#stateSelect').disabled=true;render();
   </script>
+  <script src="approved-enhancements.js"></script>
 </body>
 </html>

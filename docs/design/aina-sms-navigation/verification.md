@@ -44,27 +44,31 @@ Setiap folder arah memuat hasil fold dan full-page untuk desktop, tablet, dan mo
 
 Ini adalah verifikasi checkpoint struktur, bukan persetujuan arah. Verifikasi seluruh state dan seluruh role dilakukan setelah satu arah atau kombinasi dipilih.
 
-## Verifikasi prototipe terpilih
+## Verifikasi prototipe terpilih — runtime lengkap
 
-Kombinasi yang disetujui telah dirakit di `design-demos/approved.html` dan diperiksa pada 29 Oktober 2026.
+Runtime lengkap berada di `design-demos/approved.html`, `approved-enhancements.css`, dan `approved-enhancements.js`. Pemeriksaan kode terakhir dilakukan pada 29 Oktober 2026.
 
 | Pemeriksaan | Hasil |
 |---|---:|
-| Horizontal page overflow pada 1440px, 768px, dan 390px | 0 px |
-| Console error | 0 |
-| Beranda Sales memakai pola Today-First | Lulus |
-| Beranda Supervisor, Branch Manager, dan Admin memakai pola operasional | Lulus |
-| Pencarian serta detail pelanggan | Lulus |
-| Filter, detail, Timeline, dan riwayat tahap transaksi | Lulus |
-| Query daftar tetap setelah detail ditutup | Lulus |
-| Sheet “Lainnya” dan tombol kembali/tutup | Lulus |
-| Login, aktivasi undangan, dan password visibility | Lulus |
-| Loading, empty, error/retry, stale, offline, dan access denied | Lulus |
-| Branch Manager tanpa kontak pelanggan dan isi coaching | Lulus |
+| Syntax JavaScript (`node --check`) | Lulus |
+| Kontrak role, route, store, mutation, auth, dialog, tab, DOM, dan preservasi state | 19/19 lulus |
+| `git diff --check` | Lulus |
+| TasteSkill source lint | 0 fail, 2 warning yang sah untuk dialog/toast |
+| Impeccable detector (satu kali) | 1 false-positive disabled contrast, 1 advisory overlay shadow |
+| Dependency, backend, `localStorage`, atau `sessionStorage` baru | Tidak ada |
 
-Inspeksi visual menemukan shell aplikasi sempat tetap terlihat di permukaan Login. Aturan `[hidden]` kemudian diperkuat agar Login dan Aktivasi Undangan terisolasi sebagai halaman mandiri. Detector Impeccable final melaporkan satu false-positive kontras lintas selector, satu peringatan padding yang telah dikoreksi, serta satu advisory shadow yang dipertahankan hanya untuk overlay/toast.
+Kontrak yang diperiksa otomatis mencakup:
 
-Screenshot kanonik tersedia di:
+- Menu lengkap untuk Sales, Supervisor, Branch Manager, dan Admin.
+- Hash route halaman, autentikasi, detail pelanggan, dan detail transaksi.
+- Store sesi untuk pelanggan, transaksi, target, pengguna, tim, notifikasi, import, dealer, dan profil.
+- Mutation form, validasi terhubung ke field, focus ke error pertama, serta status melalui live region.
+- Dialog/sheet modal, focus trap, Escape, backdrop, dan focus return.
+- Tab WAI-ARIA, keyboard panah, Back/Forward, query/filter/scroll, serta tab detail yang dipertahankan.
+- Detail Branch Manager tersanitasi dan pelanggan/transaksi Admin read-only.
 
-- `design-demos/screenshots/approved/` untuk tiga viewport utama.
-- `design-demos/screenshots/approved-flows/` untuk role, halaman, autentikasi, dan state penting.
+### Batas verifikasi browser saat ini
+
+Screenshot dan `report.json` dari runtime sebelumnya tidak lagi dianggap bukti final. Percobaan membuka file lokal melalui browser terotomasi ditolak oleh kebijakan browser karena protokol `file:` tidak diizinkan; sesuai batas keamanan, pemeriksaan tidak dialihkan melalui raw CDP atau server lokal sebagai jalan memutar. Karena itu, klaim overflow, console, dan interaksi browser final belum ditandai lulus sampai `approved.html` dibuka oleh pengguna pada tab browser yang dapat diinspeksi.
+
+Folder arah awal `dir-1/`, `dir-2/`, `dir-3/`, dan `thumbs/` tetap merupakan bukti checkpoint arah, bukan bukti runtime lengkap.

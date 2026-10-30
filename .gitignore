@@ -2,6 +2,7 @@
 _doc_sources/
 .env
 .env.*
+!.env.example
 
 # Dependencies
 /vendor/
@@ -9,14 +10,44 @@ _doc_sources/
 
 # Build output and caches
 /public/build/
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/bootstrap/ssr/
 /bootstrap/cache/*.php
+/resources/js/actions/
+/resources/js/routes/
+/resources/js/wayfinder/
+/storage/*.key
+/storage/pail/
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
 /storage/logs/*
 /.phpunit.cache/
+/.phpunit.result.cache
 /coverage/
 /dist/
+
+# Local development metadata
+/auth.json
+/.agents/
+/.amp/
+/.codex/
+/.cursor/
+/.factory/
+/.fleet/
+/.grok/
+/.junie/
+/.kiro/
+/.nova/
+/.pi/
+/.zed/
+/.mcp.json
+/boost.json
+/opencode.json
+/opencode.jsonc
+/graphify-out/
 
 # IDE and operating-system files
 /.idea/
