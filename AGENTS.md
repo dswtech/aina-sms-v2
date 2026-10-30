@@ -26,3 +26,13 @@ Jangan bekerja hanya dari memory. PRD dan ADR adalah sumber keputusan kanonik.
 ## Manifest dokumen agent
 
 Semua file khusus agent wajib terdaftar di [`docs/agents/README.md`](docs/agents/README.md). File yang tidak terdaftar dianggap yatim dan harus didaftarkan atau dihapus.
+
+## Git workflow
+
+- Semua commit wajib mengikuti Conventional Commits dengan format `<type>(<optional-scope>): <description>`.
+- Jalankan automated test yang relevan sebelum membuat commit. Jika test gagal, jangan membuat commit dan laporkan kegagalannya.
+- Jika repository tidak memiliki automated test, nyatakan hal tersebut dengan jelas sebelum membuat commit.
+- Secara default, kerjakan perubahan di branch selain default branch dan kirimkan melalui pull request.
+- Jangan commit atau push langsung ke `main` atau default branch repository, kecuali pengguna secara eksplisit meminta direct commit atau direct push ke branch tersebut untuk tugas yang sedang dikerjakan.
+- Permintaan umum seperti “commit perubahan” bukan izin untuk commit atau push langsung ke default branch.
+- Pengecualian direct-to-main hanya menghapus kewajiban menggunakan pull request. Conventional Commits dan kewajiban menjalankan test tetap berlaku.
