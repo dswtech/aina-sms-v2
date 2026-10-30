@@ -4,7 +4,7 @@
 
 **Tujuan:** Membangun vertical slice Fase 2 pertama yang utuh: Customer → assignment → transaksi → aktivitas → next follow-up → tampilan mobile, yang memberikan alat kerja operasional harian pertama bagi Sales dan Supervisor.
 
-**Arsitektur:** 
+**Arsitektur:**
 - Laravel monolith dengan Inertia 3 + React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui.
 - Customer menjadi entitas kanonik terpisah dari transaksi (satu Customer dapat memiliki banyak transaksi).
 - Penugasan Customer (`CustomerAssignment`) mencatat riwayat lengkap kepemilikan hubungan pelanggan sebagai aset dealer.
