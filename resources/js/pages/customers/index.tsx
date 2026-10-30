@@ -103,7 +103,15 @@ type Props = {
         uncontacted: number;
         active: number;
         purchased: number;
+        inactive: number;
+        repeat_order: number;
+        referral: number;
     };
+    assignableSales?: Array<{
+        id: number;
+        public_id: string;
+        name: string;
+    }>;
 };
 
 function formatPhoneLink(phone: string): string {
@@ -121,13 +129,20 @@ function formatDate(iso: string | null): string {
     }).format(date);
 }
 
-export default function CustomersIndex({ customers, filters, counts }: Props) {
+export default function CustomersIndex({
+    customers,
+    filters,
+    counts,
+    assignableSales = [],
+}: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [createOpen, setCreateOpen] = useState(false);
     const [activityOpen, setActivityOpen] = useState(false);
     const [followUpOpen, setFollowUpOpen] = useState(false);
     const [stageOpen, setStageOpen] = useState(false);
     const [detailOpen, setDetailOpen] = useState(false);
+    const [transactionOpen, setTransactionOpen] = useState(false);
+    const [reassignOpen, setReassignOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] =
         useState<CustomerItem | null>(null);
 
@@ -148,6 +163,14 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
     const [stageNotes, setStageNotes] = useState('');
     const [lostReason, setLostReason] = useState('price_budget');
     const [bookingFee, setBookingFee] = useState(false);
+
+    const [txVehicleModel, setTxVehicleModel] = useState('');
+    const [txEstimatedValue, setTxEstimatedValue] = useState('');
+    const [txSource, setTxSource] = useState('walk_in');
+    const [txNotes, setTxNotes] = useState('');
+
+    const [reassignSalesId, setReassignSalesId] = useState('');
+    const [reassignNotes, setReassignNotes] = useState('');
 
     function applyFilters(
         nextTab = filters.tab,
@@ -259,6 +282,49 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                 onSuccess: () => {
                     setStageOpen(false);
                     setStageNotes('');
+                },
+            },
+        );
+    }
+
+    function handleCreateTransaction(e: React.FormEvent) {
+        e.preventDefault();
+        if (!selectedCustomer) return;
+        router.post(
+            `/customers/${selectedCustomer.public_id}/transactions`,
+            {
+                vehicle_model: txVehicleModel,
+                estimated_value: txEstimatedValue
+                    ? Number(txEstimatedValue)
+                    : undefined,
+                source: txSource,
+                notes: txNotes || undefined,
+            },
+            {
+                onSuccess: () => {
+                    setTransactionOpen(false);
+                    setTxVehicleModel('');
+                    setTxEstimatedValue('');
+                    setTxNotes('');
+                },
+            },
+        );
+    }
+
+    function handleReassign(e: React.FormEvent) {
+        e.preventDefault();
+        if (!selectedCustomer) return;
+        router.patch(
+            `/customers/${selectedCustomer.public_id}/assignment`,
+            {
+                sales_id: Number(reassignSalesId),
+                notes: reassignNotes || undefined,
+            },
+            {
+                onSuccess: () => {
+                    setReassignOpen(false);
+                    setReassignSalesId('');
+                    setReassignNotes('');
                 },
             },
         );
@@ -497,6 +563,60 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                                 className="ml-1 px-1.5 py-0 text-xs"
                             >
                                 {counts.purchased}
+                            </Badge>
+                        </Button>
+                        <Button
+                            variant={
+                                filters.tab === 'inactive'
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            size="sm"
+                            onClick={() => applyFilters('inactive')}
+                            className="min-h-10 gap-1.5"
+                        >
+                            <span>Tidak Aktif</span>
+                            <Badge
+                                variant="secondary"
+                                className="ml-1 px-1.5 py-0 text-xs"
+                            >
+                                {counts.inactive}
+                            </Badge>
+                        </Button>
+                        <Button
+                            variant={
+                                filters.tab === 'repeat_order'
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            size="sm"
+                            onClick={() => applyFilters('repeat_order')}
+                            className="min-h-10 gap-1.5"
+                        >
+                            <span>Potensi Repeat Order</span>
+                            <Badge
+                                variant="secondary"
+                                className="ml-1 px-1.5 py-0 text-xs"
+                            >
+                                {counts.repeat_order}
+                            </Badge>
+                        </Button>
+                        <Button
+                            variant={
+                                filters.tab === 'referral'
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            size="sm"
+                            onClick={() => applyFilters('referral')}
+                            className="min-h-10 gap-1.5"
+                        >
+                            <span>Potensi Referral</span>
+                            <Badge
+                                variant="secondary"
+                                className="ml-1 px-1.5 py-0 text-xs"
+                            >
+                                {counts.referral}
                             </Badge>
                         </Button>
                     </div>
@@ -1191,6 +1311,159 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                     </DialogContent>
                 </Dialog>
 
+                {/* Dialog: Buat Transaksi Baru */}
+                <Dialog
+                    open={transactionOpen}
+                    onOpenChange={setTransactionOpen}
+                >
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Buat Transaksi Baru</DialogTitle>
+                            <DialogDescription>
+                                Tambah unit baru untuk {selectedCustomer?.name}.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form
+                            onSubmit={handleCreateTransaction}
+                            className="space-y-4 pt-2"
+                        >
+                            <div className="space-y-1">
+                                <Label htmlFor="tx-model">
+                                    Model Kendaraan *
+                                </Label>
+                                <Input
+                                    id="tx-model"
+                                    required
+                                    value={txVehicleModel}
+                                    onChange={(e) =>
+                                        setTxVehicleModel(e.target.value)
+                                    }
+                                    placeholder="Contoh: Stargazer Prime"
+                                    className="min-h-11"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="tx-value">
+                                    Estimasi Nilai (Rp)
+                                </Label>
+                                <Input
+                                    id="tx-value"
+                                    type="number"
+                                    value={txEstimatedValue}
+                                    onChange={(e) =>
+                                        setTxEstimatedValue(e.target.value)
+                                    }
+                                    placeholder="0"
+                                    className="min-h-11"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="tx-source">Sumber</Label>
+                                <Select
+                                    value={txSource}
+                                    onValueChange={setTxSource}
+                                >
+                                    <SelectTrigger
+                                        id="tx-source"
+                                        className="min-h-11 w-full"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="walk_in">
+                                            Walk-in Showroom
+                                        </SelectItem>
+                                        <SelectItem value="digital_ad">
+                                            Iklan Digital / Medsos
+                                        </SelectItem>
+                                        <SelectItem value="referral">
+                                            Referral Pelanggan
+                                        </SelectItem>
+                                        <SelectItem value="exhibition">
+                                            Pameran / Mall
+                                        </SelectItem>
+                                        <SelectItem value="call">
+                                            Telepon Masuk
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="tx-notes">Catatan</Label>
+                                <Input
+                                    id="tx-notes"
+                                    value={txNotes}
+                                    onChange={(e) => setTxNotes(e.target.value)}
+                                    placeholder="Catatan tambahan..."
+                                    className="min-h-11"
+                                />
+                            </div>
+                            <Button type="submit" className="min-h-11 w-full">
+                                Simpan Transaksi
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Penugasan Ulang */}
+                <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Penugasan Ulang</DialogTitle>
+                            <DialogDescription>
+                                Pindahkan {selectedCustomer?.name} ke sales
+                                lain.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form
+                            onSubmit={handleReassign}
+                            className="space-y-4 pt-2"
+                        >
+                            <div className="space-y-1">
+                                <Label htmlFor="reassign-sales">
+                                    Sales Tujuan *
+                                </Label>
+                                <Select
+                                    value={reassignSalesId}
+                                    onValueChange={setReassignSalesId}
+                                >
+                                    <SelectTrigger
+                                        id="reassign-sales"
+                                        className="min-h-11 w-full"
+                                    >
+                                        <SelectValue placeholder="Pilih sales" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {assignableSales.map((sales) => (
+                                            <SelectItem
+                                                key={sales.id}
+                                                value={String(sales.id)}
+                                            >
+                                                {sales.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="reassign-notes">Catatan</Label>
+                                <Input
+                                    id="reassign-notes"
+                                    value={reassignNotes}
+                                    onChange={(e) =>
+                                        setReassignNotes(e.target.value)
+                                    }
+                                    placeholder="Alasan penugasan ulang..."
+                                    className="min-h-11"
+                                />
+                            </div>
+                            <Button type="submit" className="min-h-11 w-full">
+                                Konfirmasi Penugasan
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 {/* Dialog: Detail transaksi & riwayat (adaptif mobile/desktop) */}
                 <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
                     <DialogContent className="max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl">
@@ -1459,6 +1732,32 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                                         Ubah Tahap
                                     </Button>
                                 )}
+                            <Button
+                                variant="outline"
+                                className="min-h-11 flex-1"
+                                onClick={() => {
+                                    setDetailOpen(false);
+                                    setTxVehicleModel(
+                                        selectedCustomer?.active_deal
+                                            ?.vehicle_model ?? '',
+                                    );
+                                    setTransactionOpen(true);
+                                }}
+                            >
+                                Buat Transaksi Baru
+                            </Button>
+                            {assignableSales.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    className="min-h-11 flex-1"
+                                    onClick={() => {
+                                        setDetailOpen(false);
+                                        setReassignOpen(true);
+                                    }}
+                                >
+                                    Penugasan Ulang
+                                </Button>
+                            )}
                         </div>
                     </DialogContent>
                 </Dialog>

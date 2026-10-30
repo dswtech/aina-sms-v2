@@ -27,6 +27,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::post('customers/{customer}/activities', [CustomerController::class, 'storeActivity'])->name('customers.activities.store');
         Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->name('customers.follow-ups.store');
+        Route::post('customers/{customer}/transactions', [CustomerController::class, 'storeTransaction'])->name('customers.transactions.store');
+        Route::patch('customers/{customer}/assignment', [CustomerController::class, 'reassign'])->name('customers.reassign');
         Route::patch('transactions/{transaction}/stage', [CustomerController::class, 'updateStage'])->name('transactions.stage');
 
         Route::inertia('transactions', 'module-status', [

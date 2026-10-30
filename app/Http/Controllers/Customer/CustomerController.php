@@ -5,15 +5,19 @@ namespace App\Http\Controllers\Customer;
 use App\Enums\ActivityType;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\ReassignCustomerRequest;
 use App\Http\Requests\Customer\StoreCustomerActivityRequest;
 use App\Http\Requests\Customer\StoreCustomerLeadRequest;
+use App\Http\Requests\Customer\StoreCustomerTransactionRequest;
 use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
 use App\Models\CustomerActivity;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
+use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CustomerDuplicateDetector;
 use App\Support\PhoneNormalizer;
@@ -52,6 +56,22 @@ class CustomerController extends Controller
             'purchased' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
                 $q->where('current_stage', PipelineStage::Delivery->value);
             })->count(),
+            'inactive' => (clone $baseQuery)->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            })->where(function (Builder $q): void {
+                $q->whereNull('last_contact_at')
+                    ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
+            })->count(),
+            'repeat_order' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
+                $q->where('current_stage', PipelineStage::Delivery->value);
+            })->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            })->count(),
+            'referral' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
+                $q->where('current_stage', PipelineStage::Delivery->value);
+            })->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            })->where('opt_out', false)->count(),
         ];
 
         $query = Customer::query()->visibleTo($actor);
@@ -76,6 +96,22 @@ class CustomerController extends Controller
             'purchased' => $query->whereHas('transactions', function (Builder $q): void {
                 $q->where('current_stage', PipelineStage::Delivery->value);
             }),
+            'inactive' => $query->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            })->where(function (Builder $q): void {
+                $q->whereNull('last_contact_at')
+                    ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
+            }),
+            'repeat_order' => $query->whereHas('transactions', function (Builder $q): void {
+                $q->where('current_stage', PipelineStage::Delivery->value);
+            })->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            }),
+            'referral' => $query->whereHas('transactions', function (Builder $q): void {
+                $q->where('current_stage', PipelineStage::Delivery->value);
+            })->whereDoesntHave('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
+            })->where('opt_out', false),
             default => null,
         };
 
@@ -147,6 +183,32 @@ class CustomerController extends Controller
                 ];
             });
 
+        $assignableSales = [];
+        if (in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true)) {
+            $salesQuery = User::query()
+                ->where('dealer_id', $actor->dealer_id)
+                ->where('is_active', true)
+                ->where('role', UserRole::Sales);
+
+            if ($actor->role === UserRole::Supervisor) {
+                $teamIds = $actor->activeTeamMemberships()->select('team_id');
+                $salesQuery->whereHas('activeTeamMemberships', function (Builder $q) use ($teamIds): void {
+                    $q->whereIn('team_id', $teamIds)->whereNull('ended_at');
+                });
+            }
+
+            $assignableSales = $salesQuery
+                ->select(['id', 'public_id', 'name'])
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $user): array => [
+                    'id' => $user->id,
+                    'public_id' => $user->public_id,
+                    'name' => $user->name,
+                ])
+                ->all();
+        }
+
         return Inertia::render('customers/index', [
             'customers' => $customers,
             'filters' => [
@@ -156,6 +218,7 @@ class CustomerController extends Controller
                 'direction' => $direction,
             ],
             'counts' => $counts,
+            'assignableSales' => $assignableSales,
         ]);
     }
 
@@ -275,6 +338,84 @@ class CustomerController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Tindak lanjut berhasil dijadwalkan.',
+        ]);
+
+        return back();
+    }
+
+    public function storeTransaction(StoreCustomerTransactionRequest $request, Customer $customer): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $this->authorize('update', $customer);
+
+        $validated = $request->validated();
+
+        $sales = $customer->assignedSales ?? $actor;
+
+        $deal = DB::transaction(function () use ($actor, $customer, $sales, $validated): DealTransaction {
+            $deal = $customer->transactions()->create([
+                'dealer_id' => $customer->dealer_id,
+                'sales_id' => $sales->id,
+                'vehicle_model' => $validated['vehicle_model'],
+                'estimated_value' => $validated['estimated_value'] ?? null,
+                'source' => $validated['source'],
+                'current_stage' => PipelineStage::Lead,
+                'last_activity_at' => now(),
+            ]);
+
+            $deal->stageHistories()->create([
+                'from_stage' => null,
+                'to_stage' => PipelineStage::Lead,
+                'actor_id' => $actor->id,
+                'notes' => $validated['notes'] ?? 'Transaksi baru dibuat',
+                'created_at' => now(),
+            ]);
+
+            return $deal;
+        });
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Transaksi baru untuk {$customer->name} berhasil dibuat.",
+        ]);
+
+        return back();
+    }
+
+    public function reassign(ReassignCustomerRequest $request, Customer $customer): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $this->authorize('assign', $customer);
+
+        $validated = $request->validated();
+
+        $newSales = User::query()
+            ->whereKey($validated['sales_id'])
+            ->where('dealer_id', $customer->dealer_id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        // Supervisor may only reassign within own team
+        if ($actor->role === UserRole::Supervisor) {
+            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $inTeam = TeamMembership::query()
+                ->whereIn('team_id', $teamIds)
+                ->where('user_id', $newSales->id)
+                ->whereNull('ended_at')
+                ->exists();
+
+            if (! $inTeam) {
+                abort(403);
+            }
+        }
+
+        $customer->assignTo($newSales, $actor, $validated['notes'] ?? 'Penugasan ulang');
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Pelanggan {$customer->name} ditugaskan ke {$newSales->name}.",
         ]);
 
         return back();
