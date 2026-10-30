@@ -79,10 +79,10 @@
 
 **Hasil:** Admin membuat/rename/nonaktif tim serta memindahkan Supervisor/Sales dengan histori utuh.
 
-- [ ] Tulis feature test create/rename/deactivate team, assignment, reassignment, membership close, inactive-team rejection, dan scope dealer.
-- [ ] Implementasikan controller/form request/action dan audit organisasi.
-- [ ] Ganti placeholder `/teams` dengan halaman responsif tim dan penempatan.
-- [ ] Jalankan Pest fokus, frontend check, type-check, dan build.
+- [x] Tulis feature test create/rename/deactivate team, assignment, reassignment, membership close, inactive-team rejection, dan scope dealer.
+- [x] Implementasikan controller/form request/action dan audit organisasi.
+- [x] Ganti placeholder `/teams` dengan halaman responsif tim dan penempatan.
+- [x] Jalankan Pest fokus, frontend check, type-check, dan build.
 
 ## Task 7 — Audit dasar dan shared props aman
 

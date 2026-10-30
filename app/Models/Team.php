@@ -20,6 +20,11 @@ class Team extends Model
     /** @use HasFactory<TeamFactory> */
     use HasFactory;
 
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
     /**
      * @return BelongsTo<Dealer, $this>
      */

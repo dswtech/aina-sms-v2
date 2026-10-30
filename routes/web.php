@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\InvitationLifecycleController;
+use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\TeamMembershipController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\InvitationController;
 use Illuminate\Support\Facades\Route;
@@ -50,7 +52,11 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
         Route::post('invitations/{invitation}/resend', [InvitationLifecycleController::class, 'resend'])->name('invitations.resend');
         Route::patch('invitations/{invitation}/revoke', [InvitationLifecycleController::class, 'revoke'])->name('invitations.revoke');
-        Route::inertia('teams', 'module-status', ['module' => 'teams'])->name('teams.index');
+        Route::get('teams', [TeamController::class, 'index'])->name('teams.index');
+        Route::post('teams', [TeamController::class, 'store'])->name('teams.store');
+        Route::patch('teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+        Route::post('team-memberships', [TeamMembershipController::class, 'store'])->name('team-memberships.store');
+        Route::delete('team-memberships/{user}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
         Route::inertia('dealer-settings', 'module-status', ['module' => 'dealer-settings'])->name('dealer-settings.edit');
     });
 
