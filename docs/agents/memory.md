@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.4 |
+| Versi | v1.5 |
 | Diperbarui | 30 Oktober 2026 |
 | Status | Aktif |
 
@@ -20,6 +20,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Implementasi referensi mempunyai kelemahan pada mobile; yang diambil adalah pola interaksi, bukan responsivitasnya.
 - Dependency PHP dan frontend telah dipasang; pemeriksaan backend, frontend, type-check, dan production build lulus pada 29 Oktober 2026.
 - Fondasi akses Fase 1 telah memakai autentikasi username, empat role server-side, status akun aktif, dan shell responsif; rencana implementasi berada di [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
+- Fase 1 telah menyelesaikan dealer, tim, histori penempatan, scope organisasi, undangan sekali pakai, lifecycle Admin, dan audit aman. Gerbang PostgreSQL terisolasi, Pest, static analysis, frontend, build, serta browser tiga viewport telah lulus sesuai [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
 
 ## Keputusan aktif
@@ -54,8 +55,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Lanjutkan Fase 1 dengan undangan pengguna serta pengelolaan tim dan penempatan berdasarkan [`roadmap.md`](roadmap.md).
-2. Setelah matriks akses dan struktur organisasi lengkap, kerjakan vertical slice Customer → assignment → transaksi → aktivitas → next follow-up.
+1. Mulai vertical slice Fase 2: Customer → assignment → transaksi → aktivitas → next follow-up berdasarkan [`roadmap.md`](roadmap.md).
+2. Pertahankan matriks akses dan audit Fase 1 sebagai invariant saat menambahkan data operasional.
 
 ## Larangan memory
 

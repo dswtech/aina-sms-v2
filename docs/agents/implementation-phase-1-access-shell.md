@@ -97,11 +97,11 @@
 
 **Hasil:** seluruh matriks akses lulus pada PostgreSQL test terisolasi dan UI shell diverifikasi pada tiga viewport.
 
-- [ ] Sediakan konfigurasi PostgreSQL test terisolasi tanpa menunjuk database development.
-- [ ] Jalankan migration dan Pest pada database test PostgreSQL setelah izin database diperoleh.
-- [ ] Jalankan Pint, PHPStan, Pest, frontend check, TypeScript, production build, dan detector Impeccable sekali.
-- [ ] Periksa login, activation, Admin users/teams, logout, focus, overflow, dan console pada 390px, 768px, dan 1440px.
-- [ ] Perbarui `memory.md` hanya dengan status dan tautan kanonik setelah bukti gerbang lengkap.
+- [x] Sediakan konfigurasi PostgreSQL test terisolasi tanpa menunjuk database development.
+- [x] Jalankan migration dan Pest pada database test PostgreSQL setelah izin database diperoleh.
+- [x] Jalankan Pint, PHPStan, Pest, frontend check, TypeScript, production build, dan detector Impeccable sekali.
+- [x] Periksa login, activation, Admin users/teams, logout, focus, overflow, dan console pada 390px, 768px, dan 1440px.
+- [x] Perbarui `memory.md` hanya dengan status dan tautan kanonik setelah bukti gerbang lengkap.
 
 ## Gerbang keluar
 
