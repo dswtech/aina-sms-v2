@@ -120,6 +120,14 @@ class DealTransaction extends Model
     }
 
     /**
+     * @return HasMany<DealComment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(DealComment::class, 'deal_transaction_id');
+    }
+
+    /**
      * @return HasMany<FollowUp, $this>
      */
     public function followUps(): HasMany
