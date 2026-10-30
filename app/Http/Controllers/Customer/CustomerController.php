@@ -15,6 +15,7 @@ use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
 use App\Models\CustomerActivity;
+use App\Models\DealComment;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\TeamMembership;
@@ -119,12 +120,12 @@ class CustomerController extends Controller
         $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
         $sort = in_array($sort, ['name', 'last_contact_at', 'updated_at'], true) ? $sort : 'updated_at';
 
-        $customers = $query->with(['activeAssignment.sales', 'transactions.stageHistories.actor', 'activities.user', 'nextFollowUp'])
+        $customers = $query->with(['activeAssignment.sales', 'transactions.stageHistories.actor', 'transactions.comments.author', 'transactions.comments.replies.author', 'activities.user', 'nextFollowUp'])
             ->orderBy($sort, $direction)
             ->orderBy('id')
             ->paginate(15)
             ->withQueryString()
-            ->through(function (Customer $c): array {
+            ->through(function (Customer $c) use ($actor): array {
                 // Pick the most recent open deal, falling back to the most recent closed one.
                 $deal = $c->transactions
                     ->sortByDesc('id')
@@ -155,6 +156,26 @@ class CustomerController extends Controller
                         'is_closed' => $deal->current_stage->isClosed(),
                         'is_stagnant' => $deal->is_stagnant,
                         'estimated_value' => $deal->estimated_value,
+                        'comments' => $deal->comments
+                            ->whereNull('parent_id')
+                            ->map(fn (DealComment $comment): array => [
+                                'id' => $comment->id,
+                                'body' => $comment->body,
+                                'author_name' => $comment->author?->name,
+                                'created_at' => $comment->created_at->toIso8601String(),
+                                'edited_at' => $comment->edited_at?->toIso8601String(),
+                                'can_edit' => $comment->canEdit($actor),
+                                'replies' => $deal->comments
+                                    ->where('parent_id', $comment->id)
+                                    ->map(fn (DealComment $reply): array => [
+                                        'id' => $reply->id,
+                                        'body' => $reply->body,
+                                        'author_name' => $reply->author?->name,
+                                        'created_at' => $reply->created_at->toIso8601String(),
+                                        'edited_at' => $reply->edited_at?->toIso8601String(),
+                                        'can_edit' => $reply->canEdit($actor),
+                                    ])->values()->all(),
+                            ])->values()->all(),
                     ] : null,
                     'next_follow_up' => $c->nextFollowUp ? [
                         'id' => $c->nextFollowUp->id,
