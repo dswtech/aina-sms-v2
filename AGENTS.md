@@ -6,12 +6,13 @@ Dokumen ini adalah pintu masuk untuk semua agent yang bekerja di repository ini.
 
 Sebelum merencanakan, menjalankan perintah, mengubah file, atau menyarankan perubahan teknis:
 
-1. Baca seluruh aturan di [`rules/README.md`](rules/README.md).
-2. Baca indeks dokumentasi di [`docs/agents/README.md`](docs/agents/README.md).
-3. Baca [`docs/agents/PRD.md`](docs/agents/PRD.md) untuk kebutuhan produk.
-4. Baca ADR yang relevan di [`docs/agents/adr`](docs/agents/adr).
-5. Baca [`docs/agents/knowledge.md`](docs/agents/knowledge.md) untuk istilah dan batas domain.
-6. Baca [`docs/agents/memory.md`](docs/agents/memory.md) untuk keadaan dan keputusan terbaru.
+1. Gunakan skill proyek [`aina-sms-workflow`](.agents/skills/aina-sms-workflow/SKILL.md).
+2. Baca seluruh aturan di [`rules/README.md`](rules/README.md).
+3. Baca indeks dokumentasi di [`docs/agents/README.md`](docs/agents/README.md).
+4. Baca [`docs/agents/PRD.md`](docs/agents/PRD.md) untuk kebutuhan produk.
+5. Baca ADR yang relevan di [`docs/agents/adr`](docs/agents/adr).
+6. Baca [`docs/agents/knowledge.md`](docs/agents/knowledge.md) untuk istilah dan batas domain.
+7. Baca [`docs/agents/memory.md`](docs/agents/memory.md) untuk keadaan dan keputusan terbaru.
 
 Jangan bekerja hanya dari memory. PRD dan ADR adalah sumber keputusan kanonik.
 

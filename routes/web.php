@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\TeamMembershipController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\Customer\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('activate/{token}', [InvitationController::class, 'show'])
@@ -22,9 +23,12 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
     Route::middleware('role:sales,supervisor,admin')->group(function () {
-        Route::inertia('customers', 'module-status', [
-            'module' => 'customers',
-        ])->name('customers.index');
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::post('customers/{customer}/activities', [CustomerController::class, 'storeActivity'])->name('customers.activities.store');
+        Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->name('customers.follow-ups.store');
+        Route::patch('transactions/{transaction}/stage', [CustomerController::class, 'updateStage'])->name('transactions.stage');
+
         Route::inertia('transactions', 'module-status', [
             'module' => 'transactions',
         ])->name('transactions.index');
