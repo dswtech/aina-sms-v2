@@ -4,7 +4,7 @@ Development baseline untuk **DealDrive Supervisor** memakai Laravel 13, Inertia 
 
 ## Kebutuhan lokal
 
-- PHP 8.3 atau lebih baru.
+- PHP 8.4.1 atau lebih baru.
 - Composer 2.
 - Node.js 24 dan pnpm 11.
 - PostgreSQL.
