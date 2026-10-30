@@ -31,6 +31,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - name: Enable Corepack
+        run: corepack enable pnpm
+
       - name: Setup Application
         run: composer setup
 

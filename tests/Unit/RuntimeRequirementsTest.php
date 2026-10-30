@@ -8,10 +8,15 @@ it('keeps local and CI runtime requirements aligned', function () {
         flags: JSON_THROW_ON_ERROR,
     );
     $workflow = file_get_contents($root.'/.github/workflows/tests.yml');
+    $corepackSetup = strpos($workflow, 'run: corepack enable pnpm');
+    $applicationSetup = strpos($workflow, 'run: composer setup');
 
     expect($composer['require']['php'])->toBe('^8.4.1')
         ->and(trim(file_get_contents($root.'/.nvmrc')))->toBe('24')
         ->and($workflow)->toContain("php-version: '8.4'")
         ->and($workflow)->toContain("node-version-file: '.nvmrc'")
-        ->not->toContain("node-version: '22'");
+        ->not->toContain("node-version: '22'")
+        ->and($corepackSetup)->not->toBeFalse()
+        ->and($applicationSetup)->not->toBeFalse()
+        ->and($corepackSetup)->toBeLessThan($applicationSetup);
 });
