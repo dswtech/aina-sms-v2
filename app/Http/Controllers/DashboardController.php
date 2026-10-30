@@ -77,6 +77,20 @@ class DashboardController extends Controller
             ->where('last_activity_at', '<=', now()->subDays(3))
             ->count();
 
+        $targetableUsers = [];
+        if ($actor->role === \App\Enums\UserRole::Sales) {
+            $targetableUsers = [$actor];
+        } elseif ($actor->role === \App\Enums\UserRole::Supervisor) {
+            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $salesIds = TeamMembership::query()
+                ->whereIn('team_id', $teamIds)
+                ->whereNull('ended_at')
+                ->pluck('user_id');
+            $targetableUsers = User::query()->whereIn('id', $salesIds)->orderBy('name')->get(['id', 'name', 'username'])->all();
+        } elseif (in_array($actor->role, [\App\Enums\UserRole::Admin, \App\Enums\UserRole::BranchManager], true)) {
+            $targetableUsers = User::query()->where('role', \App\Enums\UserRole::Sales->value)->where('dealer_id', $actor->dealer_id)->orderBy('name')->get(['id', 'name', 'username'])->all();
+        }
+
         return Inertia::render('dashboard', [
             'dashboard' => [
                 'period' => $period->toDateString(),
@@ -87,6 +101,7 @@ class DashboardController extends Controller
                 'stageCounts' => $stageCounts,
                 'stagnantCount' => $stagnantCount,
             ],
+            'targetableUsers' => $targetableUsers,
         ]);
     }
 }
