@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.6 |
+| Versi | v1.7 |
 | Diperbarui | 30 Oktober 2026 |
 | Status | Aktif |
 
@@ -25,6 +25,11 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Fase 1 telah menyelesaikan dealer, tim, histori penempatan, scope organisasi, undangan sekali pakai, lifecycle Admin, dan audit aman. Gerbang PostgreSQL terisolasi, Pest, static analysis, frontend, build, serta browser tiga viewport telah lulus sesuai [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
 - Branch kerja aktif berada di `codex/phase-2-customer-slice` yang dibuat bersih dari `origin/main` tanpa residu atau cache lokal.
+- Vertical slice Fase 2 (Customer → assignment → transaksi → aktivitas → next follow-up → mobile) telah diimplementasikan di branch tersebut sesuai [`implementation-phase-2-customer-slice.md`](implementation-phase-2-customer-slice.md).
+- Model dan skema Fase 2 mencakup `Customer`, `CustomerAssignment`, `DealTransaction`, `StageHistory`, `CustomerActivity`, dan `FollowUp` beserta policy server-side `CustomerPolicy` dan `DealTransactionPolicy`.
+- Endpoint `/customers` menyediakan filter kelompok kerja, pencarian nama/nomor, sorting server-side, pembuatan lead, pencatatan aktivitas, penjadwalan follow-up, dan perubahan tahap dengan guard SPK/Lost.
+- Branch Manager sengaja ditolak (403) dari route `/customers` karena role tersebut hanya menerima laporan agregat tersanitasi; endpoint agregat belum dibuat.
+- Verifikasi Fase 2: Pint, PHPStan, `pnpm check`, `types:check`, production build lulus; Pest 131 tes (128 lulus, 3 skip karena Fortify nonaktif); layout 390/768/1440 diverifikasi melalui DOM tanpa overflow horizontal.
 
 ## Keputusan aktif
 
@@ -58,8 +63,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Eksekusi vertical slice Fase 2 berdasarkan rencana implementasi [`implementation-phase-2-customer-slice.md`](implementation-phase-2-customer-slice.md): Customer → assignment → transaksi → aktivitas → next follow-up → mobile.
-2. Pertahankan matriks akses dan audit Fase 1 sebagai invariant saat menambahkan data operasional.
+1. Push branch `codex/phase-2-customer-slice` dan buka pull request terhadap `main` untuk review vertical slice Fase 2.
+2. Lanjutkan modul roadmap berikutnya setelah PR Fase 2 diterima, dengan mempertahankan matriks akses dan audit Fase 1 sebagai invariant.
 
 ## Larangan memory
 

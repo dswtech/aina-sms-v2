@@ -29,55 +29,65 @@
 
 ### Task 1 — Model & Skema Customer, Phone Normalization, dan Duplicate Warning
 **Hasil:** Customer tersimpan terpisah dari transaksi dengan nomor telepon ternormalisasi, preferensi komunikasi, dan deteksi kandidat duplikat.
-- [ ] Tulis feature test untuk schema `customers`, normalisasi nomor telepon Indonesia (format E.164 / `+62...`), validasi email/nama, preferensi komunikasi (izin/opt-out WhatsApp/telepon), dan service deteksi duplikat telepon (`CRM-01`, `CRM-02`, `CRM-08`, `CRM-15`).
-- [ ] Implementasikan migration `create_customers_table`, model `Customer`, factory, cast, dan helper normalisasi telepon.
-- [ ] Implementasikan query scope & service pendeteksi duplikat yang memberi warning tanpa memblokir pembuatan transaksi baru untuk pelanggan yang sama.
-- [ ] Verifikasi Pest, lint, dan types.
+- [x] Tulis feature test untuk schema `customers`, normalisasi nomor telepon Indonesia (format E.164 / `+62...`), validasi email/nama, preferensi komunikasi (izin/opt-out WhatsApp/telepon), dan service deteksi duplikat telepon (`CRM-01`, `CRM-02`, `CRM-08`, `CRM-15`).
+- [x] Implementasikan migration `create_customers_table`, model `Customer`, factory, cast, dan helper normalisasi telepon.
+- [x] Implementasikan query scope & service pendeteksi duplikat yang memberi warning tanpa memblokir pembuatan transaksi baru untuk pelanggan yang sama.
+- [x] Verifikasi Pest, lint, dan types.
 
 ### Task 2 — Penugasan Customer (Assignment & Reassignment History)
 **Hasil:** Customer ditugaskan kepada Sales dengan riwayat penugasan append-only sebagai aset dealer.
-- [ ] Tulis feature test penugasan awal ke Sales, penugasan ulang oleh Supervisor/Admin, histori assignment tidak terhapus, dan isolasi antar-tim (`CRM-04`, `CRM-13`, `CRM-14`).
-- [ ] Implementasikan migration `create_customer_assignments_table`, model `CustomerAssignment`, relasi `assignedSales`, `activeAssignment`, dan scope pelanggan tim/sales.
-- [ ] Buat `CustomerPolicy` dengan kewenangan server-side:
+- [x] Tulis feature test penugasan awal ke Sales, penugasan ulang oleh Supervisor/Admin, histori assignment tidak terhapus, dan isolasi antar-tim (`CRM-04`, `CRM-13`, `CRM-14`).
+- [x] Implementasikan migration `create_customer_assignments_table`, model `CustomerAssignment`, relasi `assignedSales`, `activeAssignment`, dan scope pelanggan tim/sales.
+- [x] Buat `CustomerPolicy` dengan kewenangan server-side:
   - Sales: hanya Customer yang sedang aktif ditugaskan kepadanya (`CRM-09`).
   - Supervisor: Customer yang ditugaskan kepada anggota timnya (`CRM-14`).
   - Branch Manager: data agregat tanpa kontak pribadi / nomor telepon (`CRM-07`, `CRM-14`).
   - Admin: audit lingkup dealer.
-- [ ] Verifikasi Pest dan types.
+- [x] Verifikasi Pest dan types.
 
 ### Task 3 — Transaksi & Riwayat Tahap Pipeline (Append-Only)
 **Hasil:** Transaksi memiliki satu Customer, kendaraan diminati, Sales PIC, tahap aktif, dan riwayat tahap yang tidak ditimpa.
-- [ ] Tulis feature test transaksi dengan 7 tahap kanonik (`Lead`, `Prospect`, `Hot Prospect`, `SPK`, `DO`, `Delivery`, `Lost`), transisi tahap append-only, validasi SPK booking fee, validasi alasan Lost, dan penghitungan status stagnant (>3 hari tanpa aktivitas) (`PIP-01`, `PIP-02`, `PIP-03`, `PIP-04`, `PIP-05`, `PIP-07`).
-- [ ] Implementasikan migration `create_deal_transactions_table` dan `create_stage_histories_table`.
-- [ ] Buat enum `PipelineStage`, catalog alasan Lost, model `DealTransaction`, `StageHistory`, dan factory.
-- [ ] Implementasikan `TransactionPolicy` dan scope query server-side.
-- [ ] Verifikasi Pest dan types.
+- [x] Tulis feature test transaksi dengan 7 tahap kanonik (`Lead`, `Prospect`, `Hot Prospect`, `SPK`, `DO`, `Delivery`, `Lost`), transisi tahap append-only, validasi SPK booking fee, validasi alasan Lost, dan penghitungan status stagnant (>3 hari tanpa aktivitas) (`PIP-01`, `PIP-02`, `PIP-03`, `PIP-04`, `PIP-05`, `PIP-07`).
+- [x] Implementasikan migration `create_deal_transactions_table` dan `create_stage_histories_table`.
+- [x] Buat enum `PipelineStage`, catalog alasan Lost, model `DealTransaction`, `StageHistory`, dan factory.
+- [x] Implementasikan `TransactionPolicy` dan scope query server-side.
+- [x] Verifikasi Pest dan types.
 
 ### Task 4 — Aktivitas & Penjadwalan Next Follow-Up
 **Hasil:** Aktivitas follow-up tercatat pada timeline dan memperbarui kontak terakhir serta rencana tindak lanjut berikutnya.
-- [ ] Tulis feature test pencatatan aktivitas (telepon, WhatsApp, visit, note), pembaruan otomatis `last_contact_at` / `last_activity_at`, dan penjadwalan `next_follow_up` (`PIP-06`, `CRM-10`, `CRM-11`, `CRM-12`).
-- [ ] Implementasikan migration `create_customer_activities_table` dan `create_follow_ups_table`.
-- [ ] Buat model `CustomerActivity`, `FollowUp`, relasi ke Customer dan Transaksi, serta audit penandaan waktu.
-- [ ] Verifikasi Pest dan types.
+- [x] Tulis feature test pencatatan aktivitas (telepon, WhatsApp, visit, note), pembaruan otomatis `last_contact_at` / `last_activity_at`, dan penjadwalan `next_follow_up` (`PIP-06`, `CRM-10`, `CRM-11`, `CRM-12`).
+- [x] Implementasikan migration `create_customer_activities_table` dan `create_follow_ups_table`.
+- [x] Buat model `CustomerActivity`, `FollowUp`, relasi ke Customer dan Transaksi, serta audit penandaan waktu.
+- [x] Verifikasi Pest dan types.
 
 ### Task 5 — Controller & Endpoint Server-Side Buku Pelanggan
 **Hasil:** Endpoint Buku Pelanggan Saya melayani data terfilter, sanitasi role, dan pencarian cepat.
-- [ ] Tulis feature test request/response `/customers` (Buku Pelanggan Saya), filter kelompok kerja (Follow-up Hari Ini, Belum Dihubungi, Aktif, Tidak Aktif, Pernah Membeli), pencarian nama/nomor telepon, aksi simpan aktivitas, dan buat transaksi (`CRM-06`, `CRM-09`, `CRM-10`, `CRM-11`).
-- [ ] Implementasikan `CustomerController`, form request validasi, dan Inertia view response.
-- [ ] Pastikan Branch Manager tidak menerima field sensitif (telepon, preferensi, catatan pribadi) pada payload.
-- [ ] Verifikasi negative authorization dan audit logging.
+- [x] Tulis feature test request/response `/customers` (Buku Pelanggan Saya), filter kelompok kerja (Follow-up Hari Ini, Belum Dihubungi, Aktif, Tidak Aktif, Pernah Membeli), pencarian nama/nomor telepon, aksi simpan aktivitas, dan buat transaksi (`CRM-06`, `CRM-09`, `CRM-10`, `CRM-11`).
+- [x] Implementasikan `CustomerController`, form request validasi, dan Inertia view response.
+- [x] Pastikan Branch Manager tidak menerima field sensitif (telepon, preferensi, catatan pribadi) pada payload.
+- [x] Verifikasi negative authorization dan audit logging.
 
 ### Task 6 — Tampilan Frontend: Buku Pelanggan Saya (Mobile & Desktop)
 **Hasil:** Sales memiliki layar phonebook kerja dengan kartu informatif di mobile dan tabel di desktop serta aksi cepat satu sentuhan.
-- [ ] Buat halaman `resources/js/pages/customers/index.tsx` dengan daftar pelanggan terbagi dalam filter kelompok kerja dan pencarian cepat (`UIX-01`, `UIX-02`).
-- [ ] Komposisi tampilan:
+- [x] Buat halaman `resources/js/pages/customers/index.tsx` dengan daftar pelanggan terbagi dalam filter kelompok kerja dan pencarian cepat (`UIX-01`, `UIX-02`).
+- [x] Komposisi tampilan:
   - Mobile (390px): kartu kerja 2-baris dengan status hubungan, transaksi aktif, kontak terakhir, target sentuh 44px, dan tombol aksi cepat (tel, wa.me, catat aktivitas, jadwalkan follow-up).
   - Desktop (1440px): tabel responsif dengan badge status, kolom sorting, dan menu aksi.
-- [ ] Buat komponen form modal/sheet adaptif untuk pembuatan lead baru dan pencatatan follow-up cepat (<60 detik di mobile).
-- [ ] Verifikasi build dan browser di 390px, 768px, dan 1440px.
+- [x] Buat komponen form modal/sheet adaptif untuk pembuatan lead baru dan pencatatan follow-up cepat (<60 detik di mobile).
+- [x] Verifikasi build dan browser di 390px, 768px, dan 1440px.
 
 ### Task 7 — Dialog Adaptif Detail Transaksi & Alur Lengkap Stage
 **Hasil:** Detail transaksi adaptif (full-screen sheet di mobile, large dialog di desktop) dengan perubahan tahap dan alasan Lost.
-- [ ] Buat dialog/sheet adaptif detail transaksi (`UIX-03`) yang menampilkan riwayat tahap, aksi ganti tahap, dialog alasan Lost jika berpindah ke Lost, dan timeline aktivitas.
-- [ ] Pastikan posisi daftar dan filter tersimpan saat menutup dialog.
-- [ ] Jalankan verifikasi linting (`pnpm run check`), type check (`pnpm run types:check`), Pint, PHPStan, dan Pest regression suite.
+- [x] Buat dialog/sheet adaptif detail transaksi (`UIX-03`) yang menampilkan riwayat tahap, aksi ganti tahap, dialog alasan Lost jika berpindah ke Lost, dan timeline aktivitas.
+- [x] Pastikan posisi daftar dan filter tersimpan saat menutup dialog.
+- [x] Jalankan verifikasi linting (`pnpm run check`), type check (`pnpm run types:check`), Pint, PHPStan, dan Pest regression suite.
+
+---
+
+## Catatan implementasi
+
+- Branch Manager tidak diberi akses ke route `/customers` sama sekali (403) karena kebutuhan role tersebut adalah data agregat tersanitasi, bukan baris pelanggan dengan kontak pribadi; laporan agregat akan menjadi endpoint tersendiri pada fase laporan.
+- Detail transaksi memakai satu `Dialog` responsif: full-screen tanpa margin di bawah `sm`, dan dialog lebar `2xl` di desktop.
+- Otorisasi tahap transaksi ditegakkan `DealTransactionPolicy`; transaksi yang sudah `Delivery`/`Lost` tidak dapat diubah tahapnya.
+- Verifikasi akhir: Pint, PHPStan, `pnpm check`, `types:check`, dan production build lulus; Pest 131 tes (128 lulus, 3 skip karena Fortify nonaktif).
+- Verifikasi layout dilakukan pada 390px, 768px, dan 1440px melalui DOM terukur (tanpa overflow horizontal, kartu tampil di 390/768, tabel tampil di 1440). Screenshot tidak dapat diambil karena jendela desktop agent tidak terlihat.
