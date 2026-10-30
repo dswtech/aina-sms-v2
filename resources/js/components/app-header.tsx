@@ -1,5 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -66,6 +66,9 @@ const activeItemStyles =
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props;
+    const notifications = (page.props as any).notifications ?? [];
+    const notificationsUnreadCount =
+        (page.props as any).notificationsUnreadCount ?? 0;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
@@ -210,6 +213,61 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 ))}
                             </div>
                         </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="relative h-9 w-9"
+                                >
+                                    <Bell className="size-5 opacity-80" />
+                                    {notificationsUnreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                            {notificationsUnreadCount}
+                                        </span>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-80" align="end">
+                                {notifications.length === 0 ? (
+                                    <div className="p-3 text-sm text-muted-foreground">
+                                        Tidak ada notifikasi baru.
+                                    </div>
+                                ) : (
+                                    notifications.map((notification: any) => (
+                                        <div
+                                            key={notification.id}
+                                            className="border-b p-3 last:border-b-0"
+                                        >
+                                            <p className="text-sm font-medium">
+                                                {notification.data?.message ??
+                                                    'Notifikasi baru'}
+                                            </p>
+                                            {notification.data?.author_name && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {
+                                                        notification.data
+                                                            .author_name
+                                                    }
+                                                </p>
+                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="mt-2 h-7 px-2 text-xs"
+                                                onClick={() =>
+                                                    router.patch(
+                                                        `/notifications/${notification.id}/read`,
+                                                    )
+                                                }
+                                            >
+                                                Tandai dibaca
+                                            </Button>
+                                        </div>
+                                    ))
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
