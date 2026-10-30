@@ -50,7 +50,15 @@ class CustomerController extends Controller
                 $q->where('status', 'pending')
                     ->whereDate('scheduled_at', CarbonImmutable::today());
             })->count(),
+            'overdue' => (clone $baseQuery)->whereHas('followUps', function (Builder $q): void {
+                $q->where('status', 'pending')
+                    ->whereDate('scheduled_at', '<', CarbonImmutable::today());
+            })->count(),
             'uncontacted' => (clone $baseQuery)->whereNull('last_contact_at')->count(),
+            'stagnant' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+                    ->where('last_activity_at', '<=', CarbonImmutable::now()->subDays(3));
+            })->count(),
             'active' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
             })->count(),
@@ -90,7 +98,15 @@ class CustomerController extends Controller
                 $q->where('status', 'pending')
                     ->whereDate('scheduled_at', CarbonImmutable::today());
             }),
+            'overdue' => $query->whereHas('followUps', function (Builder $q): void {
+                $q->where('status', 'pending')
+                    ->whereDate('scheduled_at', '<', CarbonImmutable::today());
+            }),
             'uncontacted' => $query->whereNull('last_contact_at'),
+            'stagnant' => $query->whereHas('transactions', function (Builder $q): void {
+                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+                    ->where('last_activity_at', '<=', CarbonImmutable::now()->subDays(3));
+            }),
             'active' => $query->whereHas('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
             }),
