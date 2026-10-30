@@ -59,6 +59,26 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function admin(): static
+    {
+        return $this->role(UserRole::Admin);
+    }
+
+    public function branchManager(): static
+    {
+        return $this->role(UserRole::BranchManager);
+    }
+
+    public function supervisor(): static
+    {
+        return $this->role(UserRole::Supervisor);
+    }
+
+    public function sales(): static
+    {
+        return $this->role(UserRole::Sales);
+    }
+
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
