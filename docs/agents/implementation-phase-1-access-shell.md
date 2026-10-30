@@ -70,10 +70,10 @@
 
 **Hasil:** Admin melihat status invited/active/inactive dan mengelola lifecycle tanpa hard delete.
 
-- [ ] Tulis feature test daftar terscope, invite, resend, revoke, deactivate, reactivate, dan larangan actor non-Admin.
-- [ ] Implementasikan controller/form request/action dan audit untuk lifecycle user/invitation.
-- [ ] Ganti placeholder `/users` dengan halaman responsif berisi daftar, filter status, dialog undangan, dan aksi yang beralasan saat disabled.
-- [ ] Jalankan Pest fokus, frontend check, type-check, dan build.
+- [x] Tulis feature test daftar terscope, invite, resend, revoke, deactivate, reactivate, dan larangan actor non-Admin.
+- [x] Implementasikan controller/form request/action dan audit untuk lifecycle user/invitation.
+- [x] Ganti placeholder `/users` dengan halaman responsif berisi daftar, filter status, dialog undangan, dan aksi yang beralasan saat disabled.
+- [x] Jalankan Pest fokus, frontend check, type-check, dan build.
 
 ## Task 6 — Admin Tim & Penempatan
 

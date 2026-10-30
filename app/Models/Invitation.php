@@ -35,6 +35,11 @@ class Invitation extends Model
     /** @use HasFactory<InvitationFactory> */
     use HasFactory;
 
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
     public function state(): string
     {
         return match (true) {

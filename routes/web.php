@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\InvitationLifecycleController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\InvitationController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,7 +46,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
     Route::middleware('role:admin')->group(function () {
         Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
-        Route::inertia('users', 'module-status', ['module' => 'users'])->name('users.index');
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
+        Route::post('invitations/{invitation}/resend', [InvitationLifecycleController::class, 'resend'])->name('invitations.resend');
+        Route::patch('invitations/{invitation}/revoke', [InvitationLifecycleController::class, 'revoke'])->name('invitations.revoke');
         Route::inertia('teams', 'module-status', ['module' => 'teams'])->name('teams.index');
         Route::inertia('dealer-settings', 'module-status', ['module' => 'dealer-settings'])->name('dealer-settings.edit');
     });

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AcceptInvitationRequest;
 use App\Http\Requests\Auth\StoreInvitationRequest;
+use App\Models\AuditLog;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\TeamMembership;
@@ -30,18 +31,34 @@ class InvitationController extends Controller
         $plainToken = Str::random(64);
         $username = $this->availableUsername(UsernameGenerator::fromName($validated['name']));
 
-        $invitation = Invitation::query()->create([
-            'public_id' => (string) Str::uuid(),
-            'dealer_id' => $actor->dealer_id,
-            'team_id' => $validated['team_id'] ?? null,
-            'invited_by_id' => $actor->id,
-            'name' => $validated['name'],
-            'username' => $username,
-            'email' => Str::lower($validated['email']),
-            'role' => $validated['role'],
-            'token_hash' => hash('sha256', $plainToken),
-            'expires_at' => now()->addDays(7),
-        ]);
+        $invitation = DB::transaction(function () use ($actor, $plainToken, $username, $validated): Invitation {
+            $invitation = Invitation::query()->create([
+                'public_id' => (string) Str::uuid(),
+                'dealer_id' => $actor->dealer_id,
+                'team_id' => $validated['team_id'] ?? null,
+                'invited_by_id' => $actor->id,
+                'name' => $validated['name'],
+                'username' => $username,
+                'email' => Str::lower($validated['email']),
+                'role' => $validated['role'],
+                'token_hash' => hash('sha256', $plainToken),
+                'expires_at' => now()->addDays(7),
+            ]);
+
+            AuditLog::query()->create([
+                'dealer_id' => $invitation->dealer_id,
+                'actor_id' => $actor->id,
+                'action' => 'invitation.created',
+                'subject_type' => 'invitation',
+                'subject_public_id' => $invitation->public_id,
+                'metadata' => [
+                    'role' => $invitation->role->value,
+                    'team_id' => $invitation->team_id,
+                ],
+            ]);
+
+            return $invitation;
+        });
 
         Notification::route('mail', [$invitation->email => $invitation->name])
             ->notify(new InvitationCreated($invitation, $plainToken));

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\AuditLog;
 use App\Models\Dealer;
 use App\Models\Invitation;
 use App\Models\Team;
@@ -56,7 +57,8 @@ it('lets a same-dealer admin create and deliver a hashed single-use invitation',
         ->and($invitation->role)->toBe(UserRole::Sales)
         ->and($plainToken)->toBeString()->not->toBe('')
         ->and($invitation->token_hash)->toBe(hash('sha256', $plainToken))
-        ->and($invitation->getAttributes())->not->toHaveKeys(['password', 'plain_token']);
+        ->and($invitation->getAttributes())->not->toHaveKeys(['password', 'plain_token'])
+        ->and(AuditLog::query()->where('action', 'invitation.created')->exists())->toBeTrue();
 });
 
 it('rejects non-admin creation and caller supplied organization scope', function () {

@@ -41,6 +41,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
     /**
      * @return BelongsTo<Dealer, $this>
      */
