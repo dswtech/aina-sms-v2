@@ -59,6 +59,22 @@ export type CustomerItem = {
         is_closed: boolean;
         is_stagnant: boolean;
         estimated_value: number | null;
+        comments: Array<{
+            id: number;
+            body: string;
+            author_name: string | null;
+            created_at: string;
+            edited_at: string | null;
+            can_edit: boolean;
+            replies: Array<{
+                id: number;
+                body: string;
+                author_name: string | null;
+                created_at: string;
+                edited_at: string | null;
+                can_edit: boolean;
+            }>;
+        }>;
     } | null;
     next_follow_up: {
         id: number;
@@ -171,6 +187,15 @@ export default function CustomersIndex({
 
     const [reassignSalesId, setReassignSalesId] = useState('');
     const [reassignNotes, setReassignNotes] = useState('');
+
+    // Comment states
+    const [commentBody, setCommentBody] = useState('');
+    const [replyParentId, setReplyParentId] = useState<number | null>(null);
+    const [replyBody, setReplyBody] = useState('');
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(
+        null,
+    );
+    const [editBody, setEditBody] = useState('');
 
     function applyFilters(
         nextTab = filters.tab,
@@ -325,6 +350,43 @@ export default function CustomersIndex({
                     setReassignOpen(false);
                     setReassignSalesId('');
                     setReassignNotes('');
+                },
+            },
+        );
+    }
+
+    function handleCreateComment(e: React.FormEvent, parentId?: number) {
+        e.preventDefault();
+        if (!selectedCustomer?.active_deal) return;
+        const body = parentId ? replyBody : commentBody;
+        router.post(
+            `/transactions/${selectedCustomer.active_deal.public_id}/comments`,
+            {
+                body,
+                parent_id: parentId ?? undefined,
+            },
+            {
+                onSuccess: () => {
+                    if (parentId) {
+                        setReplyBody('');
+                        setReplyParentId(null);
+                    } else {
+                        setCommentBody('');
+                    }
+                },
+            },
+        );
+    }
+
+    function handleUpdateComment(e: React.FormEvent, commentId: number) {
+        e.preventDefault();
+        router.patch(
+            `/comments/${commentId}`,
+            { body: editBody },
+            {
+                onSuccess: () => {
+                    setEditingCommentId(null);
+                    setEditBody('');
                 },
             },
         );
@@ -1662,6 +1724,365 @@ export default function CustomersIndex({
                                 ) : (
                                     <p className="mt-1 text-sm text-muted-foreground">
                                         Belum ada aktivitas tercatat.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-semibold">
+                                    Komentar & diskusi
+                                </h4>
+                                {selectedCustomer?.active_deal ? (
+                                    <>
+                                        {selectedCustomer.active_deal.comments
+                                            .length > 0 ? (
+                                            <ul className="mt-2 space-y-3">
+                                                {selectedCustomer.active_deal.comments.map(
+                                                    (comment) => (
+                                                        <li
+                                                            key={comment.id}
+                                                            className="rounded-lg border p-3"
+                                                        >
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <span className="text-sm font-medium">
+                                                                    {comment.author_name ??
+                                                                        'Anonim'}
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatDate(
+                                                                        comment.created_at,
+                                                                    )}
+                                                                </span>
+                                                                {comment.edited_at && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        (diedit{' '}
+                                                                        {formatDate(
+                                                                            comment.edited_at,
+                                                                        )}
+                                                                        )
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {editingCommentId ===
+                                                            comment.id ? (
+                                                                <form
+                                                                    onSubmit={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleUpdateComment(
+                                                                            e,
+                                                                            comment.id,
+                                                                        )
+                                                                    }
+                                                                    className="mt-2 space-y-2"
+                                                                >
+                                                                    <textarea
+                                                                        value={
+                                                                            editBody
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setEditBody(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
+                                                                        required
+                                                                    />
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            type="submit"
+                                                                            size="sm"
+                                                                            className="min-h-9"
+                                                                        >
+                                                                            Simpan
+                                                                        </Button>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            className="min-h-9"
+                                                                            onClick={() => {
+                                                                                setEditingCommentId(
+                                                                                    null,
+                                                                                );
+                                                                                setEditBody(
+                                                                                    '',
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            Batal
+                                                                        </Button>
+                                                                    </div>
+                                                                </form>
+                                                            ) : (
+                                                                <p className="mt-1 text-sm">
+                                                                    {
+                                                                        comment.body
+                                                                    }
+                                                                </p>
+                                                            )}
+
+                                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                                {comment.can_edit &&
+                                                                    editingCommentId !==
+                                                                        comment.id && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-8 px-2 text-xs"
+                                                                            onClick={() => {
+                                                                                setEditingCommentId(
+                                                                                    comment.id,
+                                                                                );
+                                                                                setEditBody(
+                                                                                    comment.body,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            Edit
+                                                                        </Button>
+                                                                    )}
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-8 px-2 text-xs"
+                                                                    onClick={() =>
+                                                                        setReplyParentId(
+                                                                            comment.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Balas
+                                                                </Button>
+                                                            </div>
+
+                                                            {comment.replies
+                                                                .length > 0 && (
+                                                                <ul className="mt-3 space-y-2 border-l pl-3">
+                                                                    {comment.replies.map(
+                                                                        (
+                                                                            reply,
+                                                                        ) => (
+                                                                            <li
+                                                                                key={
+                                                                                    reply.id
+                                                                                }
+                                                                                className="rounded-md bg-muted/40 p-2"
+                                                                            >
+                                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                                    <span className="text-sm font-medium">
+                                                                                        {reply.author_name ??
+                                                                                            'Anonim'}
+                                                                                    </span>
+                                                                                    <span className="text-xs text-muted-foreground">
+                                                                                        {formatDate(
+                                                                                            reply.created_at,
+                                                                                        )}
+                                                                                    </span>
+                                                                                    {reply.edited_at && (
+                                                                                        <span className="text-xs text-muted-foreground">
+                                                                                            (diedit{' '}
+                                                                                            {formatDate(
+                                                                                                reply.edited_at,
+                                                                                            )}
+                                                                                            )
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {editingCommentId ===
+                                                                                reply.id ? (
+                                                                                    <form
+                                                                                        onSubmit={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            handleUpdateComment(
+                                                                                                e,
+                                                                                                reply.id,
+                                                                                            )
+                                                                                        }
+                                                                                        className="mt-2 space-y-2"
+                                                                                    >
+                                                                                        <textarea
+                                                                                            value={
+                                                                                                editBody
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e,
+                                                                                            ) =>
+                                                                                                setEditBody(
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                )
+                                                                                            }
+                                                                                            className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
+                                                                                            required
+                                                                                        />
+                                                                                        <div className="flex gap-2">
+                                                                                            <Button
+                                                                                                type="submit"
+                                                                                                size="sm"
+                                                                                                className="min-h-9"
+                                                                                            >
+                                                                                                Simpan
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                type="button"
+                                                                                                variant="outline"
+                                                                                                size="sm"
+                                                                                                className="min-h-9"
+                                                                                                onClick={() => {
+                                                                                                    setEditingCommentId(
+                                                                                                        null,
+                                                                                                    );
+                                                                                                    setEditBody(
+                                                                                                        '',
+                                                                                                    );
+                                                                                                }}
+                                                                                            >
+                                                                                                Batal
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    </form>
+                                                                                ) : (
+                                                                                    <p className="mt-1 text-sm">
+                                                                                        {
+                                                                                            reply.body
+                                                                                        }
+                                                                                    </p>
+                                                                                )}
+
+                                                                                {reply.can_edit &&
+                                                                                    editingCommentId !==
+                                                                                        reply.id && (
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            className="mt-1 h-8 px-2 text-xs"
+                                                                                            onClick={() => {
+                                                                                                setEditingCommentId(
+                                                                                                    reply.id,
+                                                                                                );
+                                                                                                setEditBody(
+                                                                                                    reply.body,
+                                                                                                );
+                                                                                            }}
+                                                                                        >
+                                                                                            Edit
+                                                                                        </Button>
+                                                                                    )}
+                                                                            </li>
+                                                                        ),
+                                                                    )}
+                                                                </ul>
+                                                            )}
+
+                                                            {replyParentId ===
+                                                                comment.id && (
+                                                                <form
+                                                                    onSubmit={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleCreateComment(
+                                                                            e,
+                                                                            comment.id,
+                                                                        )
+                                                                    }
+                                                                    className="mt-3 space-y-2"
+                                                                >
+                                                                    <textarea
+                                                                        value={
+                                                                            replyBody
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setReplyBody(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="Tulis balasan..."
+                                                                        className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
+                                                                        required
+                                                                    />
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            type="submit"
+                                                                            size="sm"
+                                                                            className="min-h-9"
+                                                                        >
+                                                                            Kirim
+                                                                            Balasan
+                                                                        </Button>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            className="min-h-9"
+                                                                            onClick={() => {
+                                                                                setReplyParentId(
+                                                                                    null,
+                                                                                );
+                                                                                setReplyBody(
+                                                                                    '',
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            Batal
+                                                                        </Button>
+                                                                    </div>
+                                                                </form>
+                                                            )}
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        ) : (
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                Belum ada komentar.
+                                            </p>
+                                        )}
+
+                                        <form
+                                            onSubmit={(e) =>
+                                                handleCreateComment(e)
+                                            }
+                                            className="mt-3 space-y-2"
+                                        >
+                                            <textarea
+                                                value={commentBody}
+                                                onChange={(e) =>
+                                                    setCommentBody(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Tulis komentar..."
+                                                className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
+                                                required
+                                            />
+                                            <Button
+                                                type="submit"
+                                                size="sm"
+                                                className="min-h-9"
+                                            >
+                                                Kirim Komentar
+                                            </Button>
+                                        </form>
+                                    </>
+                                ) : (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Tidak ada transaksi aktif.
                                     </p>
                                 )}
                             </div>
