@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\DealCommentController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,7 +23,7 @@ Route::get('/', fn () => auth()->check()
     : redirect()->route('login'))->name('home');
 
 Route::middleware(['auth', 'active', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::middleware('role:sales,supervisor,admin')->group(function () {
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
