@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ActivityType;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Models\Customer;
@@ -176,4 +177,60 @@ it('updates deal stage with audit and validation', function () {
 
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::Lost)
         ->and($deal->fresh()->lost_reason)->toBe(LostReason::Competitor);
+});
+
+it('sorts the customer list by name and ignores unknown sort columns', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+
+    foreach (['Cempaka Sari', 'Ananda Putra', 'Bima Sakti'] as $name) {
+        $customer = Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => $name]);
+        $customer->assignTo($sales);
+    }
+
+    $this->actingAs($sales)
+        ->get(route('customers.index', ['sort' => 'name', 'direction' => 'asc']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('customers.data.0.name', 'Ananda Putra')
+            ->where('customers.data.1.name', 'Bima Sakti')
+            ->where('customers.data.2.name', 'Cempaka Sari')
+            ->where('filters.sort', 'name')
+            ->where('filters.direction', 'asc')
+        );
+
+    $this->actingAs($sales)
+        ->get(route('customers.index', ['sort' => 'phone', 'direction' => 'asc']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.sort', 'updated_at'));
+});
+
+it('exposes stage history and recent activities for the transaction detail view', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => 'Detail Pelanggan']);
+    $customer->assignTo($sales);
+
+    $deal = DealTransaction::create([
+        'dealer_id' => $dealer->id,
+        'customer_id' => $customer->id,
+        'sales_id' => $sales->id,
+        'vehicle_model' => 'Creta',
+        'current_stage' => PipelineStage::Lead,
+    ]);
+
+    $deal->transitionTo(PipelineStage::Prospect, $sales, 'Sudah dihubungi');
+    $customer->logActivity($sales, ActivityType::Whatsapp, 'Kirim brosur digital', $deal);
+
+    $this->actingAs($sales)
+        ->get(route('customers.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('customers.data.0.stage_history', 1)
+            ->where('customers.data.0.stage_history.0.to_stage', 'prospect')
+            ->where('customers.data.0.stage_history.0.to_stage_label', 'Prospect')
+            ->has('customers.data.0.recent_activities', 1)
+            ->where('customers.data.0.recent_activities.0.type', 'whatsapp')
+            ->where('customers.data.0.recent_activities.0.notes', 'Kirim brosur digital')
+        );
 });

@@ -11,7 +11,9 @@ use App\Http\Requests\Customer\StoreCustomerLeadRequest;
 use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
+use App\Models\CustomerActivity;
 use App\Models\DealTransaction;
+use App\Models\StageHistory;
 use App\Models\User;
 use App\Services\CustomerDuplicateDetector;
 use App\Support\PhoneNormalizer;
@@ -77,30 +79,38 @@ class CustomerController extends Controller
             default => null,
         };
 
-        $customers = $query->with(['activeAssignment.sales', 'transactions', 'nextFollowUp'])
-            ->latest('updated_at')
+        $sort = $request->string('sort')->toString();
+        $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
+        $sort = in_array($sort, ['name', 'last_contact_at', 'updated_at'], true) ? $sort : 'updated_at';
+
+        $customers = $query->with(['activeAssignment.sales', 'transactions.stageHistories.actor', 'activities.user', 'nextFollowUp'])
+            ->orderBy($sort, $direction)
+            ->orderBy('id')
             ->paginate(15)
             ->withQueryString()
-            ->through(fn (Customer $c) => [
-                'public_id' => $c->public_id,
-                'name' => $c->name,
-                'phone' => $c->phone,
-                'email' => $c->email,
-                'address' => $c->address,
-                'contact_channel_preference' => $c->contact_channel_preference,
-                'opt_out' => $c->opt_out,
-                'last_contact_at' => $c->last_contact_at?->toIso8601String(),
-                'notes' => $c->notes,
-                'assigned_sales' => $c->assignedSales ? [
-                    'public_id' => $c->assignedSales->public_id,
-                    'name' => $c->assignedSales->name,
-                    'username' => $c->assignedSales->username,
-                ] : null,
+            ->through(function (Customer $c): array {
                 // Pick the most recent open deal, falling back to the most recent closed one.
-                'active_deal' => ($deal = $c->transactions
+                $deal = $c->transactions
                     ->sortByDesc('id')
                     ->sortBy(fn (DealTransaction $d): int => $d->current_stage->isClosed() ? 1 : 0)
-                    ->first()) ? [
+                    ->first();
+
+                return [
+                    'public_id' => $c->public_id,
+                    'name' => $c->name,
+                    'phone' => $c->phone,
+                    'email' => $c->email,
+                    'address' => $c->address,
+                    'contact_channel_preference' => $c->contact_channel_preference,
+                    'opt_out' => $c->opt_out,
+                    'last_contact_at' => $c->last_contact_at?->toIso8601String(),
+                    'notes' => $c->notes,
+                    'assigned_sales' => $c->assignedSales ? [
+                        'public_id' => $c->assignedSales->public_id,
+                        'name' => $c->assignedSales->name,
+                        'username' => $c->assignedSales->username,
+                    ] : null,
+                    'active_deal' => $deal ? [
                         'id' => $deal->id,
                         'public_id' => $deal->public_id,
                         'vehicle_model' => $deal->vehicle_model,
@@ -110,19 +120,40 @@ class CustomerController extends Controller
                         'is_stagnant' => $deal->is_stagnant,
                         'estimated_value' => $deal->estimated_value,
                     ] : null,
-                'next_follow_up' => $c->nextFollowUp ? [
-                    'id' => $c->nextFollowUp->id,
-                    'scheduled_at' => $c->nextFollowUp->scheduled_at->toIso8601String(),
-                    'plan_notes' => $c->nextFollowUp->plan_notes,
-                    'status' => $c->nextFollowUp->status,
-                ] : null,
-            ]);
+                    'next_follow_up' => $c->nextFollowUp ? [
+                        'id' => $c->nextFollowUp->id,
+                        'scheduled_at' => $c->nextFollowUp->scheduled_at->toIso8601String(),
+                        'plan_notes' => $c->nextFollowUp->plan_notes,
+                        'status' => $c->nextFollowUp->status,
+                    ] : null,
+                    'stage_history' => $deal
+                        ? $deal->stageHistories->map(fn (StageHistory $history): array => [
+                            'from_stage' => $history->from_stage?->value,
+                            'from_stage_label' => $history->from_stage?->label(),
+                            'to_stage' => $history->to_stage->value,
+                            'to_stage_label' => $history->to_stage->label(),
+                            'notes' => $history->notes,
+                            'actor_name' => $history->actor?->name,
+                            'created_at' => $history->created_at->toIso8601String(),
+                        ])->values()->all()
+                        : [],
+                    'recent_activities' => $c->activities->take(10)->map(fn (CustomerActivity $activity): array => [
+                        'type' => $activity->type->value,
+                        'type_label' => $activity->type->label(),
+                        'notes' => $activity->notes,
+                        'occurred_at' => $activity->occurred_at->toIso8601String(),
+                        'user_name' => $activity->user?->name,
+                    ])->values()->all(),
+                ];
+            });
 
         return Inertia::render('customers/index', [
             'customers' => $customers,
             'filters' => [
                 'search' => $search ?? '',
                 'tab' => $tab,
+                'sort' => $sort,
+                'direction' => $direction,
             ],
             'counts' => $counts,
         ]);

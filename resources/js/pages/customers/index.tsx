@@ -1,8 +1,11 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    ArrowUpDown,
     Calendar,
     CalendarClock,
     CheckCircle2,
+    ChevronDown,
+    ChevronUp,
     Clock,
     MessageSquare,
     Phone,
@@ -63,6 +66,22 @@ export type CustomerItem = {
         plan_notes: string;
         status: string;
     } | null;
+    stage_history: Array<{
+        from_stage: string | null;
+        from_stage_label: string | null;
+        to_stage: string;
+        to_stage_label: string;
+        notes: string | null;
+        actor_name: string | null;
+        created_at: string;
+    }>;
+    recent_activities: Array<{
+        type: string;
+        type_label: string;
+        notes: string;
+        occurred_at: string;
+        user_name: string | null;
+    }>;
 };
 
 type Props = {
@@ -75,6 +94,8 @@ type Props = {
     filters: {
         search: string;
         tab: string;
+        sort: string;
+        direction: string;
     };
     counts: {
         all: number;
@@ -106,6 +127,7 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
     const [activityOpen, setActivityOpen] = useState(false);
     const [followUpOpen, setFollowUpOpen] = useState(false);
     const [stageOpen, setStageOpen] = useState(false);
+    const [detailOpen, setDetailOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] =
         useState<CustomerItem | null>(null);
 
@@ -127,15 +149,37 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
     const [lostReason, setLostReason] = useState('price_budget');
     const [bookingFee, setBookingFee] = useState(false);
 
-    function applyFilters(nextTab = filters.tab, query = search) {
+    function applyFilters(
+        nextTab = filters.tab,
+        query = search,
+        nextSort = filters.sort,
+        nextDirection = filters.direction,
+    ) {
         router.get(
             '/customers',
             {
                 tab: nextTab !== 'all' ? nextTab : undefined,
                 search: query ? query : undefined,
+                sort: nextSort !== 'updated_at' ? nextSort : undefined,
+                direction:
+                    nextSort !== 'updated_at' ? nextDirection : undefined,
             },
             { preserveState: true, replace: true },
         );
+    }
+
+    function toggleSort(column: 'name' | 'last_contact_at') {
+        const nextDirection =
+            filters.sort === column && filters.direction === 'asc'
+                ? 'desc'
+                : 'asc';
+
+        applyFilters(filters.tab, search, column, nextDirection);
+    }
+
+    function openDetail(customer: CustomerItem) {
+        setSelectedCustomer(customer);
+        setDetailOpen(true);
     }
 
     function handleCreateLead(e: React.FormEvent) {
@@ -481,8 +525,8 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                     </div>
                 </div>
 
-                {/* Customer List Content */}
-                <div className="mt-6 space-y-4">
+                {/* Customer List Content — mobile & tablet cards */}
+                <div className="mt-6 space-y-4 lg:hidden">
                     {customers.data.length === 0 ? (
                         <div className="rounded-xl border border-dashed p-10 text-center">
                             <Users className="mx-auto size-10 text-muted-foreground/50" />
@@ -629,6 +673,15 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                                                 Follow-Up
                                             </Button>
 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="min-h-11 px-3"
+                                                onClick={() => openDetail(c)}
+                                            >
+                                                Detail
+                                            </Button>
+
                                             {c.active_deal &&
                                                 !c.active_deal.is_closed && (
                                                     <Button
@@ -655,6 +708,230 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                             </Card>
                         ))
                     )}
+                </div>
+
+                {/* Desktop table */}
+                <div className="mt-6 hidden lg:block">
+                    <div className="overflow-x-auto rounded-xl border">
+                        <table className="w-full text-sm">
+                            <thead className="bg-muted/50 text-left text-xs tracking-wide text-muted-foreground uppercase">
+                                <tr>
+                                    <th className="px-4 py-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleSort('name')}
+                                            className="flex items-center gap-1 uppercase"
+                                        >
+                                            Pelanggan
+                                            {filters.sort === 'name' ? (
+                                                filters.direction === 'asc' ? (
+                                                    <ChevronUp className="size-3" />
+                                                ) : (
+                                                    <ChevronDown className="size-3" />
+                                                )
+                                            ) : (
+                                                <ArrowUpDown className="size-3 opacity-50" />
+                                            )}
+                                        </button>
+                                    </th>
+                                    <th className="px-4 py-3">PIC</th>
+                                    <th className="px-4 py-3">Tahap</th>
+                                    <th className="px-4 py-3">Unit diminati</th>
+                                    <th className="px-4 py-3">Tindak lanjut</th>
+                                    <th className="px-4 py-3">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                toggleSort('last_contact_at')
+                                            }
+                                            className="flex items-center gap-1 uppercase"
+                                        >
+                                            Kontak terakhir
+                                            {filters.sort ===
+                                            'last_contact_at' ? (
+                                                filters.direction === 'asc' ? (
+                                                    <ChevronUp className="size-3" />
+                                                ) : (
+                                                    <ChevronDown className="size-3" />
+                                                )
+                                            ) : (
+                                                <ArrowUpDown className="size-3 opacity-50" />
+                                            )}
+                                        </button>
+                                    </th>
+                                    <th className="px-4 py-3 text-right">
+                                        Aksi
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {customers.data.length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={7}
+                                            className="px-4 py-10 text-center text-muted-foreground"
+                                        >
+                                            Belum ada pelanggan ditemukan.
+                                        </td>
+                                    </tr>
+                                )}
+                                {customers.data.map((c) => (
+                                    <tr
+                                        key={c.public_id}
+                                        className="align-top hover:bg-muted/30"
+                                    >
+                                        <td className="px-4 py-3">
+                                            <div className="font-semibold">
+                                                {c.name}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {c.phone}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {c.assigned_sales?.name ??
+                                                'Belum ditugaskan'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {c.active_deal ? (
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <Badge
+                                                        variant={
+                                                            c.active_deal
+                                                                .is_closed
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                        }
+                                                    >
+                                                        {
+                                                            c.active_deal
+                                                                .stage_label
+                                                        }
+                                                    </Badge>
+                                                    {c.active_deal
+                                                        .is_stagnant && (
+                                                        <Badge
+                                                            variant="destructive"
+                                                            className="text-[10px]"
+                                                        >
+                                                            Stagnan &gt;3 Hari
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {c.active_deal?.vehicle_model ??
+                                                '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {c.next_follow_up ? (
+                                                <div className="text-xs">
+                                                    <div className="font-medium">
+                                                        {formatDate(
+                                                            c.next_follow_up
+                                                                .scheduled_at,
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className="max-w-56 truncate text-muted-foreground"
+                                                        title={
+                                                            c.next_follow_up
+                                                                .plan_notes
+                                                        }
+                                                    >
+                                                        {
+                                                            c.next_follow_up
+                                                                .plan_notes
+                                                        }
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">
+                                                    Belum dijadwalkan
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                                            {formatDate(c.last_contact_at)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex justify-end gap-1.5">
+                                                <Button
+                                                    asChild
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-10"
+                                                >
+                                                    <a
+                                                        href={`tel:${c.phone}`}
+                                                        aria-label={`Telepon ${c.name}`}
+                                                    >
+                                                        <Phone className="size-4 text-emerald-600" />
+                                                    </a>
+                                                </Button>
+                                                <Button
+                                                    asChild
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-10"
+                                                >
+                                                    <a
+                                                        href={formatPhoneLink(
+                                                            c.phone,
+                                                        )}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        aria-label={`WhatsApp ${c.name}`}
+                                                    >
+                                                        <MessageSquare className="size-4 text-emerald-500" />
+                                                    </a>
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="min-h-10"
+                                                    onClick={() =>
+                                                        openDetail(c)
+                                                    }
+                                                >
+                                                    Detail
+                                                </Button>
+                                                {c.active_deal &&
+                                                    !c.active_deal
+                                                        .is_closed && (
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            className="min-h-10"
+                                                            onClick={() => {
+                                                                setSelectedCustomer(
+                                                                    c,
+                                                                );
+                                                                setNextStage(
+                                                                    c
+                                                                        .active_deal!
+                                                                        .current_stage,
+                                                                );
+                                                                setStageOpen(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                        >
+                                                            Ubah Tahap
+                                                        </Button>
+                                                    )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Dialog: Catat Aktivitas */}
@@ -911,6 +1188,278 @@ export default function CustomersIndex({ customers, filters, counts }: Props) {
                                 Konfirmasi Perubahan Tahap
                             </Button>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Detail transaksi & riwayat (adaptif mobile/desktop) */}
+                <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+                    <DialogContent className="max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>{selectedCustomer?.name}</DialogTitle>
+                            <DialogDescription>
+                                {selectedCustomer?.phone}
+                                {selectedCustomer?.email
+                                    ? ` • ${selectedCustomer.email}`
+                                    : ''}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="max-h-[70vh] space-y-6 overflow-y-auto pr-1 max-sm:max-h-none">
+                            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Sales PIC
+                                    </div>
+                                    <div className="font-medium">
+                                        {selectedCustomer?.assigned_sales
+                                            ?.name ?? 'Belum ditugaskan'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Kontak terakhir
+                                    </div>
+                                    <div className="font-medium">
+                                        {formatDate(
+                                            selectedCustomer?.last_contact_at ??
+                                                null,
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Preferensi
+                                    </div>
+                                    <div className="font-medium">
+                                        {selectedCustomer?.contact_channel_preference ??
+                                            'Tidak ditentukan'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedCustomer?.active_deal && (
+                                <div className="rounded-xl border p-4">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-sm font-semibold">
+                                            {
+                                                selectedCustomer.active_deal
+                                                    .vehicle_model
+                                            }
+                                        </span>
+                                        <Badge
+                                            variant={
+                                                selectedCustomer.active_deal
+                                                    .is_closed
+                                                    ? 'secondary'
+                                                    : 'outline'
+                                            }
+                                        >
+                                            {
+                                                selectedCustomer.active_deal
+                                                    .stage_label
+                                            }
+                                        </Badge>
+                                        {selectedCustomer.active_deal
+                                            .is_stagnant && (
+                                            <Badge
+                                                variant="destructive"
+                                                className="text-[10px]"
+                                            >
+                                                Stagnan &gt;3 Hari
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {selectedCustomer.active_deal
+                                        .estimated_value !== null && (
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            Estimasi nilai:{' '}
+                                            {new Intl.NumberFormat('id-ID', {
+                                                style: 'currency',
+                                                currency: 'IDR',
+                                                maximumFractionDigits: 0,
+                                            }).format(
+                                                selectedCustomer.active_deal
+                                                    .estimated_value,
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {selectedCustomer?.next_follow_up && (
+                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                                    <div className="flex items-center gap-2 text-sm font-semibold">
+                                        <CalendarClock className="size-4" />
+                                        Tindak lanjut berikutnya
+                                    </div>
+                                    <p className="mt-1 text-sm">
+                                        {
+                                            selectedCustomer.next_follow_up
+                                                .plan_notes
+                                        }
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                        {formatDate(
+                                            selectedCustomer.next_follow_up
+                                                .scheduled_at,
+                                        )}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div>
+                                <h4 className="text-sm font-semibold">
+                                    Riwayat tahap
+                                </h4>
+                                {selectedCustomer &&
+                                selectedCustomer.stage_history.length > 0 ? (
+                                    <ol className="mt-2 space-y-3 border-l pl-4">
+                                        {selectedCustomer.stage_history.map(
+                                            (history, index) => (
+                                                <li
+                                                    key={`${history.to_stage}-${index}`}
+                                                    className="relative"
+                                                >
+                                                    <span className="absolute top-1.5 -left-[21px] size-2.5 rounded-full bg-primary" />
+                                                    <div className="text-sm font-medium">
+                                                        {history.from_stage_label
+                                                            ? `${history.from_stage_label} → ${history.to_stage_label}`
+                                                            : history.to_stage_label}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {formatDate(
+                                                            history.created_at,
+                                                        )}
+                                                        {history.actor_name
+                                                            ? ` • ${history.actor_name}`
+                                                            : ''}
+                                                    </div>
+                                                    {history.notes && (
+                                                        <p className="mt-0.5 text-xs text-muted-foreground">
+                                                            {history.notes}
+                                                        </p>
+                                                    )}
+                                                </li>
+                                            ),
+                                        )}
+                                    </ol>
+                                ) : (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Belum ada riwayat tahap.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-semibold">
+                                    Aktivitas terbaru
+                                </h4>
+                                {selectedCustomer &&
+                                selectedCustomer.recent_activities.length >
+                                    0 ? (
+                                    <ul className="mt-2 space-y-3">
+                                        {selectedCustomer.recent_activities.map(
+                                            (activity, index) => (
+                                                <li
+                                                    key={`${activity.occurred_at}-${index}`}
+                                                    className="rounded-lg border p-3"
+                                                >
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <Badge variant="outline">
+                                                            {
+                                                                activity.type_label
+                                                            }
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {formatDate(
+                                                                activity.occurred_at,
+                                                            )}
+                                                            {activity.user_name
+                                                                ? ` • ${activity.user_name}`
+                                                                : ''}
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-1 text-sm">
+                                                        {activity.notes}
+                                                    </p>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+                                ) : (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Belum ada aktivitas tercatat.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 border-t pt-3">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="min-h-11 flex-1 gap-2"
+                            >
+                                <a
+                                    href={`tel:${selectedCustomer?.phone ?? ''}`}
+                                >
+                                    <Phone className="size-4 text-emerald-600" />
+                                    Telepon
+                                </a>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="min-h-11 flex-1 gap-2"
+                            >
+                                <a
+                                    href={formatPhoneLink(
+                                        selectedCustomer?.phone ?? '',
+                                    )}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <MessageSquare className="size-4 text-emerald-500" />
+                                    WhatsApp
+                                </a>
+                            </Button>
+                            <Button
+                                className="min-h-11 flex-1"
+                                onClick={() => {
+                                    setDetailOpen(false);
+                                    setActivityOpen(true);
+                                }}
+                            >
+                                Catat Aktivitas
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                className="min-h-11 flex-1"
+                                onClick={() => {
+                                    setDetailOpen(false);
+                                    setFollowUpOpen(true);
+                                }}
+                            >
+                                Follow-Up
+                            </Button>
+                            {selectedCustomer?.active_deal &&
+                                !selectedCustomer.active_deal.is_closed && (
+                                    <Button
+                                        variant="secondary"
+                                        className="min-h-11 flex-1"
+                                        onClick={() => {
+                                            setDetailOpen(false);
+                                            setNextStage(
+                                                selectedCustomer.active_deal!
+                                                    .current_stage,
+                                            );
+                                            setStageOpen(true);
+                                        }}
+                                    >
+                                        Ubah Tahap
+                                    </Button>
+                                )}
+                        </div>
                     </DialogContent>
                 </Dialog>
             </main>
