@@ -89,6 +89,14 @@ class Customer extends Model
     }
 
     /**
+     * @return HasMany<DealTransaction, $this>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(DealTransaction::class);
+    }
+
+    /**
      * @return HasOne<CustomerAssignment, $this>
      */
     public function activeAssignment(): HasOne
