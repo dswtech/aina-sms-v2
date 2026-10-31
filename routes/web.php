@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\DealCommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TargetController;
 use Illuminate\Support\Facades\Route;
@@ -61,9 +62,12 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('analytics/export.csv', [AnalyticsController::class, 'csv'])->name('analytics.csv');
     });
 
-    Route::inertia('imports', 'module-status', ['module' => 'imports'])
-        ->middleware('role:supervisor,admin')
-        ->name('imports.index');
+    Route::middleware('role:supervisor,admin')->group(function () {
+        Route::get('imports', [ImportController::class, 'index'])->name('imports.index');
+        Route::get('imports/template', [ImportController::class, 'template'])->name('imports.template');
+        Route::post('imports/preview', [ImportController::class, 'preview'])->name('imports.preview');
+        Route::post('imports/{batch}/commit', [ImportController::class, 'commit'])->name('imports.commit');
+    });
 
     Route::middleware('role:admin')->group(function () {
         Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
