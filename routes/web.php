@@ -4,11 +4,13 @@ use App\Http\Controllers\Admin\InvitationLifecycleController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\TeamMembershipController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\DealCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TargetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('activate/{token}', [InvitationController::class, 'show'])
@@ -46,13 +48,18 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ->middleware('role:supervisor')
         ->name('targets.index');
 
+    Route::post('targets', [TargetController::class, 'store'])
+        ->middleware('role:supervisor,admin')
+        ->name('targets.store');
+
     Route::inertia('team-performance', 'module-status', ['module' => 'team-performance'])
         ->middleware('role:branch_manager')
         ->name('team-performance.index');
 
-    Route::inertia('analytics', 'module-status', ['module' => 'analytics'])
-        ->middleware('role:supervisor,branch_manager,admin')
-        ->name('analytics.index');
+    Route::middleware('role:supervisor,branch_manager,admin')->group(function () {
+        Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('analytics/export.csv', [AnalyticsController::class, 'csv'])->name('analytics.csv');
+    });
 
     Route::inertia('imports', 'module-status', ['module' => 'imports'])
         ->middleware('role:supervisor,admin')
