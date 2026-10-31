@@ -15,14 +15,6 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    private const STAGE_WEIGHTS = [
-        'lead' => 0.10,
-        'prospect' => 0.25,
-        'hot_prospect' => 0.50,
-        'spk' => 0.75,
-        'do' => 0.90,
-    ];
-
     public function index(Request $request): Response
     {
         /** @var User $actor */
@@ -35,7 +27,8 @@ class DashboardController extends Controller
         if ($actor->role === UserRole::Sales) {
             $targetUnits = (int) (SalesTarget::query()
                 ->where('user_id', $actor->id)
-                ->where('period', $period->toDateString())
+                ->whereYear('period', $period->year)
+                ->whereMonth('period', $period->month)
                 ->value('target_units') ?? 0);
         } elseif ($actor->role === UserRole::Supervisor) {
             $teamIds = $actor->activeTeamMemberships()->select('team_id');
@@ -45,11 +38,13 @@ class DashboardController extends Controller
                 ->pluck('user_id');
             $targetUnits = (int) SalesTarget::query()
                 ->whereIn('user_id', $salesIds)
-                ->where('period', $period->toDateString())
+                ->whereYear('period', $period->year)
+                ->whereMonth('period', $period->month)
                 ->sum('target_units');
         } else {
             $targetUnits = (int) SalesTarget::query()
-                ->where('period', $period->toDateString())
+                ->whereYear('period', $period->year)
+                ->whereMonth('period', $period->month)
                 ->sum('target_units');
         }
 
@@ -59,11 +54,30 @@ class DashboardController extends Controller
             ->whereMonth('updated_at', $period->month)
             ->count();
 
-        $forecast = 0.0;
-        foreach ((clone $visibleDeals)->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])->get() as $deal) {
-            $weight = self::STAGE_WEIGHTS[$deal->current_stage->value] ?? 0.0;
-            $forecast += ((float) ($deal->estimated_value ?? 0)) * $weight;
+        /** @var array<string, float|int> $weights */
+        $weights = config('forecast.weights', []);
+        $forecastValue = 0.0;
+        $weightedUnits = 0.0;
+        $contributors = [];
+        foreach ((clone $visibleDeals)
+            ->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+            ->with(['customer:id,name', 'sales:id,name'])
+            ->get() as $deal) {
+            $weight = (float) ($weights[$deal->current_stage->value] ?? 0.0);
+            $weightedValue = ((float) ($deal->estimated_value ?? 0)) * $weight;
+            $forecastValue += $weightedValue;
+            $weightedUnits += $weight;
+            $contributors[] = [
+                'public_id' => $deal->public_id,
+                'vehicle_model' => $deal->vehicle_model,
+                'stage_label' => $deal->current_stage->label(),
+                'sales_name' => $deal->sales?->name,
+                'weighted_value' => round($weightedValue, 2),
+            ];
         }
+
+        usort($contributors, fn (array $left, array $right): int => $right['weighted_value'] <=> $left['weighted_value']);
+        $contributors = array_slice($contributors, 0, 5);
 
         $stageCounts = [];
         foreach (PipelineStage::cases() as $stage) {
@@ -77,16 +91,68 @@ class DashboardController extends Controller
             ->where('last_activity_at', '<=', now()->subDays(3))
             ->count();
 
+        $targetableUsers = collect();
+        if ($actor->role === UserRole::Sales) {
+            $targetableUsers = collect([$actor]);
+        } elseif ($actor->role === UserRole::Supervisor) {
+            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $salesIds = TeamMembership::query()
+                ->whereIn('team_id', $teamIds)
+                ->where('role', UserRole::Sales->value)
+                ->whereNull('ended_at')
+                ->pluck('user_id');
+            $targetableUsers = User::query()->whereIn('id', $salesIds)->where('is_active', true)->orderBy('name')->get();
+        } elseif ($actor->role === UserRole::Admin) {
+            $targetableUsers = User::query()
+                ->where('dealer_id', $actor->dealer_id)
+                ->where('role', UserRole::Sales)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+
+        $performance = $targetableUsers->map(function (User $sales) use ($period): array {
+            $target = (int) (SalesTarget::query()
+                ->where('user_id', $sales->id)
+                ->whereYear('period', $period->year)
+                ->whereMonth('period', $period->month)
+                ->value('target_units') ?? 0);
+            $deals = DealTransaction::query()->where('sales_id', $sales->id);
+            $realization = (clone $deals)
+                ->where('current_stage', PipelineStage::Delivery)
+                ->whereYear('updated_at', $period->year)
+                ->whereMonth('updated_at', $period->month)
+                ->count();
+
+            return [
+                'id' => $sales->id,
+                'name' => $sales->name,
+                'username' => $sales->username,
+                'target_units' => $target,
+                'realization_units' => $realization,
+                'gap_units' => max(0, $target - $realization),
+            ];
+        })->values()->all();
+
         return Inertia::render('dashboard', [
             'dashboard' => [
                 'period' => $period->toDateString(),
                 'targetUnits' => $targetUnits,
                 'realizationUnits' => $realizationUnits,
-                'forecastValue' => round($forecast, 2),
+                'forecastUnits' => round($realizationUnits + $weightedUnits, 1),
+                'forecastValue' => round($forecastValue, 2),
+                'forecastApproved' => (bool) config('forecast.approved', false),
                 'gapUnits' => $targetUnits - $realizationUnits,
                 'stageCounts' => $stageCounts,
                 'stagnantCount' => $stagnantCount,
+                'contributors' => $contributors,
+                'performance' => $performance,
             ],
+            'targetableUsers' => $targetableUsers->map(fn (User $sales): array => [
+                'id' => $sales->id,
+                'name' => $sales->name,
+                'username' => $sales->username,
+            ])->values()->all(),
         ]);
     }
 }
