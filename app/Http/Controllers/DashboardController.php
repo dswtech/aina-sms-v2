@@ -61,7 +61,8 @@ class DashboardController extends Controller
         $contributors = [];
         foreach ((clone $visibleDeals)
             ->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
-            ->with(['customer:id,name', 'sales:id,name'])
+            ->select(['id', 'public_id', 'vehicle_model', 'current_stage', 'estimated_value', 'sales_id'])
+            ->with('sales:id,name')
             ->get() as $deal) {
             $weight = (float) ($weights[$deal->current_stage->value] ?? 0.0);
             $weightedValue = ((float) ($deal->estimated_value ?? 0)) * $weight;
@@ -79,11 +80,16 @@ class DashboardController extends Controller
         usort($contributors, fn (array $left, array $right): int => $right['weighted_value'] <=> $left['weighted_value']);
         $contributors = array_slice($contributors, 0, 5);
 
-        $stageCounts = [];
+        $stageCounts = (clone $visibleDeals)
+            ->select('current_stage')
+            ->selectRaw('COUNT(*) as aggregate')
+            ->groupBy('current_stage')
+            ->pluck('aggregate', 'current_stage')
+            ->map(fn ($count): int => (int) $count)
+            ->all();
+
         foreach (PipelineStage::cases() as $stage) {
-            $stageCounts[$stage->value] = (clone $visibleDeals)
-                ->where('current_stage', $stage->value)
-                ->count();
+            $stageCounts[$stage->value] ??= 0;
         }
 
         $stagnantCount = (clone $visibleDeals)

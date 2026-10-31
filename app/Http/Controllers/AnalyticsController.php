@@ -84,7 +84,11 @@ class AnalyticsController extends Controller
 
         $query = DealTransaction::query()
             ->visibleTo($actor)
-            ->with(['stageHistories', 'sales:id,name']);
+            ->select(['id', 'dealer_id', 'customer_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'estimated_value', 'created_at', 'updated_at'])
+            ->with([
+                'stageHistories' => fn ($history): mixed => $history->select(['id', 'deal_transaction_id', 'to_stage', 'created_at']),
+                'sales:id,name',
+            ]);
 
         if ($mode === 'acquisition') {
             $query->whereBetween('created_at', [$start, $end]);
