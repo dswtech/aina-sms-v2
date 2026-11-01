@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TargetController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('activate/{token}', [InvitationController::class, 'show'])
@@ -40,9 +41,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('transactions/{transaction}/comments', [DealCommentController::class, 'store'])->name('deals.comments.store');
         Route::patch('comments/{comment}', [DealCommentController::class, 'update'])->name('comments.update');
 
-        Route::inertia('transactions', 'module-status', [
-            'module' => 'transactions',
-        ])->name('transactions.index');
+        Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     });
 
     Route::inertia('targets', 'module-status', ['module' => 'targets'])
