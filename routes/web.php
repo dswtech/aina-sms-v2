@@ -50,7 +50,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ->name('targets.index');
 
     Route::post('targets', [TargetController::class, 'store'])
-        ->middleware('role:supervisor,admin')
+        ->middleware(['role:supervisor,admin', 'throttle:20,1'])
         ->name('targets.store');
 
     Route::inertia('team-performance', 'module-status', ['module' => 'team-performance'])
@@ -65,8 +65,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::middleware('role:supervisor,admin')->group(function () {
         Route::get('imports', [ImportController::class, 'index'])->name('imports.index');
         Route::get('imports/template', [ImportController::class, 'template'])->name('imports.template');
-        Route::post('imports/preview', [ImportController::class, 'preview'])->name('imports.preview');
-        Route::post('imports/{batch}/commit', [ImportController::class, 'commit'])->name('imports.commit');
+        Route::post('imports/preview', [ImportController::class, 'preview'])->middleware('throttle:10,1')->name('imports.preview');
+        Route::post('imports/{batch}/commit', [ImportController::class, 'commit'])->middleware('throttle:10,1')->name('imports.commit');
     });
 
     Route::middleware('role:admin')->group(function () {
