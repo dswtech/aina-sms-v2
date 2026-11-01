@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import AppearanceTabs from '@/components/appearance-tabs';
+import ColorPicker from '@/components/color-picker';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
@@ -39,6 +40,15 @@ export function UserMenuContent({ user }: Props) {
                         Tampilan
                     </p>
                     <AppearanceTabs className="w-full justify-between" />
+                </div>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+                <div className="px-2 py-1.5">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">
+                        Warna
+                    </p>
+                    <ColorPicker />
                 </div>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
