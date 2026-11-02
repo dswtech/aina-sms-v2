@@ -2,9 +2,17 @@ import { Link, usePage } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useInitials } from '@/hooks/use-initials';
 import { getNavigation } from '@/lib/navigation';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -15,6 +23,7 @@ export function AppSidebarHeader({
 }) {
     const { auth } = usePage().props;
     const { isCurrentUrl } = useCurrentUrl();
+    const getInitials = useInitials();
     const currentItem = getNavigation(auth.user.role).find((item) =>
         isCurrentUrl(item.href),
     );
@@ -51,11 +60,35 @@ export function AppSidebarHeader({
                 </div>
             </div>
 
-            <Button variant="ghost" size="icon" className="size-11" asChild>
-                <Link href="/notifications" aria-label="Buka notifikasi">
-                    <Bell aria-hidden="true" className="size-5" />
-                </Link>
-            </Button>
+            <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="size-11" asChild>
+                    <Link href="/notifications" aria-label="Buka notifikasi">
+                        <Bell aria-hidden="true" className="size-5" />
+                    </Link>
+                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="size-11 rounded-full p-1"
+                            aria-label="Buka kontrol panel pengguna"
+                        >
+                            <Avatar className="size-8 overflow-hidden rounded-full">
+                                <AvatarImage
+                                    src={auth.user.avatar}
+                                    alt={auth.user.name}
+                                />
+                                <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
+                                    {getInitials(auth.user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64" align="end">
+                        <UserMenuContent user={auth.user} />
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </header>
     );
 }
