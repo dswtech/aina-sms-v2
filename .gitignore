@@ -48,6 +48,7 @@ _doc_sources/
 /opencode.json
 /opencode.jsonc
 /graphify-out/
+/.playwright-cli/
 
 # IDE and operating-system files
 /.idea/

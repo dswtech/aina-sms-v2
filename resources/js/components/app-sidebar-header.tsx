@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bell } from 'lucide-react';
+import { Bell, ChevronDown } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,7 +13,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
-import { getNavigation } from '@/lib/navigation';
+import { getNavigation, roleLabels } from '@/lib/navigation';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function AppSidebarHeader({
@@ -68,23 +68,38 @@ export function AppSidebarHeader({
                 </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            className="size-11 rounded-full p-1"
+                        <button
+                            type="button"
                             aria-label="Buka kontrol panel pengguna"
+                            className="flex items-center gap-2 rounded-xl border bg-muted/50 p-1.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:pr-3"
                         >
-                            <Avatar className="size-8 overflow-hidden rounded-full">
+                            <Avatar className="size-9 shrink-0 rounded-full">
                                 <AvatarImage
                                     src={auth.user.avatar}
                                     alt={auth.user.name}
                                 />
-                                <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
+                                <AvatarFallback className="rounded-full bg-primary text-primary-foreground">
                                     {getInitials(auth.user.name)}
                                 </AvatarFallback>
                             </Avatar>
-                        </Button>
+                            <span className="hidden min-w-0 md:block">
+                                <span className="block max-w-40 truncate text-sm font-semibold">
+                                    {auth.user.name}
+                                </span>
+                                <span className="block max-w-40 truncate text-xs text-muted-foreground">
+                                    {roleLabels[auth.user.role]}
+                                </span>
+                            </span>
+                            <ChevronDown
+                                aria-hidden="true"
+                                className="hidden size-4 shrink-0 text-muted-foreground md:block"
+                            />
+                        </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64" align="end">
+                    <DropdownMenuContent
+                        className="w-80 max-w-[calc(100vw-2rem)]"
+                        align="end"
+                    >
                         <UserMenuContent user={auth.user} />
                     </DropdownMenuContent>
                 </DropdownMenu>
