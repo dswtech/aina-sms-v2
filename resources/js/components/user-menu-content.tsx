@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, UserRound } from 'lucide-react';
+import { LogOut, UserRound, BookOpen } from 'lucide-react';
 import type { ReactNode } from 'react';
 import ColorPicker from '@/components/color-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -75,6 +75,14 @@ export function UserMenuContent({ user }: Props) {
                         <UserRound className="size-4" />
                         Profil
                     </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    disabled
+                    className="px-4 py-2"
+                    title="Dokumentasi belum tersedia"
+                >
+                    <BookOpen className="size-4" />
+                    Dokumentasi
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
