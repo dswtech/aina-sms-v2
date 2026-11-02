@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import { initializeColor } from '@/hooks/use-color';
+import { initializeFontSize } from '@/hooks/use-font-size';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -40,3 +41,4 @@ void createInertiaApp({
 // This will set light / dark mode on load...
 initializeTheme();
 initializeColor();
+initializeFontSize();
