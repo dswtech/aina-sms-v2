@@ -1,9 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { NotificationMenu } from '@/components/notification-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -61,11 +61,7 @@ export function AppSidebarHeader({
             </div>
 
             <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="size-11" asChild>
-                    <Link href="/notifications" aria-label="Buka notifikasi">
-                        <Bell aria-hidden="true" className="size-5" />
-                    </Link>
-                </Button>
+                <NotificationMenu />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button

@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -1485,27 +1486,17 @@ export default function CustomersIndex({
                                 <Label htmlFor="reassign-sales">
                                     Sales Tujuan *
                                 </Label>
-                                <Select
+                                <Combobox
                                     value={reassignSalesId}
                                     onValueChange={setReassignSalesId}
-                                >
-                                    <SelectTrigger
-                                        id="reassign-sales"
-                                        className="min-h-11 w-full"
-                                    >
-                                        <SelectValue placeholder="Pilih sales" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {assignableSales.map((sales) => (
-                                            <SelectItem
-                                                key={sales.id}
-                                                value={String(sales.id)}
-                                            >
-                                                {sales.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    options={assignableSales.map((sales) => ({
+                                        value: String(sales.id),
+                                        label: sales.name,
+                                    }))}
+                                    placeholder="Pilih sales"
+                                    searchPlaceholder="Cari sales..."
+                                    aria-label="Sales tujuan"
+                                />
                             </div>
                             <div className="space-y-1">
                                 <Label htmlFor="reassign-notes">Catatan</Label>

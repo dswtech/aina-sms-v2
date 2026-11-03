@@ -4,6 +4,7 @@ import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { roleLabels } from '@/lib/navigation';
@@ -144,19 +145,19 @@ function TargetForm({
                 >
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="target-user">Sales</Label>
-                        <select
+                        <Combobox
                             id="target-user"
                             value={userId}
-                            onChange={(event) => setUserId(event.target.value)}
-                            className="min-h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                            required
-                        >
-                            {users.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                    {user.name} (@{user.username})
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={setUserId}
+                            options={users.map((user) => ({
+                                value: String(user.id),
+                                label: user.name,
+                                hint: `@${user.username}`,
+                            }))}
+                            placeholder="Pilih sales"
+                            searchPlaceholder="Cari sales..."
+                            aria-label="Sales"
+                        />
                         <InputError message={errors.user_id} />
                     </div>
 

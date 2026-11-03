@@ -4,6 +4,7 @@ import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -156,6 +157,7 @@ function InvitationActions({ invitation }: { invitation: InvitationRow }) {
 function InviteDialog({ teams }: { teams: Props['teams'] }) {
     const [open, setOpen] = useState(false);
     const [role, setRole] = useState('sales');
+    const [teamId, setTeamId] = useState('');
     const needsTeam = role === 'sales' || role === 'supervisor';
 
     return (
@@ -240,24 +242,19 @@ function InviteDialog({ teams }: { teams: Props['teams'] }) {
                             {needsTeam && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="invite-team">Tim</Label>
-                                    <Select name="team_id" required>
-                                        <SelectTrigger
-                                            id="invite-team"
-                                            className="min-h-11 w-full"
-                                        >
-                                            <SelectValue placeholder="Pilih tim" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {teams.map((team) => (
-                                                <SelectItem
-                                                    key={team.id}
-                                                    value={String(team.id)}
-                                                >
-                                                    {team.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Combobox
+                                        id="invite-team"
+                                        name="team_id"
+                                        value={teamId}
+                                        onValueChange={setTeamId}
+                                        options={teams.map((team) => ({
+                                            value: String(team.id),
+                                            label: team.name,
+                                        }))}
+                                        placeholder="Pilih tim"
+                                        searchPlaceholder="Cari tim..."
+                                        aria-label="Tim"
+                                    />
                                     <InputError message={errors.team_id} />
                                 </div>
                             )}
