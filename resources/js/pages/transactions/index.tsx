@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -174,24 +175,28 @@ export default function TransactionsIndex({
                             {assignableSales.length > 0 && (
                                 <div>
                                     <Label htmlFor="sales">Sales</Label>
-                                    <select
-                                        id="sales"
-                                        value={salesId}
-                                        onChange={(event) =>
-                                            setSalesId(event.target.value)
-                                        }
-                                        className="mt-2 min-h-11 w-full rounded-md border bg-background px-3"
-                                    >
-                                        <option value="">Semua sales</option>
-                                        {assignableSales.map((user) => (
-                                            <option
-                                                key={user.id}
-                                                value={user.id}
-                                            >
-                                                {user.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="mt-2">
+                                        <Combobox
+                                            id="sales"
+                                            value={salesId}
+                                            onValueChange={setSalesId}
+                                            options={[
+                                                {
+                                                    value: '',
+                                                    label: 'Semua sales',
+                                                },
+                                                ...assignableSales.map(
+                                                    (user) => ({
+                                                        value: String(user.id),
+                                                        label: user.name,
+                                                    }),
+                                                ),
+                                            ]}
+                                            placeholder="Semua sales"
+                                            searchPlaceholder="Cari sales..."
+                                            aria-label="Sales"
+                                        />
+                                    </div>
                                 </div>
                             )}
                             <div className="flex items-end">

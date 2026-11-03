@@ -4,6 +4,7 @@ import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -14,13 +15,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 
 type Team = {
@@ -189,25 +183,18 @@ function PlacementEditor({ person, teams }: { person: Person; teams: Team[] }) {
                 {({ processing, errors }) => (
                     <>
                         <input type="hidden" name="user_id" value={person.id} />
-                        <Select
+                        <Combobox
                             name="team_id"
                             value={teamId}
                             onValueChange={setTeamId}
-                        >
-                            <SelectTrigger
-                                className="min-h-11 w-full"
-                                aria-label={`Tim untuk ${person.name}`}
-                            >
-                                <SelectValue placeholder="Belum ditempatkan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {activeTeams.map((team) => (
-                                    <SelectItem key={team.id} value={team.id}>
-                                        {team.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            options={activeTeams.map((team) => ({
+                                value: String(team.id),
+                                label: team.name,
+                            }))}
+                            placeholder="Belum ditempatkan"
+                            searchPlaceholder="Cari tim..."
+                            aria-label={`Tim untuk ${person.name}`}
+                        />
                         <Button
                             type="submit"
                             variant="outline"
