@@ -152,7 +152,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                         {preview.rows.map((row) => (
                                             <tr
                                                 key={row.row_number}
-                                                className="border-b align-top"
+                                                className="striped-row border-b align-top"
                                             >
                                                 <td className="p-2">
                                                     {row.row_number}
@@ -240,7 +240,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                         {batches.map((batch) => (
                                             <tr
                                                 key={batch.id}
-                                                className="border-b"
+                                                className="striped-row border-b"
                                             >
                                                 <td className="p-2">
                                                     {batch.original_filename}

@@ -243,7 +243,7 @@ export default function TransactionsIndex({
                                     {transactions.data.map((transaction) => (
                                         <div
                                             key={transaction.id}
-                                            className="rounded-lg border p-4"
+                                            className="striped-row rounded-lg border p-4"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
@@ -327,7 +327,7 @@ export default function TransactionsIndex({
                                                 (transaction) => (
                                                     <tr
                                                         key={transaction.id}
-                                                        className="border-b"
+                                                        className="striped-row border-b"
                                                     >
                                                         <td className="p-2">
                                                             <p className="font-medium">

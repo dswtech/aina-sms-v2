@@ -939,6 +939,342 @@ async function accessibility(page) {
             }
         }
     });
+    await test('data rows alternate in both themes and reset for filtered and paginated results', async () => {
+        for (const width of [390, 768, 1440]) {
+            await page.setViewportSize({ width, height: 1100 });
+            for (const mode of ['light', 'dark']) {
+                for (const [count, currentPage, search] of [
+                    [3, 1, ''],
+                    [3, 2, ''],
+                    [1, 1, 'QA'],
+                    [0, 1, 'Tidak ada'],
+                ]) {
+                    await load('customers/index', {
+                        ...customerProps,
+                        filters: { ...customerProps.filters, search },
+                        customers: {
+                            ...customerProps.customers,
+                            current_page: currentPage,
+                            data: Array.from({ length: count }, (_, index) => ({
+                                ...customer,
+                                public_id: `stripe-${currentPage}-${index}`,
+                                name: `Pelanggan QA ${index}`,
+                            })),
+                        },
+                    });
+                    await page.evaluate((theme) => {
+                        document.documentElement.classList.toggle(
+                            'dark',
+                            theme === 'dark',
+                        );
+                    }, mode);
+                    const rows = page
+                        .locator('.striped-row')
+                        .filter({ visible: true });
+                    await page.mouse.move(0, 0);
+                    await tick();
+                    for (const row of await rows.all()) await settle(row);
+                    assert(
+                        (await rows.count()) === count,
+                        `${width}/${mode}: expected ${count} visible data rows`,
+                    );
+                    for (let index = 0; index < count; index++) {
+                        const row = rows.nth(index);
+                        assert(
+                            await row.evaluate(
+                                (element, odd) => {
+                                    const probe =
+                                        document.createElement('span');
+                                    probe.style.backgroundColor = `var(--${odd ? 'muted' : 'card'})`;
+                                    element.append(probe);
+                                    const expected =
+                                        getComputedStyle(probe).backgroundColor;
+                                    probe.remove();
+                                    return (
+                                        getComputedStyle(element)
+                                            .backgroundColor === expected
+                                    );
+                                },
+                                index % 2 === 1,
+                            ),
+                            `${width}/${mode}: incorrect background on row ${index}`,
+                        );
+                        assert(
+                            (await contrast(
+                                row.locator('h3, .font-semibold').first(),
+                            )) >= 4.5,
+                            `${width}/${mode}: row text fails contrast`,
+                        );
+                    }
+                    assert(
+                        await page.evaluate(
+                            () =>
+                                document.documentElement.scrollWidth ===
+                                innerWidth,
+                        ),
+                        `Striped rows overflow at ${width}`,
+                    );
+                    if (count === 3 && currentPage === 1)
+                        await page.screenshot({
+                            path: `.playwright-cli/striped-rows-${width}-${mode}.png`,
+                            fullPage: true,
+                        });
+                    if (count > 1) {
+                        const row = rows.nth(1);
+                        await row.hover();
+                        await settle(row);
+                        assert(
+                            await row.evaluate((element) => {
+                                const probe = document.createElement('span');
+                                probe.style.backgroundColor = 'var(--accent)';
+                                element.append(probe);
+                                const expected =
+                                    getComputedStyle(probe).backgroundColor;
+                                probe.remove();
+                                return (
+                                    getComputedStyle(element)
+                                        .backgroundColor === expected
+                                );
+                            }),
+                            `${width}/${mode}: hover must override the stripe`,
+                        );
+                    }
+                }
+            }
+        }
+    });
+    await test('all data tables and their mobile lists share alternating surfaces', async () => {
+        const three = (make) =>
+            Array.from({ length: 3 }, (_, index) => make(index));
+        const createdAt = '2026-11-01T00:00:00Z';
+        /** @type {Array<[string, Record<string, unknown>, number]>} */
+        const cases = [
+            [
+                'transactions/index',
+                {
+                    transactions: {
+                        data: three((id) => ({
+                            id,
+                            public_id: `qa-${id}`,
+                            customer: {
+                                name: `QA ${id}`,
+                                phone: '+620000000000',
+                            },
+                            sales: null,
+                            vehicle_model: 'Model QA',
+                            source: 'walk_in',
+                            current_stage: 'lead',
+                            stage_label: 'Lead',
+                            estimated_value: null,
+                            is_stagnant: false,
+                            last_activity_at: null,
+                            created_at: createdAt,
+                            can_update: false,
+                        })),
+                        links: [],
+                    },
+                    filters: {
+                        search: '',
+                        stage: '',
+                        tab: 'all',
+                        sales_id: null,
+                    },
+                    assignableSales: [],
+                    stages: [],
+                    lostReasons: [],
+                },
+                3,
+            ],
+            [
+                'dashboard',
+                {
+                    dashboard: {
+                        period: '2026-11',
+                        targetUnits: 10,
+                        realizationUnits: 2,
+                        forecastUnits: 5,
+                        forecastValue: 0,
+                        forecastApproved: true,
+                        gapUnits: 5,
+                        stageCounts: { lead: 3 },
+                        stagnantCount: 0,
+                        contributors: three((id) => ({
+                            public_id: `qa-${id}`,
+                            vehicle_model: 'Model QA',
+                            stage_label: 'Lead',
+                            sales_name: 'Sales QA',
+                            weighted_value: 0,
+                        })),
+                        performance: three((id) => ({
+                            id,
+                            name: `Sales QA ${id}`,
+                            username: `qa-${id}`,
+                            target_units: 3,
+                            realization_units: 1,
+                            gap_units: 2,
+                        })),
+                    },
+                    targetableUsers: [],
+                },
+                6,
+            ],
+            [
+                'analytics/index',
+                {
+                    analytics: {
+                        period: '2026-11',
+                        mode: 'acquisition',
+                        dimension: 'source',
+                        value: 'walk_in',
+                        sources: three((id) => ({
+                            source: `source_${id}`,
+                            total: 3,
+                            share: 33,
+                            spk: 1,
+                            do: 1,
+                            delivery: 1,
+                            conversion: 33,
+                        })),
+                        models: three((id) => ({
+                            model: `Model ${id}`,
+                            total: 3,
+                            share: 33,
+                            spk: 1,
+                            do: 1,
+                            delivery: 1,
+                        })),
+                        drilldown: three((id) => ({
+                            public_id: `qa-${id}`,
+                            vehicle_model: 'Model QA',
+                            source: 'walk_in',
+                            stage: 'lead',
+                            stage_label: 'Lead',
+                            sales_name: 'Sales QA',
+                            created_at: createdAt,
+                        })),
+                    },
+                },
+                9,
+            ],
+            [
+                'admin/users/index',
+                {
+                    users: three((id) => ({
+                        id: `qa-${id}`,
+                        name: `QA ${id}`,
+                        username: `qa-${id}`,
+                        email: 'qa@example.test',
+                        role: 'sales',
+                        status: 'active',
+                        is_self: false,
+                    })).slice(0, 2),
+                    invitations: [
+                        {
+                            id: 'qa-invite',
+                            name: 'Undangan QA',
+                            username: 'qa-invite',
+                            email: 'invite@example.test',
+                            role: 'sales',
+                            status: 'valid',
+                            expires_at: createdAt,
+                        },
+                    ],
+                    teams: [],
+                    filters: { q: '', status: 'all' },
+                },
+                3,
+            ],
+            [
+                'imports/index',
+                {
+                    batches: three((id) => ({
+                        id,
+                        original_filename: `qa-${id}.csv`,
+                        status: 'preview',
+                        total_rows: 3,
+                        accepted_count: 2,
+                        rejected_count: 1,
+                        created_at: createdAt,
+                        actor_name: 'QA',
+                    })),
+                    preview: {
+                        batch_id: 1,
+                        filename: 'qa.csv',
+                        accepted_count: 2,
+                        rejected_count: 1,
+                        rows: three((id) => ({
+                            row_number: id + 1,
+                            data: {
+                                name: `QA ${id}`,
+                                phone: '+620000000000',
+                                vehicle_model: 'Model QA',
+                                sales_username: 'qa-sales',
+                            },
+                            valid: id !== 1,
+                            errors: id === 1 ? ['Nomor tidak valid'] : [],
+                        })),
+                    },
+                },
+                6,
+            ],
+        ];
+        for (const [component, props, count] of cases) {
+            await load(component, {
+                ...props,
+                auth: { user: { ...user, role: 'admin' } },
+            });
+            for (const width of [390, 768, 1440]) {
+                await page.setViewportSize({ width, height: 1100 });
+                for (const mode of ['light', 'dark']) {
+                    await page.evaluate(
+                        (theme) =>
+                            document.documentElement.classList.toggle(
+                                'dark',
+                                theme === 'dark',
+                            ),
+                        mode,
+                    );
+                    const rows = page
+                        .locator('.striped-row')
+                        .filter({ visible: true });
+                    assert(
+                        (await rows.count()) === count,
+                        `${component}/${width}: expected ${count} rows`,
+                    );
+                    assert(
+                        await rows.evaluateAll((elements) =>
+                            elements.every((element) => {
+                                const siblings = Array.from(
+                                    element.parentElement.children,
+                                ).filter((sibling) =>
+                                    sibling.classList.contains('striped-row'),
+                                );
+                                const probe = document.createElement('span');
+                                probe.style.backgroundColor = `var(--${siblings.indexOf(element) % 2 ? 'muted' : 'card'})`;
+                                element.append(probe);
+                                const expected =
+                                    getComputedStyle(probe).backgroundColor;
+                                probe.remove();
+                                return (
+                                    getComputedStyle(element)
+                                        .backgroundColor === expected
+                                );
+                            }),
+                        ),
+                        `${component}/${width}/${mode}: incorrect stripe surfaces`,
+                    );
+                    assert(
+                        await page.evaluate(
+                            () =>
+                                document.documentElement.scrollWidth ===
+                                innerWidth,
+                        ),
+                        `${component}/${width}: page overflow`,
+                    );
+                }
+            }
+        }
+    });
     await page.unrouteAll({ behavior: 'wait' });
     await page.goto(`${origin}/login`);
     const report = {

@@ -298,7 +298,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 analytics.sources.map((row) => (
                                     <article
                                         key={row.source}
-                                        className="rounded-xl border bg-card p-5"
+                                        className="striped-row rounded-xl border p-5"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <h3 className="font-semibold">
@@ -377,7 +377,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 analytics.models.map((row) => (
                                     <article
                                         key={row.model}
-                                        className="rounded-xl border bg-card p-5"
+                                        className="striped-row rounded-xl border p-5"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <h3 className="font-semibold">
@@ -514,7 +514,7 @@ function SourceTable({
                         </tr>
                     ) : (
                         rows.map((row) => (
-                            <tr key={row.source}>
+                            <tr key={row.source} className="striped-row">
                                 <th className="px-4 py-3 text-left font-semibold">
                                     {formatCategory(row.source)}
                                 </th>
@@ -593,7 +593,7 @@ function ModelTable({
                         </tr>
                     ) : (
                         rows.map((row) => (
-                            <tr key={row.model}>
+                            <tr key={row.model} className="striped-row">
                                 <th className="px-4 py-3 text-left font-semibold">
                                     {row.model}
                                 </th>
@@ -638,7 +638,7 @@ function DrilldownList({ rows }: { rows: DrilldownRow[] }) {
                 {rows.map((row) => (
                     <article
                         key={row.public_id}
-                        className="rounded-xl border bg-card p-5"
+                        className="striped-row rounded-xl border p-5"
                     >
                         <div className="flex items-start justify-between gap-3">
                             <div>
@@ -687,7 +687,7 @@ function DrilldownList({ rows }: { rows: DrilldownRow[] }) {
                     </thead>
                     <tbody className="divide-y">
                         {rows.map((row) => (
-                            <tr key={row.public_id}>
+                            <tr key={row.public_id} className="striped-row">
                                 <td className="px-4 py-3 font-mono text-xs">
                                     {row.public_id}
                                 </td>
