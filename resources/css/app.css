@@ -153,6 +153,64 @@
 }
 
 @layer utilities {
+    :is([data-slot='input'], [data-slot='select-trigger'][data-size], [data-slot='combobox-trigger'], .native-select) {
+        background-color: var(--background);
+    }
+
+    :is([data-slot='input'], [data-slot='select-trigger'][data-size], [data-slot='combobox-trigger'], .native-select):where(:not(:focus-visible):not([aria-invalid='true'])) {
+        border-color: var(--input);
+        box-shadow: none;
+    }
+
+    @media (min-width: 768px) and (hover: hover) and (pointer: fine) and (not (any-pointer: coarse)) {
+        :is([data-slot='input'], [data-slot='select-trigger'][data-size], [data-slot='combobox-trigger'], [data-slot='combobox-search'], .native-select) {
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding-block: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        :where(main, [data-slot='dialog-content']) [data-control='button']:where(:not([data-size='icon']):not([data-size='lg'])) {
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding-block: 0.25rem;
+            font-size: 0.8125rem;
+        }
+
+        :where(main, [data-slot='dialog-content']) [data-control='button']:where(:not(:focus-visible)) {
+            box-shadow: none;
+        }
+
+        [data-comfortable-controls] [data-control='button'] {
+            height: auto;
+            min-height: 2.75rem;
+            font-size: 0.875rem;
+        }
+
+        [data-slot='combobox-option'], [data-slot='select-item'] {
+            min-height: 2.25rem;
+            padding-block: 0.25rem;
+        }
+
+        [data-slot='combobox-option-label'] {
+            font-size: 0.8125rem;
+            line-height: 1.125rem;
+        }
+
+        [data-slot='combobox-option-hint'] {
+            font-size: 0.6875rem;
+            line-height: 0.875rem;
+        }
+
+        [data-slot='password-toggle'] {
+            min-height: 2.25rem;
+        }
+
+        [data-slot='input']::file-selector-button {
+            height: 1.5rem;
+        }
+    }
+
     .table-actions :is(button, a) {
         position: relative;
         isolation: isolate;

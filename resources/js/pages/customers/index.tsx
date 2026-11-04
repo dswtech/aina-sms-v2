@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { FilterPanel } from '@/components/filter-panel';
 import {
     ArrowUpDown,
     Calendar,
@@ -559,177 +560,189 @@ export default function CustomersIndex({
                 </header>
 
                 {/* Filter Tabs & Search */}
-                <div className="mt-6 flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-2 border-b pb-3">
-                        <Button
-                            variant={
-                                filters.tab === 'all' ? 'default' : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('all')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <span>Semua</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                <FilterPanel
+                    className="mt-6"
+                    title="Filter pelanggan"
+                    summary={`${[filters.search, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                >
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap gap-2 border-b pb-3">
+                            <Button
+                                variant={
+                                    filters.tab === 'all'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('all')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.all}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'follow_up_today'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('follow_up_today')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <Calendar className="size-3.5" />
-                            <span>Follow-up Hari Ini</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <span>Semua</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.all}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'follow_up_today'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('follow_up_today')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.follow_up_today}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'uncontacted'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('uncontacted')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <Clock className="size-3.5" />
-                            <span>Belum Dihubungi</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <Calendar className="size-3.5" />
+                                <span>Follow-up Hari Ini</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.follow_up_today}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'uncontacted'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('uncontacted')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.uncontacted}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'active' ? 'default' : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('active')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <span>Peluang Aktif</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <Clock className="size-3.5" />
+                                <span>Belum Dihubungi</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.uncontacted}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'active'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('active')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.active}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'purchased'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('purchased')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <CheckCircle2 className="size-3.5" />
-                            <span>Pernah Beli</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <span>Peluang Aktif</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.active}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'purchased'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('purchased')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.purchased}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'inactive'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('inactive')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <span>Tidak Aktif</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <CheckCircle2 className="size-3.5" />
+                                <span>Pernah Beli</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.purchased}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'inactive'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('inactive')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.inactive}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'repeat_order'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('repeat_order')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <span>Potensi Repeat Order</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <span>Tidak Aktif</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.inactive}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'repeat_order'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('repeat_order')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.repeat_order}
-                            </Badge>
-                        </Button>
-                        <Button
-                            variant={
-                                filters.tab === 'referral'
-                                    ? 'default'
-                                    : 'outline'
-                            }
-                            size="sm"
-                            onClick={() => applyFilters('referral')}
-                            className="min-h-10 gap-1.5"
-                        >
-                            <span>Potensi Referral</span>
-                            <Badge
-                                variant="secondary"
-                                className="ml-1 px-1.5 py-0 text-xs"
+                                <span>Potensi Repeat Order</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.repeat_order}
+                                </Badge>
+                            </Button>
+                            <Button
+                                variant={
+                                    filters.tab === 'referral'
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                onClick={() => applyFilters('referral')}
+                                className="min-h-10 gap-1.5"
                             >
-                                {counts.referral}
-                            </Badge>
-                        </Button>
-                    </div>
+                                <span>Potensi Referral</span>
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 px-1.5 py-0 text-xs"
+                                >
+                                    {counts.referral}
+                                </Badge>
+                            </Button>
+                        </div>
 
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground" />
-                            <Input
-                                aria-label="Pencarian pelanggan"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                onKeyDown={(e) =>
-                                    e.key === 'Enter' &&
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    aria-label="Pencarian pelanggan"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' &&
+                                        applyFilters(filters.tab, search)
+                                    }
+                                    placeholder="Cari nama atau nomor telepon..."
+                                    className="min-h-11 pl-9"
+                                />
+                            </div>
+                            <Button
+                                variant="secondary"
+                                onClick={() =>
                                     applyFilters(filters.tab, search)
                                 }
-                                placeholder="Cari nama atau nomor telepon..."
-                                className="min-h-11 pl-9"
-                            />
+                                className="min-h-11 px-4"
+                            >
+                                Cari
+                            </Button>
                         </div>
-                        <Button
-                            variant="secondary"
-                            onClick={() => applyFilters(filters.tab, search)}
-                            className="min-h-11 px-4"
-                        >
-                            Cari
-                        </Button>
                     </div>
-                </div>
+                </FilterPanel>
 
                 {/* Customer List Content — mobile & tablet cards */}
                 <div className="mt-6 space-y-4 lg:hidden">
@@ -2212,7 +2225,10 @@ export default function CustomersIndex({
                             </div>
                         </div>
 
-                        <div className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 sm:grid-cols-3">
+                        <div
+                            data-comfortable-controls
+                            className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 sm:grid-cols-3"
+                        >
                             <Button
                                 asChild
                                 variant="outline"

@@ -155,6 +155,70 @@ async function accessibility(page) {
             return (v[0] + 0.05) / (v[1] + 0.05);
         });
     const results = [];
+    const checkFilterDisclosure = async (title) => {
+        const panel = page.getByRole('region', { name: title, exact: true });
+        const hide = panel.getByRole('button', {
+            name: 'Sembunyikan filter',
+            exact: true,
+        });
+        await hide.waitFor();
+        assert(
+            (await hide.getAttribute('aria-expanded')) === 'true',
+            'Filter should start expanded',
+        );
+        const field = panel.locator('input').first();
+        const hasField = (await field.count()) > 0;
+        const isMonth =
+            hasField && (await field.getAttribute('type')) === 'month';
+        const draft = isMonth ? await field.inputValue() : 'Draft filter QA';
+        if (hasField && !isMonth) await field.fill(draft);
+        const capture =
+            title === 'Filter transaksi' &&
+            [390, 1440].includes(page.viewportSize().width);
+        const theme = await page
+            .locator('html')
+            .evaluate((element) =>
+                element.classList.contains('dark') ? 'dark' : 'light',
+            );
+        if (capture)
+            await page.screenshot({
+                path: `.playwright-cli/compact-filter-${page.viewportSize().width}-${theme}-open.png`,
+                fullPage: true,
+            });
+        const beforeUrl = page.url();
+        await hide.click();
+        const show = panel.getByRole('button', {
+            name: 'Tampilkan filter',
+            exact: true,
+        });
+        assert(
+            (await show.getAttribute('aria-expanded')) === 'false',
+            'Filter must announce collapsed state',
+        );
+        assert(
+            (await panel
+                .locator(
+                    'input:visible, select:visible, [role="combobox"]:visible',
+                )
+                .count()) === 0,
+            'Collapsed filter must hide its fields',
+        );
+        assert(
+            page.url() === beforeUrl,
+            'Collapsing filters must not navigate',
+        );
+        if (capture)
+            await page.screenshot({
+                path: `.playwright-cli/compact-filter-${page.viewportSize().width}-${theme}-closed.png`,
+                fullPage: true,
+            });
+        await show.press('Enter');
+        if (hasField)
+            assert(
+                (await field.inputValue()) === draft,
+                'Closing filters must preserve unsaved values',
+            );
+    };
     const checkTableActions = async (expected) => {
         const controls = page
             .locator('td.table-actions button, td.table-actions a')
@@ -1288,6 +1352,11 @@ async function accessibility(page) {
             });
             for (const width of [390, 768, 1440]) {
                 await page.setViewportSize({ width, height: 1100 });
+                const filterTitles = {
+                    'transactions/index': 'Filter transaksi',
+                    'analytics/index': 'Filter analisis',
+                    'admin/users/index': 'Filter pengguna',
+                };
                 for (const mode of ['light', 'dark']) {
                     await page.evaluate(
                         (theme) =>
@@ -1297,6 +1366,8 @@ async function accessibility(page) {
                             ),
                         mode,
                     );
+                    if (filterTitles[component])
+                        await checkFilterDisclosure(filterTitles[component]);
                     const rows = page
                         .locator('.striped-row')
                         .filter({ visible: true });
@@ -1532,6 +1603,109 @@ async function accessibility(page) {
                     fullPage: true,
                 });
             }
+        }
+    });
+    await test('compact controls align on desktop and retain touch sizes with filter drafts intact', async () => {
+        for (const width of [390, 768, 1440]) {
+            await page.setViewportSize({ width, height: 1100 });
+            await load();
+            await checkFilterDisclosure('Filter pelanggan');
+            await load(
+                'dashboard',
+                {
+                    auth: { user: { ...user, role: 'supervisor' } },
+                    dashboard: {
+                        period: '2026-11-01',
+                        targetUnits: 0,
+                        realizationUnits: 0,
+                        forecastUnits: 0,
+                        forecastValue: 0,
+                        forecastApproved: false,
+                        gapUnits: 0,
+                        stageCounts: {},
+                        stagnantCount: 0,
+                        performance: [],
+                        contributors: [],
+                    },
+                    targetableUsers: [
+                        { id: 1, name: 'Sales Alpha', username: 'sales.alpha' },
+                        { id: 2, name: 'Sales Beta', username: 'sales.beta' },
+                    ],
+                },
+                '/dashboard',
+            );
+            const expected = width >= 768 ? 36 : 44;
+            for (const id of [
+                'target-user',
+                'target-period',
+                'target-units',
+                'target-value',
+            ]) {
+                const size = await page.locator(`#${id}`).boundingBox();
+                assert(
+                    Math.abs(size.height - expected) <= 0.5,
+                    `${id} should align at ${expected}px, got ${size.height}`,
+                );
+            }
+            const trigger = page.getByRole('combobox', {
+                name: 'Sales',
+                exact: true,
+            });
+            await trigger.click();
+            const search = page.getByRole('combobox', {
+                name: 'Cari sales...',
+                exact: true,
+            });
+            await search.fill('Alpha');
+            assert(
+                await search.evaluate(
+                    (element) => getComputedStyle(element).boxShadow === 'none',
+                ),
+                'Search focus belongs to its header, not a nested red rectangle',
+            );
+            assert(
+                await search.evaluate((element) =>
+                    element.parentElement.matches(':focus-within'),
+                ),
+                'Search header needs a visible focus state',
+            );
+            const option = page.getByRole('option', { name: /Sales Alpha/ });
+            assert(
+                (await contrast(option)) >= 4.5,
+                'Combobox options must retain readable contrast',
+            );
+            await page.screenshot({
+                path: `.playwright-cli/compact-combobox-${width}.png`,
+                fullPage: true,
+            });
+            await search.press('Enter');
+            assert(
+                await trigger
+                    .textContent()
+                    .then((value) => value.includes('Sales Alpha')),
+                'Keyboard selection must remain functional',
+            );
+            assert(
+                await page.evaluate(
+                    () => document.documentElement.scrollWidth === innerWidth,
+                ),
+                `Compact form overflow at ${width}`,
+            );
+            await load(
+                'auth/login',
+                { canResetPassword: true, status: null },
+                '/login',
+            );
+            const passwordSize = await page
+                .locator('input[type="password"]')
+                .boundingBox();
+            const toggleSize = await page
+                .getByRole('button', { name: 'Show password', exact: true })
+                .boundingBox();
+            assert(
+                Math.abs(passwordSize.height - toggleSize.height) <= 0.5,
+                'Password toggle must align with the resized input',
+            );
         }
     });
     await page.unrouteAll({ behavior: 'wait' });

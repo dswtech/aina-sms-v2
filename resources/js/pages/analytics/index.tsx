@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -180,11 +181,12 @@ export default function AnalyticsIndex({ analytics }: Props) {
                     </div>
                 </header>
 
-                <section
-                    aria-label="Filter analisis"
-                    className="mt-8 rounded-xl border bg-card p-5 sm:p-6 print:hidden"
+                <FilterPanel
+                    title="Filter analisis"
+                    className="mt-8 print:hidden"
+                    summary={`${formatPeriod(analytics.period)} · ${analytics.mode === 'acquisition' ? 'Akuisisi' : 'Pencapaian'}`}
                 >
-                    <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-2">
                             <Label htmlFor="analytics-period">Periode</Label>
                             <Input
@@ -237,7 +239,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                               ? 'Akuisisi memakai tanggal lead dibuat.'
                               : 'Pencapaian memakai tanggal kejadian tahap.'}
                     </p>
-                </section>
+                </FilterPanel>
 
                 <aside className="mt-6 rounded-xl border bg-secondary p-5 text-sm leading-6 sm:p-6 print:border print:bg-white">
                     <h2 className="font-semibold">Cara membaca angka</h2>

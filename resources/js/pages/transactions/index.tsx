@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Filter, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { FilterPanel } from '@/components/filter-panel';
 import { useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
@@ -127,106 +128,99 @@ export default function TransactionsIndex({
                     </div>
                 </div>
 
-                <Card className="mt-6">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Filter className="size-5" />
-                            Filter
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 md:grid-cols-4">
+                <FilterPanel
+                    className="mt-6"
+                    title="Filter transaksi"
+                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                >
+                    <div
+                        className={`grid gap-3 ${assignableSales.length > 0 ? 'md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_auto]' : 'md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]'}`}
+                    >
+                        <div>
+                            <Label htmlFor="search">Pencarian</Label>
+                            <div className="relative mt-1.5">
+                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    id="search"
+                                    value={search}
+                                    onChange={(event) =>
+                                        setSearch(event.target.value)
+                                    }
+                                    className="min-h-11 pl-9"
+                                    placeholder="Nama, telepon, model, sumber"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label htmlFor="stage">Tahap</Label>
+                            <select
+                                id="stage"
+                                value={stage}
+                                onChange={(event) =>
+                                    setStage(event.target.value)
+                                }
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                            >
+                                <option value="">Semua tahap</option>
+                                {stages.map((item) => (
+                                    <option key={item.value} value={item.value}>
+                                        {item.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        {assignableSales.length > 0 && (
                             <div>
-                                <Label htmlFor="search">Pencarian</Label>
-                                <div className="relative mt-2">
-                                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="search"
-                                        value={search}
-                                        onChange={(event) =>
-                                            setSearch(event.target.value)
-                                        }
-                                        className="min-h-11 pl-9"
-                                        placeholder="Nama, telepon, model, sumber"
+                                <Label htmlFor="sales">Sales</Label>
+                                <div className="mt-1.5">
+                                    <Combobox
+                                        id="sales"
+                                        value={salesId}
+                                        onValueChange={setSalesId}
+                                        options={[
+                                            {
+                                                value: '',
+                                                label: 'Semua sales',
+                                            },
+                                            ...assignableSales.map((user) => ({
+                                                value: String(user.id),
+                                                label: user.name,
+                                            })),
+                                        ]}
+                                        placeholder="Semua sales"
+                                        searchPlaceholder="Cari sales..."
+                                        aria-label="Sales"
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <Label htmlFor="stage">Tahap</Label>
-                                <select
-                                    id="stage"
-                                    value={stage}
-                                    onChange={(event) =>
-                                        setStage(event.target.value)
-                                    }
-                                    className="mt-2 min-h-11 w-full rounded-md border bg-background px-3"
-                                >
-                                    <option value="">Semua tahap</option>
-                                    {stages.map((item) => (
-                                        <option
-                                            key={item.value}
-                                            value={item.value}
-                                        >
-                                            {item.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            {assignableSales.length > 0 && (
-                                <div>
-                                    <Label htmlFor="sales">Sales</Label>
-                                    <div className="mt-2">
-                                        <Combobox
-                                            id="sales"
-                                            value={salesId}
-                                            onValueChange={setSalesId}
-                                            options={[
-                                                {
-                                                    value: '',
-                                                    label: 'Semua sales',
-                                                },
-                                                ...assignableSales.map(
-                                                    (user) => ({
-                                                        value: String(user.id),
-                                                        label: user.name,
-                                                    }),
-                                                ),
-                                            ]}
-                                            placeholder="Semua sales"
-                                            searchPlaceholder="Cari sales..."
-                                            aria-label="Sales"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            <div className="flex items-end">
-                                <Button
-                                    onClick={() => applyFilters()}
-                                    className="min-h-11 w-full"
-                                >
-                                    Terapkan
-                                </Button>
-                            </div>
+                        )}
+                        <div className="flex items-end">
+                            <Button
+                                onClick={() => applyFilters()}
+                                className="min-h-11 w-full"
+                            >
+                                Terapkan
+                            </Button>
                         </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {tabs.map((tab) => (
-                                <Button
-                                    key={tab.value}
-                                    variant={
-                                        filters.tab === tab.value
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    size="sm"
-                                    className="min-h-10"
-                                    onClick={() => applyFilters(tab.value)}
-                                >
-                                    {tab.label}
-                                </Button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {tabs.map((tab) => (
+                            <Button
+                                key={tab.value}
+                                variant={
+                                    filters.tab === tab.value
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                className="min-h-10"
+                                onClick={() => applyFilters(tab.value)}
+                            >
+                                {tab.label}
+                            </Button>
+                        ))}
+                    </div>
+                </FilterPanel>
 
                 <Card className="mt-6">
                     <CardHeader>
@@ -453,7 +447,7 @@ export default function TransactionsIndex({
                                         onChange={(event) =>
                                             setToStage(event.target.value)
                                         }
-                                        className="mt-2 min-h-11 w-full rounded-md border bg-background px-3"
+                                        className="native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3"
                                     >
                                         {stages.map((item) => (
                                             <option
@@ -504,7 +498,7 @@ export default function TransactionsIndex({
                                                         event.target.value,
                                                     )
                                                 }
-                                                className="mt-2 min-h-11 w-full rounded-md border bg-background px-3"
+                                                className="native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3"
                                             >
                                                 <option value="">
                                                     Pilih alasan
