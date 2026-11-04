@@ -107,6 +107,9 @@ type Props = {
         current_page: number;
         last_page: number;
         total: number;
+        from: number | null;
+        to: number | null;
+        links: Array<{ url: string | null; label: string; active: boolean }>;
     };
     filters: {
         search: string;
@@ -1116,6 +1119,39 @@ export default function CustomersIndex({
                         </table>
                     </div>
                 </div>
+
+                {customers.total > 0 && (
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            Menampilkan {customers.from ?? 0}–
+                            {customers.to ?? 0} dari {customers.total} pelanggan
+                        </p>
+                        {customers.last_page > 1 && (
+                            <div className="flex flex-wrap gap-2">
+                                {customers.links.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        variant={
+                                            link.active ? 'default' : 'outline'
+                                        }
+                                        size="sm"
+                                        disabled={!link.url}
+                                        className="min-h-9"
+                                        onClick={() =>
+                                            link.url &&
+                                            router.visit(link.url, {
+                                                preserveState: true,
+                                            })
+                                        }
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Dialog: Catat Aktivitas */}
                 <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
