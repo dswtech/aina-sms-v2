@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.14 |
+| Versi | v1.15 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #27 G01 sudah merged pada baseline `6795e9c`; branch `codex/quieter-lost-badge` dibuat dari baseline tersebut. Tindak lanjut screenshot pengguna meredupkan Lost pada tema gelap dan merapikan seluruh sel aksi tabel melalui aturan CSS bersama: bentuk terlihat 32px, teks 12px, target klik tetap minimal 44px. Cakupan tabel beraksi: Pelanggan, Transaksi, Admin pengguna/undangan, Analisis Sumber dan Model. Handler, mobile cards, schema dan API tidak berubah; aturan visual dicatat di [`../../DESIGN.md`](../../DESIGN.md).
+- Verifikasi tindak lanjut tabel: tes saturasi badge dan ukuran aksi gagal sebelum perbaikan, lalu 17 kelompok regresi browser lulus/0 gagal. Pemeriksaan terarah tambahan pada tablet/desktop kedua tema serta screenshot tabel Transaksi/Admin/Analisis lulus; screenshot Lost/Pelanggan gelap, Transaksi gelap dan Admin terang diperiksa langsung. `composer ci:check` lulus (171 tes, 168 lulus, 3 skip, 1065 assertions), build/lint browser lulus dan `git diff --check` bersih. Review independen dan detector desain tidak menemukan masalah. Tidak ada write database bisnis atau pengiriman email pada pekerjaan visual ini.
 - PR #26 matriks UAT sudah merged; branch `codex/g01-coaching-notifications` berangkat dari `main` `d4278c0`. Perbaikan G01 membatasi write coaching, reply satu tingkat, snapshot tahap immutable/legacy null, penyaringan baca per transaksi, notifikasi metadata in-app dan email dengan intent durable, pemulihan enqueue serta retry worker. Halaman coaching khusus mengikuti izin transaksi tanpa payload Customer setelah assignment Customer berubah. Rincian bukti berada di [E25/matriks](uat-matrix.md#e25) dan [runbook G01](../operations/coaching-notifications.md).
 - Pengguna memilih Mailtrap Sandbox untuk development pada 5 November 2026; keputusan development tercatat pada PRD bagian 14 dan runbook. Credential hanya di `.env` lokal yang diabaikan Git; nilainya tidak dicatat di dokumentasi. STARTTLS/auth SMTP serta resolusi konfigurasi Laravel diverifikasi; satu template email sintetis dari Laravel tertangkap di Sandbox dan metadata/URL dikonfirmasi lewat Mailtrap CLI. Provider production tetap belum ditetapkan.
 - Verifikasi G01: `composer ci:check` lulus (171 tes, 168 lulus, 3 skip, 1065 assertions), build dan lint browser lulus; regresi browser 17 kelompok lulus/0 gagal. Review independen dan perbaikan dua temuan selesai; screenshot Sales mobile/Admin desktop diperiksa. Tidak menjalankan migration pada DB development, worker/scheduler bisnis, PostgreSQL/concurrency production atau UAT manusia. Migration snapshot wajib diterapkan oleh operator pada target yang telah diotorisasi sebelum write komentar memakai versi baru; Fase 6 tetap belum selesai.
@@ -76,7 +78,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR branch G01, kemudian terapkan migration dan aktifkan worker/scheduler pada target yang diotorisasi sesuai runbook. Setelah itu lanjutkan G02 (kendali tim) dan G03 (angka/periode/scope), lalu gap lain pada [`uat-matrix.md`](uat-matrix.md). Bukti teknis G01 tidak menggantikan UAT atau menutup gap timeline/revisi G06.
+1. Review/merge PR perbaikan visual branch `codex/quieter-lost-badge`. PR #27/G01 sudah merged; penerapan migration serta worker/scheduler tetap memerlukan target dan otorisasi sesuai runbook. Setelah itu lanjutkan G02 (kendali tim) dan G03 (angka/periode/scope), lalu gap lain pada [`uat-matrix.md`](uat-matrix.md). Bukti teknis G01 tidak menggantikan UAT atau menutup gap timeline/revisi G06.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

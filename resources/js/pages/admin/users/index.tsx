@@ -433,7 +433,7 @@ export default function UsersIndex({
                                                         status={item.status}
                                                     />
                                                 </td>
-                                                <td className="px-5 py-4">
+                                                <td className="table-actions px-5 py-4">
                                                     {kind === 'user' ? (
                                                         <UserActions
                                                             user={item}

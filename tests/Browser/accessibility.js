@@ -155,6 +155,30 @@ async function accessibility(page) {
             return (v[0] + 0.05) / (v[1] + 0.05);
         });
     const results = [];
+    const checkTableActions = async (expected) => {
+        const controls = page
+            .locator('td.table-actions button, td.table-actions a')
+            .filter({ visible: true });
+        assert(
+            (await controls.count()) === expected,
+            `Expected ${expected} compact table actions`,
+        );
+        assert(
+            await controls.evaluateAll((elements) =>
+                elements.every((element) => {
+                    const target = element.getBoundingClientRect();
+                    const face = getComputedStyle(element, '::before');
+                    return (
+                        target.width >= 44 &&
+                        target.height >= 44 &&
+                        Math.abs(parseFloat(face.height) - 32) <= 0.5 &&
+                        parseFloat(getComputedStyle(element).fontSize) === 12
+                    );
+                }),
+            ),
+            'Table actions need a 32px visual surface and a 44px hit area',
+        );
+    };
     const test = async (name, run) => {
         try {
             await run();
@@ -927,6 +951,43 @@ async function accessibility(page) {
                         (await contrast(badge)) >= 4.5,
                         `${mode}/${label} badge fails 4.5:1`,
                     );
+                    if (mode === 'dark' && label === 'Lost') {
+                        assert(
+                            await badge.evaluate((element) => {
+                                const context = document
+                                    .createElement('canvas')
+                                    .getContext('2d');
+                                const style = getComputedStyle(element);
+                                return [
+                                    style.backgroundColor,
+                                    style.borderTopColor,
+                                ].every((color) => {
+                                    context.fillStyle = color;
+                                    context.fillRect(0, 0, 1, 1);
+                                    const rgb = [
+                                        ...context.getImageData(0, 0, 1, 1)
+                                            .data,
+                                    ]
+                                        .slice(0, 3)
+                                        .map((channel) => channel / 255);
+                                    const max = Math.max(...rgb);
+                                    const min = Math.min(...rgb);
+                                    const lightness = (max + min) / 2;
+                                    const saturation =
+                                        max === min
+                                            ? 0
+                                            : (max - min) /
+                                              (1 - Math.abs(2 * lightness - 1));
+                                    return saturation <= 0.3;
+                                });
+                            }),
+                            'Dark Lost background and border should use a muted red',
+                        );
+                        assert(
+                            (await contrast(badge)) <= 9,
+                            'Dark Lost text should avoid excessive brightness',
+                        );
+                    }
                 }
                 assert(
                     new Set(backgrounds).size === 7,
@@ -975,6 +1036,7 @@ async function accessibility(page) {
                     await page.mouse.move(0, 0);
                     await tick();
                     for (const row of await rows.all()) await settle(row);
+                    if (width === 1440) await checkTableActions(count * 4);
                     assert(
                         (await rows.count()) === count,
                         `${width}/${mode}: expected ${count} visible data rows`,
@@ -1070,7 +1132,7 @@ async function accessibility(page) {
                             is_stagnant: false,
                             last_activity_at: null,
                             created_at: createdAt,
-                            can_update: false,
+                            can_update: true,
                         })),
                         links: [],
                     },
@@ -1238,6 +1300,23 @@ async function accessibility(page) {
                     const rows = page
                         .locator('.striped-row')
                         .filter({ visible: true });
+                    if (width >= 768) {
+                        const actionCounts = {
+                            'transactions/index': 3,
+                            'analytics/index': width >= 1024 ? 6 : 0,
+                            'admin/users/index': 4,
+                        };
+                        await checkTableActions(actionCounts[component] ?? 0);
+                        if (width === 1440 && actionCounts[component]) {
+                            await page
+                                .locator('table')
+                                .filter({ visible: true })
+                                .first()
+                                .screenshot({
+                                    path: `.playwright-cli/quiet-table-${component.replaceAll('/', '-')}-${mode}.png`,
+                                });
+                        }
+                    }
                     assert(
                         (await rows.count()) === count,
                         `${component}/${width}: expected ${count} rows`,

@@ -206,3 +206,13 @@ Dua kelompok regresi baru memeriksa Pelanggan pada hasil tiga/satu/nol baris, ha
 Regresi browser awal menunjukkan kelompok baru gagal sebelum implementasi, sementara 14 kelompok lama lulus. Setelah implementasi dan sinkronisasi transisi test, hasil akhir **16 kelompok lulus, 0 gagal**. Enam screenshot Pelanggan tersimpan lokal pada `.playwright-cli/striped-rows-{390,768,1440}-{light,dark}.png`; screenshot mobile terang dan desktop gelap diperiksa langsung. Pemeriksaan desain mekanis tidak menghasilkan temuan. Review independen tidak menemukan masalah implementasi.
 
 `composer ci:check` lulus (147 lulus, 3 skip, 896 assertions), production build serta lint/format test browser lulus, dan `git diff --check` bersih. Fixture tetap sintetis dengan intercept mutasi; tidak ada write database bisnis. Pengujian browser tetap dijalankan terpisah dari CI/Pest dan tidak menggantikan UAT/pilot Fase 6.
+
+## Tindak lanjut 5 November 2026 — badge dan tombol tabel
+
+Baseline `6795e9c` (PR #27 merged), branch `codex/quieter-lost-badge`. Lost tema gelap memakai burgundy rendah saturasi dengan teks rose redup sesuai `DESIGN.md`; nama status tetap terlihat dan kontras teks sekitar 8,19:1. Tema terang dan palet tahap lain dipertahankan.
+
+Semua sel aksi tabel saat ini memakai CSS bersama `table-actions`: Pelanggan (termasuk link kontak), Transaksi, Admin pengguna/undangan, Analisis Sumber dan Model. Bentuk tombol terlihat 32px dengan teks 12px dan border halus tanpa shadow; target klik/fokus tetap minimal 44px. Tabel dashboard, preview/riwayat impor dan drilldown tidak mempunyai tombol aksi per baris. Kontrol form/filter/pagination serta kartu mobile tetap memakai ukuran semula.
+
+Regresi baru gagal pada baseline untuk saturasi Lost dan belum adanya aksi ringkas, lalu suite browser 17 kelompok lulus/0 gagal. Assertion tambahan memeriksa saturasi latar/border Lost maksimal 0,3 dan kontras 4,5–9 pada tema gelap, serta ukuran target/bentuk/font seluruh aksi tabel. Pengulangan terarah memeriksa kontrol tabel tablet/desktop sesuai breakpoint pada dua tema. Snapshot `.playwright-cli/stage-badges-dark.png` serta `.playwright-cli/quiet-table-*-{light,dark}.png` memakai fixture sintetis; Lost/Pelanggan gelap, Transaksi gelap dan Admin terang diperiksa langsung. Tidak ada write bisnis atau pengiriman email.
+
+CI lokal lulus: 171 tes (168 lulus, 3 skip), 1065 assertions, lint/format, TypeScript, Pint dan PHPStan. Build dan lint test browser lulus. Review independen/detector desain tidak menemukan masalah; `git diff --check` bersih. Ini perbaikan visual, bukan hasil UAT manusia atau penutupan gerbang Fase 6.

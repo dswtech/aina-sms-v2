@@ -1081,7 +1081,7 @@ export default function CustomersIndex({
                                         <td className="px-4 py-3 text-xs text-muted-foreground">
                                             {formatDate(c.last_contact_at)}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="table-actions px-4 py-3">
                                             <div className="flex justify-end gap-1.5">
                                                 <Button
                                                     asChild

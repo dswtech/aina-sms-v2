@@ -12,7 +12,7 @@ const stageColors: Record<string, string> = {
     do: 'border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-200',
     delivery:
         'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-    lost: 'border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-200',
+    lost: 'border-rose-200 bg-rose-100 text-rose-800 dark:border-[#60434d] dark:bg-[#30252c] dark:text-[#dfb7c2]',
 };
 
 export function StageBadge({

@@ -30,9 +30,11 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 - Navigasi aktif memakai perubahan surface dan warna teks, tanpa sidebar gelap.
 - KPI berada dalam satu strip terbagi, tanpa ikon atau sparkline.
 - Tabel desktop berubah menjadi kartu/list mobile dengan field penting tetap tersedia.
+- Tombol/link di sel aksi tabel memakai `table-actions`: bentuk terlihat 32px, teks 12px, border halus tanpa shadow, dengan area klik/fokus minimal 44px. Hover tetap memakai accent; kartu mobile, form, filter, dan pagination memakai ukuran kontrol semula.
 - Baris tabel data dan list/kartu mobile penggantinya memakai `striped-row`: baris pertama surface (`--card`), kedua muted biru-abu (`--muted`), berulang dan dimulai ulang pada setiap hasil filter/halaman. Token mengikuti tema terang/gelap; hover memakai accent. Header, empty state, timeline, komentar, dan form tidak ikut pola; warna status dan fokus tetap dipertahankan.
 - Status memakai tint pucat dengan teks gelap; warna bukan satu-satunya pembeda.
 - Badge tahap memakai satu komponen bersama: Lead slate, Prospect sky, Hot Prospect amber, SPK violet, DO indigo, Delivery emerald, dan Lost rose. Tema gelap memakai tint gelap dengan teks terang; nama tahap selalu ditampilkan dan pasangan teks/latar harus memenuhi 4,5:1.
+- Lost pada tema gelap memakai burgundy redup: latar `#30252c`, border `#60434d`, teks `#dfb7c2`; saturasi latar/border rendah agar tidak menyala di tabel gelap, dengan kontras teks sekitar 8,19:1. Palet Lost tema terang tetap.
 - Satu tombol primary per layar. Shadow hanya pada dialog/sheet yang mengambang.
 - Ikon berupa SVG outline konsisten; tidak memakai emoji.
 
