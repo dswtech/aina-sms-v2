@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.15 |
+| Versi | v1.16 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #28 sudah merged pada baseline `dc2c1d8`. Branch `codex/compact-controls-filter-panels` merapikan kontrol bersama: tinggi 36px untuk desktop mouse tanpa sentuh, tetap 44px pada mobile/sentuh, surface/border seragam, fokus pencarian combobox menyatu dan opsi aktif muted. Target aksi tabel dan footer detail tetap nyaman. Panel filter Pelanggan, Transaksi, Admin pengguna dan Analisis dapat dilipat lewat keyboard tanpa menghapus nilai/draft atau mengubah URL. Aturan berada di [`../../DESIGN.md`](../../DESIGN.md); API, dependency dan database tidak berubah.
+- Regresi kontrol/filter baru gagal sebelum implementasi lalu suite browser 18 kelompok lulus/0 gagal. Bukti terukur mencakup 390/768/1440, tinggi kontrol target Sales dan toggle password, keyboard/kontras combobox, serta filter empat halaman dalam dua tema (Pelanggan diuji pada tema aktif). `composer ci:check` lulus (171 tes, 168 lulus, 3 skip, 1065 assertions), build/lint browser lulus. Review independen dan detector desain tidak menemukan masalah. Bukti dan batas cakupan ada pada [laporan QA](accessibility-responsive-qa-2026-11-04.md). Tidak menjalankan write database bisnis, migration atau pengiriman email pada perubahan ini.
 - PR #27 G01 sudah merged pada baseline `6795e9c`; branch `codex/quieter-lost-badge` dibuat dari baseline tersebut. Tindak lanjut screenshot pengguna meredupkan Lost pada tema gelap dan merapikan seluruh sel aksi tabel melalui aturan CSS bersama: bentuk terlihat 32px, teks 12px, target klik tetap minimal 44px. Cakupan tabel beraksi: Pelanggan, Transaksi, Admin pengguna/undangan, Analisis Sumber dan Model. Handler, mobile cards, schema dan API tidak berubah; aturan visual dicatat di [`../../DESIGN.md`](../../DESIGN.md).
 - Verifikasi tindak lanjut tabel: tes saturasi badge dan ukuran aksi gagal sebelum perbaikan, lalu 17 kelompok regresi browser lulus/0 gagal. Pemeriksaan terarah tambahan pada tablet/desktop kedua tema serta screenshot tabel Transaksi/Admin/Analisis lulus; screenshot Lost/Pelanggan gelap, Transaksi gelap dan Admin terang diperiksa langsung. `composer ci:check` lulus (171 tes, 168 lulus, 3 skip, 1065 assertions), build/lint browser lulus dan `git diff --check` bersih. Review independen dan detector desain tidak menemukan masalah. Tidak ada write database bisnis atau pengiriman email pada pekerjaan visual ini.
 - PR #26 matriks UAT sudah merged; branch `codex/g01-coaching-notifications` berangkat dari `main` `d4278c0`. Perbaikan G01 membatasi write coaching, reply satu tingkat, snapshot tahap immutable/legacy null, penyaringan baca per transaksi, notifikasi metadata in-app dan email dengan intent durable, pemulihan enqueue serta retry worker. Halaman coaching khusus mengikuti izin transaksi tanpa payload Customer setelah assignment Customer berubah. Rincian bukti berada di [E25/matriks](uat-matrix.md#e25) dan [runbook G01](../operations/coaching-notifications.md).
@@ -78,7 +80,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR perbaikan visual branch `codex/quieter-lost-badge`. PR #27/G01 sudah merged; penerapan migration serta worker/scheduler tetap memerlukan target dan otorisasi sesuai runbook. Setelah itu lanjutkan G02 (kendali tim) dan G03 (angka/periode/scope), lalu gap lain pada [`uat-matrix.md`](uat-matrix.md). Bukti teknis G01 tidak menggantikan UAT atau menutup gap timeline/revisi G06.
+1. Review/merge PR kontrol ringkas dan filter lipat branch `codex/compact-controls-filter-panels`; PR #28 sudah merged. PR #27/G01 sudah merged; penerapan migration serta worker/scheduler tetap memerlukan target dan otorisasi sesuai runbook. Setelah itu lanjutkan G02 (kendali tim) dan G03 (angka/periode/scope), lalu gap lain pada [`uat-matrix.md`](uat-matrix.md). Bukti teknis G01 tidak menggantikan UAT atau menutup gap timeline/revisi G06.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

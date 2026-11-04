@@ -1,4 +1,5 @@
 import { Form, Head, router } from '@inertiajs/react';
+import { FilterPanel } from '@/components/filter-panel';
 import { MailPlus, Search, UserRoundCheck, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
@@ -328,55 +329,64 @@ export default function UsersIndex({
                 </header>
 
                 <section className="mt-8 rounded-xl border bg-card">
-                    <div className="grid gap-3 border-b p-4 sm:grid-cols-[1fr_180px_auto] sm:p-5">
-                        <div className="relative">
-                            <Search
-                                className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                value={query}
-                                onChange={(event) =>
-                                    setQuery(event.target.value)
-                                }
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') applyFilters();
-                                }}
-                                className="min-h-11 pl-10"
-                                placeholder="Cari nama, username, atau email"
-                                aria-label="Cari pengguna"
-                            />
-                        </div>
-                        <Select
-                            value={filters.status}
-                            onValueChange={(value) => applyFilters(value)}
-                        >
-                            <SelectTrigger
-                                className="min-h-11 w-full"
-                                aria-label="Filter status"
+                    <FilterPanel
+                        title="Filter pengguna"
+                        className="rounded-b-none border-x-0 border-t-0"
+                        summary={`${[filters.q, filters.status !== 'all' ? filters.status : null].filter(Boolean).length} filter aktif`}
+                    >
+                        <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+                            <div className="relative">
+                                <Search
+                                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                                    aria-hidden="true"
+                                />
+                                <Input
+                                    value={query}
+                                    onChange={(event) =>
+                                        setQuery(event.target.value)
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter')
+                                            applyFilters();
+                                    }}
+                                    className="min-h-11 pl-10"
+                                    placeholder="Cari nama, username, atau email"
+                                    aria-label="Cari pengguna"
+                                />
+                            </div>
+                            <Select
+                                value={filters.status}
+                                onValueChange={(value) => applyFilters(value)}
                             >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
-                                </SelectItem>
-                                <SelectItem value="active">Aktif</SelectItem>
-                                <SelectItem value="inactive">
-                                    Nonaktif
-                                </SelectItem>
-                                <SelectItem value="invited">
-                                    Diundang
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button
-                            variant="outline"
-                            onClick={() => applyFilters()}
-                        >
-                            Terapkan
-                        </Button>
-                    </div>
+                                <SelectTrigger
+                                    className="min-h-11 w-full"
+                                    aria-label="Filter status"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        Semua status
+                                    </SelectItem>
+                                    <SelectItem value="active">
+                                        Aktif
+                                    </SelectItem>
+                                    <SelectItem value="inactive">
+                                        Nonaktif
+                                    </SelectItem>
+                                    <SelectItem value="invited">
+                                        Diundang
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="outline"
+                                onClick={() => applyFilters()}
+                            >
+                                Terapkan
+                            </Button>
+                        </div>
+                    </FilterPanel>
 
                     {rows.length === 0 ? (
                         <div className="grid place-items-center px-5 py-16 text-center">

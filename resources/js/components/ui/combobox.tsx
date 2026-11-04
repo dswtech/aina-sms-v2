@@ -245,6 +245,7 @@ export function Combobox({
         open && position ? (
             <div
                 ref={panelRef}
+            data-slot="combobox-panel"
                 className="fixed z-60 max-h-72 min-w-56 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
                 style={{
                     position: container === document.body ? 'fixed' : 'absolute',
@@ -257,12 +258,13 @@ export function Combobox({
                             : undefined,
                 }}
             >
-                <div className="flex items-center gap-2 border-b px-3">
+            <div data-slot="combobox-search-header" className="flex items-center gap-2 border-b px-3 focus-within:ring-1 focus-within:ring-inset focus-within:ring-ring/60">
                     <Search
                         aria-hidden="true"
                         className="size-4 shrink-0 text-muted-foreground"
                     />
                     <input
+                    data-slot="combobox-search"
                         role="combobox"
                         aria-expanded="true"
                         aria-autocomplete="list"
@@ -277,7 +279,7 @@ export function Combobox({
                         placeholder={searchPlaceholder}
                         aria-label={searchPlaceholder}
                         aria-controls={listboxId}
-                        className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     />
                 </div>
                 <div
@@ -304,21 +306,22 @@ export function Combobox({
                                 }}
                                 type="button"
                                 role="option"
+                            data-slot="combobox-option"
                                 aria-selected={isSelected}
                                 onClick={() => selectOption(option)}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={cn(
                                     'flex min-h-11 w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                     index === activeIndex &&
-                                        'bg-accent text-accent-foreground',
+                                    'bg-muted text-foreground',
                                 )}
                             >
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate">
+                                <span data-slot="combobox-option-label" className="block truncate leading-5">
                                         {option.label}
                                     </span>
                                     {option.hint && (
-                                        <span className="block truncate text-xs text-muted-foreground">
+                                    <span data-slot="combobox-option-hint" className="block truncate text-xs leading-4 text-muted-foreground">
                                             {option.hint}
                                         </span>
                                     )}
@@ -340,6 +343,7 @@ export function Combobox({
         <div className="w-full">
             <button
                 ref={triggerRef}
+                data-slot="combobox-trigger"
                 type="button"
                 id={id}
                 role="combobox"

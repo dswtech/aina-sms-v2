@@ -20,6 +20,7 @@ export default function PasswordInput({
                 {...props}
             />
             <button
+                data-slot="password-toggle"
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute inset-y-0 right-0 flex min-h-11 w-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
