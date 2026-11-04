@@ -3,8 +3,8 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.7 |
-| Diperbarui | 30 Oktober 2026 |
+| Versi | v1.8 |
+| Diperbarui | 4 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
@@ -20,16 +20,14 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - MVP mencakup autentikasi, tim, Buku Pelanggan, lead pipeline, conversation/coaching, impor CSV, dashboard, weighted forecasting, serta Analisis Sumber dan Model.
 - UI referensi menggunakan filter rentang tanggal, tabel transaksi, status, pagination, serta dialog detail bertab.
 - Implementasi referensi mempunyai kelemahan pada mobile; yang diambil adalah pola interaksi, bukan responsivitasnya.
-- Dependency PHP dan frontend telah dipasang; pemeriksaan backend, frontend, type-check, dan production build lulus pada 29 Oktober 2026.
+- Dependency PHP dan frontend telah tersedia. Baseline `main` terverifikasi berada di commit `9e77a12` setelah merge PR #20.
 - Fondasi akses Fase 1 telah memakai autentikasi username, empat role server-side, status akun aktif, dan shell responsif; rencana implementasi berada di [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - Fase 1 telah menyelesaikan dealer, tim, histori penempatan, scope organisasi, undangan sekali pakai, lifecycle Admin, dan audit aman. Gerbang PostgreSQL terisolasi, Pest, static analysis, frontend, build, serta browser tiga viewport telah lulus sesuai [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
-- Branch kerja aktif berada di `codex/phase-2-customer-slice` yang dibuat bersih dari `origin/main` tanpa residu atau cache lokal.
-- Vertical slice Fase 2 (Customer → assignment → transaksi → aktivitas → next follow-up → mobile) telah diimplementasikan di branch tersebut sesuai [`implementation-phase-2-customer-slice.md`](implementation-phase-2-customer-slice.md).
-- Model dan skema Fase 2 mencakup `Customer`, `CustomerAssignment`, `DealTransaction`, `StageHistory`, `CustomerActivity`, dan `FollowUp` beserta policy server-side `CustomerPolicy` dan `DealTransactionPolicy`.
-- Endpoint `/customers` menyediakan filter kelompok kerja, pencarian nama/nomor, sorting server-side, pembuatan lead, pencatatan aktivitas, penjadwalan follow-up, dan perubahan tahap dengan guard SPK/Lost.
-- Branch Manager sengaja ditolak (403) dari route `/customers` karena role tersebut hanya menerima laporan agregat tersanitasi; endpoint agregat belum dibuat.
-- Verifikasi Fase 2: Pint, PHPStan, `pnpm check`, `types:check`, production build lulus; Pest 131 tes (128 lulus, 3 skip karena Fortify nonaktif); layout 390/768/1440 diverifikasi melalui DOM tanpa overflow horizontal.
+- Implementasi Fase 0–5, CSV import, performance index, security hardening, halaman Transaksi, kontrol panel pengguna, combobox data, dan notifikasi floating telah digabungkan ke `main`.
+- Branch aktif `codex/dev-demo-seeder` menambahkan data demo lokal lengkap pada commit `c6ed3da`: 72 pelanggan, 168 transaksi lintas seluruh tahap, aktivitas, follow-up, coaching beserta revisi, target, batch import, notifikasi, audit log, dan undangan.
+- Seeder demo dijaga hanya untuk environment `local`, deterministik, dan tidak menggandakan data bila dijalankan kembali. Pagination pelanggan dan transaksi telah diverifikasi di browser.
+- Verifikasi commit `c6ed3da`: frontend check, TypeScript, Pint, PHPStan, production build, serta Pest 150 tes (147 lulus, 3 skip) berhasil.
 
 ## Keputusan aktif
 
@@ -63,8 +61,9 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Push branch `codex/phase-2-customer-slice` dan buka pull request terhadap `main` untuk review vertical slice Fase 2.
-2. Lanjutkan modul roadmap berikutnya setelah PR Fase 2 diterima, dengan mempertahankan matriks akses dan audit Fase 1 sebagai invariant.
+1. Review dan merge pull request branch `codex/dev-demo-seeder` ke `main`.
+2. Lanjutkan gerbang Fase 6: accessibility/responsive QA, UAT per role, pilot, dan keputusan go-live.
+3. Tetapkan bobot forecast bersama Product Owner dan operasional sebelum forecast production diaktifkan.
 
 ## Larangan memory
 
