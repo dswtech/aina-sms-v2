@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
+import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -381,7 +382,7 @@ export default function Dashboard({ dashboard, targetableUsers }: PageProps) {
     return (
         <>
             <Head title="Dashboard" />
-            <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 overflow-x-clip px-5 pt-8 pb-12 sm:px-8 sm:pt-10 lg:px-10">
+            <div className="mx-auto w-full max-w-7xl min-w-0 flex-1 overflow-x-clip px-5 pt-8 pb-12 sm:px-8 sm:pt-10 lg:px-10">
                 <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -530,9 +531,11 @@ export default function Dashboard({ dashboard, targetableUsers }: PageProps) {
                                             {contributor.vehicle_model}
                                         </p>
                                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                            <Badge variant="secondary">
+                                            <StageBadge
+                                                stage={contributor.stage_label}
+                                            >
                                                 {contributor.stage_label}
-                                            </Badge>
+                                            </StageBadge>
                                             <span>
                                                 {contributor.sales_name ??
                                                     'Sales belum ditetapkan'}
@@ -554,7 +557,7 @@ export default function Dashboard({ dashboard, targetableUsers }: PageProps) {
                         </ol>
                     )}
                 </section>
-            </main>
+            </div>
         </>
     );
 }

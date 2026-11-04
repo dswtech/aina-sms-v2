@@ -18,13 +18,22 @@ export default function ConfirmPassword() {
                             <Label htmlFor="password">Password</Label>
                             <PasswordInput
                                 id="password"
+                                aria-invalid={!!errors.password}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'password-error'
+                                        : undefined
+                                }
                                 name="password"
                                 placeholder="Password"
                                 autoComplete="current-password"
                                 autoFocus
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError
+                                id="password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="flex items-center">

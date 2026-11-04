@@ -50,6 +50,10 @@ export default function Profile({
 
                                 <Input
                                     id="name"
+                                    aria-invalid={!!errors.name}
+                                    aria-describedby={
+                                        errors.name ? 'name-error' : undefined
+                                    }
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.name}
                                     name="name"
@@ -59,6 +63,7 @@ export default function Profile({
                                 />
 
                                 <InputError
+                                    id="name-error"
                                     className="mt-2"
                                     message={errors.name}
                                 />
@@ -69,6 +74,10 @@ export default function Profile({
 
                                 <Input
                                     id="email"
+                                    aria-invalid={!!errors.email}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                     type="email"
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.email}
@@ -79,6 +88,7 @@ export default function Profile({
                                 />
 
                                 <InputError
+                                    id="email-error"
                                     className="mt-2"
                                     message={errors.email}
                                 />

@@ -64,7 +64,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
     return (
         <>
             <Head title="Import Data" />
-            <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
+            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
@@ -282,7 +282,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
                         )}
                     </CardContent>
                 </Card>
-            </main>
+            </div>
         </>
     );
 }

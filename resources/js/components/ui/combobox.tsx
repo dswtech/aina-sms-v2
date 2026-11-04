@@ -233,6 +233,10 @@ export function Combobox({
 
         if (event.key === 'Escape') {
             event.preventDefault();
+            event.stopPropagation();
+            closePanel();
+        }
+        if (event.key === 'Tab') {
             closePanel();
         }
     };
@@ -259,6 +263,10 @@ export function Combobox({
                         className="size-4 shrink-0 text-muted-foreground"
                     />
                     <input
+                        role="combobox"
+                        aria-expanded="true"
+                        aria-autocomplete="list"
+                        aria-activedescendant={filteredOptions[activeIndex] ? `${listboxId}-option-${activeIndex}` : undefined}
                         autoFocus
                         value={query}
                         onChange={(event) => {
@@ -269,7 +277,7 @@ export function Combobox({
                         placeholder={searchPlaceholder}
                         aria-label={searchPlaceholder}
                         aria-controls={listboxId}
-                        className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                     />
                 </div>
                 <div
@@ -288,6 +296,8 @@ export function Combobox({
 
                         return (
                             <button
+                                id={`${listboxId}-option-${index}`}
+                                tabIndex={-1}
                                 key={option.value || 'empty'}
                                 ref={(element) => {
                                     optionRefs.current[index] = element;
@@ -298,7 +308,7 @@ export function Combobox({
                                 onClick={() => selectOption(option)}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={cn(
-                                    'flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none',
+                                    'flex min-h-11 w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                     index === activeIndex &&
                                         'bg-accent text-accent-foreground',
                                 )}
