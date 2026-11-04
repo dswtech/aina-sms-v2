@@ -152,6 +152,16 @@
     }
 }
 
+@layer utilities {
+    .striped-row {
+        background-color: var(--card);
+    }
+
+    .striped-row:where(:nth-child(even of .striped-row)) {
+        background-color: var(--muted);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

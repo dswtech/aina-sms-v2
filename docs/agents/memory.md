@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.11 |
+| Versi | v1.12 |
 | Diperbarui | 4 November 2026 |
 | Status | Aktif |
 
@@ -11,6 +11,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- Branch `codex/striped-data-lists` berangkat dari `origin/main` `2cef671` (PR #24/footer sudah digabungkan). Tabel dan list/kartu mobile Pelanggan, Transaksi, dashboard, Analisis/drilldown, Admin pengguna/undangan, serta preview/riwayat impor memakai baris surface/muted selang-seling sesuai [`../../DESIGN.md`](../../DESIGN.md). Tidak ada perubahan API, database, atau dependency. `composer ci:check` lulus (147 lulus, 3 skip, 896 assertions), production build lulus, lint/format regresi browser lulus, dan regresi browser kini 16 kelompok lulus/0 gagal. Bukti dan batas fixture tercatat pada [laporan QA](accessibility-responsive-qa-2026-11-04.md).
 - PRD v1.0 disetujui sebagai baseline produk pada 30 Oktober 2026.
 - Skill proyek `aina-sms-workflow` ditetapkan di [`.agents/skills/aina-sms-workflow/SKILL.md`](../../.agents/skills/aina-sms-workflow/SKILL.md) sebagai patokan kerja agent.
 - Fondasi aplikasi Laravel monolith dengan Inertia, React, TypeScript, Tailwind CSS, dan shadcn/ui telah tersedia di repository sesuai [`adr/ADR-001-laravel-inertia-monolith.md`](adr/ADR-001-laravel-inertia-monolith.md).
@@ -68,7 +69,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review dan merge PR branch `codex/perbaikan-footer-detail-pelanggan`; bukti tindak lanjut berada di [laporan QA](accessibility-responsive-qa-2026-11-04.md).
+1. Review dan merge PR branch `codex/striped-data-lists`; perbaikan footer sebelumnya sudah digabungkan melalui PR #24. Bukti warna baris dan regresi berada di [laporan QA](accessibility-responsive-qa-2026-11-04.md).
 2. Lengkapi state QA yang belum diuji, kemudian lanjutkan UAT per role, runbook operasional, pilot, dan keputusan go-live sesuai roadmap. Audit halaman awal tidak menggantikan UAT.
 3. Tetapkan bobot forecast bersama Product Owner dan operasional sebelum forecast production diaktifkan.
 

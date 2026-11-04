@@ -244,7 +244,7 @@ function Performance({ rows }: { rows: SalesPerformance[] }) {
                 <>
                     <div className="divide-y md:hidden">
                         {rows.map((row) => (
-                            <article key={row.id} className="p-5">
+                            <article key={row.id} className="striped-row p-5">
                                 <div className="min-w-0">
                                     <h3 className="truncate text-sm font-semibold">
                                         {row.name}
@@ -315,7 +315,7 @@ function Performance({ rows }: { rows: SalesPerformance[] }) {
                             </thead>
                             <tbody className="divide-y">
                                 {rows.map((row) => (
-                                    <tr key={row.id}>
+                                    <tr key={row.id} className="striped-row">
                                         <th
                                             scope="row"
                                             className="px-6 py-4 font-medium"
@@ -524,7 +524,7 @@ export default function Dashboard({ dashboard, targetableUsers }: PageProps) {
                             {dashboard.contributors.map((contributor) => (
                                 <li
                                     key={contributor.public_id}
-                                    className="grid min-w-0 gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6"
+                                    className="striped-row grid min-w-0 gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6"
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold">

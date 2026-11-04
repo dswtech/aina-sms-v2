@@ -738,7 +738,7 @@ export default function CustomersIndex({
                         customers.data.map((c) => (
                             <Card
                                 key={c.public_id}
-                                className="overflow-hidden shadow-sm transition hover:shadow-md"
+                                className="striped-row overflow-hidden shadow-sm transition hover:bg-accent hover:shadow-md"
                             >
                                 <CardContent className="p-4 sm:p-5">
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -992,7 +992,7 @@ export default function CustomersIndex({
                                 {customers.data.map((c) => (
                                     <tr
                                         key={c.public_id}
-                                        className="align-top hover:bg-muted/30"
+                                        className="striped-row align-top hover:bg-accent"
                                     >
                                         <td className="px-4 py-3">
                                             <div className="font-semibold">

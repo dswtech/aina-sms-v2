@@ -412,7 +412,10 @@ export default function UsersIndex({
                                     </thead>
                                     <tbody className="divide-y">
                                         {rows.map(({ kind, item }) => (
-                                            <tr key={`${kind}-${item.id}`}>
+                                            <tr
+                                                key={`${kind}-${item.id}`}
+                                                className="striped-row"
+                                            >
                                                 <td className="px-5 py-4">
                                                     <p className="font-medium text-foreground">
                                                         {item.name}
@@ -450,7 +453,7 @@ export default function UsersIndex({
                                 {rows.map(({ kind, item }) => (
                                     <article
                                         key={`${kind}-${item.id}`}
-                                        className="grid gap-4 p-5"
+                                        className="striped-row grid gap-4 p-5"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
