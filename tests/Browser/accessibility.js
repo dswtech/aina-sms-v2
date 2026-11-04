@@ -43,6 +43,7 @@ async function accessibility(page) {
             is_closed: false,
             is_stagnant: false,
             estimated_value: 100000000,
+            can_comment: true,
             comments: [
                 {
                     id: 1,
@@ -1272,6 +1273,185 @@ async function accessibility(page) {
                         `${component}/${width}: page overflow`,
                     );
                 }
+            }
+        }
+    });
+    await test('G01 notification links open coaching with immutable stage labels and read-only admin controls', async () => {
+        for (const width of [390, 1440]) {
+            await page.setViewportSize({ width, height: 1100 });
+            for (const role of ['admin', 'sales']) {
+                const props = {
+                    ...customerProps,
+                    auth: { user: { ...user, role } },
+                    customers: {
+                        ...customerProps.customers,
+                        data: [
+                            {
+                                ...customer,
+                                active_deal: {
+                                    ...customer.active_deal,
+                                    current_stage: 'hot_prospect',
+                                    stage_label: 'Hot Prospect',
+                                    can_comment: role === 'sales',
+                                    comments: [
+                                        {
+                                            ...customer.active_deal.comments[0],
+                                            stage_at_creation: 'prospect',
+                                            stage_at_creation_label: 'Prospect',
+                                            replies: [
+                                                {
+                                                    id: 2,
+                                                    body: 'Balasan QA',
+                                                    author_name: 'QA Sales',
+                                                    created_at:
+                                                        '2026-11-01T00:01:00Z',
+                                                    edited_at: null,
+                                                    can_edit: false,
+                                                    stage_at_creation: null,
+                                                    stage_at_creation_label:
+                                                        null,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                };
+                await load('customers/index', props);
+                await page
+                    .getByRole('button', { name: 'Detail', exact: true })
+                    .filter({ visible: true })
+                    .press('Enter');
+                const dialog = page.getByRole('dialog');
+                await dialog.waitFor({ state: 'visible' });
+                assert(
+                    (await dialog
+                        .getByText('Saat dikirim: Prospect', { exact: true })
+                        .count()) === 1,
+                    'Missing original stage metadata',
+                );
+                assert(
+                    (await dialog
+                        .getByText('Tahap saat kirim belum tercatat', {
+                            exact: true,
+                        })
+                        .count()) === 1,
+                    'Legacy stage must stay unknown',
+                );
+                assert(
+                    (await dialog
+                        .getByRole('button', {
+                            name: 'Kirim Komentar',
+                            exact: true,
+                        })
+                        .count()) === (role === 'sales' ? 1 : 0),
+                    'Admin must have no comment composer',
+                );
+                assert(
+                    (await dialog
+                        .getByRole('button', { name: 'Balas', exact: true })
+                        .count()) === (role === 'sales' ? 1 : 0),
+                    'Admin must have no reply control',
+                );
+                await page.keyboard.press('Escape');
+                await dialog.waitFor({ state: 'hidden' });
+                assert(
+                    await page.evaluate(
+                        () =>
+                            document.documentElement.scrollWidth === innerWidth,
+                    ),
+                    `G01 overflow at ${width}`,
+                );
+                await load(
+                    'transactions/coaching',
+                    {
+                        auth: props.auth,
+                        transaction: props.customers.data[0].active_deal,
+                    },
+                    '/transactions/qa-deal/coaching',
+                );
+                assert(
+                    (await page
+                        .getByText('Saat dikirim: Prospect', { exact: true })
+                        .count()) === 1,
+                    'Coaching link must show original stage',
+                );
+                assert(
+                    (await page
+                        .getByText('Tahap saat kirim belum tercatat', {
+                            exact: true,
+                        })
+                        .count()) === 1,
+                    'Coaching link must preserve unknown legacy stage',
+                );
+                assert(
+                    (await page
+                        .getByRole('button', { name: 'Balas', exact: true })
+                        .count()) === (role === 'sales' ? 1 : 0),
+                    'Only root comments can have a reply control',
+                );
+                assert(
+                    (await page
+                        .getByRole('button', {
+                            name: 'Kirim Komentar',
+                            exact: true,
+                        })
+                        .count()) === (role === 'sales' ? 1 : 0),
+                    'Coaching page must honor write capabilities',
+                );
+                if (role === 'sales') {
+                    await page
+                        .getByRole('button', { name: 'Balas', exact: true })
+                        .click();
+                    const input = page.getByRole('textbox', {
+                        name: 'Balas komentar',
+                    });
+                    assert(
+                        await input.evaluate(
+                            (element) => element === document.activeElement,
+                        ),
+                        'Reply must focus the composer',
+                    );
+                    await input.fill('Balasan sintetis');
+                    mutationErrors = { body: 'Pesan uji tidak valid' };
+                    await page
+                        .getByRole('button', {
+                            name: 'Kirim Komentar',
+                            exact: true,
+                        })
+                        .click();
+                    await page
+                        .getByRole('alert')
+                        .filter({ hasText: 'Pesan uji tidak valid' })
+                        .waitFor();
+                    assert(
+                        (await input.getAttribute('aria-invalid')) === 'true',
+                        'Coaching validation must mark the input invalid',
+                    );
+                    mutationErrors = {};
+                    await page
+                        .getByRole('button', {
+                            name: 'Kirim Komentar',
+                            exact: true,
+                        })
+                        .click();
+                    await page
+                        .getByRole('textbox', { name: 'Komentar baru' })
+                        .waitFor();
+                }
+                assert(
+                    await page.evaluate(
+                        () =>
+                            document.documentElement.scrollWidth === innerWidth,
+                    ),
+                    `Coaching page overflow at ${width}`,
+                );
+                await page.screenshot({
+                    path: `.playwright-cli/g01-coaching-${role}-${width}.png`,
+                    fullPage: true,
+                });
             }
         }
     });

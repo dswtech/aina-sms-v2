@@ -394,7 +394,7 @@ Baseline penggunaan dikumpulkan setelah dua minggu pertama; target yang bergantu
 |---:|---|---|---|---|
 | 1 | Apa nama produk final? | Product Owner | Branding, title, logo, dan alamat deployment. | S |
 | 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, SPK, dan DO? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. | M |
-| 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Pengiriman undangan dan email notifikasi di production. | M |
+| 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Development memakai Mailtrap Sandbox, dipilih pengguna 5 November 2026. Provider untuk pengiriman undangan dan notifikasi production masih belum ditetapkan. | M |
 | 4 | Di mana aplikasi production akan dijalankan? | Product Owner + IT | Runbook deployment, sizing, backup, dan target observability. | M |
 | 5 | Bukti booking fee apa yang cukup untuk masuk SPK? | Product Owner + operasional dealer | Validasi final transisi ke SPK. | M |
 | 6 | Berapa lama data pelanggan dan audit disimpan? | Product Owner + legal/operasional | Kebijakan retensi, archive, dan penghapusan. | S |

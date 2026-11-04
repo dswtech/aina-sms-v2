@@ -61,6 +61,7 @@ export type CustomerItem = {
         is_closed: boolean;
         is_stagnant: boolean;
         estimated_value: number | null;
+        can_comment: boolean;
         comments: Array<{
             id: number;
             body: string;
@@ -68,6 +69,8 @@ export type CustomerItem = {
             created_at: string;
             edited_at: string | null;
             can_edit: boolean;
+            stage_at_creation: string | null;
+            stage_at_creation_label: string | null;
             replies: Array<{
                 id: number;
                 body: string;
@@ -75,6 +78,8 @@ export type CustomerItem = {
                 created_at: string;
                 edited_at: string | null;
                 can_edit: boolean;
+                stage_at_creation: string | null;
+                stage_at_creation_label: string | null;
             }>;
         }>;
     } | null;
@@ -166,8 +171,13 @@ export default function CustomersIndex({
     const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
     const [transactionOpen, setTransactionOpen] = useState(false);
     const [reassignOpen, setReassignOpen] = useState(false);
-    const [selectedCustomer, setSelectedCustomer] =
+    const [selectedCustomerSnapshot, setSelectedCustomer] =
         useState<CustomerItem | null>(null);
+    const selectedCustomer =
+        customers.data.find(
+            (customer) =>
+                customer.public_id === selectedCustomerSnapshot?.public_id,
+        ) ?? null;
 
     // Form states
     const [leadName, setLeadName] = useState('');
@@ -1859,6 +1869,11 @@ export default function CustomersIndex({
                                                                         )
                                                                     </span>
                                                                 )}
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {comment.stage_at_creation_label
+                                                                        ? `Saat dikirim: ${comment.stage_at_creation_label}`
+                                                                        : 'Tahap saat kirim belum tercatat'}
+                                                                </span>
                                                             </div>
 
                                                             {editingCommentId ===
@@ -1945,19 +1960,23 @@ export default function CustomersIndex({
                                                                             Edit
                                                                         </Button>
                                                                     )}
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-11 px-2 text-xs"
-                                                                    onClick={() =>
-                                                                        setReplyParentId(
-                                                                            comment.id,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Balas
-                                                                </Button>
+                                                                {selectedCustomer
+                                                                    .active_deal
+                                                                    ?.can_comment && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-11 px-2 text-xs"
+                                                                        onClick={() =>
+                                                                            setReplyParentId(
+                                                                                comment.id,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Balas
+                                                                    </Button>
+                                                                )}
                                                             </div>
 
                                                             {comment.replies
@@ -1992,6 +2011,11 @@ export default function CustomersIndex({
                                                                                             )
                                                                                         </span>
                                                                                     )}
+                                                                                    <span className="text-xs text-muted-foreground">
+                                                                                        {reply.stage_at_creation_label
+                                                                                            ? `Saat dikirim: ${reply.stage_at_creation_label}`
+                                                                                            : 'Tahap saat kirim belum tercatat'}
+                                                                                    </span>
                                                                                 </div>
 
                                                                                 {editingCommentId ===
@@ -2151,31 +2175,34 @@ export default function CustomersIndex({
                                             </p>
                                         )}
 
-                                        <form
-                                            onSubmit={(e) =>
-                                                handleCreateComment(e)
-                                            }
-                                            className="mt-3 space-y-2"
-                                        >
-                                            <textarea
-                                                value={commentBody}
-                                                onChange={(e) =>
-                                                    setCommentBody(
-                                                        e.target.value,
-                                                    )
+                                        {selectedCustomer.active_deal
+                                            .can_comment && (
+                                            <form
+                                                onSubmit={(e) =>
+                                                    handleCreateComment(e)
                                                 }
-                                                placeholder="Tulis komentar..."
-                                                className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
-                                                required
-                                            />
-                                            <Button
-                                                type="submit"
-                                                size="sm"
-                                                className="min-h-9"
+                                                className="mt-3 space-y-2"
                                             >
-                                                Kirim Komentar
-                                            </Button>
-                                        </form>
+                                                <textarea
+                                                    value={commentBody}
+                                                    onChange={(e) =>
+                                                        setCommentBody(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Tulis komentar..."
+                                                    className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
+                                                    required
+                                                />
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    className="min-h-9"
+                                                >
+                                                    Kirim Komentar
+                                                </Button>
+                                            </form>
+                                        )}
                                     </>
                                 ) : (
                                     <p className="mt-1 text-sm text-muted-foreground">

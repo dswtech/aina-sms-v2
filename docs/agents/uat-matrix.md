@@ -91,14 +91,14 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | Referensi PRD | Role | Skenario | Bukti assertion | Status teknis | Keterbatasan dan sisa pekerjaan | UAT |
 |---|---|---|---|---|---|---|
 | [CVS-01](PRD.md#75-conversation--coaching-cvs) | S, V, A | [S06](#s06), [V03](#v03) | [E08](#e08) history/activity; [E16](#e16) komentar tersimpan, tanpa assertion timeline gabungan. | Parsial / Gap source | UI memisahkan riwayat tahap, aktivitas dan coaching; belum timeline kronologis tunggal [G06](#g06). | Belum dijalankan |
-| [CVS-02](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06), [V03](#v03) | [E16](#e16): Sales membuat body komentar pada deal. | Parsial / Gap source | Tahap saat kirim tidak disimpan di model/payload komentar; akses positif V dan negatif asing belum dites [G01](#g01), [G09](#g09). | Belum dijalankan |
-| [CVS-03](PRD.md#75-conversation--coaching-cvs) | A | [A04](#a04) | Belum ada assertion langsung yang membatasi Admin pada baca coaching. | Gap source | POST comments mengotorisasi view deal dan menerima Admin; audit baca saja belum ditegakkan [G01](#g01). | Belum dijalankan |
+| [CVS-02](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06), [V03](#v03) | [E16](#e16), [E25](#e25): Sales/Supervisor terkait boleh menulis; actor asing ditolak sebelum validasi; snapshot server tidak berubah saat edit/tahap berganti. | Parsial | G01 ditutup teknis pada branch perbaikan; UAT dan gerbang operasional tetap terbuka. | Belum dijalankan |
+| [CVS-03](PRD.md#75-conversation--coaching-cvs) | A | [A04](#a04) | [E25](#e25): Admin membaca, can_comment/can_edit false; create/edit komentar Admin ditolak, termasuk komentar lama miliknya. | Parsial | Penulisan sudah dibatasi; inspeksi revisi audit lengkap masih [G06](#g06), UAT belum dijalankan. | Belum dijalankan |
 | [CVS-04](PRD.md#75-conversation--coaching-cvs) | B | [B02](#b02) | [E04](#e04) menolak Customer/Transaksi B; belum mengetes endpoint komentar atau body bocor. | Parsial | Tambahkan HTTP negatif komentar/edit serta pemeriksaan laporan/email [G09](#g09). | Belum dijalankan |
-| [CVS-05](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06) | [E16](#e16): komentar lalu reply menghasilkan count dua. | Parsial / Gap source | Hanya mengecek parent pada deal yang sama, tidak menolak parent berupa reply; [G01](#g01). | Belum dijalankan |
-| [CVS-06](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06) | [E16](#e16): edit langsung berhasil; tidak menggeser waktu. | Parsial | Uji sebelum/pada/setelah lima menit dan actor lain, sesuai keputusan batas waktu kanonik; [G09](#g09). | Belum dijalankan |
+| [CVS-05](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06) | [E16](#e16), [E25](#e25): reply satu tingkat berhasil; parent reply/deal lain/tidak ada/nol/negatif ditolak tanpa mutasi/notifikasi. | Parsial | Backend dan kontrol reply root diuji; UAT conversation belum dijalankan. | Belum dijalankan |
+| [CVS-06](PRD.md#75-conversation--coaching-cvs) | S, V | [S06](#s06) | [E16](#e16), [E25](#e25): edit milik sendiri pada 299 detik diizinkan, 300/301 ditolak; actor lain ditolak dan snapshot tetap. | Parsial | Boundary diuji mengikuti implementasi strict lima menit; penerimaan pengguna masih diperlukan. | Belum dijalankan |
 | [CVS-07](PRD.md#75-conversation--coaching-cvs) | S, V, A | [S06](#s06), [A04](#a04) | [E16](#e16): count revision satu dan old_body benar. | Parsial / Gap source | edited_by/time belum diassert; belum ada route/props inspeksi revisi bagi Admin [G06](#g06). | Belum dijalankan |
 | [CVS-08](PRD.md#75-conversation--coaching-cvs) | Semua | [S06](#s06), [X01](#x01) | Belum ada assertion delete komentar; policy delete false dan route delete tidak ada pada source. | Belum ada | Tambahkan uji DELETE ditolak dan record/revision tetap ada [G09](#g09). | Belum dijalankan |
-| [CVS-09](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03), [O01](#o01) | [E20](#e20) hanya menu notifikasi fixture; tidak ada assertion dispatch coaching. | Gap source | Store komentar tidak memicu notifikasi in-app/email; belum delivery/retry atau uji email metadata-only [G01](#g01). | Belum dijalankan |
+| [CVS-09](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03), [O01](#o01) | [E25](#e25): notifikasi database metadata, job tanpa body, worker retry/recovery enqueue dan otorisasi ulang; SMTP template dikonfirmasi Mailtrap CLI. | Parsial | Intent durable/tautan transaksi sudah tersedia; SLA, provider production, worker/scheduler deployment dan UAT tetap terbuka. | Belum dijalankan |
 | [CVS-10](PRD.md#75-conversation--coaching-cvs) | S, V | [X04](#x04) | Belum ada assertion lampiran; request komentar hanya body/parent_id. | Ditunda | Lampiran di luar MVP; cek tidak ada kontrol/jalur upload coaching aktif. | Belum dijalankan |
 
 ### Impor
@@ -161,6 +161,8 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [ANL-09](PRD.md#710-analisis-penjualan-anl) | V, B | [X04](#x04) | Belum assertion Area/MSCP; PRD secara eksplisit menunda. | Ditunda | Menunggu lokasi terstruktur serta modul leasing/definisi MSCP; bukan penghambat MVP. | Belum dijalankan |
 
 ## Katalog bukti otomatis
+
+E01–E24 mencatat inspeksi baseline awal; E25 mencatat tindak lanjut G01 pada 5 November 2026. Perubahan bukti teknis tidak mengubah hasil UAT menjadi lulus.
 
 Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak menggunakan nama file sebagai bukti kelulusan requirement. Semua tes PHP di bawah termasuk suite `composer ci:check`, kecuali bagian browser E20. Detail hasil run ada pada bagian verifikasi.
 
@@ -259,6 +261,12 @@ Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak meng
 ### E24
 
 [TestCase](../../tests/TestCase.php) menjalankan `markTestSkipped` bila fitur Fortify tidak aktif. Tiga tes halaman 2FA pada [Settings SecurityTest](../../tests/Feature/Settings/SecurityTest.php) memakai guard twoFactorAuthentication, sementara [config Fortify](../../config/fortify.php) hanya mengaktifkan resetPasswords/emailVerification. Run terarah `php vendor/bin/pest --filter SecurityTest --display-skipped` menghasilkan lima tes (dua lulus, tiga skip), delapan assertions; tes halaman 2FA belum menjadi bukti kelulusan. Output reporter proyek merangkum jumlah tanpa detail pesan skip; guard source dan konfigurasi menjelaskan kondisi skip ini, bukan bukti fitur 2FA rusak atau wajib ditambahkan ke MVP.
+
+### E25
+
+[CoachingWorkflowTest](../../tests/Feature/Customer/CoachingWorkflowTest.php) menambah 21 kasus (termasuk dataset): role/scope penulis, otorisasi sebelum validasi, penolakan parent yang tidak sah, snapshot server immutable serta legacy null, Admin baca saja, pemilihan penerima/metadata/read status, halaman coaching transaksi setelah reassignment Customer tanpa payload Customer, penyaringan coaching transaksi asing, boundary edit dan perubahan akses sebelum delivery. Nama tes antara lain `allows only the assigned sales and team supervisors to write coaching`, `captures the server stage for roots and replies and preserves it after stage changes and edits`, `opens the exact authorized transaction from its notification even when a newer deal exists`, `retains a pending email intent when enqueue fails and recovers it on the next dispatch pass`, dan `records exhausted delivery and permits an explicit retry while ignoring a completed replay`.
+
+Assertion juga memeriksa rollback komentar/notifikasi, payload job tanpa body, retry provider dengan worker database test, intent pending pulih melalui command lalu tidak di-enqueue dua kali, serta failed/sent/replay. Suite lokal terbaru: 171 tes (168 lulus, 3 skip), 1065 assertions. [Browser](../../tests/Browser/accessibility.js) kini 17 kelompok lulus, dengan G01 pada 390/1440px untuk Admin/Sales, label snapshot/legacy, readonly, composer/reply dan error aksesibel. Satu template metadata coaching sintetis dikirim lewat Laravel SMTP ke Mailtrap Sandbox dan dikonfirmasi menggunakan CLI; bukan lifecycle komentar pada database development. Bukti deployment, provider production, PostgreSQL dan UAT tetap belum tersedia. Lihat [runbook G01](../operations/coaching-notifications.md).
 
 ## Skenario UAT empat role
 
@@ -368,11 +376,11 @@ Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan
 
 ## Backlog gap berdasarkan dampak
 
-Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requirement di PRD atau persetujuan pembangunan fitur baru. Gap source dikonfirmasi melalui pembacaan jalur yang disebut; reproduksi runtime dan tes gagal masih menjadi langkah pertama pekerjaan perbaikannya. Kekurangan bukti tidak otomatis berarti implementasi salah.
+Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requirement di PRD atau persetujuan pembangunan fitur baru. Gap source dikonfirmasi melalui pembacaan jalur yang disebut; reproduksi runtime dan tes gagal masih menjadi langkah pertama pekerjaan perbaikannya. Kekurangan bukti tidak otomatis berarti implementasi salah. Status G01 diperbarui berdasarkan E25; gap lain tetap memakai bukti inspeksi awal sampai diuji atau diperbaiki tersendiri.
 
 ### G01
 
-**Penghambat rilis — alur coaching belum lengkap.** Bukti: [store/update komentar][comment-source] hanya menyimpan komentar/revisi; pencarian notification dispatch di `app` hanya menemukan undangan, bukan komentar. [Model komentar][comment-model] tidak menyimpan tahap saat kirim; parent hanya dibatasi ke deal sama, reply-ke-reply tidak ditolak. Store mengotorisasi view deal, yang memberi Admin akses melalui [policy deal][deal-policy], walau PRD membatasi Admin pada baca audit. Tindak lanjut: reproduksi positif/negatif S06/A04/B02, terapkan batas role/tahap/reply dan delivery metadata-only beserta retry sesuai PRD; jangan menyamakan menu notifikasi demo dengan pipeline dispatch. Pemilik: Engineering backend + QA, PO/operasional untuk penerimaan. Terkait: CVS-02/03/05/09, DSH-03; gerbang O01.
+**Ditutup secara teknis pada branch G01, belum menjadi kelulusan UAT.** Inspeksi awal menemukan store/update hanya menyimpan komentar/revisi, tanpa dispatch; tahap tidak disimpan, reply-ke-reply diterima, dan Admin dapat menulis melalui izin view deal. Perbaikan memakai policy write Sales/Supervisor, parent root pada deal sama, snapshot nullable/immutable, notifikasi database metadata serta intent email durable dengan worker retry dan pemulihan enqueue melalui scheduler. Tautan membuka halaman coaching berdasarkan izin transaksi, tanpa memperluas payload Customer. [E25](#e25) mereproduksi kegagalan awal dan memeriksa perbaikan; [runbook](../operations/coaching-notifications.md) menjelaskan migration, worker/scheduler dan keterbatasan at-least-once. Pemilik: Engineering + QA untuk review/merge dan regresi; IT/operasional/PO untuk [O01](#o01) dan UAT. Migration database development belum dijalankan, scheduler/worker belum diaktifkan; provider production/SLA tetap terbuka. Timeline gabungan dan audit revisi penuh masih G06; daftar unread pada dashboard masih G02.
 
 ### G02
 
@@ -430,7 +438,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 **Gerbang penerimaan — UAT/pilot belum dijalankan.** Bukti: [laporan QA][qa] membatasi audit sebagai bukan UAT; dokumen ini belum berisi hasil aktual atau tanda tangan pengguna. Tindak lanjut: O04 setelah blocker teknis ditriase, data awal direkonsiliasi, peserta dijadwalkan dan lingkungan/write diotorisasi. Pemilik: PO + pemilik empat role + QA/operasional. Fase 6 dan go-live tetap terbuka.
 
-## Verifikasi dokumen dan baseline
+## Verifikasi dokumen dan baseline awal (4 November 2026)
 
 - Baseline source `47ff7a9`; pemeriksaan lokal `composer ci:check` pada penyusunan dokumen ini lulus: frontend lint/format, TypeScript, Pint, PHPStan, Pest 150 tes (147 lulus, 3 skip), 896 assertions. Database test SQLite in-memory sesuai konfigurasi; bukan write database bisnis.
 - Tidak menjalankan ulang browser, build, benchmark, email, migration/seeder, impor bisnis atau UAT manusia pada tugas dokumentasi ini. Bukti 16 kelompok browser/build pada PR #25 adalah bukti historis tertaut, bukan hasil run baru.

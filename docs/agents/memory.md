@@ -3,14 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.13 |
-| Diperbarui | 4 November 2026 |
+| Versi | v1.14 |
+| Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
 
+- PR #26 matriks UAT sudah merged; branch `codex/g01-coaching-notifications` berangkat dari `main` `d4278c0`. Perbaikan G01 membatasi write coaching, reply satu tingkat, snapshot tahap immutable/legacy null, penyaringan baca per transaksi, notifikasi metadata in-app dan email dengan intent durable, pemulihan enqueue serta retry worker. Halaman coaching khusus mengikuti izin transaksi tanpa payload Customer setelah assignment Customer berubah. Rincian bukti berada di [E25/matriks](uat-matrix.md#e25) dan [runbook G01](../operations/coaching-notifications.md).
+- Pengguna memilih Mailtrap Sandbox untuk development pada 5 November 2026; keputusan development tercatat pada PRD bagian 14 dan runbook. Credential hanya di `.env` lokal yang diabaikan Git; nilainya tidak dicatat di dokumentasi. STARTTLS/auth SMTP serta resolusi konfigurasi Laravel diverifikasi; satu template email sintetis dari Laravel tertangkap di Sandbox dan metadata/URL dikonfirmasi lewat Mailtrap CLI. Provider production tetap belum ditetapkan.
+- Verifikasi G01: `composer ci:check` lulus (171 tes, 168 lulus, 3 skip, 1065 assertions), build dan lint browser lulus; regresi browser 17 kelompok lulus/0 gagal. Review independen dan perbaikan dua temuan selesai; screenshot Sales mobile/Admin desktop diperiksa. Tidak menjalankan migration pada DB development, worker/scheduler bisnis, PostgreSQL/concurrency production atau UAT manusia. Migration snapshot wajib diterapkan oleh operator pada target yang telah diotorisasi sebelum write komentar memakai versi baru; Fase 6 tetap belum selesai.
 - PR #25 warna baris sudah merged ke `main` pada baseline `47ff7a9`; PR #24/footer juga sudah merged. Branch dokumentasi `codex/uat-matrix-gap-review` berangkat dari baseline tersebut dengan working tree bersih. Tidak ada perubahan fitur/API/database pada pekerjaan matriks UAT.
 - [`uat-matrix.md`](uat-matrix.md) memetakan seluruh 80 referensi requirement ke assertion yang diperiksa, 20 skenario UAT empat role/lintas role dan lima gerbang operasional, serta 15 kelompok gap. Seluruh hasil UAT belum dijalankan. Inspeksi source menemukan capability parsial yang belum terungkap oleh suite lulus, termasuk dispatch coaching, batas Admin/reply, perbandingan/target tim, konsistensi periode/scope forecast, duplikat sebelum simpan, consent/riwayat lengkap dan responsivitas impor. Rincian, batas bukti, pemilik serta prioritas triase ada di matriks; ini bukan keputusan produk baru atau perbaikan implementasi.
 - Verifikasi baseline `47ff7a9` pada pekerjaan dokumentasi: `composer ci:check` lulus, frontend lint/format, TypeScript, Pint, PHPStan; Pest 150 tes (147 lulus, 3 skip), 896 assertions. Tes menggunakan SQLite in-memory, bukan database bisnis. Tidak menjalankan ulang browser/build/UAT; bukti browser PR #25 tetap historis. Kesiapan seluruh requirement/Fase 6 belum dapat disimpulkan dari hasil suite ini.
@@ -73,7 +76,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review matriks dan triase gap source pada [`uat-matrix.md`](uat-matrix.md), terutama coaching/otorisasi, kendali tim, angka/periode/scope, dan konfirmasi duplikat. Kerjakan perbaikan melalui perubahan terpisah dengan reproduksi serta tes gagal dahulu; jangan menyatakan capability lengkap berdasarkan catatan fase historis.
+1. Review/merge PR branch G01, kemudian terapkan migration dan aktifkan worker/scheduler pada target yang diotorisasi sesuai runbook. Setelah itu lanjutkan G02 (kendali tim) dan G03 (angka/periode/scope), lalu gap lain pada [`uat-matrix.md`](uat-matrix.md). Bukti teknis G01 tidak menggantikan UAT atau menutup gap timeline/revisi G06.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

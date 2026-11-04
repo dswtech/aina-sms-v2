@@ -21,6 +21,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 | [`memory.md`](memory.md) | Runbook/handoff | Mencatat keadaan terverifikasi, keputusan aktif, keputusan terbuka, dan langkah berikutnya. |
 | [`roadmap.md`](roadmap.md) | Roadmap | Menetapkan urutan pembangunan, dependensi, test wajib, dan gerbang keluar setiap fase. |
 | [`uat-matrix.md`](uat-matrix.md) | Matriks UAT & gap | Memetakan 80 referensi requirement PRD ke assertion aktual, skenario empat role, batas bukti, backlog gap, serta gerbang operasional; hasil UAT belum dijalankan. |
+| [`../operations/coaching-notifications.md`](../operations/coaching-notifications.md) | Runbook G01 | Mencatat otorisasi coaching, migration snapshot, intent/retry email, worker/scheduler, Mailtrap development dan batas bukti verifikasi. |
 | [`accessibility-responsive-qa-2026-11-04.md`](accessibility-responsive-qa-2026-11-04.md) | Laporan QA | Mencatat audit Playwright empat role, tiga viewport, temuan aksesibilitas, bukti, batas cakupan, dan langkah regresi Fase 6. |
 | [`implementation-phase-6-accessibility-fixes.md`](implementation-phase-6-accessibility-fixes.md) | Rencana perbaikan | Menetapkan perbaikan sepuluh temuan audit, test browser sintetis, dan verifikasi Fase 6. |
 | [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md) | Rencana implementasi | Memecah fondasi role, matriks route, dan shell responsif Fase 1 menjadi siklus test-first. |
