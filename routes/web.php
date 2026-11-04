@@ -42,6 +42,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('comments/{comment}', [DealCommentController::class, 'update'])->name('comments.update');
 
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
 
     Route::inertia('targets', 'module-status', ['module' => 'targets'])

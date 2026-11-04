@@ -144,6 +144,7 @@ class CustomerController extends Controller
             ->through(function (Customer $c) use ($actor): array {
                 // Pick the most recent open deal, falling back to the most recent closed one.
                 $deal = $c->transactions
+                    ->filter(fn (DealTransaction $deal): bool => $actor->can('view', $deal))
                     ->sortByDesc('id')
                     ->sortBy(fn (DealTransaction $d): int => $d->current_stage->isClosed() ? 1 : 0)
                     ->first();
@@ -172,6 +173,7 @@ class CustomerController extends Controller
                         'is_closed' => $deal->current_stage->isClosed(),
                         'is_stagnant' => $deal->is_stagnant,
                         'estimated_value' => $deal->estimated_value,
+                        'can_comment' => $actor->can('create', [DealComment::class, $deal]),
                         'comments' => $deal->comments
                             ->whereNull('parent_id')
                             ->map(fn (DealComment $comment): array => [
@@ -180,7 +182,9 @@ class CustomerController extends Controller
                                 'author_name' => $comment->author?->name,
                                 'created_at' => $comment->created_at->toIso8601String(),
                                 'edited_at' => $comment->edited_at?->toIso8601String(),
-                                'can_edit' => $comment->canEdit($actor),
+                                'stage_at_creation' => $comment->stage_at_creation?->value,
+                                'stage_at_creation_label' => $comment->stage_at_creation?->label(),
+                                'can_edit' => $actor->can('update', $comment),
                                 'replies' => $deal->comments
                                     ->where('parent_id', $comment->id)
                                     ->map(fn (DealComment $reply): array => [
@@ -189,7 +193,9 @@ class CustomerController extends Controller
                                         'author_name' => $reply->author?->name,
                                         'created_at' => $reply->created_at->toIso8601String(),
                                         'edited_at' => $reply->edited_at?->toIso8601String(),
-                                        'can_edit' => $reply->canEdit($actor),
+                                        'stage_at_creation' => $reply->stage_at_creation?->value,
+                                        'stage_at_creation_label' => $reply->stage_at_creation?->label(),
+                                        'can_edit' => $actor->can('update', $reply),
                                     ])->values()->all(),
                             ])->values()->all(),
                     ] : null,

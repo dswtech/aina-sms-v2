@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PipelineStage;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property int|null $parent_id
  * @property string $body
+ * @property PipelineStage|null $stage_at_creation
  * @property Carbon|null $edited_at
  */
 #[Fillable([
@@ -22,6 +24,7 @@ use Illuminate\Support\Carbon;
     'user_id',
     'parent_id',
     'body',
+    'stage_at_creation',
     'edited_at',
 ])]
 class DealComment extends Model
@@ -87,6 +90,7 @@ class DealComment extends Model
     protected function casts(): array
     {
         return [
+            'stage_at_creation' => PipelineStage::class,
             'edited_at' => 'datetime',
         ];
     }

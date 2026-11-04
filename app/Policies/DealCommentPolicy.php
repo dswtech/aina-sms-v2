@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\DealComment;
 use App\Models\DealTransaction;
 use App\Models\User;
@@ -20,13 +21,14 @@ class DealCommentPolicy
 
     public function create(User $actor, DealTransaction $deal): bool
     {
-        return app(DealTransactionPolicy::class)->view($actor, $deal);
+        return in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)
+            && app(DealTransactionPolicy::class)->view($actor, $deal);
     }
 
     public function update(User $actor, DealComment $comment): bool
     {
         return $comment->canEdit($actor)
-            && app(DealTransactionPolicy::class)->view($actor, $comment->deal);
+            && $this->create($actor, $comment->deal);
     }
 
     public function delete(User $actor, DealComment $comment): bool
