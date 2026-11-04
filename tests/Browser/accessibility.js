@@ -1,0 +1,752 @@
+// Run against a built local app with playwright-cli run-code --filename.
+// Documents and mutations are intercepted; only the real app assets are loaded.
+// eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
+async function accessibility(page) {
+    page.setDefaultTimeout(2500);
+    const origin = new URL(page.url()).origin;
+    const template = await (await page.request.get(`${origin}/login`)).text();
+    const bootstrap = /(<script\b[^>]*data-page[^>]*>)([\s\S]*?)(<\/script>)/;
+    const match = template.match(bootstrap);
+    if (!match)
+        throw new Error('Expected an Inertia document from the local app');
+    const initial = JSON.parse(match[2]);
+    const user = {
+        public_id: 'qa-sales',
+        name: 'QA Sales',
+        username: 'qa-sales',
+        email: 'qa@example.test',
+        email_verified_at: '2026-11-01T00:00:00Z',
+        role: 'sales',
+        is_active: true,
+    };
+    const customer = {
+        public_id: 'qa-customer',
+        name: 'Pelanggan QA',
+        phone: '+620000000000',
+        email: null,
+        address: null,
+        contact_channel_preference: 'call',
+        opt_out: false,
+        last_contact_at: null,
+        notes: null,
+        assigned_sales: {
+            public_id: user.public_id,
+            name: user.name,
+            username: user.username,
+        },
+        active_deal: {
+            id: 1,
+            public_id: 'qa-deal',
+            vehicle_model: 'Model QA',
+            current_stage: 'lead',
+            stage_label: 'Lead',
+            is_closed: false,
+            is_stagnant: false,
+            estimated_value: 100000000,
+            comments: [
+                {
+                    id: 1,
+                    body: 'Komentar QA',
+                    author_name: 'Supervisor QA',
+                    created_at: '2026-11-01T00:00:00Z',
+                    edited_at: null,
+                    can_edit: false,
+                    replies: [],
+                },
+            ],
+        },
+        next_follow_up: null,
+        stage_history: Array.from({ length: 15 }, () => ({
+            from_stage: null,
+            from_stage_label: null,
+            to_stage: 'lead',
+            to_stage_label: 'Lead',
+            notes: 'Riwayat panjang untuk menguji fokus',
+            actor_name: 'QA Sales',
+            created_at: '2026-11-01T00:00:00Z',
+        })),
+        recent_activities: [],
+    };
+    const customerProps = {
+        customers: {
+            data: [customer],
+            current_page: 1,
+            last_page: 2,
+            total: 2,
+            from: 1,
+            to: 1,
+            links: [
+                { url: '/customers?page=1', label: '1', active: true },
+                { url: '/customers?page=2', label: '2', active: false },
+            ],
+        },
+        filters: {
+            search: '',
+            tab: 'all',
+            sort: 'updated_at',
+            direction: 'desc',
+        },
+        counts: {
+            all: 2,
+            follow_up_today: 0,
+            uncontacted: 1,
+            active: 1,
+            purchased: 0,
+            inactive: 0,
+            repeat_order: 0,
+            referral: 0,
+        },
+        assignableSales: [
+            { id: 1, public_id: 'qa-sales-1', name: 'Sales Alpha' },
+            { id: 2, public_id: 'qa-sales-2', name: 'Sales Beta' },
+        ],
+    };
+    let fixture;
+    let mutationErrors = {};
+    let mutations = 0;
+    const tick = () =>
+        page.evaluate(
+            () =>
+                new Promise((r) =>
+                    requestAnimationFrame(() => requestAnimationFrame(r)),
+                ),
+        );
+    const assert = (ok, message) => {
+        if (!ok) throw new Error(message);
+    };
+    const focus = () =>
+        page.evaluate(
+            () =>
+                document.activeElement.getAttribute('aria-label') ||
+                document.activeElement.textContent?.trim(),
+        );
+    const settle = (locator) =>
+        locator.evaluate(async (e) => {
+            await Promise.all(e.getAnimations().map((a) => a.finished));
+        });
+    const contrast = (locator) =>
+        locator.evaluate((e) => {
+            const context = document.createElement('canvas').getContext('2d');
+            const paint = (color) => {
+                context.fillStyle = color;
+                context.fillRect(0, 0, 1, 1);
+            };
+            const luminance = (rgb) => {
+                const v = rgb
+                    .slice(0, 3)
+                    .map((c) => c / 255)
+                    .map((c) =>
+                        c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4,
+                    );
+                return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+            };
+            paint('#ffffff');
+            const ancestors = [];
+            for (let n = e; n; n = n.parentElement) ancestors.unshift(n);
+            for (const n of ancestors)
+                paint(getComputedStyle(n).backgroundColor);
+            const background = [...context.getImageData(0, 0, 1, 1).data];
+            paint(getComputedStyle(e).color);
+            const text = [...context.getImageData(0, 0, 1, 1).data];
+            const v = [luminance(text), luminance(background)].sort(
+                (a, b) => b - a,
+            );
+            return (v[0] + 0.05) / (v[1] + 0.05);
+        });
+    const results = [];
+    const test = async (name, run) => {
+        try {
+            await run();
+            results.push({ name, passed: true });
+        } catch (error) {
+            results.push({
+                name,
+                passed: false,
+                error: error.message,
+            });
+        }
+    };
+    await page.route(`${origin}/**`, async (route) => {
+        const request = route.request();
+        if (!['GET', 'HEAD'].includes(request.method())) {
+            mutations++;
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                headers: { 'X-Inertia': 'true' },
+                body: JSON.stringify({
+                    ...fixture,
+                    props: { ...fixture.props, errors: mutationErrors },
+                }),
+            });
+        } else if (request.isNavigationRequest()) {
+            const json = JSON.stringify(fixture).replaceAll('<', '\\u003c');
+            await route.fulfill({
+                status: 200,
+                contentType: 'text/html',
+                body: template.replace(
+                    bootstrap,
+                    (_, start, _old, end) => start + json + end,
+                ),
+            });
+        } else {
+            // Fulfilled documents have no network address space in Chromium.
+            // Serve real assets through the same route to avoid loopback CORS failures.
+            await route.fulfill({ response: await route.fetch() });
+        }
+    });
+    const load = async (
+        component = 'customers/index',
+        props = customerProps,
+        url = '/customers',
+    ) => {
+        fixture = {
+            ...initial,
+            component,
+            url,
+            props: {
+                ...initial.props,
+                auth: { user },
+                errors: {},
+                sidebarOpen: true,
+                notifications: [
+                    {
+                        id: 'qa-notification',
+                        data: {
+                            title: 'Notifikasi QA',
+                            message: 'Pesan QA',
+                            url: '/customers',
+                        },
+                        created_at: '2026-11-01T00:00:00Z',
+                    },
+                ],
+                notificationsUnreadCount: 1,
+                ...props,
+            },
+        };
+        mutationErrors = {};
+        await page.goto(origin + url);
+        await page.locator('h1').first().waitFor();
+        await tick();
+    };
+    const openMenu = async () => {
+        await page
+            .getByRole('button', { name: 'Buka kontrol panel pengguna' })
+            .press('Enter');
+        await settle(page.getByRole('menu'));
+    };
+    const reach = async (name) => {
+        for (let i = 0; i < 25; i++) {
+            if ((await focus()) === name) return true;
+            await page.keyboard.press('ArrowDown');
+            await tick();
+        }
+        return false;
+    };
+    await page.setViewportSize({ width: 390, height: 844 });
+    await test('keyboard can select theme, text size and accent in the user menu', async () => {
+        await load();
+        await openMenu();
+        for (const name of ['Gelap', 'Besar', 'Pilih warna Hijau']) {
+            assert(await reach(name), `Keyboard cannot reach ${name}`);
+            await page.keyboard.press('Space');
+            await tick();
+            const expected =
+                name === 'Gelap'
+                    ? 'appearance'
+                    : name === 'Besar'
+                      ? 'font-size'
+                      : 'color-theme';
+            const value =
+                name === 'Gelap'
+                    ? 'dark'
+                    : name === 'Besar'
+                      ? 'large'
+                      : 'green';
+            assert(
+                await page.evaluate(
+                    ([k, v]) => localStorage.getItem(k) === v,
+                    [expected, value],
+                ),
+                `${name} did not change preference`,
+            );
+        }
+        await page.keyboard.press('Escape');
+        await page.getByRole('menu').waitFor({ state: 'hidden' });
+        assert(
+            (await focus()) === 'Buka kontrol panel pengguna',
+            'Menu did not return focus',
+        );
+    });
+    // Each following document starts with the normal light/default preferences.
+    await page.evaluate(() => {
+        localStorage.clear();
+        document.cookie = 'appearance=light;path=/';
+    });
+    await test('keyboard reaches notification items', async () => {
+        await load();
+        await page.getByRole('button', { name: /^Notifikasi/ }).press('Enter');
+        await tick();
+        assert(
+            (await focus()).includes('Notifikasi QA'),
+            'Notification was skipped by menu keyboard navigation',
+        );
+        await page.keyboard.press('Escape');
+        await page.getByRole('menu').waitFor({ state: 'hidden' });
+    });
+    await test('mobile contact links have action names', async () => {
+        await load();
+        assert(
+            await page
+                .getByRole('link', {
+                    name: 'Telepon Pelanggan QA',
+                    exact: true,
+                })
+                .isVisible(),
+            'Phone link has no accessible action name',
+        );
+        assert(
+            await page
+                .getByRole('link', {
+                    name: 'WhatsApp Pelanggan QA',
+                    exact: true,
+                })
+                .isVisible(),
+            'WhatsApp link has no accessible action name',
+        );
+    });
+    await test('long detail focuses visible content and returns to its opener', async () => {
+        await load();
+        const trigger = page
+            .getByRole('button', { name: 'Detail', exact: true })
+            .filter({ visible: true });
+        await trigger.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await settle(dialog);
+        assert(
+            await dialog.evaluate((d) => {
+                const f = document.activeElement;
+                const r = f.getBoundingClientRect();
+                return d.contains(f) && r.top >= 0 && r.bottom <= innerHeight;
+            }),
+            'Initial dialog focus is outside the viewport',
+        );
+        await page.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'hidden' });
+        assert(
+            await trigger.evaluate((e) => e === document.activeElement),
+            'Detail did not return focus to its trigger',
+        );
+    });
+    await test('follow-on dialogs return focus to the original customer action', async () => {
+        for (const action of [
+            'Catat Aktivitas',
+            'Follow-Up',
+            'Ubah Tahap',
+            'Buat Transaksi Baru',
+            'Penugasan Ulang',
+        ]) {
+            await load();
+            const trigger = page
+                .getByRole('button', { name: 'Detail', exact: true })
+                .filter({ visible: true });
+            await trigger.click();
+            await settle(page.getByRole('dialog'));
+            const nextAction = page
+                .getByRole('dialog')
+                .getByRole('button', { name: action, exact: true });
+            await nextAction.click();
+            await page
+                .getByRole('heading', { name: 'Pelanggan QA', exact: true })
+                .waitFor({ state: 'hidden' });
+            await settle(page.getByRole('dialog'));
+            await page.keyboard.press('Escape');
+            await page.getByRole('dialog').waitFor({ state: 'hidden' });
+            assert(
+                await trigger.evaluate((e) => e === document.activeElement),
+                `${action} lost the original Detail focus`,
+            );
+        }
+        for (const action of ['Catat Aktivitas', 'Follow-Up', 'Ubah Tahap']) {
+            await load();
+            const trigger = page
+                .getByRole('button', { name: action, exact: true })
+                .filter({ visible: true });
+            await trigger.press('Enter');
+            await settle(page.getByRole('dialog'));
+            await page.keyboard.press('Escape');
+            await page.getByRole('dialog').waitFor({ state: 'hidden' });
+            assert(
+                await trigger.evaluate((e) => e === document.activeElement),
+                `${action} did not restore its direct card trigger`,
+            );
+        }
+    });
+    await test('all primary theme pairs and hover states meet normal text contrast', async () => {
+        await load();
+        await openMenu();
+        for (const mode of ['Terang', 'Gelap']) {
+            await page
+                .getByRole('menuitemradio', { name: mode, exact: true })
+                .click();
+            for (const color of [
+                'Biru',
+                'Hijau',
+                'Ungu',
+                'Merah',
+                'Oranye',
+                'Teal',
+            ]) {
+                await page
+                    .getByLabel(`Pilih warna ${color}`, { exact: true })
+                    .click();
+                await page.keyboard.press('Escape');
+                await page.getByRole('menu').waitFor({ state: 'hidden' });
+                const target = page.getByRole('button', {
+                    name: 'Tambah Lead Baru',
+                    exact: true,
+                });
+                await settle(target);
+                assert(
+                    (await contrast(target)) >= 4.5,
+                    `${mode}/${color} normal fails 4.5:1`,
+                );
+                await target.hover();
+                await settle(target);
+                assert(
+                    (await contrast(target)) >= 4.5,
+                    `${mode}/${color} hover fails 4.5:1`,
+                );
+                await page.mouse.move(0, 0);
+                await openMenu();
+            }
+        }
+        await page.keyboard.press('Escape');
+    });
+    await page.evaluate(() => {
+        localStorage.clear();
+        document.cookie = 'appearance=light;path=/';
+    });
+    await test('password visibility toggle follows the password in Tab order', async () => {
+        await load(
+            'auth/login',
+            { auth: { user: null }, canResetPassword: true },
+            '/login',
+        );
+        await page.getByLabel('Password', { exact: true }).focus();
+        await page.keyboard.press('Tab');
+        assert(
+            /password/i.test(await focus()),
+            'Tab skips the password visibility button',
+        );
+        await page.keyboard.press('Space');
+        assert(
+            (await page
+                .getByLabel('Password', { exact: true })
+                .getAttribute('type')) === 'text',
+            'Keyboard cannot show password',
+        );
+    });
+    await test('combobox exposes active option, empty results and isolated Escape', async () => {
+        await load();
+        await page
+            .getByRole('button', { name: 'Detail', exact: true })
+            .filter({ visible: true })
+            .click();
+        await page
+            .getByRole('button', { name: 'Penugasan Ulang', exact: true })
+            .click();
+        const dialog = page.getByRole('dialog');
+        await settle(dialog);
+        await page
+            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
+            .press('Enter');
+        const search = page.getByPlaceholder('Cari sales...');
+        await search.waitFor();
+        await search.press('ArrowDown');
+        await tick();
+        const active = await search.getAttribute('aria-activedescendant');
+        assert(
+            active &&
+                (await page.locator(`[id="${active}"]`).innerText()) ===
+                    'Sales Beta',
+            'ArrowDown does not expose the active option',
+        );
+        await search.fill('no-results-qa');
+        await tick();
+        assert(
+            !(await search.getAttribute('aria-activedescendant')),
+            'Empty search refers to a nonexistent option',
+        );
+        await search.fill('Alpha');
+        await search.press('Enter');
+        assert(
+            (await page
+                .getByRole('combobox', { name: 'Sales tujuan', exact: true })
+                .innerText()) === 'Sales Alpha',
+            'Enter did not select filtered option',
+        );
+        await page
+            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
+            .press('Enter');
+        await page.getByPlaceholder('Cari sales...').press('Escape');
+        await tick();
+        assert(
+            await dialog.isVisible(),
+            'Combobox Escape closed the parent dialog',
+        );
+        assert(
+            !(await page.getByRole('listbox').count()),
+            'Escape did not close combobox',
+        );
+        await page
+            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
+            .press('Enter');
+        await page.getByPlaceholder('Cari sales...').press('Tab');
+        await tick();
+        assert(
+            await page
+                .locator('#reassign-notes')
+                .evaluate((e) => e === document.activeElement),
+            'Tab did not leave combobox for the next field',
+        );
+    });
+    await test('mobile targets are at least 44 by 44 on pages, menus and dialogs', async () => {
+        const check = async () => {
+            const small = await page
+                .locator(
+                    'a[href],button,input:not([type=hidden]),select,[role=menuitem],[role=menuitemradio],[role=option]',
+                )
+                .evaluateAll((es) =>
+                    es
+                        .filter((e) => {
+                            const r = e.getBoundingClientRect();
+                            return (
+                                r.width > 0 &&
+                                r.height > 0 &&
+                                !e.disabled &&
+                                !e.closest('[aria-hidden=true]')
+                            );
+                        })
+                        .filter((e) => {
+                            const r = e.getBoundingClientRect();
+                            return r.width < 43.9 || r.height < 43.9;
+                        })
+                        .map(
+                            (e) =>
+                                e.getAttribute('aria-label') ||
+                                e.textContent ||
+                                e.name,
+                        ),
+                );
+            assert(
+                !small.length,
+                `Small targets: ${small.join(', ').slice(0, 200)}`,
+            );
+        };
+        await load();
+        await check();
+        await openMenu();
+        await check();
+        await page.keyboard.press('Escape');
+        await page.getByRole('menu').waitFor({ state: 'hidden' });
+        await page
+            .getByRole('button', { name: 'Tambah Lead Baru', exact: true })
+            .click();
+        await settle(page.getByRole('dialog'));
+        await check();
+        await load(
+            'auth/login',
+            { auth: { user: null }, canResetPassword: true },
+            '/login',
+        );
+        await check();
+    });
+    await test('customer search retains a label after typing', async () => {
+        await load();
+        const search = page.getByRole('textbox', {
+            name: 'Pencarian pelanggan',
+            exact: true,
+        });
+        assert(
+            (await search.count()) === 1,
+            'Search relies on placeholder instead of a label',
+        );
+        await search.fill('QA');
+        assert(await search.isVisible(), 'Search is not visible after input');
+    });
+    await test('login and profile validation messages describe invalid fields', async () => {
+        for (const component of ['auth/login', 'settings/profile']) {
+            const login = component === 'auth/login';
+            await load(
+                component,
+                { canResetPassword: true, mustVerifyEmail: false },
+                login ? '/login' : '/settings/profile',
+            );
+            mutationErrors = login
+                ? { username: 'Kesalahan username QA' }
+                : { email: 'Kesalahan email QA' };
+            if (login) {
+                await page
+                    .getByLabel('Username', { exact: true })
+                    .fill('qa-user');
+                await page
+                    .getByLabel('Password', { exact: true })
+                    .fill('qa-dummy-not-a-credential');
+            }
+            await page
+                .getByRole('button', {
+                    name: login ? 'Masuk' : 'Save',
+                    exact: true,
+                })
+                .click();
+            await page
+                .getByText(
+                    login ? 'Kesalahan username QA' : 'Kesalahan email QA',
+                    { exact: true },
+                )
+                .waitFor();
+            const input = page.getByLabel(
+                login ? 'Username' : 'Email address',
+                { exact: true },
+            );
+            const state = await input.evaluate((e) => ({
+                invalid: e.getAttribute('aria-invalid'),
+                message: document.getElementById(
+                    e.getAttribute('aria-describedby'),
+                )?.textContent,
+            }));
+            assert(
+                state.invalid === 'true' &&
+                    state.message?.includes('Kesalahan'),
+                `${component} error is not associated with its field`,
+            );
+            mutationErrors = {};
+            await page
+                .getByRole('button', {
+                    name: login ? 'Masuk' : 'Save',
+                    exact: true,
+                })
+                .click();
+            await page
+                .getByText(
+                    login ? 'Kesalahan username QA' : 'Kesalahan email QA',
+                    { exact: true },
+                )
+                .waitFor({ state: 'hidden' });
+            assert(
+                !(await input.getAttribute('aria-describedby')),
+                'Cleared error still describes the field',
+            );
+        }
+    });
+    await test('one main landmark and no page overflow at three widths', async () => {
+        for (const width of [390, 768, 1440]) {
+            await page.setViewportSize({ width, height: 900 });
+            await load();
+            assert(
+                (await page.getByRole('main').count()) === 1,
+                'Nested main landmarks',
+            );
+            assert(
+                await page.evaluate(
+                    () => document.documentElement.scrollWidth === innerWidth,
+                ),
+                `Page overflow at ${width}`,
+            );
+        }
+    });
+    await test('all seven transaction stages have distinct readable badge colors', async () => {
+        const stages = [
+            ['lead', 'Lead'],
+            ['prospect', 'Prospect'],
+            ['hot_prospect', 'Hot Prospect'],
+            ['spk', 'SPK'],
+            ['do', 'DO'],
+            ['delivery', 'Delivery'],
+            ['lost', 'Lost'],
+        ];
+        await page.setViewportSize({ width: 390, height: 844 });
+        const data = stages.map(([stage, label], index) => ({
+            ...customer,
+            public_id: `qa-${index}`,
+            name: `Pelanggan QA ${index}`,
+            active_deal: {
+                ...customer.active_deal,
+                current_stage: stage,
+                stage_label: label,
+                is_closed: ['delivery', 'lost'].includes(stage),
+            },
+        }));
+        await load('customers/index', {
+            ...customerProps,
+            customers: {
+                ...customerProps.customers,
+                data,
+                last_page: 1,
+                total: 7,
+                from: 1,
+                to: 7,
+                links: [],
+            },
+            counts: {
+                ...customerProps.counts,
+                all: 7,
+                uncontacted: 7,
+                active: 5,
+                purchased: 1,
+                inactive: 1,
+            },
+        });
+        for (const width of [390, 1440]) {
+            await page.setViewportSize({ width, height: 1100 });
+            for (const mode of ['light', 'dark']) {
+                await openMenu();
+                await page
+                    .getByRole('menuitemradio', {
+                        name: mode === 'dark' ? 'Gelap' : 'Terang',
+                        exact: true,
+                    })
+                    .click();
+                await page.keyboard.press('Escape');
+                await page.getByRole('menu').waitFor({ state: 'hidden' });
+                const backgrounds = [];
+                for (const [, label] of stages) {
+                    const badge = page
+                        .getByText(label, { exact: true })
+                        .filter({ visible: true });
+                    await settle(badge);
+                    backgrounds.push(
+                        await badge.evaluate(
+                            (e) => getComputedStyle(e).backgroundColor,
+                        ),
+                    );
+                    assert(
+                        (await contrast(badge)) >= 4.5,
+                        `${mode}/${label} badge fails 4.5:1`,
+                    );
+                }
+                assert(
+                    new Set(backgrounds).size === 7,
+                    'Stages do not have seven distinct badge colors',
+                );
+                if (width === 1440)
+                    await page.screenshot({
+                        path: `.playwright-cli/stage-badges-${mode}.png`,
+                        fullPage: true,
+                    });
+            }
+        }
+    });
+    await page.unrouteAll({ behavior: 'wait' });
+    await page.goto(`${origin}/login`);
+    const report = {
+        passed: results.filter((r) => r.passed).length,
+        failed: results.filter((r) => !r.passed).length,
+        interceptedMutations: mutations,
+        results,
+    };
+    if (report.failed)
+        throw new Error(`Accessibility regressions: ${JSON.stringify(report)}`);
+    return report;
+}

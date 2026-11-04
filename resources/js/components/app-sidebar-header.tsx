@@ -31,11 +31,11 @@ export function AppSidebarHeader({
     return (
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-3 border-b bg-background px-5 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
-                <SidebarTrigger className="-ml-1 hidden size-10 md:inline-flex" />
+                <SidebarTrigger className="-ml-1 hidden size-11 md:inline-flex" />
                 <Link
                     href="/dashboard"
                     aria-label="Kembali ke Beranda"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hidden"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hidden"
                 >
                     <AppLogoIcon className="size-5" />
                 </Link>

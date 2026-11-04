@@ -29,6 +29,10 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                             <Label htmlFor="email">Email</Label>
                             <Input
                                 id="email"
+                                aria-invalid={!!errors.email}
+                                aria-describedby={
+                                    errors.email ? 'email-error' : undefined
+                                }
                                 type="email"
                                 name="email"
                                 autoComplete="email"
@@ -37,6 +41,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 readOnly
                             />
                             <InputError
+                                id="email-error"
                                 message={errors.email}
                                 className="mt-2"
                             />
@@ -46,6 +51,12 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                             <Label htmlFor="password">Password</Label>
                             <PasswordInput
                                 id="password"
+                                aria-invalid={!!errors.password}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'password-error'
+                                        : undefined
+                                }
                                 name="password"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
@@ -53,7 +64,10 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 placeholder="Password"
                                 passwordrules={passwordRules}
                             />
-                            <InputError message={errors.password} />
+                            <InputError
+                                id="password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -62,6 +76,12 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
+                                aria-invalid={!!errors.password_confirmation}
+                                aria-describedby={
+                                    errors.password_confirmation
+                                        ? 'password_confirmation-error'
+                                        : undefined
+                                }
                                 name="password_confirmation"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
@@ -69,6 +89,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 passwordrules={passwordRules}
                             />
                             <InputError
+                                id="password_confirmation-error"
                                 message={errors.password_confirmation}
                                 className="mt-2"
                             />

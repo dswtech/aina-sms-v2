@@ -7,6 +7,8 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -88,7 +90,11 @@ export function UserMenuContent({ user }: Props) {
             <DropdownMenuSeparator />
             <div className="py-1.5">
                 <MenuRow label="Tema">
-                    <div className="inline-flex rounded-lg bg-muted p-0.5">
+                    <DropdownMenuRadioGroup
+                        value={appearance}
+                        aria-label="Tema"
+                        className="inline-flex rounded-lg bg-muted p-0.5"
+                    >
                         {(
                             [
                                 { value: 'light', label: 'Terang' },
@@ -96,42 +102,50 @@ export function UserMenuContent({ user }: Props) {
                                 { value: 'system', label: 'Sistem' },
                             ] as const
                         ).map((option) => (
-                            <button
+                            <DropdownMenuRadioItem
                                 key={option.value}
-                                type="button"
-                                aria-pressed={appearance === option.value}
-                                onClick={() => updateAppearance(option.value)}
+                                value={option.value}
+                                onSelect={(event) => {
+                                    event.preventDefault();
+                                    updateAppearance(option.value);
+                                }}
                                 className={cn(
-                                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                                    'min-h-11 min-w-11 justify-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors [&>span:first-child]:hidden',
                                     appearance === option.value
                                         ? 'bg-background text-primary shadow-xs'
                                         : 'text-muted-foreground hover:text-foreground',
                                 )}
                             >
                                 {option.label}
-                            </button>
+                            </DropdownMenuRadioItem>
                         ))}
-                    </div>
+                    </DropdownMenuRadioGroup>
                 </MenuRow>
                 <MenuRow label="Ukuran">
-                    <div className="inline-flex rounded-lg bg-muted p-0.5">
+                    <DropdownMenuRadioGroup
+                        value={fontSize}
+                        aria-label="Ukuran teks"
+                        className="inline-flex rounded-lg bg-muted p-0.5"
+                    >
                         {FONT_SIZE_OPTIONS.map((option) => (
-                            <button
+                            <DropdownMenuRadioItem
                                 key={option.value}
-                                type="button"
-                                aria-pressed={fontSize === option.value}
-                                onClick={() => updateFontSize(option.value)}
+                                value={option.value}
+                                onSelect={(event) => {
+                                    event.preventDefault();
+                                    updateFontSize(option.value);
+                                }}
                                 className={cn(
-                                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                                    'min-h-11 min-w-11 justify-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors [&>span:first-child]:hidden',
                                     fontSize === option.value
                                         ? 'bg-background text-primary shadow-xs'
                                         : 'text-muted-foreground hover:text-foreground',
                                 )}
                             >
                                 {option.label}
-                            </button>
+                            </DropdownMenuRadioItem>
                         ))}
-                    </div>
+                    </DropdownMenuRadioGroup>
                 </MenuRow>
                 <MenuRow label="Warna">
                     <ColorPicker />

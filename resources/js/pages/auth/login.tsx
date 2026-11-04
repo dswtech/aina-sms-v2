@@ -36,11 +36,19 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="username"
                                     required
                                     autoFocus
-                                    tabIndex={1}
+                                    aria-invalid={!!errors.username}
+                                    aria-describedby={
+                                        errors.username
+                                            ? 'username-error'
+                                            : undefined
+                                    }
                                     autoComplete="username"
                                     placeholder="contoh: ariina"
                                 />
-                                <InputError message={errors.username} />
+                                <InputError
+                                    id="username-error"
+                                    message={errors.username}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -49,8 +57,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
+                                            className="ml-auto inline-flex min-h-11 items-center text-sm"
                                         >
                                             Lupa password?
                                         </TextLink>
@@ -60,26 +67,29 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="password"
                                     name="password"
                                     required
-                                    tabIndex={2}
+                                    aria-invalid={!!errors.password}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'password-error'
+                                            : undefined
+                                    }
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
+                                <Checkbox id="remember" name="remember" />
                                 <Label htmlFor="remember">Ingat saya</Label>
                             </div>
 
                             <Button
                                 type="submit"
                                 className="mt-4 w-full"
-                                tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
                             >

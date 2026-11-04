@@ -28,6 +28,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                 <Label htmlFor="email">Email address</Label>
                                 <Input
                                     id="email"
+                                    aria-invalid={!!errors.email}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                     type="email"
                                     name="email"
                                     autoComplete="off"
@@ -35,7 +39,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     placeholder="email@example.com"
                                 />
 
-                                <InputError message={errors.email} />
+                                <InputError
+                                    id="email-error"
+                                    message={errors.email}
+                                />
                             </div>
 
                             <div className="my-6 flex items-center justify-start">

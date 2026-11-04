@@ -61,6 +61,12 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="current_password"
+                                    aria-invalid={!!errors.current_password}
+                                    aria-describedby={
+                                        errors.current_password
+                                            ? 'current_password-error'
+                                            : undefined
+                                    }
                                     ref={currentPasswordInput}
                                     name="current_password"
                                     className="mt-1 block w-full"
@@ -68,7 +74,10 @@ export default function Security(props: Props) {
                                     placeholder="Current password"
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError
+                                    id="current_password-error"
+                                    message={errors.current_password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -76,6 +85,12 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="password"
+                                    aria-invalid={!!errors.password}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'password-error'
+                                            : undefined
+                                    }
                                     ref={passwordInput}
                                     name="password"
                                     className="mt-1 block w-full"
@@ -84,7 +99,10 @@ export default function Security(props: Props) {
                                     passwordrules={props.passwordRules}
                                 />
 
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -94,6 +112,14 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="password_confirmation"
+                                    aria-invalid={
+                                        !!errors.password_confirmation
+                                    }
+                                    aria-describedby={
+                                        errors.password_confirmation
+                                            ? 'password_confirmation-error'
+                                            : undefined
+                                    }
                                     name="password_confirmation"
                                     className="mt-1 block w-full"
                                     autoComplete="new-password"
@@ -102,6 +128,7 @@ export default function Security(props: Props) {
                                 />
 
                                 <InputError
+                                    id="password_confirmation-error"
                                     message={errors.password_confirmation}
                                 />
                             </div>

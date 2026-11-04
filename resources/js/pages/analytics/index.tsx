@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { Download, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -142,7 +143,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
     return (
         <>
             <Head title="Analisis" />
-            <main className="mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10 print:max-w-none print:px-0 print:pt-0 print:pb-0">
+            <div className="mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10 print:max-w-none print:px-0 print:pt-0 print:pb-0">
                 <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                     <div className="max-w-2xl">
                         <h1 className="text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
@@ -457,7 +458,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                         )}
                     </section>
                 </div>
-            </main>
+            </div>
         </>
     );
 }
@@ -648,7 +649,9 @@ function DrilldownList({ rows }: { rows: DrilldownRow[] }) {
                                     {row.public_id}
                                 </p>
                             </div>
-                            <Badge variant="outline">{row.stage_label}</Badge>
+                            <StageBadge stage={row.stage}>
+                                {row.stage_label}
+                            </StageBadge>
                         </div>
                         <dl className="mt-5 grid grid-cols-2 gap-4">
                             <Metric
@@ -694,7 +697,11 @@ function DrilldownList({ rows }: { rows: DrilldownRow[] }) {
                                 <td className="px-4 py-3">
                                     {formatCategory(row.source)}
                                 </td>
-                                <td className="px-4 py-3">{row.stage_label}</td>
+                                <td className="px-4 py-3">
+                                    <StageBadge stage={row.stage}>
+                                        {row.stage_label}
+                                    </StageBadge>
+                                </td>
                                 <td className="px-4 py-3">
                                     {row.sales_name ?? 'Belum ditugaskan'}
                                 </td>

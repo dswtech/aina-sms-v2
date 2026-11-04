@@ -13,8 +13,9 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
@@ -161,6 +162,8 @@ export default function CustomersIndex({
     const [followUpOpen, setFollowUpOpen] = useState(false);
     const [stageOpen, setStageOpen] = useState(false);
     const [detailOpen, setDetailOpen] = useState(false);
+    const customerActionTriggerRef = useRef<HTMLButtonElement | null>(null);
+    const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
     const [transactionOpen, setTransactionOpen] = useState(false);
     const [reassignOpen, setReassignOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] =
@@ -229,7 +232,13 @@ export default function CustomersIndex({
         applyFilters(filters.tab, search, column, nextDirection);
     }
 
-    function openDetail(customer: CustomerItem) {
+    function restoreCustomerActionFocus(event: Event) {
+        event.preventDefault();
+        customerActionTriggerRef.current?.focus();
+    }
+
+    function openDetail(customer: CustomerItem, trigger: HTMLButtonElement) {
+        customerActionTriggerRef.current = trigger;
         setSelectedCustomer(customer);
         setDetailOpen(true);
     }
@@ -400,7 +409,7 @@ export default function CustomersIndex({
         <>
             <Head title="Buku Pelanggan Saya" />
 
-            <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pt-6 pb-24 sm:px-6 sm:pt-8 md:pb-10 lg:px-8">
+            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pt-6 pb-24 sm:px-6 sm:pt-8 md:pb-10 lg:px-8">
                 {/* Header Section */}
                 <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -691,6 +700,7 @@ export default function CustomersIndex({
                         <div className="relative flex-1">
                             <Search className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground" />
                             <Input
+                                aria-label="Pencarian pelanggan"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={(e) =>
@@ -739,15 +749,18 @@ export default function CustomersIndex({
                                                     {c.name}
                                                 </h3>
                                                 {c.active_deal && (
-                                                    <Badge
-                                                        variant="outline"
+                                                    <StageBadge
+                                                        stage={
+                                                            c.active_deal
+                                                                .current_stage
+                                                        }
                                                         className="font-medium"
                                                     >
                                                         {
                                                             c.active_deal
                                                                 .stage_label
                                                         }
-                                                    </Badge>
+                                                    </StageBadge>
                                                 )}
                                                 {c.active_deal?.is_stagnant && (
                                                     <Badge
@@ -807,7 +820,10 @@ export default function CustomersIndex({
                                                 size="sm"
                                                 className="min-h-11 min-w-11 gap-1.5 px-3"
                                             >
-                                                <a href={`tel:${c.phone}`}>
+                                                <a
+                                                    href={`tel:${c.phone}`}
+                                                    aria-label={`Telepon ${c.name}`}
+                                                >
                                                     <Phone className="size-4 text-emerald-600" />
                                                     <span className="xs:inline hidden">
                                                         Telepon
@@ -822,6 +838,7 @@ export default function CustomersIndex({
                                                 className="min-h-11 min-w-11 gap-1.5 px-3"
                                             >
                                                 <a
+                                                    aria-label={`WhatsApp ${c.name}`}
                                                     href={formatPhoneLink(
                                                         c.phone,
                                                     )}
@@ -839,7 +856,9 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
-                                                onClick={() => {
+                                                onClick={(event) => {
+                                                    customerActionTriggerRef.current =
+                                                        event.currentTarget;
                                                     setSelectedCustomer(c);
                                                     setActivityOpen(true);
                                                 }}
@@ -851,7 +870,9 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
-                                                onClick={() => {
+                                                onClick={(event) => {
+                                                    customerActionTriggerRef.current =
+                                                        event.currentTarget;
                                                     setSelectedCustomer(c);
                                                     setFollowUpOpen(true);
                                                 }}
@@ -863,7 +884,12 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
-                                                onClick={() => openDetail(c)}
+                                                onClick={(event) =>
+                                                    openDetail(
+                                                        c,
+                                                        event.currentTarget,
+                                                    )
+                                                }
                                             >
                                                 Detail
                                             </Button>
@@ -874,7 +900,9 @@ export default function CustomersIndex({
                                                         variant="secondary"
                                                         size="sm"
                                                         className="min-h-11 px-3"
-                                                        onClick={() => {
+                                                        onClick={(event) => {
+                                                            customerActionTriggerRef.current =
+                                                                event.currentTarget;
                                                             setSelectedCustomer(
                                                                 c,
                                                             );
@@ -981,19 +1009,17 @@ export default function CustomersIndex({
                                         <td className="px-4 py-3">
                                             {c.active_deal ? (
                                                 <div className="flex flex-col items-start gap-1">
-                                                    <Badge
-                                                        variant={
+                                                    <StageBadge
+                                                        stage={
                                                             c.active_deal
-                                                                .is_closed
-                                                                ? 'secondary'
-                                                                : 'outline'
+                                                                .current_stage
                                                         }
                                                     >
                                                         {
                                                             c.active_deal
                                                                 .stage_label
                                                         }
-                                                    </Badge>
+                                                    </StageBadge>
                                                     {c.active_deal
                                                         .is_stagnant && (
                                                         <Badge
@@ -1081,8 +1107,11 @@ export default function CustomersIndex({
                                                     variant="outline"
                                                     size="sm"
                                                     className="min-h-10"
-                                                    onClick={() =>
-                                                        openDetail(c)
+                                                    onClick={(event) =>
+                                                        openDetail(
+                                                            c,
+                                                            event.currentTarget,
+                                                        )
                                                     }
                                                 >
                                                     Detail
@@ -1094,7 +1123,11 @@ export default function CustomersIndex({
                                                             variant="secondary"
                                                             size="sm"
                                                             className="min-h-10"
-                                                            onClick={() => {
+                                                            onClick={(
+                                                                event,
+                                                            ) => {
+                                                                customerActionTriggerRef.current =
+                                                                    event.currentTarget;
                                                                 setSelectedCustomer(
                                                                     c,
                                                                 );
@@ -1155,7 +1188,10 @@ export default function CustomersIndex({
 
                 {/* Dialog: Catat Aktivitas */}
                 <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent
+                        className="sm:max-w-md"
+                        onCloseAutoFocus={restoreCustomerActionFocus}
+                    >
                         <DialogHeader>
                             <DialogTitle>Catat Aktivitas Lapangan</DialogTitle>
                             <DialogDescription>
@@ -1224,7 +1260,10 @@ export default function CustomersIndex({
 
                 {/* Dialog: Jadwalkan Next Follow-Up */}
                 <Dialog open={followUpOpen} onOpenChange={setFollowUpOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent
+                        className="sm:max-w-md"
+                        onCloseAutoFocus={restoreCustomerActionFocus}
+                    >
                         <DialogHeader>
                             <DialogTitle>
                                 Jadwalkan Tindak Lanjut Berikutnya
@@ -1273,7 +1312,10 @@ export default function CustomersIndex({
 
                 {/* Dialog: Ubah Tahap Pipeline */}
                 <Dialog open={stageOpen} onOpenChange={setStageOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent
+                        className="sm:max-w-md"
+                        onCloseAutoFocus={restoreCustomerActionFocus}
+                    >
                         <DialogHeader>
                             <DialogTitle>Perbarui Tahap Penjualan</DialogTitle>
                             <DialogDescription>
@@ -1415,7 +1457,10 @@ export default function CustomersIndex({
                     open={transactionOpen}
                     onOpenChange={setTransactionOpen}
                 >
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent
+                        className="sm:max-w-md"
+                        onCloseAutoFocus={restoreCustomerActionFocus}
+                    >
                         <DialogHeader>
                             <DialogTitle>Buat Transaksi Baru</DialogTitle>
                             <DialogDescription>
@@ -1506,7 +1551,10 @@ export default function CustomersIndex({
 
                 {/* Dialog: Penugasan Ulang */}
                 <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent
+                        className="sm:max-w-md"
+                        onCloseAutoFocus={restoreCustomerActionFocus}
+                    >
                         <DialogHeader>
                             <DialogTitle>Penugasan Ulang</DialogTitle>
                             <DialogDescription>
@@ -1555,9 +1603,33 @@ export default function CustomersIndex({
 
                 {/* Dialog: Detail transaksi & riwayat (adaptif mobile/desktop) */}
                 <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-                    <DialogContent className="max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl">
+                    <DialogContent
+                        className="max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl"
+                        onOpenAutoFocus={(event) => {
+                            event.preventDefault();
+                            detailTitleRef.current?.focus();
+                        }}
+                        onCloseAutoFocus={(event) => {
+                            event.preventDefault();
+                            if (
+                                !activityOpen &&
+                                !followUpOpen &&
+                                !stageOpen &&
+                                !transactionOpen &&
+                                !reassignOpen
+                            ) {
+                                customerActionTriggerRef.current?.focus();
+                            }
+                        }}
+                    >
                         <DialogHeader>
-                            <DialogTitle>{selectedCustomer?.name}</DialogTitle>
+                            <DialogTitle
+                                ref={detailTitleRef}
+                                tabIndex={-1}
+                                className="mr-6 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
+                            >
+                                {selectedCustomer?.name}
+                            </DialogTitle>
                             <DialogDescription>
                                 {selectedCustomer?.phone}
                                 {selectedCustomer?.email
@@ -1608,19 +1680,17 @@ export default function CustomersIndex({
                                                     .vehicle_model
                                             }
                                         </span>
-                                        <Badge
-                                            variant={
+                                        <StageBadge
+                                            stage={
                                                 selectedCustomer.active_deal
-                                                    .is_closed
-                                                    ? 'secondary'
-                                                    : 'outline'
+                                                    .current_stage
                                             }
                                         >
                                             {
                                                 selectedCustomer.active_deal
                                                     .stage_label
                                             }
-                                        </Badge>
+                                        </StageBadge>
                                         {selectedCustomer.active_deal
                                             .is_stagnant && (
                                             <Badge
@@ -1862,7 +1932,7 @@ export default function CustomersIndex({
                                                                             type="button"
                                                                             variant="ghost"
                                                                             size="sm"
-                                                                            className="h-8 px-2 text-xs"
+                                                                            className="h-11 px-2 text-xs"
                                                                             onClick={() => {
                                                                                 setEditingCommentId(
                                                                                     comment.id,
@@ -1879,7 +1949,7 @@ export default function CustomersIndex({
                                                                     type="button"
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    className="h-8 px-2 text-xs"
+                                                                    className="h-11 px-2 text-xs"
                                                                     onClick={() =>
                                                                         setReplyParentId(
                                                                             comment.id,
@@ -1994,7 +2064,7 @@ export default function CustomersIndex({
                                                                                             type="button"
                                                                                             variant="ghost"
                                                                                             size="sm"
-                                                                                            className="mt-1 h-8 px-2 text-xs"
+                                                                                            className="mt-1 h-11 px-2 text-xs"
                                                                                             onClick={() => {
                                                                                                 setEditingCommentId(
                                                                                                     reply.id,
@@ -2209,7 +2279,7 @@ export default function CustomersIndex({
                         </div>
                     </DialogContent>
                 </Dialog>
-            </main>
+            </div>
         </>
     );
 }

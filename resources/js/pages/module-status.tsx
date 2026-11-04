@@ -96,7 +96,7 @@ export default function ModuleStatus({ module }: { module: ModuleKey }) {
     return (
         <>
             <Head title={title} />
-            <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
+            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <div className="max-w-2xl">
                     <Badge variant="secondary">Fondasi akses siap</Badge>
                     <h1 className="mt-4 text-2xl font-semibold tracking-[-0.02em] text-foreground sm:text-3xl">
@@ -132,7 +132,7 @@ export default function ModuleStatus({ module }: { module: ModuleKey }) {
                         {content.next}
                     </div>
                 </section>
-            </main>
+            </div>
         </>
     );
 }

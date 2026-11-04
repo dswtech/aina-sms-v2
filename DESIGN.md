@@ -31,6 +31,7 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 - KPI berada dalam satu strip terbagi, tanpa ikon atau sparkline.
 - Tabel desktop berubah menjadi kartu/list mobile dengan field penting tetap tersedia.
 - Status memakai tint pucat dengan teks gelap; warna bukan satu-satunya pembeda.
+- Badge tahap memakai satu komponen bersama: Lead slate, Prospect sky, Hot Prospect amber, SPK violet, DO indigo, Delivery emerald, dan Lost rose. Tema gelap memakai tint gelap dengan teks terang; nama tahap selalu ditampilkan dan pasangan teks/latar harus memenuhi 4,5:1.
 - Satu tombol primary per layar. Shadow hanya pada dialog/sheet yang mengambang.
 - Ikon berupa SVG outline konsisten; tidak memakai emoji.
 

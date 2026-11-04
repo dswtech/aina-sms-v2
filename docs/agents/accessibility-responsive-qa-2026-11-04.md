@@ -6,7 +6,7 @@
 | Branch audit | `codex/phase-6-accessibility-responsive-qa` |
 | Target | Aplikasi lokal `http://aina.test`, data demo yang sudah tersedia |
 | Metode | `playwright-cli`, pengukuran DOM, keyboard, screenshot, inspeksi source |
-| Keputusan | **Gerbang aksesibilitas belum lulus.** Tidak ada perbaikan aplikasi dalam perubahan dokumentasi ini. |
+| Keputusan audit awal | **Gerbang aksesibilitas belum lulus pada baseline ini.** Status perbaikan berikutnya dicatat pada bagian verifikasi lanjutan di akhir dokumen. |
 | Sumber acceptance | [PRD](PRD.md), [ADR-003](adr/ADR-003-responsive-web-platform.md), [roadmap](roadmap.md) |
 
 ## Cakupan dan batas bukti
@@ -151,3 +151,38 @@ Implementasi mempunyai sistem visual yang konsisten: shell, token terang/gelap, 
 - Tidak ada test aplikasi baru karena perubahan ini hanya laporan; langkah regresi di setiap temuan harus diwujudkan ketika perilaku diperbaiki.
 
 Urutan tindak lanjut: `$impeccable harden` untuk keyboard/nama/fokus/semantik, `$impeccable colorize` untuk pasangan token, `$impeccable adapt` untuk target sentuh, lalu `$impeccable polish` setelah test regresi lulus. Pilihan perintah ini dapat dikerjakan satu per satu atau sekaligus; setelah perbaikan, ulangi `$impeccable audit` pada state yang diperbaiki dan lengkapi state yang belum diuji. Jangan menyatakan Fase 6 selesai sebelum gerbang roadmap termasuk UAT dan runbook terpenuhi.
+
+## Verifikasi perbaikan — lanjutan PR #22
+
+Baseline perbaikan `ba26af3` (merge PR #22), branch `codex/phase-6-accessibility-fixes`. Sepuluh temuan di atas telah diperbaiki untuk skenario regresi yang diuji. Ini tidak mengubah catatan historis audit awal atau menyatakan kepatuhan WCAG menyeluruh.
+
+| Temuan awal | Perbaikan dan bukti |
+|---|---|
+| 1 — Menu floating | Preferensi memakai Radix radio items; notifikasi memakai menu items. ArrowDown/Space dapat memilih tema, ukuran, warna, dan mencapai notifikasi; Escape mengembalikan fokus. |
+| 2 — Kontak mobile | Telepon dan WhatsApp pada kartu mempunyai nama aksi beserta pelanggan. |
+| 3 — Fokus detail | Fokus awal berada pada judul yang terlihat, kemudian kembali ke tombol asal. Regresi juga menguji lima dialog lanjutan dari detail dan tiga aksi langsung dari kartu. |
+| 4 — Kontras aksen | Pasangan primary terang diperbaiki; seluruh enam aksen × dua tema diuji pada keadaan normal dan hover dengan compositing latar. Hover primary tetap opaque, dengan umpan balik shadow, agar tidak mengurangi kontras. |
+| 5 — Password | Toggle masuk urutan Tab normal dan bisa diaktifkan dengan Space; positive tabindex login dihapus. |
+| 6 — Combobox | Opsi aktif mempunyai ID dan active descendant pada input; hasil kosong tidak merujuk ID yang hilang. Enter memilih hasil; Escape menutup panel tanpa menutup dialog induk; Tab berpindah ke field berikutnya. |
+| 7 — Target sentuh | Hit area input, checkbox, menu, swatch, pagination, header, dan tombol tutup diperbesar. Pemeriksaan ulang halaman awal pada 390px menemukan nol kandidat target kecil; regresi terarah juga memeriksa menu/dialog/login terbuka. |
+| 8 — Pencarian | Nama Pencarian pelanggan tetap tersedia setelah nilai diisi. |
+| 9 — Error form | Login/profil serta form password terkait mempunyai hubungan ID error, describedby, dan invalid state. Respons error/clear login dan profil diuji dengan intercept browser. |
+| 10 — Landmark | Shell tetap menjadi main; main halaman bersarang diganti container netral. Settings tetap memakai main shell. |
+
+Tambahan pengguna: badge tahap sekarang konsisten pada Pelanggan, Transaksi, kontributor dashboard, dan drilldown Analisis melalui `components/stage-badge.tsx`. Lead/slate, Prospect/sky, Hot Prospect/amber, SPK/violet, DO/indigo, Delivery/emerald, Lost/rose; nama tahap dipertahankan. Test mengecek tujuh warna berbeda dan kontras minimal 4,5:1 pada 390px/1440px, tema terang/gelap.
+
+`tests/Browser/accessibility.js` merender komponen dan aset build sebenarnya memakai dokumen Inertia sintetis. Seluruh request mutasi dicegat; empat respons form yang diuji tidak diteruskan ke server. Test tidak membutuhkan akun demo, seeder, package tambahan, atau perubahan database. Hasil akhir **13 kelompok lulus, 0 gagal**; sebelum implementasi terdapat 12 kelompok gagal. Dua temuan tambahan reviewer direproduksi terlebih dahulu lalu diverifikasi bersama suite final.
+
+Jalankan dari root repository dengan local app yang aktif dan production build terbaru:
+
+```powershell
+playwright-cli -s=aina-a11y open http://aina.test/login
+playwright-cli -s=aina-a11y run-code --filename tests/Browser/accessibility.js
+playwright-cli -s=aina-a11y close
+```
+
+File test adalah fungsi yang dipanggil CLI, bukan script Node mandiri. Kegagalan melempar error dan menghasilkan exit nonzero; ringkasan sukses menunjukkan `failed: 0`. Screenshot fixture terang/gelap tersimpan di `.playwright-cli/`, yang diabaikan Git. Browser regression ini memerlukan Playwright CLI lokal dan dijalankan terpisah dari suite Pest/CI saat ini.
+
+Pemeriksaan ulang aplikasi nyata memakai akun demo yang telah diizinkan: **108 kombinasi** empat role × tiga viewport, nol horizontal page overflow pada keadaan halaman awal. Tidak ada penyimpanan data bisnis; akun demo di-logout. Pengecualian Security tetap berhenti pada gerbang konfirmasi password. Review independen menemukan kasus fokus dialog lanjutan dan hover contrast; keduanya diperbaiki dan ditambahkan ke regresi.
+
+Batas yang belum diuji dalam audit awal tetap berlaku: pembaca layar nyata, seluruh state/form/zoom, UAT per role, pilot, serta runbook operasional. Penutupan temuan ini tidak menyelesaikan seluruh Fase 6 atau keputusan go-live.

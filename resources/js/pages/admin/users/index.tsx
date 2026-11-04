@@ -309,7 +309,7 @@ export default function UsersIndex({
     return (
         <>
             <Head title="Pengguna & Undangan" />
-            <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
+            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div className="max-w-2xl">
                         <div className="flex items-center gap-2 text-sm font-medium text-primary">
@@ -482,7 +482,7 @@ export default function UsersIndex({
                         </>
                     )}
                 </section>
-            </main>
+            </div>
         </>
     );
 }

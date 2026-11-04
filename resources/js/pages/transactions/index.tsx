@@ -1,7 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
@@ -114,7 +114,7 @@ export default function TransactionsIndex({
     return (
         <>
             <Head title="Transaksi" />
-            <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
+            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
@@ -260,15 +260,13 @@ export default function TransactionsIndex({
                                                             ?.name ?? '-'}
                                                     </p>
                                                 </div>
-                                                <Badge
-                                                    variant={
-                                                        transaction.is_stagnant
-                                                            ? 'destructive'
-                                                            : 'secondary'
+                                                <StageBadge
+                                                    stage={
+                                                        transaction.current_stage
                                                     }
                                                 >
                                                     {transaction.stage_label}
-                                                </Badge>
+                                                </StageBadge>
                                             </div>
                                             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                                                 <div>
@@ -356,17 +354,15 @@ export default function TransactionsIndex({
                                                                 ?.name ?? '-'}
                                                         </td>
                                                         <td className="p-2">
-                                                            <Badge
-                                                                variant={
-                                                                    transaction.is_stagnant
-                                                                        ? 'destructive'
-                                                                        : 'secondary'
+                                                            <StageBadge
+                                                                stage={
+                                                                    transaction.current_stage
                                                                 }
                                                             >
                                                                 {
                                                                     transaction.stage_label
                                                                 }
-                                                            </Badge>
+                                                            </StageBadge>
                                                         </td>
                                                         <td className="p-2">
                                                             {transaction.source}
@@ -561,7 +557,7 @@ export default function TransactionsIndex({
                         </div>
                     </div>
                 )}
-            </main>
+            </div>
         </>
     );
 }

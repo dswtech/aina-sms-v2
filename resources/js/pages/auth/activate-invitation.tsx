@@ -111,6 +111,12 @@ export default function ActivateInvitation({
                                 <Label htmlFor="password">Password baru</Label>
                                 <PasswordInput
                                     id="password"
+                                    aria-invalid={!!errors.password}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'password-error'
+                                            : undefined
+                                    }
                                     name="password"
                                     autoComplete="new-password"
                                     required
@@ -121,7 +127,10 @@ export default function ActivateInvitation({
                                     Gunakan minimal 8 karakter. Password hanya
                                     Anda yang mengetahuinya.
                                 </p>
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -130,12 +139,21 @@ export default function ActivateInvitation({
                                 </Label>
                                 <PasswordInput
                                     id="password_confirmation"
+                                    aria-invalid={
+                                        !!errors.password_confirmation
+                                    }
+                                    aria-describedby={
+                                        errors.password_confirmation
+                                            ? 'password_confirmation-error'
+                                            : undefined
+                                    }
                                     name="password_confirmation"
                                     autoComplete="new-password"
                                     required
                                     passwordrules="minlength:8;"
                                 />
                                 <InputError
+                                    id="password_confirmation-error"
                                     message={errors.password_confirmation}
                                 />
                             </div>

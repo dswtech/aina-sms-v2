@@ -120,28 +120,32 @@ export function NotificationMenu() {
                 ) : (
                     <div className="max-h-80 overflow-y-auto">
                         {items.map((notification) => (
-                            <button
-                                key={notification.id}
-                                type="button"
-                                onClick={() => openNotification(notification)}
-                                className={cn(
-                                    'flex w-full flex-col gap-1 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-accent/50',
-                                )}
-                            >
-                                <span className="text-sm font-medium">
-                                    {notification.data.title ?? 'Notifikasi'}
-                                </span>
-                                {notification.data.message && (
-                                    <span className="line-clamp-2 text-xs text-muted-foreground">
-                                        {notification.data.message}
-                                    </span>
-                                )}
-                                <span className="text-[11px] text-muted-foreground">
-                                    {formatRelativeTime(
-                                        notification.created_at,
+                            <DropdownMenuItem key={notification.id} asChild>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        openNotification(notification)
+                                    }
+                                    className={cn(
+                                        'flex w-full flex-col gap-1 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-accent/50',
                                     )}
-                                </span>
-                            </button>
+                                >
+                                    <span className="text-sm font-medium">
+                                        {notification.data.title ??
+                                            'Notifikasi'}
+                                    </span>
+                                    {notification.data.message && (
+                                        <span className="line-clamp-2 text-xs text-muted-foreground">
+                                            {notification.data.message}
+                                        </span>
+                                    )}
+                                    <span className="text-[11px] text-muted-foreground">
+                                        {formatRelativeTime(
+                                            notification.created_at,
+                                        )}
+                                    </span>
+                                </button>
+                            </DropdownMenuItem>
                         ))}
                     </div>
                 )}
