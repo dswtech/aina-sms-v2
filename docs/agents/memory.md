@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.12 |
+| Versi | v1.13 |
 | Diperbarui | 4 November 2026 |
 | Status | Aktif |
 
@@ -11,6 +11,10 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #25 warna baris sudah merged ke `main` pada baseline `47ff7a9`; PR #24/footer juga sudah merged. Branch dokumentasi `codex/uat-matrix-gap-review` berangkat dari baseline tersebut dengan working tree bersih. Tidak ada perubahan fitur/API/database pada pekerjaan matriks UAT.
+- [`uat-matrix.md`](uat-matrix.md) memetakan seluruh 80 referensi requirement ke assertion yang diperiksa, 20 skenario UAT empat role/lintas role dan lima gerbang operasional, serta 15 kelompok gap. Seluruh hasil UAT belum dijalankan. Inspeksi source menemukan capability parsial yang belum terungkap oleh suite lulus, termasuk dispatch coaching, batas Admin/reply, perbandingan/target tim, konsistensi periode/scope forecast, duplikat sebelum simpan, consent/riwayat lengkap dan responsivitas impor. Rincian, batas bukti, pemilik serta prioritas triase ada di matriks; ini bukan keputusan produk baru atau perbaikan implementasi.
+- Verifikasi baseline `47ff7a9` pada pekerjaan dokumentasi: `composer ci:check` lulus, frontend lint/format, TypeScript, Pint, PHPStan; Pest 150 tes (147 lulus, 3 skip), 896 assertions. Tes menggunakan SQLite in-memory, bukan database bisnis. Tidak menjalankan ulang browser/build/UAT; bukti browser PR #25 tetap historis. Kesiapan seluruh requirement/Fase 6 belum dapat disimpulkan dari hasil suite ini.
+- Validasi matriks lulus untuk 80 referensi unik sesuai PRD, 400 tautan/anchor, nama tes, skenario/gerbang/gap/bukti dan status belum dijalankan. Review independen selesai; kriteria delivery email dan batas waktu pengguna terlatih telah diselaraskan dengan PRD. Pemeriksaan lokal `git diff --check` bersih; tidak menambahkan validator/test aplikasi permanen.
 - Branch `codex/striped-data-lists` berangkat dari `origin/main` `2cef671` (PR #24/footer sudah digabungkan). Tabel dan list/kartu mobile Pelanggan, Transaksi, dashboard, Analisis/drilldown, Admin pengguna/undangan, serta preview/riwayat impor memakai baris surface/muted selang-seling sesuai [`../../DESIGN.md`](../../DESIGN.md). Tidak ada perubahan API, database, atau dependency. `composer ci:check` lulus (147 lulus, 3 skip, 896 assertions), production build lulus, lint/format regresi browser lulus, dan regresi browser kini 16 kelompok lulus/0 gagal. Bukti dan batas fixture tercatat pada [laporan QA](accessibility-responsive-qa-2026-11-04.md).
 - PRD v1.0 disetujui sebagai baseline produk pada 30 Oktober 2026.
 - Skill proyek `aina-sms-workflow` ditetapkan di [`.agents/skills/aina-sms-workflow/SKILL.md`](../../.agents/skills/aina-sms-workflow/SKILL.md) sebagai patokan kerja agent.
@@ -69,9 +73,9 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review dan merge PR branch `codex/striped-data-lists`; perbaikan footer sebelumnya sudah digabungkan melalui PR #24. Bukti warna baris dan regresi berada di [laporan QA](accessibility-responsive-qa-2026-11-04.md).
-2. Lengkapi state QA yang belum diuji, kemudian lanjutkan UAT per role, runbook operasional, pilot, dan keputusan go-live sesuai roadmap. Audit halaman awal tidak menggantikan UAT.
-3. Tetapkan bobot forecast bersama Product Owner dan operasional sebelum forecast production diaktifkan.
+1. Review matriks dan triase gap source pada [`uat-matrix.md`](uat-matrix.md), terutama coaching/otorisasi, kendali tim, angka/periode/scope, dan konfirmasi duplikat. Kerjakan perbaikan melalui perubahan terpisah dengan reproduksi serta tes gagal dahulu; jangan menyatakan capability lengkap berdasarkan catatan fase historis.
+2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
+3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
 ## Larangan memory
 
