@@ -538,7 +538,7 @@ function SourceTable({
                                         {formatPercentage(row.conversion ?? 0)}
                                     </td>
                                 )}
-                                <td className="px-4 py-3 text-right print:hidden">
+                                <td className="table-actions px-4 py-3 text-right print:hidden">
                                     <Button
                                         type="button"
                                         size="sm"
@@ -612,7 +612,7 @@ function ModelTable({
                                 <td className="px-4 py-3 text-right tabular-nums">
                                     {row.delivery}
                                 </td>
-                                <td className="px-4 py-3 text-right print:hidden">
+                                <td className="table-actions px-4 py-3 text-right print:hidden">
                                     <Button
                                         type="button"
                                         size="sm"

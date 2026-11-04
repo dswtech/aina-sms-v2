@@ -153,6 +153,49 @@
 }
 
 @layer utilities {
+    .table-actions :is(button, a) {
+        position: relative;
+        isolation: isolate;
+        height: 2.75rem;
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        padding-inline: 0.75rem;
+        border-width: 0;
+        background-color: transparent;
+        color: var(--foreground);
+        box-shadow: none;
+        font-size: 0.75rem;
+    }
+
+    /* Keep the 44px hit area around a quieter 32px visible button. */
+    .table-actions :is(button, a)::before {
+        position: absolute;
+        z-index: -1;
+        inset: 0.375rem 0;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background-color: var(--card);
+        content: '';
+    }
+
+    .table-actions a {
+        padding-inline: 0;
+    }
+
+    .table-actions a::before {
+        inset-inline: 0.375rem;
+    }
+
+    .table-actions :is(button, a):hover {
+        background-color: transparent;
+        color: var(--accent-foreground);
+    }
+
+    .table-actions :is(button, a):hover::before {
+        border-color: var(--input);
+        background-color: var(--accent);
+    }
+
     .striped-row {
         background-color: var(--card);
     }

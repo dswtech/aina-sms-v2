@@ -381,7 +381,7 @@ export default function TransactionsIndex({
                                                                   )
                                                                 : '-'}
                                                         </td>
-                                                        <td className="p-2">
+                                                        <td className="table-actions p-2">
                                                             {transaction.can_update && (
                                                                 <Button
                                                                     variant="outline"
