@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.8 |
+| Versi | v1.9 |
 | Diperbarui | 4 November 2026 |
 | Status | Aktif |
 
@@ -20,14 +20,17 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - MVP mencakup autentikasi, tim, Buku Pelanggan, lead pipeline, conversation/coaching, impor CSV, dashboard, weighted forecasting, serta Analisis Sumber dan Model.
 - UI referensi menggunakan filter rentang tanggal, tabel transaksi, status, pagination, serta dialog detail bertab.
 - Implementasi referensi mempunyai kelemahan pada mobile; yang diambil adalah pola interaksi, bukan responsivitasnya.
-- Dependency PHP dan frontend telah tersedia. Baseline `main` terverifikasi berada di commit `9e77a12` setelah merge PR #20.
+- Dependency PHP dan frontend telah tersedia. Baseline `main` tersinkron ke `caf2cf5` setelah merge PR #21; working tree bersih sebelum branch QA dibuat.
 - Fondasi akses Fase 1 telah memakai autentikasi username, empat role server-side, status akun aktif, dan shell responsif; rencana implementasi berada di [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - Fase 1 telah menyelesaikan dealer, tim, histori penempatan, scope organisasi, undangan sekali pakai, lifecycle Admin, dan audit aman. Gerbang PostgreSQL terisolasi, Pest, static analysis, frontend, build, serta browser tiga viewport telah lulus sesuai [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md).
 - PostgreSQL development telah dikonfigurasi dan seeder akun development lokal telah dijalankan. Seeder dibatasi untuk environment local/testing dan credential tidak dicatat di dokumentasi.
 - Implementasi Fase 0–5, CSV import, performance index, security hardening, halaman Transaksi, kontrol panel pengguna, combobox data, dan notifikasi floating telah digabungkan ke `main`.
-- Branch aktif `codex/dev-demo-seeder` menambahkan data demo lokal lengkap pada commit `c6ed3da`: 72 pelanggan, 168 transaksi lintas seluruh tahap, aktivitas, follow-up, coaching beserta revisi, target, batch import, notifikasi, audit log, dan undangan.
+- PR #21 telah menggabungkan seeder demo lokal lengkap: 72 pelanggan, 168 transaksi lintas seluruh tahap, aktivitas, follow-up, coaching beserta revisi, target, batch import, notifikasi, audit log, dan undangan.
 - Seeder demo dijaga hanya untuk environment `local`, deterministik, dan tidak menggandakan data bila dijalankan kembali. Pagination pelanggan dan transaksi telah diverifikasi di browser.
 - Verifikasi commit `c6ed3da`: frontend check, TypeScript, Pint, PHPStan, production build, serta Pest 150 tes (147 lulus, 3 skip) berhasil.
+- Audit pada branch `codex/phase-6-accessibility-responsive-qa` menggunakan `playwright-cli`: 108 kombinasi halaman/viewport empat role pada 390/768/1440 tanpa horizontal page overflow pada keadaan awal yang diukur. Gerbang aksesibilitas belum lulus: 6 temuan P1 dan 4 P2 dicatat beserta bukti, lokasi source, serta batas cakupan di [laporan QA](accessibility-responsive-qa-2026-11-04.md). Perubahan branch ini hanya dokumentasi; temuan belum diperbaiki.
+- Verifikasi ulang baseline `caf2cf5`: `composer ci:check` lulus (150 tes, 147 lulus, 3 skip, 896 assertions) dan production build lulus. Pemeriksaan memakai pnpm 11.25.0 yang sudah tersedia; PHPStan/CI dan browser Playwright berjalan di luar sandbox setelah kendala akses lokal.
+- QA tidak menjalankan seeder, migration, import, atau penyimpanan data bisnis. Sesi akun demo telah di-logout; artefak screenshot/hasil DOM lokal berada di luar repository. `.playwright-cli/` adalah metadata lokal yang diabaikan Git.
 
 ## Keputusan aktif
 
@@ -61,8 +64,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review dan merge pull request branch `codex/dev-demo-seeder` ke `main`.
-2. Lanjutkan gerbang Fase 6: accessibility/responsive QA, UAT per role, pilot, dan keputusan go-live.
+1. Perbaiki temuan keyboard, nama aksesibel, fokus dialog, kontras, dan target sentuh pada [laporan QA](accessibility-responsive-qa-2026-11-04.md), dengan test regresi untuk perubahan perilaku.
+2. Lengkapi state QA yang belum diuji, kemudian lanjutkan UAT per role, runbook operasional, pilot, dan keputusan go-live sesuai roadmap. Audit halaman awal tidak menggantikan UAT.
 3. Tetapkan bobot forecast bersama Product Owner dan operasional sebelum forecast production diaktifkan.
 
 ## Larangan memory
