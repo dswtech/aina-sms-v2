@@ -54,3 +54,10 @@
 - [x] `composer ci:check`, `pnpm run build`, browser regressions, and `git diff --check` pass.
 - [x] Append closure evidence to the audit, update memory and this checklist, register documentation, and request independent review.
 Delivery: commit and create PR after the checked gates; do not merge automatically. Remaining untested UAT/pilot acceptance stays open.
+
+### Tindak lanjut yang disetujui: footer detail pelanggan
+
+- [x] Reproduksi screenshot dengan regresi geometri yang gagal pada 18 kombinasi viewport/ukuran teks/jumlah aksi.
+- [x] Grid dua kolom mobile/tiga kolom tablet-desktop, label membungkus, minimum target 44×44px; tinggi dialog mengikuti viewport dengan scroll hanya pada isi.
+- [x] Verifikasi 14 kelompok browser termasuk fokus dialog, CI lokal, build, screenshot mobile/desktop, dan review independen. Tidak ada perubahan handler/API/database.
+- Pengiriman menggunakan branch `codex/perbaikan-footer-detail-pelanggan` dari merge PR #23; deskripsi commit dan PR berbahasa Indonesia.

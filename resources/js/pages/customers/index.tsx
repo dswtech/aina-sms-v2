@@ -1604,7 +1604,7 @@ export default function CustomersIndex({
                 {/* Dialog: Detail transaksi & riwayat (adaptif mobile/desktop) */}
                 <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
                     <DialogContent
-                        className="max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl"
+                        className="flex max-h-[calc(100dvh-2rem)] flex-col max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl"
                         onOpenAutoFocus={(event) => {
                             event.preventDefault();
                             detailTitleRef.current?.focus();
@@ -1622,7 +1622,7 @@ export default function CustomersIndex({
                             }
                         }}
                     >
-                        <DialogHeader>
+                        <DialogHeader className="shrink-0">
                             <DialogTitle
                                 ref={detailTitleRef}
                                 tabIndex={-1}
@@ -1638,7 +1638,7 @@ export default function CustomersIndex({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="max-h-[70vh] space-y-6 overflow-y-auto pr-1 max-sm:max-h-none">
+                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pr-1">
                             <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                                 <div>
                                     <div className="text-xs text-muted-foreground">
@@ -2185,11 +2185,11 @@ export default function CustomersIndex({
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 border-t pt-3">
+                        <div className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 sm:grid-cols-3">
                             <Button
                                 asChild
                                 variant="outline"
-                                className="min-h-11 flex-1 gap-2"
+                                className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
                             >
                                 <a
                                     href={`tel:${selectedCustomer?.phone ?? ''}`}
@@ -2201,7 +2201,7 @@ export default function CustomersIndex({
                             <Button
                                 asChild
                                 variant="outline"
-                                className="min-h-11 flex-1 gap-2"
+                                className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
                             >
                                 <a
                                     href={formatPhoneLink(
@@ -2215,7 +2215,7 @@ export default function CustomersIndex({
                                 </a>
                             </Button>
                             <Button
-                                className="min-h-11 flex-1"
+                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                 onClick={() => {
                                     setDetailOpen(false);
                                     setActivityOpen(true);
@@ -2225,7 +2225,7 @@ export default function CustomersIndex({
                             </Button>
                             <Button
                                 variant="secondary"
-                                className="min-h-11 flex-1"
+                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                 onClick={() => {
                                     setDetailOpen(false);
                                     setFollowUpOpen(true);
@@ -2237,7 +2237,7 @@ export default function CustomersIndex({
                                 !selectedCustomer.active_deal.is_closed && (
                                     <Button
                                         variant="secondary"
-                                        className="min-h-11 flex-1"
+                                        className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                         onClick={() => {
                                             setDetailOpen(false);
                                             setNextStage(
@@ -2252,7 +2252,7 @@ export default function CustomersIndex({
                                 )}
                             <Button
                                 variant="outline"
-                                className="min-h-11 flex-1"
+                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                 onClick={() => {
                                     setDetailOpen(false);
                                     setTxVehicleModel(
@@ -2267,7 +2267,7 @@ export default function CustomersIndex({
                             {assignableSales.length > 0 && (
                                 <Button
                                     variant="outline"
-                                    className="min-h-11 flex-1"
+                                    className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                     onClick={() => {
                                         setDetailOpen(false);
                                         setReassignOpen(true);
