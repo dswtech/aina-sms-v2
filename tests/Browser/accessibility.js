@@ -338,6 +338,207 @@ async function accessibility(page) {
             'Detail did not return focus to its trigger',
         );
     });
+    await test('customer detail keeps its action grid readable and visible', async () => {
+        const failures = [];
+        for (const width of [390, 768, 1440]) {
+            for (const font of ['Normal', 'Ekstra']) {
+                for (const variant of [
+                    {
+                        name: '7-aksi',
+                        closed: false,
+                        assignable: true,
+                        count: 7,
+                    },
+                    {
+                        name: '6-aksi',
+                        closed: false,
+                        assignable: false,
+                        count: 6,
+                    },
+                    {
+                        name: '5-aksi',
+                        closed: true,
+                        assignable: false,
+                        count: 5,
+                    },
+                ]) {
+                    await page.setViewportSize({ width, height: 844 });
+                    await load('customers/index', {
+                        ...customerProps,
+                        customers: {
+                            ...customerProps.customers,
+                            data: [
+                                {
+                                    ...customer,
+                                    active_deal: {
+                                        ...customer.active_deal,
+                                        is_closed: variant.closed,
+                                        current_stage: variant.closed
+                                            ? 'delivery'
+                                            : 'lead',
+                                        stage_label: variant.closed
+                                            ? 'Delivery'
+                                            : 'Lead',
+                                    },
+                                },
+                            ],
+                        },
+                        assignableSales: variant.assignable
+                            ? customerProps.assignableSales
+                            : [],
+                    });
+                    await openMenu();
+                    await page
+                        .getByRole('menuitemradio', { name: font, exact: true })
+                        .click();
+                    await page.keyboard.press('Escape');
+                    await page.getByRole('menu').waitFor({ state: 'hidden' });
+                    const trigger = page
+                        .getByRole('button', { name: 'Detail', exact: true })
+                        .filter({ visible: true });
+                    await trigger.press('Enter');
+                    const dialog = page.getByRole('dialog');
+                    await settle(dialog);
+                    const metrics = await dialog.evaluate((d) => {
+                        const footer = [...d.querySelectorAll('button')].find(
+                            (b) =>
+                                b.textContent.trim() === 'Buat Transaksi Baru',
+                        ).parentElement;
+                        const actions = [...footer.children].filter((e) =>
+                            e.matches('button,a'),
+                        );
+                        const outside = (a, b) =>
+                            a.left < b.left - 1 ||
+                            a.right > b.right + 1 ||
+                            a.top < b.top - 1 ||
+                            a.bottom > b.bottom + 1;
+                        const rect = footer.getBoundingClientRect(),
+                            bounds = d.getBoundingClientRect();
+                        const issues = [];
+                        if (
+                            bounds.top < -1 ||
+                            bounds.bottom > innerHeight + 1 ||
+                            bounds.left < -1 ||
+                            bounds.right > innerWidth + 1
+                        )
+                            issues.push('Dialog keluar viewport');
+                        if (outside(rect, bounds))
+                            issues.push('Footer keluar dialog');
+                        const boxes = actions.map((e) =>
+                            e.getBoundingClientRect(),
+                        );
+                        for (const [index, action] of actions.entries()) {
+                            const box = boxes[index],
+                                label = action.textContent.trim();
+                            if (box.width < 43.9 || box.height < 43.9)
+                                issues.push(`Target terlalu kecil: ${label}`);
+                            if (outside(box, rect))
+                                issues.push(`Tombol keluar footer: ${label}`);
+                            const walker = document.createTreeWalker(
+                                action,
+                                NodeFilter.SHOW_TEXT,
+                            );
+                            while (walker.nextNode()) {
+                                if (!walker.currentNode.textContent.trim())
+                                    continue;
+                                const range = document.createRange();
+                                range.selectNodeContents(walker.currentNode);
+                                if (
+                                    [...range.getClientRects()].some((r) =>
+                                        outside(r, box),
+                                    )
+                                )
+                                    issues.push(`Teks keluar tombol: ${label}`);
+                            }
+                            if (
+                                [...action.querySelectorAll('svg')].some((e) =>
+                                    outside(e.getBoundingClientRect(), box),
+                                )
+                            )
+                                issues.push(`Ikon keluar tombol: ${label}`);
+                            for (let j = index + 1; j < boxes.length; j++) {
+                                const other = boxes[j];
+                                if (
+                                    Math.min(box.right, other.right) -
+                                        Math.max(box.left, other.left) >
+                                        0.5 &&
+                                    Math.min(box.bottom, other.bottom) -
+                                        Math.max(box.top, other.top) >
+                                        0.5
+                                )
+                                    issues.push('Tombol bertumpuk');
+                            }
+                        }
+                        const heading = d.querySelector('h2'),
+                            headerTop = heading.getBoundingClientRect().top;
+                        const body = [...d.children].find(
+                            (e) => getComputedStyle(e).overflowY === 'auto',
+                        );
+                        if (!body || body.scrollHeight <= body.clientHeight)
+                            issues.push(
+                                'Riwayat panjang tidak memiliki area scroll',
+                            );
+                        else {
+                            body.scrollTop = body.scrollHeight;
+                            if (
+                                Math.abs(
+                                    footer.getBoundingClientRect().top -
+                                        rect.top,
+                                ) > 1 ||
+                                Math.abs(
+                                    heading.getBoundingClientRect().top -
+                                        headerTop,
+                                ) > 1
+                            )
+                                issues.push('Header/footer ikut terscroll');
+                            if (
+                                heading.getBoundingClientRect().top < bounds.top
+                            )
+                                issues.push('Header tidak terlihat');
+                        }
+                        return {
+                            issues,
+                            count: actions.length,
+                            columns: new Set(
+                                boxes.map((b) => Math.round(b.left)),
+                            ).size,
+                        };
+                    });
+                    if (metrics.count !== variant.count)
+                        metrics.issues.push('Jumlah aksi berubah');
+                    if (metrics.columns !== (width === 390 ? 2 : 3))
+                        metrics.issues.push(
+                            'Jumlah kolom tidak sesuai viewport',
+                        );
+                    if (metrics.issues.length)
+                        failures.push({
+                            width,
+                            font,
+                            variant: variant.name,
+                            issues: metrics.issues,
+                        });
+                    else if (variant.count === 7)
+                        await dialog.screenshot({
+                            path: `.playwright-cli/customer-detail-${width}-${font}.png`,
+                        });
+                    await page.keyboard.press('Escape');
+                    await dialog.waitFor({ state: 'hidden' });
+                    assert(
+                        await trigger.evaluate(
+                            (e) => e === document.activeElement,
+                        ),
+                        'Layout change lost Detail trigger focus',
+                    );
+                }
+            }
+        }
+        await page.evaluate(() => localStorage.setItem('font-size', 'normal'));
+        await page.setViewportSize({ width: 390, height: 844 });
+        assert(
+            !failures.length,
+            `Customer detail layout failures: ${JSON.stringify(failures)}`,
+        );
+    });
     await test('follow-on dialogs return focus to the original customer action', async () => {
         for (const action of [
             'Catat Aktivitas',

@@ -186,3 +186,13 @@ File test adalah fungsi yang dipanggil CLI, bukan script Node mandiri. Kegagalan
 Pemeriksaan ulang aplikasi nyata memakai akun demo yang telah diizinkan: **108 kombinasi** empat role × tiga viewport, nol horizontal page overflow pada keadaan halaman awal. Tidak ada penyimpanan data bisnis; akun demo di-logout. Pengecualian Security tetap berhenti pada gerbang konfirmasi password. Review independen menemukan kasus fokus dialog lanjutan dan hover contrast; keduanya diperbaiki dan ditambahkan ke regresi.
 
 Batas yang belum diuji dalam audit awal tetap berlaku: pembaca layar nyata, seluruh state/form/zoom, UAT per role, pilot, serta runbook operasional. Penutupan temuan ini tidak menyelesaikan seluruh Fase 6 atau keputusan go-live.
+
+## Tindak lanjut screenshot — footer detail pelanggan
+
+Setelah PR #23 merged (`33a1757`), screenshot pengguna menunjukkan teks aksi saling menimpa. Footer `flex-1` membagi ruang hingga tombol terlalu sempit, sementara label tetap `nowrap`. Pemeriksaan ukuran target dan page overflow sebelumnya tidak mendeteksi teks/ikon yang melampaui kotak tombol.
+
+Branch `codex/perbaikan-footer-detail-pelanggan` mengganti footer menjadi grid dua kolom mobile dan tiga kolom tablet/desktop. Tombol dapat bertambah tinggi dan membungkus teks dengan minimum 44×44px. Dialog dibatasi tinggi viewport; header/footer tidak menyusut, sementara riwayat dan komentar mengisi area scroll yang dapat menyusut. Urutan, warna, handler, dan pengembalian fokus tetap dipertahankan.
+
+Regresi baru pada `tests/Browser/accessibility.js` memeriksa bounding box setiap tombol, rect teks dan ikon, pasangan tombol yang bertumpuk, batas footer/dialog/viewport, jumlah kolom/aksi, serta header/footer yang tetap diam saat isi di-scroll. Matrix 390/768/1440 × Normal/Ekstra × tujuh/enam/lima aksi (tinggi 844px) menghasilkan **18 kasus gagal sebelum perbaikan**, lalu seluruhnya lulus. Regresi fokus juga tetap lulus; suite browser kini **14 kelompok lulus, 0 gagal**. Screenshot mobile Ekstra serta tablet/desktop diperiksa langsung.
+
+`composer ci:check` lulus (147 tes lulus, 3 skip, 896 assertions); production build dan lint/format test browser lulus. Review independen tidak menemukan temuan actionable. Fixture sintetis dan intercept mutasi tetap dipakai; tidak memerlukan login atau write database. Viewport landscape pendek dan header pelanggan yang sangat panjang belum diverifikasi oleh matrix ini; batas UAT/pilot di atas tetap berlaku.
