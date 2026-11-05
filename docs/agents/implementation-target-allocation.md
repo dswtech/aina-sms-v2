@@ -42,3 +42,14 @@ Review menemukan dan mengoreksi gap benchmark yang tidak ter-render, bypass endp
 - Migration dan seeder baru belum dijalankan pada development/production. Semua pembacaan laporan versi ini memerlukan schema baru, sehingga deployment harus menerapkan migration sebelum trafik aplikasi baru dilayani. Seeder lokal opsional memerlukan otorisasi terpisah. UAT manusia dan pengukuran p95 tetap belum dijalankan.
 
 Delivery: commit implementasi `d595f05`, [PR #32](https://github.com/dswtech/aina-sms-v2/pull/32). Branch fitur sudah dikirim; tidak merge ke `main`.
+
+
+## Penerapan development lokal
+
+Pada 5 November 2026 pengguna secara eksplisit memerintahkan migration dan seeder. Target koneksi diperiksa melalui konfigurasi aplikasi: environment local, PostgreSQL, host loopback, koneksi berhasil; tidak menampilkan credential atau membaca file environment secara langsung.
+
+- Satu migration alokasi yang pending diterapkan pada batch 7 tanpa reset/rollback. Schema alokasi serta kolom markup, benchmark, dan versi tersedia.
+- `DevelopmentReportingSeeder` menambahkan 3 rencana Desember 2026 dengan 24 alokasi. Target tim 6 → 9, revisi 7 → 10, dan notifikasi tetap 59. Nilai serta penerima keenam target lama dan seluruh 48 target personal legacy dibandingkan sebelum/sesudah dan tidak berubah.
+- Akun 29, pelanggan 72, serta transaksi 168 tetap. Tidak menjalankan seeder akun, worker, scheduler, atau mengirim email.
+- Pembacaan laporan SPV, Branch Manager dan Sales periode Desember berhasil tanpa error; benchmark seluruh rencana baru tercakup alokasi. Tes relevan target/seeder lulus 17/17 (211 assertions) pada SQLite in-memory.
+- Bukti lokal tersanitasi berada di `.playwright-cli/targets-local-result.json`. Production belum diterapkan; hasil ini bukan UAT manusia.
