@@ -58,3 +58,9 @@ Pilih pesan berdasarkan subjek unik pengujian sebelum membaca source; jangan men
 - Mailtrap: STARTTLS dan autentikasi SMTP berhasil; konfigurasi Laravel lokal diverifikasi tanpa menampilkan nilainya. Satu email sintetis dikirim lewat Laravel SMTP dengan template metadata coaching dan dikonfirmasi memakai Mailtrap CLI: tertangkap di Sandbox, tahap asal dan URL coaching benar. Tidak ada email ke mailbox penerima nyata. Pengujian SMTP ini tidak menjalankan lifecycle komentar/queue pada database bisnis; jalur tersebut diuji pada SQLite test terisolasi.
 - Review independen menemukan dua masalah yang telah diperbaiki: tautan tidak boleh bergantung pada assignment Customer, dan enqueue gagal harus memiliki intent yang dapat dipulihkan. Pemeriksaan ulang tidak menemukan temuan actionable pada perbaikan tersebut.
 - Migration development belum dijalankan; worker/scheduler development maupun production tidak diaktifkan oleh pekerjaan ini. Pengujian PostgreSQL/concurrency produksi, load test, seluruh kombinasi UI dan UAT manusia belum dijalankan. [Gerbang O01–O05](../agents/uat-matrix.md#gerbang-operasional-terpisah) tetap terbuka.
+
+## Penerapan development dan kompatibilitas PostgreSQL — 5 November 2026
+
+Atas perintah pengguna, migration G01 dan G02 sudah diterapkan pada PostgreSQL development lokal (batch 6), tanpa backfill bisnis atau perubahan jumlah record. Query metadata JSON pada kolom teks diperbaiki menggunakan containment yang kompatibel PostgreSQL/SQLite. Sesi koneksi aplikasi memakai UTC; ini tidak mengubah timestamp lama atau timezone global server.
+
+Seeder laporan development sudah dijalankan setelah persetujuan terpisah. Notifikasi contoh memakai `email_status=demo` dan tidak dipilih recovery/worker pengiriman. Tidak mengaktifkan worker/scheduler bisnis atau mengirim email. Rincian bukti, koreksi snapshot fixture dan batas audit waktu ada di [catatan G03](../agents/implementation-g03-reporting-reconciliation.md).

@@ -42,6 +42,13 @@ Seluruh aturan berikut wajib dibaca sebelum eksekusi.
 
 Aturan ini membatasi tindakan agent terhadap database. Fitur aplikasi yang memang dibuat untuk menyimpan lead, komentar, atau transaksi tetap dapat melakukan write melalui alur aplikasi dan kewenangan yang disetujui PRD.
 
+### Data demo development untuk migration
+
+- Saat menambah migration, sertakan atau selaraskan seeder development agar fungsi dan tampilan yang memakai schema baru dapat dicoba.
+- Seeder demo hanya berjalan pada environment local, aman dijalankan ulang tanpa duplikasi, dan mempertahankan data non-demo serta nilai yang sudah diubah pengguna.
+- Data notifikasi demo tidak boleh mengirim email atau membuat intent pengiriman aktif. Tidak membuat credential production.
+- Pembuatan seeder tidak otomatis mengizinkan menjalankannya pada database non-test; pelaksanaan tetap memerlukan perintah eksplisit sesuai bagian 3.
+
 ## 4. Package memerlukan persetujuan
 
 - Jangan memasang, menghapus, atau memperbarui package Composer, npm, pnpm, atau package manager lain tanpa persetujuan pengguna.

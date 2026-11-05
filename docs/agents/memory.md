@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.17 |
+| Versi | v1.18 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
@@ -11,7 +11,12 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
-- PR [#30](https://github.com/dswtech/aina-sms-v2/pull/30) dikirim dengan commit implementasi `5592a1f`. Branch `codex/g02-team-performance-targets` berangkat dari `main`/PR #29 baseline `12c8176`. Target tim independen dan audit, estimasi closing, perbandingan tim/Sales, Delivery history/batas Jakarta, data tanpa tim, prioritas dan sanitasi notifikasi tersedia sesuai [PRD](PRD.md) dan [catatan G02](implementation-g02-team-performance.md). Supervisor menetapkan target tim untuk penggunaan saat ini; BM tetap read-only. Migration belum dijalankan pada DB bisnis; transaksi lama tidak di-backfill. G03/Fase 6 serta UAT tetap terbuka.
+- Branch `codex/g03-reporting-reconciliation` berangkat dari `main` `9e13957` (PR #30 merged). Perbaikan G03 menyatukan periode Jakarta dan scope laporan, memulihkan ID drilldown, memperbaiki total target Sales per tim, serta menetapkan sesi koneksi PostgreSQL ke UTC dan query JSON kompatibel. Rincian, tes dan batas audit timestamp ada di [catatan G03](implementation-g03-reporting-reconciliation.md) dan [E27](uat-matrix.md#e27).
+- Atas perintah pengguna, dua migration G01/G02 sudah diterapkan pada PostgreSQL development lokal dalam batch 6; schema tersedia dan jumlah record bisnis tetap. Setelah izin seeder terpisah, `DevelopmentReportingSeeder` melengkapi 6 target tim, 91 estimasi closing, 92 snapshot coaching dan 41 notifikasi demo tanpa email/reset/perubahan timestamp bisnis. Snapshot fixture yang sempat salah urutan telah dikoreksi berdasarkan timeline; data non-demo tidak diubah.
+- Pengguna meminta seeder development diselaraskan ketika ada migration agar fungsi/tampilan terlihat. Aturan workflow kanonik dicatat di [rules](../../rules/README.md#data-demo-development-untuk-migration); local-only/idempotensi/preservasi manual dan izin write tetap berlaku. Seeder laporan dipanggil juga saat demo dasar sudah ada, tanpa membuat ulang akun atau dataset.
+- Review independen selesai dan temuannya ditangani. `composer ci:check` lulus (205 tes, 202 lulus, 3 skip, 1534 assertions); suite PostgreSQL lulus (205 tes, 202 lulus, 3 skip, 1533 assertions), production build lulus. Preview props demo lokal tersanitasi lulus 18 kombinasi tiga layar/tiga viewport/dua tema tanpa overflow/error JavaScript atau mutasi browser. Suite PostgreSQL memakai database test khusus yang dibersihkan, bukan database bisnis. UAT/concurrency/p95 volume, bobot production dan Fase 6 tetap terbuka.
+
+- PR [#30](https://github.com/dswtech/aina-sms-v2/pull/30) dikirim dengan commit implementasi `5592a1f`. Branch `codex/g02-team-performance-targets` berangkat dari `main`/PR #29 baseline `12c8176`. Target tim independen dan audit, estimasi closing, perbandingan tim/Sales, Delivery history/batas Jakarta, data tanpa tim, prioritas dan sanitasi notifikasi tersedia sesuai [PRD](PRD.md) dan [catatan G02](implementation-g02-team-performance.md). Supervisor menetapkan target tim untuk penggunaan saat ini; BM tetap read-only. Migration sudah diterapkan pada development lokal dalam pekerjaan G03; transaksi lama tidak di-backfill. G03/Fase 6 serta UAT tetap terbuka.
 - Review independen menemukan pembulatan forecast, kelengkapan target tim nonaktif, kontributor yang sempat hilang dan label development halaman Target; semuanya ditangani. Regresi browser 21 kelompok lulus/0 gagal pada fixture sintetis, termasuk tiga viewport/dua tema dan mutasi diintersep. `composer ci:check` akhir lulus (186 tes, 183 lulus, 3 skip, 1269 assertions), production build dan lint browser lulus. Rincian pemeriksaan akhir ada pada [E26](uat-matrix.md#e26); ini bukan bukti UAT/PostgreSQL/performa production.
 
 - PR #28 sudah merged pada baseline `dc2c1d8`. Branch `codex/compact-controls-filter-panels` merapikan kontrol bersama: tinggi 36px untuk desktop mouse tanpa sentuh, tetap 44px pada mobile/sentuh, surface/border seragam, fokus pencarian combobox menyatu dan opsi aktif muted. Target aksi tabel dan footer detail tetap nyaman. Panel filter Pelanggan, Transaksi, Admin pengguna dan Analisis dapat dilipat lewat keyboard tanpa menghapus nilai/draft atau mengubah URL. Aturan berada di [`../../DESIGN.md`](../../DESIGN.md); API, dependency dan database tidak berubah.
@@ -83,7 +88,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR #30/G02 branch `codex/g02-team-performance-targets`; PR #29 kontrol ringkas/filter lipat sudah merged. Penerapan migration G01/G02 serta worker/scheduler memerlukan target dan otorisasi operator. Setelah G02, lanjutkan sisa G03 (rekonsiliasi lintas modul/performa/PostgreSQL) lalu gap lain di [matriks UAT](uat-matrix.md). Bukti otomatis G01/G02 tidak menggantikan UAT atau menutup G06.
+1. Review/merge branch `codex/g03-reporting-reconciliation`; PR #30/G02 sudah merged pada `9e13957`, migration lokal G01/G02 dan seeder laporan sudah diterapkan. Lanjutkan G04 (peringatan duplikat sebelum simpan), gerbang G13 (concurrency/performa volume) dan gap lain pada [matriks UAT](uat-matrix.md). Audit timestamp sebelum koneksi UTC memerlukan provenance; jangan menggeser data historis otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

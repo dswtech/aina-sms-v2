@@ -11,7 +11,8 @@ use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\TeamTarget;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use App\Support\ReportingPeriod;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 class TeamPerformance
@@ -19,18 +20,13 @@ class TeamPerformance
     /** @return array<string, mixed> */
     public function build(User $actor, string $period): array
     {
-        $month = Carbon::createFromFormat('!Y-m', $period, 'Asia/Jakarta')->startOfMonth();
-        $start = $month->copy()->utc();
-        $end = $month->copy()->addMonth()->utc();
+        $window = new ReportingPeriod($period);
+        $start = $window->start;
+        $end = $window->end;
         $historical = $period < now('Asia/Jakarta')->format('Y-m');
         $teams = Team::query()->visibleTo($actor)->orderBy('name')->get();
         $teamIds = $teams->modelKeys();
-        $dealsQuery = DealTransaction::query()->where('dealer_id', $actor->dealer_id);
-        if ($actor->role === UserRole::Sales) {
-            $dealsQuery->where('sales_id', $actor->id);
-        } elseif ($actor->role === UserRole::Supervisor) {
-            $dealsQuery->whereIn('team_id', $teamIds);
-        }
+        $dealsQuery = DealTransaction::query()->visibleInReportsTo($actor);
         $deals = $dealsQuery->with(['sales:id,name,username', 'stageHistories' => fn ($q) => $q->select(['id', 'deal_transaction_id', 'to_stage', 'created_at'])])->get();
         $memberships = TeamMembership::query()->whereIn('team_id', $teamIds)->whereNull('ended_at')
             ->where('role', UserRole::Sales)->whereHas('user', fn ($q) => $q->where('dealer_id', $actor->dealer_id)->where('is_active', true)->where('role', UserRole::Sales))->get();
@@ -41,12 +37,12 @@ class TeamPerformance
             $usersQuery->whereIn('id', $memberships->pluck('user_id'));
         }
         $users = $usersQuery->orderBy('name')->get();
-        $salesTargets = SalesTarget::query()->whereIn('user_id', $users->modelKeys())->whereDate('period', $month->toDateString())->get()->keyBy('user_id');
-        $teamTargets = TeamTarget::query()->whereIn('team_id', $teamIds)->whereDate('period', $month->toDateString())->get()->keyBy('team_id');
+        $salesTargets = SalesTarget::query()->whereIn('user_id', $users->modelKeys())->whereDate('period', $period.'-01')->get()->keyBy('user_id');
+        $teamTargets = TeamTarget::query()->whereIn('team_id', $teamIds)->whereDate('period', $period.'-01')->get()->keyBy('team_id');
         $teamRows = $teams->map(function (Team $team) use ($deals, $memberships, $salesTargets, $teamTargets, $period, $start, $end, $historical): array {
             $target = $teamTargets->get($team->id);
             $memberIds = $memberships->where('team_id', $team->id)->pluck('user_id')->unique();
-            $assignedTargets = $salesTargets->only($memberIds->all());
+            $assignedTargets = $salesTargets->whereIn('user_id', $memberIds);
             $salesTotal = $assignedTargets->isEmpty() ? null : (int) $assignedTargets->sum('target_units');
 
             return array_merge([
@@ -89,7 +85,7 @@ class TeamPerformance
 
         return [
             'dashboard' => [
-                'period' => $month->toDateString(), 'targetUnits' => $metrics['target_units'],
+                'period' => $period.'-01', 'targetUnits' => $metrics['target_units'],
                 'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->count() - $salesTargets->count(),
                 'teamTargetsMissing' => $missingTeamTargets,
                 'targetAllocationDifference' => $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
@@ -110,7 +106,7 @@ class TeamPerformance
     /** @param Collection<int, DealTransaction> $deals
      * @return array<string, mixed>
      */
-    private function metrics(Collection $deals, ?int $target, string $period, Carbon $start, Carbon $end, bool $historical): array
+    private function metrics(Collection $deals, ?int $target, string $period, CarbonInterface $start, CarbonInterface $end, bool $historical): array
     {
         $delivered = $deals->filter(fn (DealTransaction $d): bool => $d->stageHistories->contains(fn ($h): bool => $h->to_stage === PipelineStage::Delivery && $h->created_at->gte($start) && $h->created_at->lt($end)));
         $active = $deals->filter(fn (DealTransaction $d): bool => ! $d->current_stage->isClosed());

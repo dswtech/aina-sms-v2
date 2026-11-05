@@ -86,6 +86,8 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
+            // Business timestamps are UTC; display conversion happens at the boundary.
+            'timezone' => 'UTC',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
