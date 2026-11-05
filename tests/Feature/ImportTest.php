@@ -13,6 +13,34 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
+it('marks repeated normalized phone numbers in the CSV before commit', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.sales']);
+    $file = UploadedFile::fake()->createWithContent('duplicates.csv', "name,phone,vehicle_model,source,sales_username\nFirst,081234567890,Model,walk_in,csv.sales\nSecond,+6281234567890,Model,walk_in,csv.sales\n");
+    $this->actingAs($admin)->post('/imports/preview', ['file' => $file])->assertInertia(fn (Assert $p) => $p
+        ->where('preview.accepted_count', 1)->where('preview.rejected_count', 1)
+        ->where('preview.rows.0.valid', true)->where('preview.rows.1.valid', false));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('customers', 1);
+    $this->assertDatabaseCount('deal_transactions', 1);
+});
+
+it('rechecks duplicates at import commit and rolls back the whole pending batch', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.sales']);
+    $file = UploadedFile::fake()->createWithContent('stale.csv', "name,phone,vehicle_model,source,sales_username\nFirst,081234567890,Model,walk_in,csv.sales\nSecond,081234567891,Model,walk_in,csv.sales\n");
+    $this->actingAs($admin)->post('/imports/preview', ['file' => $file])->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 2));
+    Customer::factory()->create(['dealer_id' => $dealer->id, 'phone' => '+6281234567891']);
+    $batch = CsvImportBatch::query()->sole();
+    $this->from('/imports')->post(route('imports.commit', $batch))->assertRedirect('/imports')->assertSessionHasErrors('import');
+    expect($batch->fresh()->status)->toBe('preview');
+    $this->assertDatabaseCount('customers', 1);
+    $this->assertDatabaseCount('customer_assignments', 0);
+    $this->assertDatabaseCount('deal_transactions', 0);
+});
+
 it('previews and imports valid csv rows', function () {
     $dealer = Dealer::factory()->create();
     $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);

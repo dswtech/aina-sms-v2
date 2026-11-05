@@ -145,7 +145,7 @@ it('lets a supervisor move the stage of a team member transaction', function () 
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::HotProspect);
 });
 
-it('flashes a duplicate warning without blocking lead creation', function () {
+it('warns about an inaccessible duplicate before creating a lead', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
 
@@ -162,10 +162,10 @@ it('flashes a duplicate warning without blocking lead creation', function () {
             'vehicle_model' => 'Stargazer',
             'source' => 'walk_in',
         ])
-        ->assertRedirect(route('customers.index'))
-        ->assertInertiaFlash('toast');
+        ->assertRedirect()
+        ->assertSessionHasErrors('duplicate_customer');
 
-    expect(Customer::query()->where('dealer_id', $dealer->id)->count())->toBe(2)
-        ->and(Customer::query()->where('name', 'Agus Duplikat')->exists())->toBeTrue()
+    expect(Customer::query()->where('dealer_id', $dealer->id)->count())->toBe(1)
+        ->and(Customer::query()->where('name', 'Agus Duplikat')->exists())->toBeFalse()
         ->and($existing->fresh()->name)->toBe('Agus Pratama');
 });

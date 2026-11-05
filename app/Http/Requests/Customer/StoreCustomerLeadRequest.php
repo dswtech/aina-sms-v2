@@ -19,6 +19,7 @@ class StoreCustomerLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'existing_customer_id' => ['nullable', 'uuid'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:32', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! PhoneNormalizer::isValid((string) $value)) {

@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
+import InputError from '@/components/input-error';
 import { Download, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ type Props = {
 };
 
 export default function ImportsIndex({ batches, preview }: Props) {
+    const { errors } = usePage().props;
     const { flash } = usePage().props as { flash?: { success?: string } };
     const [file, setFile] = useState<File | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -86,6 +88,11 @@ export default function ImportsIndex({ batches, preview }: Props) {
                 {flash?.success && (
                     <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                         {flash.success}
+                    </div>
+                )}
+                {(errors.import || errors.file) && (
+                    <div role="alert" className="mt-6">
+                        <InputError message={errors.import || errors.file} />
                     </div>
                 )}
 

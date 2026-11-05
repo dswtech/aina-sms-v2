@@ -16,6 +16,7 @@ use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
 use App\Models\CustomerActivity;
 use App\Models\DealComment;
+use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\TeamMembership;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -254,6 +256,12 @@ class CustomerController extends Controller
         }
 
         return Inertia::render('customers/index', [
+            'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
+                'phone' => $request->session()->get('duplicate_lead_phone'),
+                'customers' => Customer::query()->visibleTo($actor)
+                    ->where('phone', PhoneNormalizer::normalize($request->session()->get('duplicate_lead_phone')))
+                    ->orderBy('name')->get(['public_id', 'name'])->toArray(),
+            ] : null,
             'customers' => $customers,
             'filters' => [
                 'search' => $search ?? '',
@@ -273,9 +281,25 @@ class CustomerController extends Controller
         $dealerId = (int) $actor->dealer_id;
 
         $validated = $request->validated();
-        $duplicate = $detector->check($dealerId, $validated['phone']);
+        $customer = DB::transaction(function () use ($actor, $dealerId, $validated, $detector, $request): Customer {
+            // The same dealer lock serializes manual creation and CSV imports.
+            Dealer::query()->whereKey($dealerId)->lockForUpdate()->firstOrFail();
+            if (isset($validated['existing_customer_id'])) {
+                $customer = Customer::query()->where('dealer_id', $dealerId)
+                    ->where('phone', PhoneNormalizer::normalize($validated['phone']))
+                    ->where('public_id', $validated['existing_customer_id'])->lockForUpdate()->first();
+                if ($customer === null) {
+                    throw ValidationException::withMessages(['existing_customer_id' => 'Pelanggan tidak cocok dengan nomor ini. Periksa kembali.']);
+                }
+                $this->authorize('update', $customer);
+                $this->createLeadTransaction($actor, $customer, $validated);
 
-        $customer = DB::transaction(function () use ($actor, $dealerId, $validated): Customer {
+                return $customer;
+            }
+            if ($detector->check($dealerId, $validated['phone'])->hasDuplicate) {
+                $request->session()->flash('duplicate_lead_phone', $validated['phone']);
+                throw ValidationException::withMessages(['duplicate_customer' => 'Nomor telepon sudah terdaftar. Periksa pelanggan sebelum menyimpan.']);
+            }
             $customer = Customer::create([
                 'dealer_id' => $dealerId,
                 'created_by_id' => $actor->id,
@@ -286,44 +310,15 @@ class CustomerController extends Controller
                 'contact_channel_preference' => $validated['contact_channel_preference'] ?? null,
                 'notes' => $validated['notes'] ?? null,
             ]);
-
-            // Assign to creating sales
             $customer->assignTo($actor, $actor, 'Penugasan saat pembuatan lead');
-
-            // Create initial deal transaction (Lead)
-            $deal = $customer->transactions()->create([
-                'dealer_id' => $dealerId,
-                'sales_id' => $actor->id,
-                'team_id' => $actor->activeTeamMemberships()->value('team_id'),
-                'vehicle_model' => $validated['vehicle_model'],
-                'estimated_value' => $validated['estimated_value'] ?? null,
-                'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
-                'source' => $validated['source'],
-                'current_stage' => PipelineStage::Lead,
-                'last_activity_at' => now(),
-            ]);
-
-            // Create initial stage history
-            $deal->stageHistories()->create([
-                'from_stage' => null,
-                'to_stage' => PipelineStage::Lead,
-                'actor_id' => $actor->id,
-                'notes' => 'Lead baru dibuat',
-                'created_at' => now(),
-            ]);
+            $this->createLeadTransaction($actor, $customer, $validated);
 
             return $customer;
         });
 
-        $message = "Lead {$customer->name} berhasil disimpan.";
-
-        if ($duplicate->hasDuplicate) {
-            $message .= ' '.$duplicate->message;
-        }
-
         Inertia::flash('toast', [
-            'type' => $duplicate->hasDuplicate ? 'warning' : 'success',
-            'message' => $message,
+            'type' => 'success',
+            'message' => "Lead {$customer->name} berhasil disimpan.",
         ]);
 
         return redirect()->route('customers.index');
@@ -397,9 +392,22 @@ class CustomerController extends Controller
 
         $validated = $request->validated();
 
+        $this->createLeadTransaction($actor, $customer, $validated);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Transaksi baru untuk {$customer->name} berhasil dibuat.",
+        ]);
+
+        return back();
+    }
+
+    /** @param array<string, mixed> $validated */
+    private function createLeadTransaction(User $actor, Customer $customer, array $validated): DealTransaction
+    {
         $sales = $customer->assignedSales ?? $actor;
 
-        $deal = DB::transaction(function () use ($actor, $customer, $sales, $validated): DealTransaction {
+        return DB::transaction(function () use ($actor, $customer, $sales, $validated): DealTransaction {
             $deal = $customer->transactions()->create([
                 'dealer_id' => $customer->dealer_id,
                 'sales_id' => $sales->id,
@@ -422,13 +430,6 @@ class CustomerController extends Controller
 
             return $deal;
         });
-
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => "Transaksi baru untuk {$customer->name} berhasil dibuat.",
-        ]);
-
-        return back();
     }
 
     public function reassign(ReassignCustomerRequest $request, Customer $customer): RedirectResponse

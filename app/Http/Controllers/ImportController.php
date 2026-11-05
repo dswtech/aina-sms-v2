@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\CsvImportBatch;
 use App\Models\Customer;
+use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\TeamMembership;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -121,6 +123,7 @@ class ImportController extends Controller
         }
 
         $rows = [];
+        $seenPhones = [];
         $rowNumber = 1;
         while (($line = fgetcsv($handle)) !== false) {
             $rowNumber++;
@@ -135,6 +138,13 @@ class ImportController extends Controller
             }
 
             $errors = $this->validateRow($actor, $record);
+            $normalizedPhone = PhoneNormalizer::normalize($record['phone']);
+            if ($normalizedPhone !== null && isset($seenPhones[$normalizedPhone])) {
+                $errors[] = 'Nomor telepon berulang dalam CSV. Gunakan satu identitas pelanggan.';
+            }
+            if ($errors === [] && $normalizedPhone !== null) {
+                $seenPhones[$normalizedPhone] = true;
+            }
             $rows[] = [
                 'row_number' => $rowNumber,
                 'data' => $record,
@@ -186,8 +196,14 @@ class ImportController extends Controller
         $validRows = array_filter($preview['rows'] ?? [], fn (array $row): bool => $row['valid'] ?? false);
 
         DB::transaction(function () use ($actor, $batch, $validRows): void {
+            Dealer::query()->whereKey($actor->dealer_id)->lockForUpdate()->firstOrFail();
+            $batch->refresh();
+            abort_unless($batch->status === 'preview', 422);
             foreach ($validRows as $row) {
                 $record = $row['data'];
+                if (Customer::query()->where('dealer_id', $actor->dealer_id)->where('phone', PhoneNormalizer::normalize($record['phone']))->exists()) {
+                    throw ValidationException::withMessages(['import' => 'Nomor telepon pada baris '.$row['row_number'].' sudah terdaftar. Tidak ada baris yang disimpan; unggah ulang CSV untuk memeriksa data terbaru.']);
+                }
                 $sales = $this->resolveSales($actor, (string) $record['sales_username']);
                 $customer = Customer::create([
                     'dealer_id' => $actor->dealer_id,

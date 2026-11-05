@@ -59,7 +59,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | Referensi PRD | Role | Skenario | Bukti assertion | Status teknis | Keterbatasan dan sisa pekerjaan | UAT |
 |---|---|---|---|---|---|---|
 | [CRM-01](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E08](#e08): customer, normalisasi nomor, assignment, model dan tahap Lead tersimpan. | Parsial / Gap source | Estimasi waktu pembelian tidak ada pada request; create oleh non-Sales menugaskan ke actor [G05](#g05). | Belum dijalankan |
-| [CRM-02](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E09](#e09): detektor cocok nomor; test HTTP justru mengharapkan dua Customer setelah submit. | Parsial / Gap source | Peringatan saat ini setelah penyimpanan; alur batal/lanjut sebelum simpan belum terpenuhi [G04](#g04). | Belum dijalankan |
+| [CRM-02](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E09](#e09): warning tanpa write, konfirmasi identitas existing, akses terkini dan regresi batal/lanjut browser. | Terverifikasi teknis | UAT manusia belum dijalankan; batas bukti dan revalidasi import di [G04](#g04). | Belum dijalankan |
 | [CRM-03](PRD.md#73-customer--lead-crm) | S | [S02](#s02), [X01](#x01) | [E07](#e07), [E08](#e08): daftar hanya assigned; aktivitas/follow-up/stage asing 403 tanpa mutasi. | Parsial | Uji semua aksi termasuk komentar dan akses transaksi setelah perpindahan Customer. | Belum dijalankan |
 | [CRM-04](PRD.md#73-customer--lead-crm) | V | [V01](#v01) | [E10](#e10): histori assignment model tetap dua; endpoint reassignment yang dites memakai Admin. | Parsial | Belum membuktikan endpoint Supervisor sukses maupun penolakan lintas tim [G09](#g09). | Belum dijalankan |
 | [CRM-05](PRD.md#73-customer--lead-crm) | A | [A04](#a04) | [E07](#e07): query Customer Admin memuat D1 dan mengecualikan D2; [E11](#e11) redaksi audit. | Parsial | Akses baca riwayat lengkap dan batas aksi Admin/coaching perlu [G06](#g06). | Belum dijalankan |
@@ -200,7 +200,9 @@ Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak meng
 
 ### E09
 
-[DuplicateCustomerWarningTest](../../tests/Feature/Customer/DuplicateCustomerWarningTest.php): `detects existing customer with same normalized phone in the same dealer` mengassert hasDuplicate dan ID cocok; dealer lain tidak cocok. [CustomerAuthorizationTest](../../tests/Feature/Customer/CustomerAuthorizationTest.php): `flashes a duplicate warning without blocking lead creation` mengassert toast dan count Customer dua setelah POST. Ini bukti perilaku saat ini, bukan kelulusan konfirmasi duplikat sebelum simpan.
+[DuplicateCustomerWarningTest](../../tests/Feature/Customer/DuplicateCustomerWarningTest.php) memeriksa nomor ternormalisasi dan batas dealer. [DuplicateLeadConfirmationTest](../../tests/Feature/Customer/DuplicateLeadConfirmationTest.php) memeriksa warning tanpa Customer/assignment/transaksi/histori baru, konfirmasi oleh Sales/SPV/Admin yang mempertahankan identitas/assignment, draft peluang dan audit, UUID forged/nomor tidak cocok/dealer lain, kandidat inaccessible, perubahan assignment sebelum baca/konfirmasi, kandidat legacy ganda serta nomor dengan spasi. [CustomerAuthorizationTest](../../tests/Feature/Customer/CustomerAuthorizationTest.php) kini mengassert penolakan duplikat sebelum write. [ImportTest](../../tests/Feature/ImportTest.php) memeriksa nomor berulang sesama CSV serta duplikat yang muncul sesudah preview, dengan rollback seluruh batch.
+
+[Regresi browser G04](../../tests/Browser/customer-duplicate.js) memeriksa 18 kombinasi role Sales/SPV/Admin × 390/768/1440 × terang/gelap: draft dipertahankan, batal tanpa submit tambahan, konfirmasi UUID existing, fokus keyboard, overflow dan teks kandidat tidak terpotong. Skenario tambahan mencakup nomor ditempel dengan spasi, pelanggan inaccessible, perubahan nomor, kandidat stale dan error HTTP/jaringan. Dokumen sintetis memakai aset aplikasi asli, semua submit diintersep; otorisasi/persistensi dibuktikan feature test terpisah. Ini bukan UAT manusia atau bukti concurrency multikoneksi PostgreSQL. Rincian di [catatan G04](implementation-g04-duplicate-confirmation.md).
 
 ### E10
 
@@ -408,7 +410,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G04
 
-**Penghambat rilis — duplikat diberi peringatan setelah tersimpan.** Bukti: [CustomerController::store][customer-source] membuat Customer/transaksi baru lalu flash toast; [E09](#e09) justru mengassert dua Customer. Bertentangan dengan alur konfirmasi sebelum simpan dan identitas Customer kanonik. Tindak lanjut: tes/reproduksi cancel/continue sebelum simpan dan peluang baru pada identitas existing; tinjau jalur import tanpa menjalankan deduplikasi data nyata. Pemilik: Engineering full-stack + QA, operasional menentukan penanganan kandidat yang sah.
+**Ditutup teknis untuk konfirmasi sebelum write dan identitas kanonik.** [E09](#e09) memverifikasi warning sebelum Customer/transaksi tersimpan, batal/konfirmasi eksplisit, reuse identitas dan assignment, batas akses serta revalidasi import. Sales dengan kandidat di luar cakupan diarahkan ke SPV/Admin sesuai [PRD](PRD.md); tidak membuat identitas terpisah atau membuka nama pelanggan tersembunyi. Data lama tidak digabung/dihapus. UAT manusia dan concurrency PostgreSQL tetap gerbang terpisah; rincian bukti/limitasinya ada di [catatan G04](implementation-g04-duplicate-confirmation.md).
 
 ### G05
 
