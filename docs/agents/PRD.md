@@ -186,7 +186,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ID | Kebutuhan | Prioritas |
 |---|---|---|
 | CRM-01 | **Sales dapat membuat lead dengan identitas dan kebutuhan minimum pelanggan.** Form utama memuat nama, nomor telepon, kendaraan yang diminati, estimasi pembelian, sumber, dan catatan. | M |
-| CRM-02 | **Sistem memperingatkan kemungkinan duplikat berdasarkan nomor telepon.** Peringatan tidak otomatis memblokir transaksi berbeda milik pelanggan yang sama. | S |
+| CRM-02 | **Sistem memperingatkan kemungkinan duplikat berdasarkan nomor telepon ternormalisasi sebelum data pelanggan atau transaksi baru disimpan.** Pengguna dapat membatalkan atau memilih identitas pelanggan yang sudah ada untuk membuat transaksi berbeda tanpa menggandakan identitas maupun mengubah penugasan. Kandidat hanya ditampilkan sesuai akses terkini; jika pelanggan berada di luar akses Sales, penyimpanan ditahan dengan arahan ke Supervisor/Admin untuk pemeriksaan dan penugasan tanpa membuka identitas pelanggan. Server memeriksa ulang akses dan kecocokan nomor saat konfirmasi. | S |
 | CRM-03 | **Sales hanya dapat melihat dan memperbarui lead yang ditugaskan kepadanya.** Data Sales lain tidak ikut terkirim ke client. | M |
 | CRM-04 | **Supervisor dapat melihat dan menugaskan ulang lead dalam timnya.** Riwayat penugasan lama tetap tersimpan untuk audit. | M |
 | CRM-05 | **Admin dapat membaca data yang diperlukan untuk audit dan dukungan.** Akses tersebut tidak menghapus batas akses role operasional lain. | M |

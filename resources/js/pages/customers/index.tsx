@@ -16,7 +16,7 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
@@ -112,6 +112,10 @@ export type CustomerItem = {
 };
 
 type Props = {
+    duplicateLead?: {
+        phone: string;
+        customers: { public_id: string; name: string }[];
+    } | null;
     customers: {
         data: CustomerItem[];
         current_page: number;
@@ -164,6 +168,7 @@ export default function CustomersIndex({
     filters,
     counts,
     assignableSales = [],
+    duplicateLead = null,
 }: Props) {
     const { auth, errors } = usePage().props;
     const role = auth.user.role;
@@ -193,6 +198,17 @@ export default function CustomersIndex({
     const [txClosingMonth, setTxClosingMonth] = useState('');
     const [leadSource, setLeadSource] = useState('walk_in');
     const [leadNotes, setLeadNotes] = useState('');
+    const [createSaving, setCreateSaving] = useState(false);
+    const [createError, setCreateError] = useState('');
+    const [duplicateDismissed, setDuplicateDismissed] = useState(true);
+    const duplicate =
+        !duplicateDismissed && duplicateLead?.phone.trim() === leadPhone.trim()
+            ? duplicateLead
+            : null;
+    const duplicatePanelRef = useRef<HTMLElement | null>(null);
+    useEffect(() => {
+        if (duplicate) duplicatePanelRef.current?.focus();
+    }, [duplicate]);
 
     const [actType, setActType] = useState('call');
     const [actNotes, setActNotes] = useState('');
@@ -263,6 +279,14 @@ export default function CustomersIndex({
 
     function handleCreateLead(e: React.FormEvent) {
         e.preventDefault();
+        submitLead();
+    }
+
+    function submitLead(existingCustomerId?: string) {
+        if (createSaving) return;
+        setCreateSaving(true);
+        setCreateError('');
+        setDuplicateDismissed(true);
         router.post(
             '/customers',
             {
@@ -272,15 +296,34 @@ export default function CustomersIndex({
                 source: leadSource,
                 expected_closing_month: leadClosingMonth || null,
                 notes: leadNotes,
+                existing_customer_id: existingCustomerId ?? null,
             },
             {
-                onSuccess: () => {
+                onSuccess: (page) => {
+                    if (page.props.duplicateLead) {
+                        setDuplicateDismissed(false);
+                        return;
+                    }
                     setCreateOpen(false);
                     setLeadName('');
                     setLeadClosingMonth('');
                     setLeadPhone('');
                     setLeadModel('');
                     setLeadNotes('');
+                },
+                onError: () => setDuplicateDismissed(false),
+                onFinish: () => setCreateSaving(false),
+                onNetworkError: () => {
+                    setCreateError(
+                        'Koneksi terputus. Draft tetap tersimpan di form. Periksa koneksi sebelum mencoba lagi.',
+                    );
+                    return false;
+                },
+                onHttpException: () => {
+                    setCreateError(
+                        'Lead belum dapat dikonfirmasi tersimpan. Draft tetap tersedia; periksa kembali sebelum mencoba lagi.',
+                    );
+                    return false;
                 },
             },
         );
@@ -448,14 +491,22 @@ export default function CustomersIndex({
                         </p>
                     </div>
 
-                    <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                    <Dialog
+                        open={createOpen}
+                        onOpenChange={(open) => {
+                            if (createSaving) return;
+                            setCreateOpen(open);
+                            setDuplicateDismissed(true);
+                            setCreateError('');
+                        }}
+                    >
                         <DialogTrigger asChild>
                             <Button className="min-h-11 w-full gap-2 sm:w-auto">
                                 <Plus className="size-4" />
                                 <span>Tambah Lead Baru</span>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Tambah Lead Baru</DialogTitle>
                                 <DialogDescription>
@@ -466,121 +517,219 @@ export default function CustomersIndex({
                             <form
                                 onSubmit={handleCreateLead}
                                 className="space-y-4 pt-2"
+                                aria-busy={createSaving}
                             >
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-name">
-                                        Nama Pelanggan *
-                                    </Label>
-                                    <Input
-                                        id="lead-name"
-                                        required
-                                        value={leadName}
-                                        onChange={(e) =>
-                                            setLeadName(e.target.value)
-                                        }
-                                        placeholder="Contoh: Budi Santoso"
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-phone">
-                                        Nomor Telepon / WhatsApp *
-                                    </Label>
-                                    <Input
-                                        id="lead-phone"
-                                        required
-                                        value={leadPhone}
-                                        onChange={(e) =>
-                                            setLeadPhone(e.target.value)
-                                        }
-                                        placeholder="081234567890"
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-closing-month">
-                                        Estimasi bulan closing
-                                    </Label>
-                                    <Input
-                                        id="lead-closing-month"
-                                        type="month"
-                                        value={leadClosingMonth}
-                                        onChange={(e) =>
-                                            setLeadClosingMonth(e.target.value)
-                                        }
-                                    />
-                                    <InputError
-                                        message={errors.expected_closing_month}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-model">
-                                        Model Kendaraan Diminati *
-                                    </Label>
-                                    <Input
-                                        id="lead-model"
-                                        required
-                                        value={leadModel}
-                                        onChange={(e) =>
-                                            setLeadModel(e.target.value)
-                                        }
-                                        placeholder="Contoh: Stargazer Prime, Creta"
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-source">
-                                        Sumber Lead
-                                    </Label>
-                                    <Select
-                                        value={leadSource}
-                                        onValueChange={setLeadSource}
-                                    >
-                                        <SelectTrigger
-                                            id="lead-source"
+                                <fieldset
+                                    disabled={createSaving}
+                                    className="min-w-0 space-y-4"
+                                >
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-name">
+                                            Nama Pelanggan *
+                                        </Label>
+                                        <Input
+                                            id="lead-name"
+                                            required
+                                            value={leadName}
+                                            onChange={(e) =>
+                                                setLeadName(e.target.value)
+                                            }
+                                            placeholder="Contoh: Budi Santoso"
+                                            className="min-h-11"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-phone">
+                                            Nomor Telepon / WhatsApp *
+                                        </Label>
+                                        <Input
+                                            id="lead-phone"
+                                            required
+                                            value={leadPhone}
+                                            onChange={(e) =>
+                                                setLeadPhone(e.target.value)
+                                            }
+                                            placeholder="081234567890"
+                                            className="min-h-11"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-closing-month">
+                                            Estimasi bulan closing
+                                        </Label>
+                                        <Input
+                                            id="lead-closing-month"
+                                            type="month"
+                                            value={leadClosingMonth}
+                                            onChange={(e) =>
+                                                setLeadClosingMonth(
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            message={
+                                                errors.expected_closing_month
+                                            }
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-model">
+                                            Model Kendaraan Diminati *
+                                        </Label>
+                                        <Input
+                                            id="lead-model"
+                                            required
+                                            value={leadModel}
+                                            onChange={(e) =>
+                                                setLeadModel(e.target.value)
+                                            }
+                                            placeholder="Contoh: Stargazer Prime, Creta"
+                                            className="min-h-11"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-source">
+                                            Sumber Lead
+                                        </Label>
+                                        <Select
+                                            value={leadSource}
+                                            onValueChange={setLeadSource}
+                                        >
+                                            <SelectTrigger
+                                                id="lead-source"
+                                                className="min-h-11 w-full"
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="walk_in">
+                                                    Walk-in Showroom
+                                                </SelectItem>
+                                                <SelectItem value="digital_ad">
+                                                    Iklan Digital / Medsos
+                                                </SelectItem>
+                                                <SelectItem value="referral">
+                                                    Referral Pelanggan
+                                                </SelectItem>
+                                                <SelectItem value="exhibition">
+                                                    Pameran / Mall
+                                                </SelectItem>
+                                                <SelectItem value="call">
+                                                    Telepon Masuk
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lead-notes">
+                                            Catatan Tambahan
+                                        </Label>
+                                        <Input
+                                            id="lead-notes"
+                                            value={leadNotes}
+                                            onChange={(e) =>
+                                                setLeadNotes(e.target.value)
+                                            }
+                                            placeholder="Minat DP minim, rencana beli minggu depan..."
+                                            className="min-h-11"
+                                        />
+                                    </div>
+                                    {duplicate ? (
+                                        <section
+                                            ref={duplicatePanelRef}
+                                            tabIndex={-1}
+                                            data-comfortable-controls
+                                            aria-label="Konfirmasi pelanggan"
+                                            className="space-y-3 rounded-lg border bg-muted/40 p-4"
+                                        >
+                                            <div
+                                                role="alert"
+                                                className="space-y-1 text-sm"
+                                            >
+                                                <h3 className="font-semibold">
+                                                    Nomor telepon sudah
+                                                    terdaftar
+                                                </h3>
+                                                <p>
+                                                    {duplicate.customers.length
+                                                        ? 'Pilih pelanggan untuk membuat transaksi baru. Identitas dan penugasan pelanggan tetap dipertahankan.'
+                                                        : 'Pelanggan berada di luar akses Anda. Hubungi SPV/Admin untuk pemeriksaan dan penugasan sebelum melanjutkan.'}
+                                                </p>
+                                            </div>
+                                            {duplicate.customers.map(
+                                                (customer) => (
+                                                    <Button
+                                                        type="button"
+                                                        key={customer.public_id}
+                                                        variant="outline"
+                                                        className="h-auto min-h-11 w-full flex-col items-start py-3 text-left whitespace-normal"
+                                                        onClick={() =>
+                                                            submitLead(
+                                                                customer.public_id,
+                                                            )
+                                                        }
+                                                    >
+                                                        <span className="break-words">
+                                                            {customer.name}
+                                                        </span>
+                                                        <span className="text-xs font-normal">
+                                                            Buat transaksi pada
+                                                            pelanggan ini
+                                                        </span>
+                                                    </Button>
+                                                ),
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                className="min-h-11 w-full"
+                                                onClick={() =>
+                                                    setCreateOpen(false)
+                                                }
+                                            >
+                                                Batal menyimpan
+                                            </Button>
+                                        </section>
+                                    ) : (
+                                        <Button
+                                            type="submit"
                                             className="min-h-11 w-full"
                                         >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="walk_in">
-                                                Walk-in Showroom
-                                            </SelectItem>
-                                            <SelectItem value="digital_ad">
-                                                Iklan Digital / Medsos
-                                            </SelectItem>
-                                            <SelectItem value="referral">
-                                                Referral Pelanggan
-                                            </SelectItem>
-                                            <SelectItem value="exhibition">
-                                                Pameran / Mall
-                                            </SelectItem>
-                                            <SelectItem value="call">
-                                                Telepon Masuk
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="lead-notes">
-                                        Catatan Tambahan
-                                    </Label>
-                                    <Input
-                                        id="lead-notes"
-                                        value={leadNotes}
-                                        onChange={(e) =>
-                                            setLeadNotes(e.target.value)
-                                        }
-                                        placeholder="Minat DP minim, rencana beli minggu depan..."
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="min-h-11 w-full"
-                                >
-                                    Simpan Lead
-                                </Button>
+                                            {createSaving
+                                                ? 'Menyimpan…'
+                                                : 'Simpan Lead'}
+                                        </Button>
+                                    )}
+                                    {!!createError && (
+                                        <p
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {createError}
+                                        </p>
+                                    )}
+                                    {!duplicate &&
+                                        Object.entries(errors)
+                                            .filter(([key]) =>
+                                                [
+                                                    'name',
+                                                    'phone',
+                                                    'vehicle_model',
+                                                    'source',
+                                                    'expected_closing_month',
+                                                    'notes',
+                                                    'existing_customer_id',
+                                                    'duplicate_customer',
+                                                ].includes(key),
+                                            )
+                                            .map(([key, message]) => (
+                                                <InputError
+                                                    key={key}
+                                                    message={message}
+                                                />
+                                            ))}
+                                </fieldset>
                             </form>
                         </DialogContent>
                     </Dialog>

@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.22 |
+| Versi | v1.23 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch `codex/g04-customer-duplicate-confirmation` memakai `main`/`origin/main` `d7afd39` (PR #35/#36 sudah merged). Konfirmasi duplikat sebelum write, reuse Customer existing sesuai akses, arahan aman ke SPV/Admin serta revalidasi import mengikuti [PRD](PRD.md); bukti di [catatan G04](implementation-g04-duplicate-confirmation.md) dan [E09/matriks](uat-matrix.md#e09). Dua temuan (spasi nomor dan clipping tombol) diperbaiki dengan regresi gagal/lulus; review ulang tidak menemukan temuan actionable. Pest 231 lulus/3 skip (2.106 assertions), lima tes frontend, lint/format, TypeScript, Pint, PHPStan dan production build lulus. Browser sintetis G04 18 kombinasi plus skenario tambahan, dashboard 28 dan role/laporan 42 lulus; nol write bisnis/error JavaScript. Tidak ada migration/dependency atau write database bisnis. UAT manusia dan concurrency PostgreSQL tetap terbuka. Stash terarah pra-integrasi G04 dipertahankan sebagai backup lokal; tidak termasuk commit.
 
 - Branch `codex/dashboard-analytics-layout` berangkat dari baseline `007d59d` (PR #35). Dashboard bagian bawah memakai grafik realisasi/forecast dan target sesuai akses, distribusi pipeline, ranking lima Sales dengan expand, kontribusi rupiah berbobot dan disclosure rincian. Kontrak API/rumus laporan/database/dependency tetap. Lima tes frontend, CI lengkap (228 lulus/3 skip, 2.082 assertions), production build, 28 kondisi browser dashboard dan 42 kondisi role/laporan lulus; nol mutasi/error JavaScript. Review independen tidak menemukan temuan actionable. Bukti, keputusan visual, batas fixture sintetis serta perubahan G04 paralel yang tidak termasuk cakupan ada pada [catatan implementasi dashboard](implementation-dashboard-analytics.md).
 
@@ -103,7 +105,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR #32 branch `codex/team-target-allocation`, migration dan seeder lokal fitur target sudah diterapkan sesuai catatan di atas; production tetap memerlukan otorisasi tersendiri. PR #31 sudah merged pada `9a13d35`; PR #30/G02 sudah merged pada `9e13957`, migration lokal G01/G02 dan seeder laporan sudah diterapkan. Lanjutkan G04 (peringatan duplikat sebelum simpan), gerbang G13 (concurrency/performa volume) dan gap lain pada [matriks UAT](uat-matrix.md). Audit timestamp sebelum koneksi UTC memerlukan provenance; jangan menggeser data historis otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
+1. Review/merge branch G04 di atas; PR #35 (QA target/forecast) dan PR #36 (grafik dashboard) sudah merged pada baseline terbaru. Migration/seeder target development sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Berikutnya prioritaskan G05/G06 dan gerbang G13 pada [matriks UAT](uat-matrix.md). Audit timestamp historis sebelum koneksi UTC memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
