@@ -1,36 +1,23 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { TransactionTimeline } from '@/components/transaction-timeline';
+import type { HistoryPage, TimelineEvent } from '@/types/history';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
-type Comment = {
-    id: number;
-    body: string;
-    author_name: string | null;
-    created_at: string | null;
-    stage_at_creation_label: string | null;
-    can_edit: boolean;
-};
-
 type Props = {
+    timeline: HistoryPage<TimelineEvent>;
     transaction: {
         public_id: string;
         vehicle_model: string;
         stage_label: string;
         can_comment: boolean;
-        comments: Array<Comment & { replies: Comment[] }>;
     };
 };
 
-const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Jakarta',
-});
-
-export default function Coaching({ transaction }: Props) {
+export default function Coaching({ transaction, timeline }: Props) {
     const form = useForm<{ body: string; parent_id: number | null }>({
         body: '',
         parent_id: null,
@@ -59,69 +46,6 @@ export default function Coaching({ transaction }: Props) {
         }
     }
 
-    function renderComment(comment: Comment, root: boolean) {
-        return (
-            <article className="rounded-lg border bg-card p-4">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="font-medium">
-                        {comment.author_name ?? 'Pengguna'}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                        {comment.created_at
-                            ? dateFormatter.format(new Date(comment.created_at))
-                            : 'Waktu belum tercatat'}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                        {comment.stage_at_creation_label
-                            ? `Saat dikirim: ${comment.stage_at_creation_label}`
-                            : 'Tahap saat kirim belum tercatat'}
-                    </span>
-                </div>
-                <p className="mt-2 text-sm break-words whitespace-pre-wrap">
-                    {comment.body}
-                </p>
-                {transaction.can_comment && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        {root && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setEditingId(null);
-                                    form.setData({
-                                        body: '',
-                                        parent_id: comment.id,
-                                    });
-                                    form.clearErrors();
-                                    bodyRef.current?.focus();
-                                }}
-                            >
-                                Balas
-                            </Button>
-                        )}
-                        {comment.can_edit && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setEditingId(comment.id);
-                                    form.setData({
-                                        body: comment.body,
-                                        parent_id: null,
-                                    });
-                                    form.clearErrors();
-                                    bodyRef.current?.focus();
-                                }}
-                            >
-                                Edit
-                            </Button>
-                        )}
-                    </div>
-                )}
-            </article>
-        );
-    }
-
     return (
         <>
             <Head title="Coaching transaksi" />
@@ -143,28 +67,44 @@ export default function Coaching({ transaction }: Props) {
                     Diskusi untuk transaksi ini. Tahap saat komentar dikirim
                     tetap tersimpan.
                 </p>
-                {transaction.comments.length === 0 ? (
-                    <p className="mt-6 text-sm text-muted-foreground">
-                        Belum ada komentar.
-                    </p>
-                ) : (
-                    <ul className="mt-6 space-y-4">
-                        {transaction.comments.map((comment) => (
-                            <li key={comment.id}>
-                                {renderComment(comment, true)}
-                                {comment.replies.length > 0 && (
-                                    <ul className="mt-2 space-y-2 pl-4 sm:pl-6">
-                                        {comment.replies.map((reply) => (
-                                            <li key={reply.id}>
-                                                {renderComment(reply, false)}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                <div className="mt-6">
+                    <TransactionTimeline
+                        page={timeline}
+                        onPageChange={(page) =>
+                            router.get(
+                                `/transactions/${transaction.public_id}/coaching`,
+                                { timeline_page: page },
+                                { preserveScroll: true, preserveState: true },
+                            )
+                        }
+                        onReply={
+                            transaction.can_comment
+                                ? (comment) => {
+                                      setEditingId(null);
+                                      form.setData({
+                                          body: '',
+                                          parent_id: comment.id,
+                                      });
+                                      form.clearErrors();
+                                      bodyRef.current?.focus();
+                                  }
+                                : undefined
+                        }
+                        onEdit={
+                            transaction.can_comment
+                                ? (comment) => {
+                                      setEditingId(comment.id);
+                                      form.setData({
+                                          body: comment.body,
+                                          parent_id: null,
+                                      });
+                                      form.clearErrors();
+                                      bodyRef.current?.focus();
+                                  }
+                                : undefined
+                        }
+                    />
+                </div>
                 {transaction.can_comment ? (
                     <form onSubmit={submit} className="mt-6 space-y-3">
                         <Label htmlFor="coaching-body">

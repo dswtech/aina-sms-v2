@@ -106,9 +106,10 @@ it('captures the server stage for roots and replies and preserves it after stage
 it('keeps legacy snapshots unknown and lets admins read without write capabilities', function () {
     $legacy = $this->deal->comments()->create(['user_id' => $this->admin->id, 'body' => 'Riwayat lama']);
     $this->actingAs($this->admin)->get(route('customers.index'))->assertInertia(fn (Assert $page) => $page
-        ->where('customers.data.0.active_deal.can_comment', false)
-        ->where('customers.data.0.active_deal.comments.0.stage_at_creation', null)
-        ->where('customers.data.0.active_deal.comments.0.can_edit', false));
+        ->where('customers.data.0.active_deal.can_comment', false));
+    $this->getJson(route('customers.history', $this->customer))->assertOk()
+        ->assertJsonPath('timeline.data.0.comment.stage_at_creation', null)
+        ->assertJsonPath('timeline.data.0.comment.can_edit', false);
     $this->actingAs($this->admin)->patchJson(route('comments.update', $legacy), ['body' => 'Tidak boleh'])
         ->assertForbidden();
     expect($legacy->fresh()->body)->toBe('Riwayat lama');
@@ -116,7 +117,7 @@ it('keeps legacy snapshots unknown and lets admins read without write capabiliti
         ->assertInertia(fn (Assert $page) => $page
             ->component('transactions/coaching')
             ->where('transaction.can_comment', false)
-            ->where('transaction.comments.0.can_edit', false)
+            ->where('timeline.data.0.comment.can_edit', false)
             ->missing('transaction.customer'));
     $this->actingAs($this->manager)->get(route('transactions.coaching', $this->deal))->assertForbidden();
     $this->actingAs(User::factory()->sales()->create())->get(route('transactions.coaching', $this->deal))->assertForbidden();
@@ -154,7 +155,7 @@ it('opens the exact authorized transaction from its notification even when a new
         ->assertInertia(fn (Assert $page) => $page
             ->component('transactions/coaching')
             ->where('transaction.public_id', $this->deal->public_id)
-            ->where('transaction.comments.0.body', 'Deal pertama')
+            ->where('timeline.data.0.comment.body', 'Deal pertama')
             ->missing('transaction.customer')
             ->missing('transaction.phone')
             ->missing('transaction.notes'));

@@ -8,6 +8,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\ClosingMonthController;
 use App\Http\Controllers\Customer\CustomerController;
+use App\Http\Controllers\Customer\CustomerHistoryController;
 use App\Http\Controllers\Customer\DealCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportController;
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
     Route::middleware('role:sales,supervisor,admin')->group(function () {
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('customers/{customer}/history', CustomerHistoryController::class)->name('customers.history');
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::post('customers/{customer}/activities', [CustomerController::class, 'storeActivity'])->name('customers.activities.store');
         Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->name('customers.follow-ups.store');

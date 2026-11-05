@@ -1,3 +1,5 @@
+import { CustomerHistory } from '@/components/customer-history';
+import type { HistoryTransaction, TimelineComment } from '@/types/history';
 import { ClosingMonthForm } from '@/components/team-performance';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { canContact } from '@/lib/customer-contact';
@@ -19,7 +21,7 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
@@ -69,26 +71,6 @@ export type CustomerItem = {
         estimated_value: number | null;
         expected_closing_month: string | null;
         can_comment: boolean;
-        comments: Array<{
-            id: number;
-            body: string;
-            author_name: string | null;
-            created_at: string;
-            edited_at: string | null;
-            can_edit: boolean;
-            stage_at_creation: string | null;
-            stage_at_creation_label: string | null;
-            replies: Array<{
-                id: number;
-                body: string;
-                author_name: string | null;
-                created_at: string;
-                edited_at: string | null;
-                can_edit: boolean;
-                stage_at_creation: string | null;
-                stage_at_creation_label: string | null;
-            }>;
-        }>;
     } | null;
     next_follow_up: {
         id: number;
@@ -96,22 +78,6 @@ export type CustomerItem = {
         plan_notes: string;
         status: string;
     } | null;
-    stage_history: Array<{
-        from_stage: string | null;
-        from_stage_label: string | null;
-        to_stage: string;
-        to_stage_label: string;
-        notes: string | null;
-        actor_name: string | null;
-        created_at: string;
-    }>;
-    recent_activities: Array<{
-        type: string;
-        type_label: string;
-        notes: string;
-        occurred_at: string;
-        user_name: string | null;
-    }>;
 };
 
 type Props = {
@@ -187,11 +153,26 @@ export default function CustomersIndex({
     const [reassignOpen, setReassignOpen] = useState(false);
     const [selectedCustomerSnapshot, setSelectedCustomer] =
         useState<CustomerItem | null>(null);
-    const selectedCustomer =
+    const [historyDeal, setHistoryDeal] = useState<HistoryTransaction | null>(
+        null,
+    );
+    const [historyReady, setHistoryReady] = useState(false);
+    const [historyMode, setHistoryMode] = useState(false);
+    const currentCustomer =
         customers.data.find(
             (customer) =>
                 customer.public_id === selectedCustomerSnapshot?.public_id,
         ) ?? null;
+
+    const selectedCustomer =
+        currentCustomer && (!historyMode || historyReady)
+            ? {
+                  ...currentCustomer,
+                  active_deal: historyMode
+                      ? historyDeal
+                      : currentCustomer.active_deal,
+              }
+            : null;
 
     // Form states
     const [leadName, setLeadName] = useState('');
@@ -244,6 +225,54 @@ export default function CustomersIndex({
     );
     const [editBody, setEditBody] = useState('');
 
+    const historyTransactionRef = useRef<string | null>(null);
+    const selectHistoryTransaction = useCallback(
+        (
+            transaction: HistoryTransaction | null,
+            ready: boolean,
+            invalidate = false,
+        ) => {
+            setHistoryDeal(transaction);
+            setHistoryReady(ready);
+            const identity = transaction?.public_id ?? null;
+            const changed = ready && identity !== historyTransactionRef.current;
+            if (ready || invalidate) historyTransactionRef.current = identity;
+            if (!changed && !invalidate) return;
+            setCommentBody('');
+            setReplyParentId(null);
+            setReplyBody('');
+            setEditingCommentId(null);
+            setEditBody('');
+            setStageOpen(false);
+            setStageNotes('');
+            setBookingFee(false);
+            setActivityOpen(false);
+            setActNotes('');
+            setFollowUpOpen(false);
+            setFuDate('');
+            setFuNotes('');
+        },
+        [],
+    );
+    function replyToHistory(comment: TimelineComment) {
+        setEditingCommentId(null);
+        setReplyParentId(comment.id);
+        setReplyBody('');
+        window.setTimeout(
+            () => document.getElementById('history-comment-body')?.focus(),
+            0,
+        );
+    }
+    function editHistoryComment(comment: TimelineComment) {
+        setReplyParentId(null);
+        setEditingCommentId(comment.id);
+        setEditBody(comment.body);
+        window.setTimeout(
+            () => document.getElementById('history-comment-body')?.focus(),
+            0,
+        );
+    }
+
     function applyFilters(
         nextTab = filters.tab,
         query = search,
@@ -274,12 +303,26 @@ export default function CustomersIndex({
 
     function restoreCustomerActionFocus(event: Event) {
         event.preventDefault();
-        customerActionTriggerRef.current?.focus();
+        customerActionTriggerRef.current?.focus({ preventScroll: true });
     }
 
+    function selectQuickCustomer(customer: CustomerItem) {
+        setHistoryMode(false);
+        setHistoryDeal(null);
+        setHistoryReady(false);
+        setSelectedCustomer(customer);
+        setActNotes('');
+        setFuDate('');
+        setFuNotes('');
+        setStageNotes('');
+        setBookingFee(false);
+    }
     function openDetail(customer: CustomerItem, trigger: HTMLButtonElement) {
         customerActionTriggerRef.current = trigger;
         setSelectedCustomer(customer);
+        setHistoryMode(true);
+        setHistoryDeal(null);
+        setHistoryReady(false);
         setDetailOpen(true);
     }
 
@@ -370,6 +413,7 @@ export default function CustomersIndex({
             {
                 scheduled_at: fuDate,
                 plan_notes: fuNotes,
+                deal_transaction_id: selectedCustomer.active_deal?.id,
             },
             {
                 onSuccess: () => {
@@ -458,6 +502,7 @@ export default function CustomersIndex({
                 parent_id: parentId ?? undefined,
             },
             {
+                preserveScroll: true,
                 onSuccess: () => {
                     if (parentId) {
                         setReplyBody('');
@@ -476,6 +521,7 @@ export default function CustomersIndex({
             `/comments/${commentId}`,
             { body: editBody },
             {
+                preserveScroll: true,
                 onSuccess: () => {
                     setEditingCommentId(null);
                     setEditBody('');
@@ -1151,7 +1197,7 @@ export default function CustomersIndex({
                                                 onClick={(event) => {
                                                     customerActionTriggerRef.current =
                                                         event.currentTarget;
-                                                    setSelectedCustomer(c);
+                                                    selectQuickCustomer(c);
                                                     setActivityOpen(true);
                                                 }}
                                             >
@@ -1165,7 +1211,7 @@ export default function CustomersIndex({
                                                 onClick={(event) => {
                                                     customerActionTriggerRef.current =
                                                         event.currentTarget;
-                                                    setSelectedCustomer(c);
+                                                    selectQuickCustomer(c);
                                                     setFollowUpOpen(true);
                                                 }}
                                             >
@@ -1195,7 +1241,7 @@ export default function CustomersIndex({
                                                         onClick={(event) => {
                                                             customerActionTriggerRef.current =
                                                                 event.currentTarget;
-                                                            setSelectedCustomer(
+                                                            selectQuickCustomer(
                                                                 c,
                                                             );
                                                             setNextStage(
@@ -1424,7 +1470,7 @@ export default function CustomersIndex({
                                                             ) => {
                                                                 customerActionTriggerRef.current =
                                                                     event.currentTarget;
-                                                                setSelectedCustomer(
+                                                                selectQuickCustomer(
                                                                     c,
                                                                 );
                                                                 setNextStage(
@@ -1930,7 +1976,9 @@ export default function CustomersIndex({
                                 !transactionOpen &&
                                 !reassignOpen
                             ) {
-                                customerActionTriggerRef.current?.focus();
+                                customerActionTriggerRef.current?.focus({
+                                    preventScroll: true,
+                                });
                             }
                         }}
                     >
@@ -1940,7 +1988,7 @@ export default function CustomersIndex({
                                 tabIndex={-1}
                                 className="mr-6 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
                             >
-                                {selectedCustomer?.name}
+                                {selectedCustomer?.name ?? 'Riwayat pelanggan'}
                             </DialogTitle>
                             <DialogDescription>
                                 {selectedCustomer?.phone}
@@ -2077,472 +2125,118 @@ export default function CustomersIndex({
                                 </div>
                             )}
 
-                            <div>
-                                <h4 className="text-sm font-semibold">
-                                    Riwayat tahap
-                                </h4>
-                                {selectedCustomer &&
-                                selectedCustomer.stage_history.length > 0 ? (
-                                    <ol className="mt-2 space-y-3 border-l pl-4">
-                                        {selectedCustomer.stage_history.map(
-                                            (history, index) => (
-                                                <li
-                                                    key={`${history.to_stage}-${index}`}
-                                                    className="relative"
-                                                >
-                                                    <span className="absolute top-1.5 -left-[21px] size-2.5 rounded-full bg-primary" />
-                                                    <div className="text-sm font-medium">
-                                                        {history.from_stage_label
-                                                            ? `${history.from_stage_label} → ${history.to_stage_label}`
-                                                            : history.to_stage_label}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {formatDate(
-                                                            history.created_at,
-                                                        )}
-                                                        {history.actor_name
-                                                            ? ` • ${history.actor_name}`
-                                                            : ''}
-                                                    </div>
-                                                    {history.notes && (
-                                                        <p className="mt-0.5 text-xs text-muted-foreground">
-                                                            {history.notes}
-                                                        </p>
-                                                    )}
-                                                </li>
-                                            ),
-                                        )}
-                                    </ol>
-                                ) : (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                        Belum ada riwayat tahap.
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-semibold">
-                                    Aktivitas terbaru
-                                </h4>
-                                {selectedCustomer &&
-                                selectedCustomer.recent_activities.length >
-                                    0 ? (
-                                    <ul className="mt-2 space-y-3">
-                                        {selectedCustomer.recent_activities.map(
-                                            (activity, index) => (
-                                                <li
-                                                    key={`${activity.occurred_at}-${index}`}
-                                                    className="rounded-lg border p-3"
-                                                >
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <Badge variant="outline">
-                                                            {
-                                                                activity.type_label
-                                                            }
-                                                        </Badge>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {formatDate(
-                                                                activity.occurred_at,
-                                                            )}
-                                                            {activity.user_name
-                                                                ? ` • ${activity.user_name}`
-                                                                : ''}
-                                                        </span>
-                                                    </div>
-                                                    <p className="mt-1 text-sm">
-                                                        {activity.notes}
-                                                    </p>
-                                                </li>
-                                            ),
-                                        )}
-                                    </ul>
-                                ) : (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                        Belum ada aktivitas tercatat.
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-semibold">
-                                    Komentar & diskusi
-                                </h4>
-                                {selectedCustomer?.active_deal ? (
-                                    <>
-                                        {selectedCustomer.active_deal.comments
-                                            .length > 0 ? (
-                                            <ul className="mt-2 space-y-3">
-                                                {selectedCustomer.active_deal.comments.map(
-                                                    (comment) => (
-                                                        <li
-                                                            key={comment.id}
-                                                            className="rounded-lg border p-3"
-                                                        >
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <span className="text-sm font-medium">
-                                                                    {comment.author_name ??
-                                                                        'Anonim'}
-                                                                </span>
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    {formatDate(
-                                                                        comment.created_at,
-                                                                    )}
-                                                                </span>
-                                                                {comment.edited_at && (
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        (diedit{' '}
-                                                                        {formatDate(
-                                                                            comment.edited_at,
-                                                                        )}
-                                                                        )
-                                                                    </span>
-                                                                )}
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    {comment.stage_at_creation_label
-                                                                        ? `Saat dikirim: ${comment.stage_at_creation_label}`
-                                                                        : 'Tahap saat kirim belum tercatat'}
-                                                                </span>
-                                                            </div>
-
-                                                            {editingCommentId ===
-                                                            comment.id ? (
-                                                                <form
-                                                                    onSubmit={(
-                                                                        e,
-                                                                    ) =>
-                                                                        handleUpdateComment(
-                                                                            e,
-                                                                            comment.id,
-                                                                        )
-                                                                    }
-                                                                    className="mt-2 space-y-2"
-                                                                >
-                                                                    <textarea
-                                                                        value={
-                                                                            editBody
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setEditBody(
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
-                                                                        required
-                                                                    />
-                                                                    <div className="flex gap-2">
-                                                                        <Button
-                                                                            type="submit"
-                                                                            size="sm"
-                                                                            className="min-h-9"
-                                                                        >
-                                                                            Simpan
-                                                                        </Button>
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            className="min-h-9"
-                                                                            onClick={() => {
-                                                                                setEditingCommentId(
-                                                                                    null,
-                                                                                );
-                                                                                setEditBody(
-                                                                                    '',
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            Batal
-                                                                        </Button>
-                                                                    </div>
-                                                                </form>
-                                                            ) : (
-                                                                <p className="mt-1 text-sm">
-                                                                    {
-                                                                        comment.body
-                                                                    }
-                                                                </p>
-                                                            )}
-
-                                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                                {comment.can_edit &&
-                                                                    editingCommentId !==
-                                                                        comment.id && (
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-11 px-2 text-xs"
-                                                                            onClick={() => {
-                                                                                setEditingCommentId(
-                                                                                    comment.id,
-                                                                                );
-                                                                                setEditBody(
-                                                                                    comment.body,
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            Edit
-                                                                        </Button>
-                                                                    )}
-                                                                {selectedCustomer
-                                                                    .active_deal
-                                                                    ?.can_comment && (
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="h-11 px-2 text-xs"
-                                                                        onClick={() =>
-                                                                            setReplyParentId(
-                                                                                comment.id,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Balas
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-
-                                                            {comment.replies
-                                                                .length > 0 && (
-                                                                <ul className="mt-3 space-y-2 border-l pl-3">
-                                                                    {comment.replies.map(
-                                                                        (
-                                                                            reply,
-                                                                        ) => (
-                                                                            <li
-                                                                                key={
-                                                                                    reply.id
-                                                                                }
-                                                                                className="rounded-md bg-muted/40 p-2"
-                                                                            >
-                                                                                <div className="flex flex-wrap items-center gap-2">
-                                                                                    <span className="text-sm font-medium">
-                                                                                        {reply.author_name ??
-                                                                                            'Anonim'}
-                                                                                    </span>
-                                                                                    <span className="text-xs text-muted-foreground">
-                                                                                        {formatDate(
-                                                                                            reply.created_at,
-                                                                                        )}
-                                                                                    </span>
-                                                                                    {reply.edited_at && (
-                                                                                        <span className="text-xs text-muted-foreground">
-                                                                                            (diedit{' '}
-                                                                                            {formatDate(
-                                                                                                reply.edited_at,
-                                                                                            )}
-                                                                                            )
-                                                                                        </span>
-                                                                                    )}
-                                                                                    <span className="text-xs text-muted-foreground">
-                                                                                        {reply.stage_at_creation_label
-                                                                                            ? `Saat dikirim: ${reply.stage_at_creation_label}`
-                                                                                            : 'Tahap saat kirim belum tercatat'}
-                                                                                    </span>
-                                                                                </div>
-
-                                                                                {editingCommentId ===
-                                                                                reply.id ? (
-                                                                                    <form
-                                                                                        onSubmit={(
-                                                                                            e,
-                                                                                        ) =>
-                                                                                            handleUpdateComment(
-                                                                                                e,
-                                                                                                reply.id,
-                                                                                            )
-                                                                                        }
-                                                                                        className="mt-2 space-y-2"
-                                                                                    >
-                                                                                        <textarea
-                                                                                            value={
-                                                                                                editBody
-                                                                                            }
-                                                                                            onChange={(
-                                                                                                e,
-                                                                                            ) =>
-                                                                                                setEditBody(
-                                                                                                    e
-                                                                                                        .target
-                                                                                                        .value,
-                                                                                                )
-                                                                                            }
-                                                                                            className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
-                                                                                            required
-                                                                                        />
-                                                                                        <div className="flex gap-2">
-                                                                                            <Button
-                                                                                                type="submit"
-                                                                                                size="sm"
-                                                                                                className="min-h-9"
-                                                                                            >
-                                                                                                Simpan
-                                                                                            </Button>
-                                                                                            <Button
-                                                                                                type="button"
-                                                                                                variant="outline"
-                                                                                                size="sm"
-                                                                                                className="min-h-9"
-                                                                                                onClick={() => {
-                                                                                                    setEditingCommentId(
-                                                                                                        null,
-                                                                                                    );
-                                                                                                    setEditBody(
-                                                                                                        '',
-                                                                                                    );
-                                                                                                }}
-                                                                                            >
-                                                                                                Batal
-                                                                                            </Button>
-                                                                                        </div>
-                                                                                    </form>
-                                                                                ) : (
-                                                                                    <p className="mt-1 text-sm">
-                                                                                        {
-                                                                                            reply.body
-                                                                                        }
-                                                                                    </p>
-                                                                                )}
-
-                                                                                {reply.can_edit &&
-                                                                                    editingCommentId !==
-                                                                                        reply.id && (
-                                                                                        <Button
-                                                                                            type="button"
-                                                                                            variant="ghost"
-                                                                                            size="sm"
-                                                                                            className="mt-1 h-11 px-2 text-xs"
-                                                                                            onClick={() => {
-                                                                                                setEditingCommentId(
-                                                                                                    reply.id,
-                                                                                                );
-                                                                                                setEditBody(
-                                                                                                    reply.body,
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            Edit
-                                                                                        </Button>
-                                                                                    )}
-                                                                            </li>
-                                                                        ),
-                                                                    )}
-                                                                </ul>
-                                                            )}
-
-                                                            {replyParentId ===
-                                                                comment.id && (
-                                                                <form
-                                                                    onSubmit={(
-                                                                        e,
-                                                                    ) =>
-                                                                        handleCreateComment(
-                                                                            e,
-                                                                            comment.id,
-                                                                        )
-                                                                    }
-                                                                    className="mt-3 space-y-2"
-                                                                >
-                                                                    <textarea
-                                                                        value={
-                                                                            replyBody
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setReplyBody(
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        placeholder="Tulis balasan..."
-                                                                        className="min-h-[60px] w-full rounded-md border bg-background p-2 text-sm"
-                                                                        required
-                                                                    />
-                                                                    <div className="flex gap-2">
-                                                                        <Button
-                                                                            type="submit"
-                                                                            size="sm"
-                                                                            className="min-h-9"
-                                                                        >
-                                                                            Kirim
-                                                                            Balasan
-                                                                        </Button>
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            className="min-h-9"
-                                                                            onClick={() => {
-                                                                                setReplyParentId(
-                                                                                    null,
-                                                                                );
-                                                                                setReplyBody(
-                                                                                    '',
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            Batal
-                                                                        </Button>
-                                                                    </div>
-                                                                </form>
-                                                            )}
-                                                        </li>
-                                                    ),
-                                                )}
-                                            </ul>
-                                        ) : (
-                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                Belum ada komentar.
+                            {currentCustomer && detailOpen && (
+                                <CustomerHistory
+                                    key={currentCustomer.public_id}
+                                    customerId={currentCustomer.public_id}
+                                    refreshKey={customers}
+                                    onSelection={selectHistoryTransaction}
+                                    onReply={replyToHistory}
+                                    onEdit={editHistoryComment}
+                                />
+                            )}
+                            {historyReady &&
+                                selectedCustomer?.active_deal?.can_comment && (
+                                    <form
+                                        onSubmit={(event) =>
+                                            editingCommentId !== null
+                                                ? handleUpdateComment(
+                                                      event,
+                                                      editingCommentId,
+                                                  )
+                                                : handleCreateComment(
+                                                      event,
+                                                      replyParentId ??
+                                                          undefined,
+                                                  )
+                                        }
+                                        className="space-y-3"
+                                    >
+                                        <Label htmlFor="history-comment-body">
+                                            {editingCommentId !== null
+                                                ? 'Edit komentar'
+                                                : replyParentId !== null
+                                                  ? 'Balas komentar'
+                                                  : 'Komentar baru'}
+                                        </Label>
+                                        <textarea
+                                            id="history-comment-body"
+                                            value={
+                                                editingCommentId !== null
+                                                    ? editBody
+                                                    : replyParentId !== null
+                                                      ? replyBody
+                                                      : commentBody
+                                            }
+                                            onChange={(event) =>
+                                                editingCommentId !== null
+                                                    ? setEditBody(
+                                                          event.target.value,
+                                                      )
+                                                    : replyParentId !== null
+                                                      ? setReplyBody(
+                                                            event.target.value,
+                                                        )
+                                                      : setCommentBody(
+                                                            event.target.value,
+                                                        )
+                                            }
+                                            required
+                                            maxLength={2000}
+                                            aria-invalid={Boolean(
+                                                errors.body || errors.parent_id,
+                                            )}
+                                            aria-describedby={
+                                                errors.body || errors.parent_id
+                                                    ? 'history-comment-error'
+                                                    : undefined
+                                            }
+                                            className="min-h-28 w-full rounded-md border bg-background p-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"
+                                        />
+                                        {(errors.body || errors.parent_id) && (
+                                            <p
+                                                id="history-comment-error"
+                                                role="alert"
+                                                className="text-sm text-destructive"
+                                            >
+                                                {errors.body ||
+                                                    errors.parent_id}
                                             </p>
                                         )}
-
-                                        {selectedCustomer.active_deal
-                                            .can_comment && (
-                                            <form
-                                                onSubmit={(e) =>
-                                                    handleCreateComment(e)
-                                                }
-                                                className="mt-3 space-y-2"
-                                            >
-                                                <textarea
-                                                    value={commentBody}
-                                                    onChange={(e) =>
-                                                        setCommentBody(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Tulis komentar..."
-                                                    className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
-                                                    required
-                                                />
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button type="submit">
+                                                {editingCommentId !== null
+                                                    ? 'Simpan koreksi'
+                                                    : replyParentId !== null
+                                                      ? 'Kirim Balasan'
+                                                      : 'Kirim Komentar'}
+                                            </Button>
+                                            {(editingCommentId !== null ||
+                                                replyParentId !== null) && (
                                                 <Button
-                                                    type="submit"
-                                                    size="sm"
-                                                    className="min-h-9"
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setEditingCommentId(
+                                                            null,
+                                                        );
+                                                        setReplyParentId(null);
+                                                        setEditBody('');
+                                                        setReplyBody('');
+                                                    }}
                                                 >
-                                                    Kirim Komentar
+                                                    Batal
                                                 </Button>
-                                            </form>
-                                        )}
-                                    </>
-                                ) : (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                        Tidak ada transaksi aktif.
-                                    </p>
+                                            )}
+                                        </div>
+                                    </form>
                                 )}
-                            </div>
                         </div>
 
-                        <div
+                        <fieldset
+                            disabled={!historyReady}
                             data-comfortable-controls
-                            className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 sm:grid-cols-3"
+                            className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 disabled:opacity-50 sm:grid-cols-3"
                         >
                             {canContact(selectedCustomer, 'phone') && (
                                 <Button
@@ -2638,7 +2332,7 @@ export default function CustomersIndex({
                                     Penugasan Ulang
                                 </Button>
                             )}
-                        </div>
+                        </fieldset>
                     </DialogContent>
                 </Dialog>
             </div>

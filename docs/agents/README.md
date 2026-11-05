@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [`design-g06-g08-history-stagnant-import.md`](design-g06-g08-history-stagnant-import.md) | Rancangan G06–G08 | Rancangan disetujui untuk riwayat terpadu, audit revisi Admin, konsistensi hari kalender stagnan dan impor mobile dalam satu PR. |
+| [`implementation-g06-g08.md`](implementation-g06-g08.md) | Rencana G06–G08 | Task, kontrak, verifikasi dan ledger implementasi satu PR. |
 | [`../panduan-bobot-forecast.md`](../panduan-bobot-forecast.md) | Panduan pembaca | Penjelasan bobot forecast, simulasi unit/gap, pengaruh bobot dan cakupan role untuk dibaca ulang atau dibagikan. |
 | [`implementation-g05-lead-contact-filters.md`](implementation-g05-lead-contact-filters.md) | Rencana dan bukti G05 | Form lead, penanggung jawab, filter transaksi dan preferensi/penolakan kontak. |
 | [`implementation-dashboard-analytics.md`](implementation-dashboard-analytics.md) | Desain dan bukti | Dashboard analitik seimbang, batas role, chart tanpa dependency, serta verifikasi layout dan laporan. |
