@@ -21,8 +21,8 @@ dataset('role route access', [
     ],
     'admin' => [
         UserRole::Admin,
-        ['/dashboard', '/customers', '/transactions', '/users', '/teams', '/analytics', '/imports', '/dealer-settings', '/notifications'],
-        ['/team-performance', '/targets'],
+        ['/dashboard', '/customers', '/transactions', '/users', '/teams', '/analytics', '/imports', '/dealer-settings', '/notifications', '/targets'],
+        ['/team-performance'],
     ],
 ]);
 

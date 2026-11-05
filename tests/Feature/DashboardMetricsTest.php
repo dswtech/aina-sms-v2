@@ -31,8 +31,9 @@ it('reconciles sales dashboard metrics to visible source transactions', function
         'vehicle_model' => 'Creta',
         'estimated_value' => 300_000_000,
         'current_stage' => PipelineStage::HotProspect,
+        'expected_closing_month' => now('Asia/Jakarta')->startOfMonth()->toDateString(),
     ]);
-    DealTransaction::create([
+    $delivered = DealTransaction::create([
         'dealer_id' => $dealer->id,
         'customer_id' => $customer->id,
         'sales_id' => $sales->id,
@@ -41,6 +42,8 @@ it('reconciles sales dashboard metrics to visible source transactions', function
         'current_stage' => PipelineStage::Delivery,
         'updated_at' => now(),
     ]);
+
+    $delivered->stageHistories()->create(['to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => now()]);
 
     $this->actingAs($sales)
         ->get(route('dashboard'))

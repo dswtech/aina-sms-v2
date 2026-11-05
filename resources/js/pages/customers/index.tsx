@@ -1,4 +1,6 @@
-import { Head, router } from '@inertiajs/react';
+import { ClosingMonthForm } from '@/components/team-performance';
+import InputError from '@/components/input-error';
+import { Head, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import {
     ArrowUpDown,
@@ -62,6 +64,7 @@ export type CustomerItem = {
         is_closed: boolean;
         is_stagnant: boolean;
         estimated_value: number | null;
+        expected_closing_month: string | null;
         can_comment: boolean;
         comments: Array<{
             id: number;
@@ -162,6 +165,8 @@ export default function CustomersIndex({
     counts,
     assignableSales = [],
 }: Props) {
+    const { auth, errors } = usePage().props;
+    const role = auth.user.role;
     const [search, setSearch] = useState(filters.search || '');
     const [createOpen, setCreateOpen] = useState(false);
     const [activityOpen, setActivityOpen] = useState(false);
@@ -184,6 +189,8 @@ export default function CustomersIndex({
     const [leadName, setLeadName] = useState('');
     const [leadPhone, setLeadPhone] = useState('');
     const [leadModel, setLeadModel] = useState('');
+    const [leadClosingMonth, setLeadClosingMonth] = useState('');
+    const [txClosingMonth, setTxClosingMonth] = useState('');
     const [leadSource, setLeadSource] = useState('walk_in');
     const [leadNotes, setLeadNotes] = useState('');
 
@@ -263,12 +270,14 @@ export default function CustomersIndex({
                 phone: leadPhone,
                 vehicle_model: leadModel,
                 source: leadSource,
+                expected_closing_month: leadClosingMonth || null,
                 notes: leadNotes,
             },
             {
                 onSuccess: () => {
                     setCreateOpen(false);
                     setLeadName('');
+                    setLeadClosingMonth('');
                     setLeadPhone('');
                     setLeadModel('');
                     setLeadNotes('');
@@ -347,12 +356,14 @@ export default function CustomersIndex({
                     ? Number(txEstimatedValue)
                     : undefined,
                 source: txSource,
+                expected_closing_month: txClosingMonth || null,
                 notes: txNotes || undefined,
             },
             {
                 onSuccess: () => {
                     setTransactionOpen(false);
                     setTxVehicleModel('');
+                    setTxClosingMonth('');
                     setTxEstimatedValue('');
                     setTxNotes('');
                 },
@@ -484,6 +495,22 @@ export default function CustomersIndex({
                                         }
                                         placeholder="081234567890"
                                         className="min-h-11"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="lead-closing-month">
+                                        Estimasi bulan closing
+                                    </Label>
+                                    <Input
+                                        id="lead-closing-month"
+                                        type="month"
+                                        value={leadClosingMonth}
+                                        onChange={(e) =>
+                                            setLeadClosingMonth(e.target.value)
+                                        }
+                                    />
+                                    <InputError
+                                        message={errors.expected_closing_month}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -1495,6 +1522,22 @@ export default function CustomersIndex({
                             className="space-y-4 pt-2"
                         >
                             <div className="space-y-1">
+                                <Label htmlFor="tx-closing-month">
+                                    Estimasi bulan closing
+                                </Label>
+                                <Input
+                                    id="tx-closing-month"
+                                    type="month"
+                                    value={txClosingMonth}
+                                    onChange={(e) =>
+                                        setTxClosingMonth(e.target.value)
+                                    }
+                                />
+                                <InputError
+                                    message={errors.expected_closing_month}
+                                />
+                            </div>
+                            <div className="space-y-1">
                                 <Label htmlFor="tx-model">
                                     Model Kendaraan *
                                 </Label>
@@ -1740,6 +1783,25 @@ export default function CustomersIndex({
                                     )}
                                 </div>
                             )}
+
+                            {selectedCustomer?.active_deal &&
+                                !selectedCustomer.active_deal.is_closed &&
+                                (role === 'sales' || role === 'supervisor') && (
+                                    <ClosingMonthForm
+                                        key={
+                                            selectedCustomer.active_deal
+                                                .public_id
+                                        }
+                                        transactionId={
+                                            selectedCustomer.active_deal
+                                                .public_id
+                                        }
+                                        month={
+                                            selectedCustomer.active_deal
+                                                .expected_closing_month ?? null
+                                        }
+                                    />
+                                )}
 
                             {selectedCustomer?.next_follow_up && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">

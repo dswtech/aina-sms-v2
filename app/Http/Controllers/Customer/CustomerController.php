@@ -173,6 +173,7 @@ class CustomerController extends Controller
                         'is_closed' => $deal->current_stage->isClosed(),
                         'is_stagnant' => $deal->is_stagnant,
                         'estimated_value' => $deal->estimated_value,
+                        'expected_closing_month' => $deal->expected_closing_month?->format('Y-m'),
                         'can_comment' => $actor->can('create', [DealComment::class, $deal]),
                         'comments' => $deal->comments
                             ->whereNull('parent_id')
@@ -293,8 +294,10 @@ class CustomerController extends Controller
             $deal = $customer->transactions()->create([
                 'dealer_id' => $dealerId,
                 'sales_id' => $actor->id,
+                'team_id' => $actor->activeTeamMemberships()->value('team_id'),
                 'vehicle_model' => $validated['vehicle_model'],
                 'estimated_value' => $validated['estimated_value'] ?? null,
+                'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
                 'source' => $validated['source'],
                 'current_stage' => PipelineStage::Lead,
                 'last_activity_at' => now(),
@@ -400,8 +403,10 @@ class CustomerController extends Controller
             $deal = $customer->transactions()->create([
                 'dealer_id' => $customer->dealer_id,
                 'sales_id' => $sales->id,
+                'team_id' => $sales->activeTeamMemberships()->value('team_id'),
                 'vehicle_model' => $validated['vehicle_model'],
                 'estimated_value' => $validated['estimated_value'] ?? null,
+                'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
                 'source' => $validated['source'],
                 'current_stage' => PipelineStage::Lead,
                 'last_activity_at' => now(),

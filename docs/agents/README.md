@@ -24,6 +24,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 | [`../operations/coaching-notifications.md`](../operations/coaching-notifications.md) | Runbook G01 | Mencatat otorisasi coaching, migration snapshot, intent/retry email, worker/scheduler, Mailtrap development dan batas bukti verifikasi. |
 | [`accessibility-responsive-qa-2026-11-04.md`](accessibility-responsive-qa-2026-11-04.md) | Laporan QA | Mencatat audit Playwright empat role, tiga viewport, temuan aksesibilitas, bukti, batas cakupan, dan langkah regresi Fase 6. |
 | [`implementation-phase-6-accessibility-fixes.md`](implementation-phase-6-accessibility-fixes.md) | Rencana perbaikan | Menetapkan perbaikan sepuluh temuan audit, test browser sintetis, dan verifikasi Fase 6. |
+| [`implementation-g02-team-performance.md`](implementation-g02-team-performance.md) | Implementasi G02 | Mencatat rencana yang disetujui, kontrak target/closing, bukti tes, review, dan batas rollout database G02. |
 | [`implementation-phase-1-access-shell.md`](implementation-phase-1-access-shell.md) | Rencana implementasi | Memecah fondasi role, matriks route, dan shell responsif Fase 1 menjadi siklus test-first. |
 | [`implementation-phase-2-customer-slice.md`](implementation-phase-2-customer-slice.md) | Rencana implementasi | Merencanakan vertical slice Fase 2 (Customer, assignment, pipeline, aktivitas, follow-up, mobile). |
 | [`ringkasan-untuk-supervisor.md`](ringkasan-untuk-supervisor.md) | Panduan | Menjelaskan produk dalam bahasa operasional yang mudah dipahami Supervisor. |

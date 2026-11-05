@@ -127,6 +127,7 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.transactions,
         shared.users,
         shared.teams,
+        shared.targets,
         shared.analytics,
         shared.imports,
         shared.dealerSettings,

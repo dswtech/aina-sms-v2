@@ -105,6 +105,7 @@ async function accessibility(page) {
     let fixture;
     let mutationErrors = {};
     let mutations = 0;
+    let lastMutation;
     const tick = () =>
         page.evaluate(
             () =>
@@ -259,6 +260,11 @@ async function accessibility(page) {
         const request = route.request();
         if (!['GET', 'HEAD'].includes(request.method())) {
             mutations++;
+            lastMutation = {
+                url: request.url(),
+                method: request.method(),
+                data: request.postDataJSON(),
+            };
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -1636,10 +1642,10 @@ async function accessibility(page) {
             );
             const expected = width >= 768 ? 36 : 44;
             for (const id of [
-                'target-user',
-                'target-period',
-                'target-units',
-                'target-value',
+                'target-sales-recipient',
+                'target-sales-period',
+                'target-sales-units',
+                'target-sales-value',
             ]) {
                 const size = await page.locator(`#${id}`).boundingBox();
                 assert(
@@ -1708,6 +1714,261 @@ async function accessibility(page) {
             );
         }
     });
+
+    const reporting = {
+        period: '2026-11-01',
+        targetUnits: 30,
+        salesTargetUnits: 25,
+        salesTargetsMissing: 0,
+        teamTargetsMissing: 0,
+        targetAllocationDifference: 5,
+        realizationUnits: 1,
+        forecastUnits: 1.25,
+        forecastValue: 75000000,
+        forecastApproved: false,
+        gapUnits: 29,
+        forecastGapUnits: 28.75,
+        missingClosingMonthCount: 2,
+        missingDeliveryHistoryCount: 1,
+        stageCounts: {
+            lead: 0,
+            prospect: 1,
+            hot_prospect: 0,
+            spk: 0,
+            do: 0,
+            delivery: 1,
+            lost: 0,
+        },
+        stagnantCount: 1,
+        performance: [
+            {
+                id: 1,
+                name: 'Sales QA',
+                username: 'qa-sales',
+                is_current_member: true,
+                target_units: 25,
+                realization_units: 1,
+                forecast_units: 1.25,
+                gap_units: 24,
+                forecast_gap_units: 23.75,
+            },
+        ],
+        teams: [
+            {
+                id: 'qa-team',
+                name: 'Tim Supervisor QA',
+                target_units: 30,
+                sales_target_units: 25,
+                target_allocation_difference: 5,
+                sales_targets_missing: 0,
+                realization_units: 1,
+                forecast_units: 1.25,
+                gap_units: 29,
+                forecast_gap_units: 28.75,
+            },
+        ],
+        unassignedTeam: null,
+        priorities: {
+            stagnant: [
+                {
+                    public_id: 'qa-deal',
+                    vehicle_model: 'Model QA',
+                    sales_name: 'Sales QA',
+                    stage: 'prospect',
+                    url: '/transactions/qa-deal/coaching',
+                },
+            ],
+            closing: [
+                {
+                    public_id: 'qa-deal',
+                    vehicle_model: 'Model QA',
+                    sales_name: 'Sales QA',
+                    stage: 'prospect',
+                    url: '/transactions/qa-deal/coaching',
+                },
+            ],
+            unread: [
+                {
+                    id: 'qa-unread',
+                    title: 'Komentar belum dibaca',
+                    url: '/transactions/qa-deal/coaching',
+                },
+            ],
+        },
+    };
+    const reportProps = {
+        auth: { user: { ...user, role: 'supervisor' } },
+        dashboard: reporting,
+        targetableUsers: [{ id: 1, name: 'Sales QA', username: 'qa-sales' }],
+        targetableTeams: [{ id: 'qa-team', name: 'Tim Supervisor QA' }],
+    };
+    await test('G02 reports preserve independent targets, decimal forecasts and responsive layouts', async () => {
+        for (const width of [390, 768, 1440]) {
+            await page.setViewportSize({ width, height: 1000 });
+            for (const theme of ['light', 'dark']) {
+                for (const [component, url, role] of [
+                    ['dashboard', '/dashboard', 'supervisor'],
+                    ['targets/index', '/targets', 'supervisor'],
+                    [
+                        'team-performance/index',
+                        '/team-performance',
+                        'branch_manager',
+                    ],
+                ]) {
+                    await load(
+                        component,
+                        { ...reportProps, auth: { user: { ...user, role } } },
+                        url,
+                    );
+                    await openMenu();
+                    await page
+                        .getByRole('menuitemradio', {
+                            name: theme === 'dark' ? 'Gelap' : 'Terang',
+                            exact: true,
+                        })
+                        .press('Enter');
+                    await page.keyboard.press('Escape');
+                    await page.waitForTimeout(250);
+                    assert(
+                        await page.evaluate(
+                            () =>
+                                document.documentElement.scrollWidth ===
+                                innerWidth,
+                        ),
+                        `${component}/${width}/${theme}: page overflow`,
+                    );
+                    const row = page
+                        .locator('.striped-row:visible')
+                        .filter({ hasText: 'Tim Supervisor QA' })
+                        .first();
+                    assert(
+                        (await row.innerText()).includes('30') &&
+                            (await row.innerText()).includes('25'),
+                        'Team and Sales targets must remain distinct',
+                    );
+                    assert(
+                        (await row.innerText()).includes('1,25'),
+                        'Quarter-weight forecast lost precision',
+                    );
+                    if (role === 'branch_manager')
+                        assert(
+                            (await page
+                                .getByRole('button', { name: /Simpan target/ })
+                                .count()) === 0,
+                            'Manager must remain read-only',
+                        );
+                    await page.screenshot({
+                        path: `.playwright-cli/g02-${component.replaceAll('/', '-')}-${width}-${theme}.png`,
+                        animations: 'disabled',
+                    });
+                }
+            }
+        }
+        await load(
+            'dashboard',
+            {
+                ...reportProps,
+                dashboard: {
+                    ...reporting,
+                    period: '2026-10-01',
+                    targetUnits: null,
+                    forecastUnits: null,
+                    forecastGapUnits: null,
+                    gapUnits: null,
+                    teams: [],
+                    performance: [],
+                },
+            },
+            '/dashboard?period=2026-10',
+        );
+        assert(
+            (await page
+                .getByText('Belum ditetapkan', { exact: true })
+                .count()) > 0,
+            'Missing target must not print zero',
+        );
+        assert(
+            (await page.getByText('Tidak tersedia', { exact: true }).count()) >
+                0,
+            'Historical forecast must be unavailable',
+        );
+    });
+    await test('G02 target forms send independent team and Sales writes with keyboard-accessible errors', async () => {
+        await page.setViewportSize({ width: 390, height: 1000 });
+        await load('targets/index', reportProps, '/targets');
+        await page.getByLabel('Target unit tim', { exact: true }).fill('30');
+        await page
+            .getByRole('button', { name: 'Simpan target tim', exact: true })
+            .press('Enter');
+        await page.waitForFunction(
+            () => !document.querySelector('button[disabled]'),
+        );
+        await tick();
+        assert(
+            lastMutation.url.endsWith('/team-targets') &&
+                lastMutation.data.team_id === 'qa-team' &&
+                lastMutation.data.target_units === '30',
+            'Wrong team target payload',
+        );
+        mutationErrors = { target_units: 'Target unit tidak valid.' };
+        await page.getByLabel('Target unit', { exact: true }).fill('25');
+        await page
+            .getByRole('button', { name: 'Simpan target Sales', exact: true })
+            .press('Enter');
+        await page
+            .getByText('Target unit tidak valid.', { exact: true })
+            .waitFor();
+        assert(
+            lastMutation.url.endsWith('/targets') &&
+                lastMutation.data.user_id === '1' &&
+                lastMutation.data.target_units === '25',
+            'Wrong Sales target payload',
+        );
+        const invalid = page.getByLabel('Target unit', { exact: true });
+        assert(
+            (await invalid.getAttribute('aria-invalid')) === 'true',
+            'Target error must identify invalid input',
+        );
+    });
+    await test('G02 closing-month editor updates and clears an estimate without changing stage', async () => {
+        await page.setViewportSize({ width: 390, height: 1000 });
+        await load();
+        await page
+            .getByRole('button', { name: 'Detail', exact: true })
+            .first()
+            .click();
+        const month = page.getByLabel('Estimasi bulan closing', {
+            exact: true,
+        });
+        await month.fill('2026-12');
+        await page
+            .getByRole('button', { name: 'Simpan estimasi closing' })
+            .press('Enter');
+        await tick();
+        assert(
+            lastMutation.url.endsWith('/transactions/qa-deal/closing-month') &&
+                lastMutation.method === 'PATCH' &&
+                lastMutation.data.expected_closing_month === '2026-12',
+            'Wrong closing-month update',
+        );
+        await month.fill('');
+        await page
+            .getByRole('button', { name: 'Simpan estimasi closing' })
+            .press('Enter');
+        await tick();
+        assert(
+            lastMutation.data.expected_closing_month === null &&
+                !('to_stage' in lastMutation.data),
+            'Clearing estimate must not change stage',
+        );
+        assert(
+            await page.evaluate(
+                () => document.documentElement.scrollWidth === innerWidth,
+            ),
+            'Closing editor overflows on mobile',
+        );
+    });
+
     await page.unrouteAll({ behavior: 'wait' });
     await page.goto(`${origin}/login`);
     const report = {

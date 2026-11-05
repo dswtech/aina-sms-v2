@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\VisibleCoachingNotifications;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,6 +37,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $notifications = $user ? app(VisibleCoachingNotifications::class)->forUser($user) : collect();
 
         return [
             ...parent::share($request),
@@ -51,12 +53,12 @@ class HandleInertiaRequests extends Middleware
                     'is_active' => $user->is_active,
                 ] : null,
             ],
-            'notifications' => $user ? $user->unreadNotifications()->latest()->limit(10)->get()->map(fn ($notification): array => [
+            'notifications' => $notifications->take(10)->map(fn ($notification): array => [
                 'id' => $notification->id,
-                'data' => $notification->data,
+                'data' => array_intersect_key($notification->data, array_flip(['title', 'message', 'url', 'comment_id', 'email_status'])),
                 'created_at' => $notification->created_at?->toISOString(),
-            ])->values()->all() : [],
-            'notificationsUnreadCount' => $user ? $user->unreadNotifications()->count() : 0,
+            ])->values()->all(),
+            'notificationsUnreadCount' => $notifications->count(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
