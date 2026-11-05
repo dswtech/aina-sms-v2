@@ -156,28 +156,32 @@ export function PerformanceTable({
     rows: PerformanceRow[];
     team?: boolean;
 }) {
+    const role = usePage().props.auth.user.role;
+    const showManagement =
+        !team || role === 'supervisor' || role === 'branch_manager';
     const columns = [
-        team ? 'Target management' : 'Target personal',
+        ...(showManagement
+            ? [team ? 'Target management' : 'Target personal']
+            : []),
         ...(team
             ? [
                   'Benchmark tim',
                   'Total alokasi Sales',
                   'Alokasi / benchmark',
                   'Alokasi aktif',
-                  'Pencapaian management',
+                  ...(showManagement ? ['Pencapaian management'] : []),
                   'Pencapaian benchmark',
               ]
             : []),
         'Realisasi',
         'Forecast',
-        'Gap ke realisasi',
-        'Gap ke forecast',
+        ...(showManagement ? ['Gap ke realisasi', 'Gap ke forecast'] : []),
         ...(team
             ? ['Gap benchmark ke realisasi', 'Gap benchmark ke forecast']
             : []),
     ];
     const values = (row: PerformanceRow) => [
-        amount(row.target_units),
+        ...(showManagement ? [amount(row.target_units)] : []),
         ...(team
             ? [
                   amount(row.benchmark_units),
@@ -186,9 +190,13 @@ export function PerformanceTable({
                       ? '—'
                       : amount(row.allocation_percent) + '%',
                   amount(row.active_allocation_units),
-                  row.achievement_percent == null
-                      ? '—'
-                      : amount(row.achievement_percent) + '%',
+                  ...(showManagement
+                      ? [
+                            row.achievement_percent == null
+                                ? '—'
+                                : amount(row.achievement_percent) + '%',
+                        ]
+                      : []),
                   row.benchmark_achievement_percent == null
                       ? '—'
                       : amount(row.benchmark_achievement_percent) + '%',
@@ -196,8 +204,9 @@ export function PerformanceTable({
             : []),
         amount(row.realization_units),
         amount(row.forecast_units, 'Tidak tersedia'),
-        amount(row.gap_units, '—'),
-        amount(row.forecast_gap_units, '—'),
+        ...(showManagement
+            ? [amount(row.gap_units, '—'), amount(row.forecast_gap_units, '—')]
+            : []),
         ...(team
             ? [
                   amount(row.benchmark_gap_units, '—'),

@@ -214,7 +214,7 @@ it('scopes dealer targets and unassigned transactions without counting team targ
     }
     g02Deal($f, ['team_id' => null]);
     $this->actingAs($admin)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
-        ->where('dashboard.targetUnits', 30)->where('dashboard.salesTargetUnits', 25)
+        ->where('dashboard.targetUnits', null)->where('dashboard.salesTargetUnits', 25)
         ->where('dashboard.forecastUnits', 1)->where('dashboard.teams.0.forecast_units', 0.5)
         ->where('dashboard.unassignedTeam.forecast_units', 0.5));
     $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);

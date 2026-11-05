@@ -14,16 +14,26 @@ export default function Dashboard({
     title = 'Dashboard penjualan',
 }: ReportingProps & { title?: string }) {
     const role = usePage().props.auth.user.role;
-    const canManage = role === 'supervisor' || role === 'admin';
+    const canManage = role === 'supervisor';
+    const canViewManagementTarget =
+        role === 'supervisor' || role === 'branch_manager';
     const metrics = [
-        [
-            role === 'sales' ? 'Target Sales' : 'Target management',
-            amount(d.targetUnits),
-        ],
+        ...(role !== 'admin'
+            ? [
+                  [
+                      role === 'sales' ? 'Target Sales' : 'Target management',
+                      amount(d.targetUnits),
+                  ],
+              ]
+            : []),
         ['Realisasi', amount(d.realizationUnits)],
         ['Forecast (estimasi)', amount(d.forecastUnits, 'Tidak tersedia')],
-        ['Gap ke realisasi', amount(d.gapUnits, '—')],
-        ['Gap ke forecast', amount(d.forecastGapUnits, '—')],
+        ...(role !== 'admin'
+            ? [
+                  ['Gap ke realisasi', amount(d.gapUnits, '—')],
+                  ['Gap ke forecast', amount(d.forecastGapUnits, '—')],
+              ]
+            : []),
     ];
     return (
         <>
@@ -32,7 +42,9 @@ export default function Dashboard({
                 <ReportingHeader title={title} period={d.period} />
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <h2 className="sr-only">Metrik utama</h2>
-                    <dl className="grid divide-y sm:grid-cols-2 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+                    <dl
+                        className={`grid divide-y sm:grid-cols-2 lg:divide-x lg:divide-y-0 ${role === 'admin' ? 'lg:grid-cols-2' : 'lg:grid-cols-5'}`}
+                    >
                         {metrics.map(([label, value]) => (
                             <div key={label} className="min-w-0 p-5">
                                 <dt className="text-sm text-muted-foreground">
@@ -56,8 +68,14 @@ export default function Dashboard({
                             <strong className="text-foreground">
                                 {amount(d.salesTargetUnits)} unit
                             </strong>
-                            . Selisih target tim − total target Sales:{' '}
-                            {amount(d.targetAllocationDifference, '—')} unit.
+                            .{' '}
+                            {canViewManagementTarget && (
+                                <>
+                                    Selisih target tim − total target Sales:{' '}
+                                    {amount(d.targetAllocationDifference, '—')}{' '}
+                                    unit.
+                                </>
+                            )}
                             Benchmark dan alokasi personal tersedia pada rincian
                             tim.
                         </p>

@@ -3,13 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.20 |
+| Versi | v1.21 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR [#34](https://github.com/dswtech/aina-sms-v2/pull/34) menyelaraskan branch akses target dengan `origin/main` `b804a01`; konflik hanya pada catatan handoff dan kedua catatan dipertahankan. Tidak ada konflik kode aplikasi. Verifikasi ulang setelah penyelesaian: Pest 215 lulus/3 skip (1.900 assertions), tiga tes frontend, lint/format frontend, TypeScript, Pint dan PHPStan lulus. Pemeriksaan visual empat role masih menjadi langkah terpisah.
+
+- Branch `codex/restrict-management-target-visibility` dari `main`/`origin/main` `43737a9` membatasi angka target management dan metrik turunannya ke SPV/BM sesuai [PRD](PRD.md). Admin tetap dapat membuka menu Target tetapi tidak menerima editor/markup/angka management; target personal Sales tetap tersedia. Route dan hak write tidak berubah. Regresi empat role mencakup dashboard, halaman Target, laporan BM, rencana terkelola serta target legacy. Tes baru gagal sebelum perbaikan. Pest lulus (215 lulus, 3 skip, 1.900 assertions); tiga tes frontend, lint/format frontend, TypeScript, Pint, PHPStan dan production build lulus. Pemeriksaan memakai executable dependency lokal karena shim pnpm mencoba mengunduh package manager; tidak ada dependency dipasang. Browser visual/UAT belum dijalankan untuk perubahan ini; tidak ada migration atau write database bisnis.
 
 - Atas perintah pengguna pada 5 November 2026, migration alokasi target diterapkan pada PostgreSQL development loopback dalam batch 7 dan `DevelopmentReportingSeeder` dijalankan. Terbentuk 3 rencana Desember 2026 dengan 24 alokasi; target tim menjadi 9 dan revisi menjadi 10. Enam target tim lama dan seluruh 48 target personal legacy terverifikasi tidak berubah. Jumlah akun 29, pelanggan 72, transaksi 168 dan notifikasi 59 tetap; tidak ada pengiriman email. Laporan read-only SPV/BM/Sales periode Desember terverifikasi tanpa error; 17 tes target/seeder lulus (211 assertions) pada database test in-memory. Rincian rollout ada pada [catatan implementasi](implementation-target-allocation.md#penerapan-development-lokal).
 

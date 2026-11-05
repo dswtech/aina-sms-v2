@@ -30,6 +30,41 @@ function allocationPayload(array $f, array $units = [60, 60], int $version = 0):
         'allocations' => $f['sales']->values()->map(fn ($user, $i) => ['user_id' => $user->id, 'target_units' => $units[$i]])->all()];
 }
 
+it('discloses management targets only to supervisors and branch managers', function (bool $managed) {
+    $f = allocationFixture();
+    if ($managed) {
+        $this->actingAs($f['supervisor'])->post('/target-plans', allocationPayload($f))->assertSessionHasNoErrors();
+    } else {
+        TeamTarget::create(['team_id' => $f['team']->id, 'period' => '2026-11-01', 'target_units' => 100]);
+        SalesTarget::create(['user_id' => $f['sales'][0]->id, 'period' => '2026-11-01', 'target_units' => 60]);
+    }
+    $admin = User::factory()->admin()->create(['dealer_id' => $f['dealer']->id]);
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
+
+    foreach ([$f['supervisor'], $manager] as $actor) {
+        foreach (['/dashboard', $actor->is($manager) ? '/team-performance' : '/targets'] as $path) {
+            $this->actingAs($actor)->get($path.'?period=2026-11')->assertInertia(fn (Assert $p) => $p
+                ->where('dashboard.targetUnits', 100)->where('dashboard.teams.0.target_units', 100));
+        }
+    }
+
+    foreach ([$admin, $f['sales'][0]] as $actor) {
+        $paths = $actor->is($admin) ? ['/dashboard', '/targets'] : ['/dashboard'];
+        foreach ($paths as $path) {
+            $this->actingAs($actor)->get($path.'?period=2026-11')->assertInertia(fn (Assert $p) => $p
+                ->where('dashboard.targetUnits', $actor->is($admin) ? null : 60)
+                ->where('dashboard.gapUnits', $actor->is($admin) ? null : 60)
+                ->where('dashboard.targetAllocationDifference', null)
+                ->where('dashboard.teams.0.target_units', null)
+                ->where('dashboard.teams.0.gap_units', null)
+                ->where('dashboard.teams.0.forecast_gap_units', null)
+                ->where('dashboard.teams.0.achievement_percent', null)
+                ->where('dashboard.teams.0.target_allocation_difference', null)
+                ->where('targetPlans', []));
+        }
+    }
+})->with(['managed' => true, 'legacy' => false]);
+
 it('saves a complete marked up plan and audits decimal personal adjustments atomically', function () {
     $f = allocationFixture();
     $this->actingAs($f['supervisor'])->post('/target-plans', allocationPayload($f, [59.125, 60.875]))->assertRedirect()->assertSessionHasNoErrors();
