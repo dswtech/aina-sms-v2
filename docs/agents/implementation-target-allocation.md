@@ -40,3 +40,5 @@ Review menemukan dan mengoreksi gap benchmark yang tidak ter-render, bypass endp
 - Production build lulus. `tests/Browser/target-plan.js` lulus enam kombinasi 390/768/1440 × terang/gelap, ditambah anggota keluar/baru dan konflik versi. Tujuh request simpan diintersep, nol write bisnis, nol error JavaScript. Memeriksa pembagian 120/7, edit manual, markup, validasi simpan, koma, gap benchmark, target sentuh mobile dan overflow. Screenshot desktop terang/mobile gelap diperiksa langsung.
 - Review independen selesai; lima temuan konkret telah diperbaiki dan diperiksa ulang tanpa temuan baru.
 - Migration dan seeder baru belum dijalankan pada development/production. Semua pembacaan laporan versi ini memerlukan schema baru, sehingga deployment harus menerapkan migration sebelum trafik aplikasi baru dilayani. Seeder lokal opsional memerlukan otorisasi terpisah. UAT manusia dan pengukuran p95 tetap belum dijalankan.
+
+Delivery: commit implementasi `d595f05`, [PR #32](https://github.com/dswtech/aina-sms-v2/pull/32). Branch fitur sudah dikirim; tidak merge ke `main`.
