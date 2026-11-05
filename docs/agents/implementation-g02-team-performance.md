@@ -1,6 +1,6 @@
 # G02 — Target dan Kinerja Tim Supervisor
 
-Tanggal: 5 November 2026. Branch: `codex/g02-team-performance-targets`, baseline `12c8176`.
+Tanggal: 5 November 2026. Commit implementasi: `5592a1f`; [PR #30](https://github.com/dswtech/aina-sms-v2/pull/30). Branch: `codex/g02-team-performance-targets`, baseline `12c8176`.
 Sumber aturan: [PRD](PRD.md), terutama bagian Organization, Forecast, dan Dashboard; [ADR](adr/ADR-001-laravel-inertia-monolith.md). Rencana disetujui pengguna di chat sebelum implementasi.
 
 ## Rencana dan kontrak
