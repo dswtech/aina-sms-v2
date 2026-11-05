@@ -71,7 +71,7 @@ Files: dokumen ini, `docs/agents/uat-matrix.md`, `docs/agents/memory.md`, `docs/
 - [x] Jalankan `composer ci:check`, `pnpm run build`, browser regression relevan dan `git diff --check`. Pastikan database test terisolasi; catat skip dan batas bukti.
 - [x] Review independen seluruh diff; tangani temuan dengan test gagal/lulus dan jalankan ulang pemeriksaan yang terdampak.
 - [x] Isi bukti, batas UAT manusia/PostgreSQL/performa, hasil aktual dan residu lokal di dokumentasi. Perbarui status gap tanpa mengklaim UAT manusia selesai.
-- [ ] Commit Conventional Commits, push branch ini, buat satu PR. Tidak merge otomatis.
+- [x] Commit Conventional Commits, push branch ini, buat satu PR. Tidak merge otomatis.
 
 ## Ledger
 
@@ -84,3 +84,4 @@ Files: dokumen ini, `docs/agents/uat-matrix.md`, `docs/agents/memory.md`, `docs/
 - Browser: G06 enam kombinasi viewport/tema plus skenario izin/stale/retry/draft/aksi/scroll/coaching lulus, tiga submit diintersep; G08 enam kombinasi plus empty/invalid/error/loading/keyboard lulus, dua submit diintersep. G04 18 kombinasi, G05 enam dan aksesibilitas 21 kelompok lulus; fixture lama diselaraskan tanpa membuang assertion. Nol write bisnis dan pageerror pada suite baru; respons 503/403 memang disimulasikan untuk skenario gagal.
 - Review backend dan UI independen selesai; seluruh temuan actionable diperbaiki dan diuji ulang. Screenshot perwakilan G06 mobile terang/desktop gelap serta G08 mobile gelap/desktop terang diperiksa langsung. Detector app impor nol FAIL/nol error konsol pada tiga viewport; satu warning alignment angka desktop diwarisi tabel lama dan dipertahankan untuk konsistensi.
 - Batas: database test SQLite in-memory; tidak menjalankan PostgreSQL baru, concurrency, benchmark p95, server-save E2E atau UAT manusia. Tidak ada migration/seeder/dependency atau akses .env/write bisnis. Bukti screenshot/log lokal di .playwright-cli (ignored), server QA loopback dihentikan saat handoff.
+- Delivery: commit implementasi `2019e82`, [PR #40](https://github.com/dswtech/aina-sms-v2/pull/40), target `main`. Branch fitur sudah didorong; tidak merge. Server QA 8019 dan empat sesi browser tugas sudah ditutup. Konektor GitHub menolak create PR dengan 403 izin integrasi; PR yang sama berhasil dibuat melalui sesi GitHub CLI yang tersedia.
