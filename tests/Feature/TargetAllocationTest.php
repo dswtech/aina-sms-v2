@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Dealer;
+use App\Models\DealTransaction;
 use App\Models\SalesTarget;
 use App\Models\Team;
 use App\Models\TeamMembership;
@@ -64,6 +66,41 @@ it('discloses management targets only to supervisors and branch managers', funct
         }
     }
 })->with(['managed' => true, 'legacy' => false]);
+
+it('keeps personal targets realization and forecasts identical in sales and management views', function () {
+    $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
+    config(['forecast.weights.hot_prospect' => 0.5]);
+    $f = allocationFixture();
+    $this->actingAs($f['supervisor'])->post('/target-plans', allocationPayload($f))->assertSessionHasNoErrors();
+    foreach ($f['sales'] as $sales) {
+        $customer = Customer::factory()->create(['dealer_id' => $f['dealer']->id]);
+        foreach (['delivery', 'hot_prospect'] as $stage) {
+            $deal = DealTransaction::create([
+                'dealer_id' => $f['dealer']->id, 'team_id' => $f['team']->id,
+                'sales_id' => $sales->id, 'customer_id' => $customer->id,
+                'vehicle_model' => 'Model QA', 'current_stage' => $stage,
+                'expected_closing_month' => '2026-11-01',
+            ]);
+            if ($stage === 'delivery') {
+                $deal->stageHistories()->create(['to_stage' => $stage, 'actor_id' => $sales->id, 'created_at' => now()]);
+            }
+        }
+    }
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
+    foreach ([$f['supervisor'], $manager, $f['sales'][0]] as $actor) {
+        $this->actingAs($actor)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+            ->where('dashboard.targetUnits', $actor->is($f['sales'][0]) ? 60 : 100)
+            ->where('dashboard.realizationUnits', $actor->is($f['sales'][0]) ? 1 : 2)
+            ->where('dashboard.forecastUnits', $actor->is($f['sales'][0]) ? 1.5 : 3)
+            ->where('dashboard.performance', function ($rows) use ($f): bool {
+                $row = collect($rows)->firstWhere('id', $f['sales'][0]->id);
+
+                return $row['target_units'] === 60 && $row['realization_units'] === 1
+                    && $row['forecast_units'] === 1.5 && $row['gap_units'] === 59
+                    && $row['forecast_gap_units'] === 58.5;
+            }));
+    }
+});
 
 it('saves a complete marked up plan and audits decimal personal adjustments atomically', function () {
     $f = allocationFixture();

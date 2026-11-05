@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.21 |
+| Versi | v1.22 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #34 sudah merged pada `main`/`origin/main` `5b46ea0`; branch baru `codex/verify-target-role-metrics` berangkat dari baseline bersih tersebut. Verifikasi baca empat role lulus pada 42 keadaan browser sintetis, nol request mutasi/error JavaScript, dan screenshot perwakilan diperiksa langsung. Feature test tambahan membuktikan target personal/realisasi/forecast/gap yang sama pada dashboard Sales dan rincian SPV/BM. Pest 216 lulus/3 skip (1.944 assertions), tiga tes frontend, lint/format, TypeScript, Pint dan PHPStan lulus. Source aplikasi tidak berubah; tanpa build ulang atau write database bisnis. Bukti dan batas cakupan ada pada [laporan QA](accessibility-responsive-qa-2026-11-04.md#verifikasi-target-dan-forecast-empat-role--5-november-2026). Langkah fitur berikutnya tetap G04 pada matriks UAT.
 
 - PR [#34](https://github.com/dswtech/aina-sms-v2/pull/34) menyelaraskan branch akses target dengan `origin/main` `b804a01`; konflik hanya pada catatan handoff dan kedua catatan dipertahankan. Tidak ada konflik kode aplikasi. Verifikasi ulang setelah penyelesaian: Pest 215 lulus/3 skip (1.900 assertions), tiga tes frontend, lint/format frontend, TypeScript, Pint dan PHPStan lulus. Pemeriksaan visual empat role masih menjadi langkah terpisah.
 

@@ -228,3 +228,14 @@ Kelompok regresi baru gagal pada baseline lalu lulus setelah implementasi; suite
 Filter bulan Analisis diterapkan langsung melalui request; test disclosure mempertahankan periode props yang sudah diterapkan, sedangkan field pencarian pada tiga halaman lain diuji dengan draft yang belum diterapkan. Screenshot filter Transaksi terbuka/tertutup tersedia lokal pada `.playwright-cli/compact-filter-{390,1440}-{light,dark}-{open,closed}.png`.
 
 `composer ci:check` lulus (171 tes: 168 lulus, 3 skip; 1065 assertions), build serta lint/format browser lulus. Review independen dan detector desain tidak menemukan masalah. Tidak ada perubahan API, dependency, migration, database bisnis atau pengiriman email. Batas pengujian tetap: perangkat sentuh fisik, seluruh variasi native calendar/browser, pembaca layar dan UAT manusia belum dijalankan. Fase 6 belum selesai.
+
+
+## Verifikasi target dan forecast empat role — 5 November 2026
+
+Baseline `main` `5b46ea0` memuat merge PR #34. Branch `codex/verify-target-role-metrics` menambahkan regresi baca tanpa mengubah kode aplikasi atau requirement.
+
+- `tests/Browser/target-role-metrics.js` lulus 42 keadaan: dashboard empat role, halaman Target SPV/Admin dan Kinerja Tim BM, masing-masing 390/768/1440 × terang/gelap. Pemeriksaan mencakup visibilitas angka management/editor, target personal, realisasi, forecast, kedua gap dan page overflow. Tidak ada error JavaScript atau request mutasi.
+- Feature test `keeps personal targets realization and forecasts identical in sales and management views` memverifikasi respons server pada SQLite in-memory: dua Sales masing-masing mempunyai target 60, realisasi 1, forecast 1,5. SPV/BM melihat target management 100, realisasi tim 2 dan forecast 3; rincian Sales sama dengan dashboard personal, gap personal 59/58,5. Markup tidak mengubah forecast.
+- Regresi akses empat role yang sudah ada tetap memeriksa payload management, metrik turunan dan editor tidak dikirim ke Sales/Admin, baik rencana terkelola maupun legacy. Browser memakai fixture sintetis dan aset aplikasi asli; otorisasi dibuktikan feature test terpisah, bukan oleh fixture browser.
+- Screenshot Sales mobile gelap, Target Admin/SPV desktop terang dan Kinerja Tim BM tablet gelap diperiksa langsung. Artefak lokal berada di `.playwright-cli/target-role-*.png` (diabaikan Git).
+- Verifikasi akhir: Pest 216 lulus, 3 skip, 1.944 assertions; tiga tes frontend, lint/format frontend beserta skrip browser baru, TypeScript, Pint dan PHPStan lulus. Tidak menjalankan migration/seeder/write bisnis atau mengirim email. UAT manusia, sesi login bisnis empat role, pembaca layar dan perangkat sentuh fisik tetap belum diverifikasi pada pekerjaan ini. Tidak menjalankan build ulang karena source aplikasi tidak berubah.
