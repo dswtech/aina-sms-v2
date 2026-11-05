@@ -94,7 +94,7 @@ class DealCommentController extends Controller
             DB::afterCommit(function () use ($comment): void {
                 $queueEmail = app(QueueCoachingEmail::class);
                 DatabaseNotification::query()->where('type', DealCommentCreated::class)
-                    ->where('data->comment_id', $comment->id)->get()
+                    ->whereJsonContains('data', ['comment_id' => $comment->id])->get()
                     ->each(fn (DatabaseNotification $record) => $queueEmail($record->id));
             });
         });

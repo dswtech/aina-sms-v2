@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PipelineStage;
+use App\Http\Requests\AnalyticsRequest;
 use App\Models\DealTransaction;
 use App\Models\User;
+use App\Support\ReportingPeriod;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AnalyticsController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(AnalyticsRequest $request): Response
     {
         /** @var User $actor */
         $actor = $request->user();
@@ -26,7 +27,7 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    public function csv(Request $request): StreamedResponse
+    public function csv(AnalyticsRequest $request): StreamedResponse
     {
         /** @var User $actor */
         $actor = $request->user();
@@ -75,26 +76,27 @@ class AnalyticsController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function buildAnalytics(Request $request, User $actor): array
+    private function buildAnalytics(AnalyticsRequest $request, User $actor): array
     {
-        $period = $request->string('period')->toString() ?: now()->format('Y-m');
+        $period = $request->string('period')->toString() ?: now('Asia/Jakarta')->format('Y-m');
         $mode = $request->string('mode')->toString() === 'achievement' ? 'achievement' : 'acquisition';
-        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
-        $end = $start->copy()->endOfMonth();
+        $window = new ReportingPeriod($period);
+        $start = $window->start;
+        $end = $window->end;
 
         $query = DealTransaction::query()
-            ->visibleTo($actor)
-            ->select(['id', 'dealer_id', 'customer_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'estimated_value', 'created_at', 'updated_at'])
+            ->visibleInReportsTo($actor)
+            ->select(['id', 'public_id', 'dealer_id', 'customer_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'estimated_value', 'created_at', 'updated_at'])
             ->with([
                 'stageHistories' => fn ($history): mixed => $history->select(['id', 'deal_transaction_id', 'to_stage', 'created_at']),
                 'sales:id,name',
             ]);
 
         if ($mode === 'acquisition') {
-            $query->whereBetween('created_at', [$start, $end]);
+            $query->where('created_at', '>=', $start)->where('created_at', '<', $end);
         } else {
             $query->whereHas('stageHistories', fn (Builder $history): Builder => $history
-                ->whereBetween('created_at', [$start, $end]));
+                ->where('created_at', '>=', $start)->where('created_at', '<', $end));
         }
 
         $deals = $query->get();
@@ -156,13 +158,13 @@ class AnalyticsController extends Controller
      * @param  Collection<int, DealTransaction>  $deals
      * @return array{spk: int, do: int, delivery: int}
      */
-    private function stageCounts(Collection $deals, string $mode, Carbon $start, Carbon $end): array
+    private function stageCounts(Collection $deals, string $mode, CarbonInterface $start, CarbonInterface $end): array
     {
         $count = function (PipelineStage $stage) use ($deals, $mode, $start, $end): int {
             return $deals->filter(function (DealTransaction $deal) use ($stage, $mode, $start, $end): bool {
                 if ($mode === 'achievement') {
                     return $deal->stageHistories->contains(fn ($history): bool => $history->to_stage === $stage
-                        && $history->created_at->betweenIncluded($start, $end));
+                        && $history->created_at->gte($start) && $history->created_at->lt($end));
                 }
 
                 return $deal->current_stage === $stage

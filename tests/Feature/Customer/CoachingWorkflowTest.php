@@ -227,7 +227,7 @@ it('rolls back the comment and in-app notifications together and never queues ma
 });
 
 it('queues only safe email metadata and retries a provider failure without undoing the comment or in-app notification', function () {
-    config(['queue.default' => 'database', 'queue.connections.database.connection' => 'sqlite']);
+    config(['queue.default' => 'database', 'queue.connections.database.connection' => DB::getDefaultConnection()]);
     Queue::swap(Queue::getFacadeRoot()->queue);
     $mail = Mockery::mock(MailChannel::class);
     $mail->shouldReceive('send')->once()->ordered()->andThrow(new RuntimeException('Provider unavailable'));

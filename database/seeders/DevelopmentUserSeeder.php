@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
 
 class DevelopmentUserSeeder extends Seeder
 {
+    public const SUPERVISOR_NAMES = ['Ari Ina', 'Maya Lestari', 'Rizky Pranata'];
+
     public function run(): void
     {
         if (! app()->environment(['local', 'testing'])) {
@@ -48,7 +50,7 @@ class DevelopmentUserSeeder extends Seeder
 
         $teams = [
             [
-                'supervisor' => 'Ari Ina',
+                'supervisor' => self::SUPERVISOR_NAMES[0],
                 'sales' => [
                     'Dhany Seskoadi Wibawa',
                     'Sari Nabila Putri',
@@ -61,7 +63,7 @@ class DevelopmentUserSeeder extends Seeder
                 ],
             ],
             [
-                'supervisor' => 'Maya Lestari',
+                'supervisor' => self::SUPERVISOR_NAMES[1],
                 'sales' => [
                     'Bagus Rama Santoso',
                     'Citra Dewi Anggraini',
@@ -74,7 +76,7 @@ class DevelopmentUserSeeder extends Seeder
                 ],
             ],
             [
-                'supervisor' => 'Rizky Pranata',
+                'supervisor' => self::SUPERVISOR_NAMES[2],
                 'sales' => [
                     'Andi Surya Wijaya',
                     'Bella Kirana Sari',

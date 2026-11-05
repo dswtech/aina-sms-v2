@@ -16,7 +16,7 @@ class QueueCoachingEmails extends Command
     public function handle(QueueCoachingEmail $queueEmail): int
     {
         DatabaseNotification::query()->where('type', DealCommentCreated::class)
-            ->where('data->email_status', 'pending')->eachById(function (DatabaseNotification $record) use ($queueEmail): void {
+            ->whereJsonContains('data', ['email_status' => 'pending'])->eachById(function (DatabaseNotification $record) use ($queueEmail): void {
                 $queueEmail($record->id);
             });
 

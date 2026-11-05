@@ -33,12 +33,25 @@ use Illuminate\Support\Str;
  * Data demo lengkap untuk pengembangan lokal.
  *
  * Seeder ini hanya berjalan pada environment `local` dan tidak dijalankan
- * otomatis pada environment lain. Untuk membuat ulang dari nol gunakan:
+ * otomatis pada environment lain. Untuk membuat atau melengkapi data demo:
  *
- *     php artisan migrate:fresh --seed
+ *     php artisan db:seed --class=DevelopmentDemoSeeder
  */
 class DevelopmentDemoSeeder extends Seeder
 {
+    public const INITIAL_STAGE_NOTE = 'Lead baru masuk dan siap dihubungi.';
+
+    public const COMMENT_BODIES = [
+        'Pelanggan ini butuh perhatian ekstra. Coba tawarkan paket aksesori.',
+        'Harga masih bisa dinegosiasikan. Koordinasikan dengan kepala cabang.',
+        'Jangan lupa konfirmasi kesiapan dokumen sebelum SPK.',
+        'Sudah bagus progresnya. Pastikan follow-up berikutnya tercatat.',
+        'Baik, akan saya follow-up hari ini.',
+        'Sudah saya sampaikan ke pelanggan, menunggu konfirmasi.',
+        'Terima kasih arahan. Saya jadwalkan test drive ulang.',
+        'Pelanggan sudah konfirmasi akan test drive akhir pekan ini.',
+    ];
+
     private const CUSTOMER_TOTAL = 72;
 
     private const DEAL_TOTAL = 168;
@@ -69,7 +82,8 @@ class DevelopmentDemoSeeder extends Seeder
         }
 
         if (Customer::query()->where('dealer_id', $dealer->id)->where('notes', 'like', '[demo]%')->exists()) {
-            $this->command?->warn('Data demo sudah ada. Jalankan `php artisan migrate:fresh --seed` untuk membuat ulang.');
+            $this->command?->info('Data demo sudah ada; melengkapi contoh laporan tanpa membuat ulang data.');
+            $this->call(DevelopmentReportingSeeder::class);
 
             return;
         }
@@ -148,6 +162,8 @@ class DevelopmentDemoSeeder extends Seeder
             $this->seedAuditLogs($dealer, $admin);
             $this->seedInvitations($dealer, $admin, $teams);
         });
+
+        $this->call(DevelopmentReportingSeeder::class);
 
         $this->command?->info(sprintf(
             'Data demo dibuat: %d pelanggan, %d transaksi.',
@@ -430,7 +446,7 @@ class DevelopmentDemoSeeder extends Seeder
         $interval = max(1, intdiv(max(1, (int) $createdAt->diffInSeconds($finalAt)), $steps));
 
         $notes = [
-            PipelineStage::Lead->value => 'Lead baru masuk dan siap dihubungi.',
+            PipelineStage::Lead->value => self::INITIAL_STAGE_NOTE,
             PipelineStage::Prospect->value => 'Pelanggan menunjukkan minat pada unit.',
             PipelineStage::HotProspect->value => 'Sudah test drive dan meminta simulasi kredit.',
             PipelineStage::Spk->value => 'Booking fee diterima, SPK dibuat.',
@@ -521,18 +537,8 @@ class DevelopmentDemoSeeder extends Seeder
      */
     private function seedComments(array $records, User $admin): void
     {
-        $coachingBodies = [
-            'Pelanggan ini butuh perhatian ekstra. Coba tawarkan paket aksesori.',
-            'Harga masih bisa dinegosiasikan. Koordinasikan dengan kepala cabang.',
-            'Jangan lupa konfirmasi kesiapan dokumen sebelum SPK.',
-            'Sudah bagus progresnya. Pastikan follow-up berikutnya tercatat.',
-        ];
-
-        $replyBodies = [
-            'Baik, akan saya follow-up hari ini.',
-            'Sudah saya sampaikan ke pelanggan, menunggu konfirmasi.',
-            'Terima kasih arahan. Saya jadwalkan test drive ulang.',
-        ];
+        $coachingBodies = array_slice(self::COMMENT_BODIES, 0, 4);
+        $replyBodies = array_slice(self::COMMENT_BODIES, 4, 3);
 
         /** @var array<int, list<array{deal: DealTransaction, sales: User, supervisor: User|null}>> $byCustomer */
         $byCustomer = [];
@@ -597,7 +603,7 @@ class DevelopmentDemoSeeder extends Seeder
                     'deal_transaction_id' => $deal->id,
                     'user_id' => $sales->id,
                     'parent_id' => null,
-                    'body' => 'Pelanggan sudah konfirmasi akan test drive akhir pekan ini.',
+                    'body' => self::COMMENT_BODIES[7],
                     'edited_at' => $editedAt,
                 ]);
 

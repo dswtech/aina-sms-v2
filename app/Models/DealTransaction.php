@@ -227,6 +227,23 @@ class DealTransaction extends Model
         $query->where('sales_id', $actor->id);
     }
 
+    /** @param Builder<DealTransaction> $query */
+    public function scopeVisibleInReportsTo(Builder $query, User $actor): void
+    {
+        if (! $actor->is_active || $actor->dealer_id === null) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+        $query->where('dealer_id', $actor->dealer_id);
+        if ($actor->role === UserRole::Supervisor) {
+            // Reporting attribution follows the transaction, not a Sales transfer.
+            $query->whereIn('team_id', Team::query()->visibleTo($actor)->select('id'));
+        } elseif ($actor->role === UserRole::Sales) {
+            $query->where('sales_id', $actor->id);
+        }
+    }
+
     /**
      * @return array<string, string>
      */
