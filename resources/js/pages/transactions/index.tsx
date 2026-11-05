@@ -1,4 +1,5 @@
 import { ClosingMonthForm } from '@/components/team-performance';
+import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
@@ -41,7 +42,11 @@ type Props = {
         stage: string;
         tab: string;
         sales_id: number | null;
+        date_from?: string | null;
+        date_to?: string | null;
+        source?: string | null;
     };
+    sourceOptions?: string[];
     assignableSales: SalesUser[];
     stages: Array<{ value: string; label: string }>;
     lostReasons: Array<{ value: string; label: string }>;
@@ -60,10 +65,14 @@ export default function TransactionsIndex({
     assignableSales,
     stages,
     lostReasons,
+    sourceOptions = [],
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
     const [stage, setStage] = useState(filters.stage);
+    const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
+    const [dateTo, setDateTo] = useState(filters.date_to ?? '');
+    const [source, setSource] = useState(filters.source ?? '');
     const [salesId, setSalesId] = useState(
         filters.sales_id ? String(filters.sales_id) : '',
     );
@@ -82,6 +91,9 @@ export default function TransactionsIndex({
                 stage,
                 tab: nextTab ?? filters.tab,
                 sales_id: salesId || null,
+                date_from: dateFrom || null,
+                date_to: dateTo || null,
+                source: source || null,
             },
             { preserveState: true, replace: true },
         );
@@ -133,10 +145,10 @@ export default function TransactionsIndex({
                 <FilterPanel
                     className="mt-6"
                     title="Filter transaksi"
-                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
                     <div
-                        className={`grid gap-3 ${assignableSales.length > 0 ? 'md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_auto]' : 'md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]'}`}
+                        className={`grid gap-3 sm:grid-cols-2 ${assignableSales.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
                     >
                         <div>
                             <Label htmlFor="search">Pencarian</Label>
@@ -196,6 +208,80 @@ export default function TransactionsIndex({
                                 </div>
                             </div>
                         )}
+                        <div>
+                            <Label htmlFor="transaction-date-from">
+                                Lead dibuat mulai
+                            </Label>
+                            <Input
+                                id="transaction-date-from"
+                                type="date"
+                                className="mt-1.5"
+                                value={dateFrom}
+                                onChange={(event) =>
+                                    setDateFrom(event.target.value)
+                                }
+                                aria-invalid={!!errors?.date_from}
+                                aria-describedby={
+                                    errors?.date_from
+                                        ? 'transaction-date-from-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="transaction-date-from-error"
+                                message={errors?.date_from}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="transaction-date-to">
+                                Lead dibuat sampai
+                            </Label>
+                            <Input
+                                id="transaction-date-to"
+                                type="date"
+                                className="mt-1.5"
+                                value={dateTo}
+                                onChange={(event) =>
+                                    setDateTo(event.target.value)
+                                }
+                                aria-invalid={!!errors?.date_to}
+                                aria-describedby={
+                                    errors?.date_to
+                                        ? 'transaction-date-to-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="transaction-date-to-error"
+                                message={errors?.date_to}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="transaction-source">
+                                Sumber lead
+                            </Label>
+                            <select
+                                id="transaction-source"
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                value={source}
+                                onChange={(event) =>
+                                    setSource(event.target.value)
+                                }
+                            >
+                                <option value="">Semua sumber</option>
+                                {[
+                                    ...new Set([
+                                        ...sourceOptions,
+                                        ...(source ? [source] : []),
+                                    ]),
+                                ].map((value) => (
+                                    <option key={value} value={value}>
+                                        {value}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors?.source} />
+                        </div>
                         <div className="flex items-end">
                             <Button
                                 onClick={() => applyFilters()}

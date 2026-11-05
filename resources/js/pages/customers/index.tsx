@@ -1,4 +1,7 @@
 import { ClosingMonthForm } from '@/components/team-performance';
+import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
+import { canContact } from '@/lib/customer-contact';
+import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
@@ -198,6 +201,9 @@ export default function CustomersIndex({
     const [txClosingMonth, setTxClosingMonth] = useState('');
     const [leadSource, setLeadSource] = useState('walk_in');
     const [leadNotes, setLeadNotes] = useState('');
+    const [leadSalesId, setLeadSalesId] = useState('');
+    const [leadContactChannel, setLeadContactChannel] = useState('');
+    const [leadOptOut, setLeadOptOut] = useState(false);
     const [createSaving, setCreateSaving] = useState(false);
     const [createError, setCreateError] = useState('');
     const [duplicateDismissed, setDuplicateDismissed] = useState(true);
@@ -297,6 +303,11 @@ export default function CustomersIndex({
                 expected_closing_month: leadClosingMonth || null,
                 notes: leadNotes,
                 existing_customer_id: existingCustomerId ?? null,
+                contact_channel_preference: leadContactChannel || null,
+                opt_out: leadOptOut,
+                ...(role !== 'sales'
+                    ? { sales_id: leadSalesId ? Number(leadSalesId) : null }
+                    : {}),
             },
             {
                 onSuccess: (page) => {
@@ -310,6 +321,9 @@ export default function CustomersIndex({
                     setLeadPhone('');
                     setLeadModel('');
                     setLeadNotes('');
+                    setLeadContactChannel('');
+                    setLeadOptOut(false);
+                    setLeadSalesId('');
                 },
                 onError: () => setDuplicateDismissed(false),
                 onFinish: () => setCreateSaving(false),
@@ -523,6 +537,33 @@ export default function CustomersIndex({
                                     disabled={createSaving}
                                     className="min-w-0 space-y-4"
                                 >
+                                    {role !== 'sales' && (
+                                        <div className="space-y-1">
+                                            <Label htmlFor="lead-sales">
+                                                Sales penanggung jawab *
+                                            </Label>
+                                            <Combobox
+                                                id="lead-sales"
+                                                value={leadSalesId}
+                                                onValueChange={setLeadSalesId}
+                                                options={assignableSales.map(
+                                                    (sales) => ({
+                                                        value: String(sales.id),
+                                                        label: sales.name,
+                                                    }),
+                                                )}
+                                                placeholder="Pilih Sales aktif"
+                                                searchPlaceholder="Cari Sales..."
+                                                emptyMessage="Tidak ada Sales aktif dalam cakupan Anda."
+                                                aria-invalid={!!errors.sales_id}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                {assignableSales.length
+                                                    ? 'Wajib dipilih untuk pelanggan baru. Pelanggan lama tetap mengikuti penugasan yang sudah ada.'
+                                                    : 'Belum ada Sales aktif yang dapat dipilih. Hubungi Admin untuk penempatan Sales.'}
+                                            </p>
+                                        </div>
+                                    )}
                                     <div className="space-y-1">
                                         <Label htmlFor="lead-name">
                                             Nama Pelanggan *
@@ -635,6 +676,48 @@ export default function CustomersIndex({
                                             className="min-h-11"
                                         />
                                     </div>
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="lead-contact-channel">
+                                            Kanal kontak pilihan
+                                        </Label>
+                                        <select
+                                            id="lead-contact-channel"
+                                            className="native-select min-h-11 w-full rounded-md border bg-background px-3"
+                                            value={leadContactChannel}
+                                            onChange={(event) =>
+                                                setLeadContactChannel(
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="">
+                                                Belum ditentukan
+                                            </option>
+                                            <option value="whatsapp">
+                                                WhatsApp
+                                            </option>
+                                            <option value="phone">
+                                                Telepon
+                                            </option>
+                                            <option value="any">
+                                                WhatsApp dan telepon
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <Label
+                                        htmlFor="lead-contact-refusal"
+                                        className="flex min-h-11 items-center gap-3 leading-5"
+                                    >
+                                        <Checkbox
+                                            id="lead-contact-refusal"
+                                            checked={leadOptOut}
+                                            onCheckedChange={(value) =>
+                                                setLeadOptOut(value === true)
+                                            }
+                                        />
+                                        Pelanggan menolak dihubungi pada semua
+                                        kanal
+                                    </Label>
                                     {duplicate ? (
                                         <section
                                             ref={duplicatePanelRef}
@@ -694,6 +777,9 @@ export default function CustomersIndex({
                                     ) : (
                                         <Button
                                             type="submit"
+                                            disabled={
+                                                role !== 'sales' && !leadSalesId
+                                            }
                                             className="min-h-11 w-full"
                                         >
                                             {createSaving
@@ -721,6 +807,9 @@ export default function CustomersIndex({
                                                     'notes',
                                                     'existing_customer_id',
                                                     'duplicate_customer',
+                                                    'sales_id',
+                                                    'contact_channel_preference',
+                                                    'opt_out',
                                                 ].includes(key),
                                             )
                                             .map(([key, message]) => (
@@ -1013,43 +1102,47 @@ export default function CustomersIndex({
 
                                         {/* Quick Action Touch Targets (>= 44px) */}
                                         <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0">
-                                            <Button
-                                                asChild
-                                                variant="outline"
-                                                size="sm"
-                                                className="min-h-11 min-w-11 gap-1.5 px-3"
-                                            >
-                                                <a
-                                                    href={`tel:${c.phone}`}
-                                                    aria-label={`Telepon ${c.name}`}
+                                            {canContact(c, 'phone') && (
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="min-h-11 min-w-11 gap-1.5 px-3"
                                                 >
-                                                    <Phone className="size-4 text-emerald-600" />
-                                                    <span className="xs:inline hidden">
-                                                        Telepon
-                                                    </span>
-                                                </a>
-                                            </Button>
+                                                    <a
+                                                        href={`tel:${c.phone}`}
+                                                        aria-label={`Telepon ${c.name}`}
+                                                    >
+                                                        <Phone className="size-4 text-emerald-600" />
+                                                        <span className="xs:inline hidden">
+                                                            Telepon
+                                                        </span>
+                                                    </a>
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                asChild
-                                                variant="outline"
-                                                size="sm"
-                                                className="min-h-11 min-w-11 gap-1.5 px-3"
-                                            >
-                                                <a
-                                                    aria-label={`WhatsApp ${c.name}`}
-                                                    href={formatPhoneLink(
-                                                        c.phone,
-                                                    )}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                            {canContact(c, 'whatsapp') && (
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="min-h-11 min-w-11 gap-1.5 px-3"
                                                 >
-                                                    <MessageSquare className="size-4 text-emerald-500" />
-                                                    <span className="xs:inline hidden">
-                                                        WhatsApp
-                                                    </span>
-                                                </a>
-                                            </Button>
+                                                    <a
+                                                        aria-label={`WhatsApp ${c.name}`}
+                                                        href={formatPhoneLink(
+                                                            c.phone,
+                                                        )}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <MessageSquare className="size-4 text-emerald-500" />
+                                                        <span className="xs:inline hidden">
+                                                            WhatsApp
+                                                        </span>
+                                                    </a>
+                                                </Button>
+                                            )}
 
                                             <Button
                                                 variant="outline"
@@ -1272,36 +1365,40 @@ export default function CustomersIndex({
                                         </td>
                                         <td className="table-actions px-4 py-3">
                                             <div className="flex justify-end gap-1.5">
-                                                <Button
-                                                    asChild
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-10"
-                                                >
-                                                    <a
-                                                        href={`tel:${c.phone}`}
-                                                        aria-label={`Telepon ${c.name}`}
+                                                {canContact(c, 'phone') && (
+                                                    <Button
+                                                        asChild
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-10"
                                                     >
-                                                        <Phone className="size-4 text-emerald-600" />
-                                                    </a>
-                                                </Button>
-                                                <Button
-                                                    asChild
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-10"
-                                                >
-                                                    <a
-                                                        href={formatPhoneLink(
-                                                            c.phone,
-                                                        )}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        aria-label={`WhatsApp ${c.name}`}
+                                                        <a
+                                                            href={`tel:${c.phone}`}
+                                                            aria-label={`Telepon ${c.name}`}
+                                                        >
+                                                            <Phone className="size-4 text-emerald-600" />
+                                                        </a>
+                                                    </Button>
+                                                )}
+                                                {canContact(c, 'whatsapp') && (
+                                                    <Button
+                                                        asChild
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-10"
                                                     >
-                                                        <MessageSquare className="size-4 text-emerald-500" />
-                                                    </a>
-                                                </Button>
+                                                        <a
+                                                            href={formatPhoneLink(
+                                                                c.phone,
+                                                            )}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            aria-label={`WhatsApp ${c.name}`}
+                                                        >
+                                                            <MessageSquare className="size-4 text-emerald-500" />
+                                                        </a>
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -1886,6 +1983,13 @@ export default function CustomersIndex({
                                 </div>
                             </div>
 
+                            {selectedCustomer && (
+                                <CustomerContactPreferences
+                                    key={`${selectedCustomer.public_id}-${selectedCustomer.contact_channel_preference}-${selectedCustomer.opt_out}`}
+                                    customer={selectedCustomer}
+                                />
+                            )}
+
                             {selectedCustomer?.active_deal && (
                                 <div className="rounded-xl border p-4">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -2440,34 +2544,38 @@ export default function CustomersIndex({
                             data-comfortable-controls
                             className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 sm:grid-cols-3"
                         >
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
-                            >
-                                <a
-                                    href={`tel:${selectedCustomer?.phone ?? ''}`}
+                            {canContact(selectedCustomer, 'phone') && (
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
                                 >
-                                    <Phone className="size-4 text-emerald-600" />
-                                    Telepon
-                                </a>
-                            </Button>
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
-                            >
-                                <a
-                                    href={formatPhoneLink(
-                                        selectedCustomer?.phone ?? '',
-                                    )}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    <a
+                                        href={`tel:${selectedCustomer?.phone ?? ''}`}
+                                    >
+                                        <Phone className="size-4 text-emerald-600" />
+                                        Telepon
+                                    </a>
+                                </Button>
+                            )}
+                            {canContact(selectedCustomer, 'whatsapp') && (
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
                                 >
-                                    <MessageSquare className="size-4 text-emerald-500" />
-                                    WhatsApp
-                                </a>
-                            </Button>
+                                    <a
+                                        href={formatPhoneLink(
+                                            selectedCustomer?.phone ?? '',
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <MessageSquare className="size-4 text-emerald-500" />
+                                        WhatsApp
+                                    </a>
+                                </Button>
+                            )}
                             <Button
                                 className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                 onClick={() => {

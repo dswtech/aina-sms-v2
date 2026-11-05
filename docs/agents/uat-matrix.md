@@ -58,12 +58,12 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 
 | Referensi PRD | Role | Skenario | Bukti assertion | Status teknis | Keterbatasan dan sisa pekerjaan | UAT |
 |---|---|---|---|---|---|---|
-| [CRM-01](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E08](#e08): customer, normalisasi nomor, assignment, model dan tahap Lead tersimpan. | Parsial / Gap source | Estimasi waktu pembelian tidak ada pada request; create oleh non-Sales menugaskan ke actor [G05](#g05). | Belum dijalankan |
+| [CRM-01](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E08](#e08): Customer, assignment Sales terotorisasi, pelaku histori, estimasi bulan closing dan tahap Lead tersimpan. | Terverifikasi teknis | Pilihan PIC dan preservasi penugasan pelanggan lama diuji pada [G05](#g05); UAT manusia belum dijalankan. | Belum dijalankan |
 | [CRM-02](PRD.md#73-customer--lead-crm) | S, V | [S01](#s01) | [E09](#e09): warning tanpa write, konfirmasi identitas existing, akses terkini dan regresi batal/lanjut browser. | Terverifikasi teknis | UAT manusia belum dijalankan; batas bukti dan revalidasi import di [G04](#g04). | Belum dijalankan |
 | [CRM-03](PRD.md#73-customer--lead-crm) | S | [S02](#s02), [X01](#x01) | [E07](#e07), [E08](#e08): daftar hanya assigned; aktivitas/follow-up/stage asing 403 tanpa mutasi. | Parsial | Uji semua aksi termasuk komentar dan akses transaksi setelah perpindahan Customer. | Belum dijalankan |
 | [CRM-04](PRD.md#73-customer--lead-crm) | V | [V01](#v01) | [E10](#e10): histori assignment model tetap dua; endpoint reassignment yang dites memakai Admin. | Parsial | Belum membuktikan endpoint Supervisor sukses maupun penolakan lintas tim [G09](#g09). | Belum dijalankan |
 | [CRM-05](PRD.md#73-customer--lead-crm) | A | [A04](#a04) | [E07](#e07): query Customer Admin memuat D1 dan mengecualikan D2; [E11](#e11) redaksi audit. | Parsial | Akses baca riwayat lengkap dan batas aksi Admin/coaching perlu [G06](#g06). | Belum dijalankan |
-| [CRM-06](PRD.md#73-customer--lead-crm) | S, V | [S02](#s02) | [E08](#e08): pencarian nama/nomor dan sort; [E19](#e19) hanya halaman transaksi dan stage update. | Parsial / Gap source | Filter periode dan sumber khusus belum tersedia pada Transaksi; state kembali dari detail belum dibuktikan penuh [G05](#g05). | Belum dijalankan |
+| [CRM-06](PRD.md#73-customer--lead-crm) | S, V | [S02](#s02) | [E08](#e08): pencarian/sort; [E19](#e19): filter tanggal Jakarta/sumber, scope dan preservasi tab di [G05](#g05). | Parsial / Gap verifikasi | Filter baru terverifikasi teknis; seluruh kombinasi/pagination/posisi scroll serta konsistensi stagnant [G07](#g07) tetap perlu verifikasi lanjutan. | Belum dijalankan |
 | [CRM-07](PRD.md#73-customer--lead-crm) | B | [B02](#b02) | [E07](#e07): route Customer B ditolak; [E18](#e18): drilldown tanpa phone/address/notes. | Parsial | Tidak ada assertion langsung atas seluruh props dashboard B; audit data turunannya [G09](#g09). | Belum dijalankan |
 | [CRM-08](PRD.md#73-customer--lead-crm) | S | [S03](#s03) | [E10](#e10): transaksi baru pada Customer existing, count satu dan tahap Lead. | Parsial | Fixture tes mulai tanpa transaksi; belum membuktikan dua transaksi dan pemilihan riwayat lama [G06](#g06). | Belum dijalankan |
 | [CRM-09](PRD.md#73-customer--lead-crm) | S | [S02](#s02) | [E08](#e08): daftar assigned dan pencarian nama/nomor. | Parsial | Tab follow-up/overdue/stagnant belum mempunyai assertion hasil query per kondisi [G09](#g09). | Belum dijalankan |
@@ -72,7 +72,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [CRM-12](PRD.md#73-customer--lead-crm) | S, V, A | [S03](#s03), [A04](#a04) | [E08](#e08): satu history dan recent activity benar. | Parsial / Gap source | Props hanya memilih satu deal dan sepuluh aktivitas; histori seluruh transaksi belum tersedia [G06](#g06). | Belum dijalankan |
 | [CRM-13](PRD.md#73-customer--lead-crm) | V, A | [A04](#a04), [V01](#v01) | [E10](#e10): assignment lama ended dan dua record tetap ada. | Parsial | Belum mengassert aktivitas/transaksi tak berubah dan otoritas Sales lama/baru setelah alih tugas. | Belum dijalankan |
 | [CRM-14](PRD.md#73-customer--lead-crm) | V, A, B | [V01](#v01), [B02](#b02) | [E07](#e07), [E18](#e18): scope Customer/query, route B 403 dan sanitasi drilldown. | Parsial | Query model B memuat Customer; perlindungan HTTP harus tetap diuji di semua jalur [G09](#g09). | Belum dijalankan |
-| [CRM-15](PRD.md#73-customer--lead-crm) | S, V | [S04](#s04), [X04](#x04) | [E13](#e13): model menyimpan opt_out true dan preference phone. | Parsial / Gap source | Belum ada alur edit opt-out pada route/field UI yang diperiksa; peringatan kontak juga belum tampak [G05](#g05). | Belum dijalankan |
+| [CRM-15](PRD.md#73-customer--lead-crm) | S, V | [S04](#s04), [X04](#x04) | [E13](#e13): pembaruan preference/opt-out sesuai akses, audit dan gating aksi telepon/WhatsApp. | Terverifikasi teknis | Data legacy bukan bukti opt-in; skenario manusia dan kanal nyata belum diuji, batas bukti di [G05](#g05). | Belum dijalankan |
 
 ### Pipeline
 
@@ -198,6 +198,8 @@ Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak meng
 
 [CustomerControllerTest](../../tests/Feature/Customer/CustomerControllerTest.php): `renders Buku Pelanggan Saya for sales with only their assigned customers`, `filters customers by search query (name or phone)`, dan `sorts the customer list by name and ignores unknown sort columns` mengassert hasil Inertia. `creates a new lead with customer, transaction, and initial assignment in one transaction` memeriksa normalisasi, pemilik dan model/stage. `logs activity for a customer and updates timestamps`, `schedules next follow up for a customer`, `updates deal stage with audit and validation`, serta `exposes stage history and recent activities for the transaction detail view` memeriksa hasil tersimpan/field terkait; tidak membuktikan semua detail pada judul tes, misalnya tidak ada assertion audit log pada tes update stage.
 
+Tambahan G05: [LeadSalesAssignmentTest](../../tests/Feature/Customer/LeadSalesAssignmentTest.php) memeriksa PIC pilihan SPV/Admin, self-assignment Sales, wajib memilih, kandidat nonaktif/lintas dealer/role salah/di luar tim, histori tetap menunjuk pembuat, estimasi closing, tim nonaktif dan preservasi penugasan duplikat. Pelanggan existing tanpa PIC Sales aktif tidak menggunakan Admin sebagai fallback pemilik transaksi.
+
 ### E09
 
 [DuplicateCustomerWarningTest](../../tests/Feature/Customer/DuplicateCustomerWarningTest.php) memeriksa nomor ternormalisasi dan batas dealer. [DuplicateLeadConfirmationTest](../../tests/Feature/Customer/DuplicateLeadConfirmationTest.php) memeriksa warning tanpa Customer/assignment/transaksi/histori baru, konfirmasi oleh Sales/SPV/Admin yang mempertahankan identitas/assignment, draft peluang dan audit, UUID forged/nomor tidak cocok/dealer lain, kandidat inaccessible, perubahan assignment sebelum baca/konfirmasi, kandidat legacy ganda serta nomor dengan spasi. [CustomerAuthorizationTest](../../tests/Feature/Customer/CustomerAuthorizationTest.php) kini mengassert penolakan duplikat sebelum write. [ImportTest](../../tests/Feature/ImportTest.php) memeriksa nomor berulang sesama CSV serta duplikat yang muncul sesudah preview, dengan rollback seluruh batch.
@@ -219,6 +221,8 @@ Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak meng
 ### E13
 
 [CustomerSchemaTest](../../tests/Feature/Customer/CustomerSchemaTest.php): `creates a customer with required attributes and casts` memeriksa normalisasi, relasi dan opt_out false; `supports opt_out and channel preferences` memeriksa opt_out true/preference phone pada model. Tidak membuktikan form edit consent atau perilaku aksi kontak.
+
+Tambahan G05: [ContactPreferencesTest](../../tests/Feature/Customer/ContactPreferencesTest.php) memeriksa endpoint update, audit sebelum/sesudah, validasi dan penolakan akses Sales lain/manager/dealer lain, pencatatan awal serta preservasi consent pada konfirmasi G04. [Tes frontend kontak](../../tests/Frontend/customer-contact.test.mjs) memeriksa penolakan global serta kanal pilihan/legacy. [Browser G05](../../tests/Browser/lead-contact-filters.js) memeriksa pembaruan langsung seluruh aksi kontak dan error request tanpa mengaktifkan consent yang belum tersimpan.
 
 ### E14
 
@@ -244,9 +248,13 @@ Katalog ini mengikat nama tes pada assertion yang dibaca di baseline; tidak meng
 
 [TransactionPageTest](../../tests/Feature/TransactionPageTest.php): `shows transactions page for sales` mengassert component dan satu item; `updates transaction stage from transactions page` mengassert stage Prospect setelah PATCH. Tidak mengassert hasil filter kombinasi, pagination, posisi scroll atau close dialog.
 
+Tambahan G05: [TransactionFiltersTest](../../tests/Feature/TransactionFiltersTest.php) memeriksa rentang tanggal pembuatan inklusif menurut Asia/Jakarta, batas UTC di kedua ujung, kombinasi sumber/scope Sales, opsi sumber tersanitasi, source `0` dan parameter invalid. Browser G05 memeriksa query tanggal/sumber tetap pada perubahan tab, enam viewport/tema serta input PIC tiga role. Browser memakai fixture sintetis; persistensi/otorisasi diuji feature test terpisah.
+
 ### E20
 
 [Browser accessibility](../../tests/Browser/accessibility.js): 16 kelompok regresi, termasuk `keyboard can select theme, text size and accent in the user menu`, `mobile contact links have action names`, `long detail focuses visible content and returns to its opener`, `customer detail keeps its action grid readable and visible`, `all primary theme pairs and hover states meet normal text contrast`, combobox, target sentuh, label/error/landmark, tujuh badge dan dua kelompok striped rows. Assertion memeriksa DOM, fokus, geometri, kontras, background serta overflow pada fixture komponen nyata. Mutasi diintersep; bukan tes simpan melalui server. Hasil historis dan batas cakupan tersedia di [laporan QA][qa]; browser belum masuk CI.
+
+Tambahan G05: suite aksesibilitas diselaraskan dengan kanal valid, disclosure dashboard dan editor target bulanan. Audit akhir 21 kelompok lulus/0 gagal; kontrol/fokus/footer/kontras/nama aksi dan keyboard tetap diperiksa. Browser G05 dan G04 lulus, semuanya memakai fixture/intersepsi write. Bukti dan batas ada di [catatan G05](implementation-g05-lead-contact-filters.md) serta [laporan QA][qa].
 
 ### E21
 
@@ -414,7 +422,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G05
 
-**Gap fungsi MVP — form lead, filter dan consent.** Bukti: [request lead][lead-request] tidak menerima estimasi waktu pembelian/opt-out; create [CustomerController][customer-source] menugaskan ke actor meski route mengizinkan Admin/V; [TransactionController][transaction-source] hanya membaca search/stage/tab/sales_id, belum periode/sumber terstruktur; [route][routes-source] dan [UI Customer][customer-ui] yang diperiksa belum menyediakan edit opt-out. Tindak lanjut: reproduksi S01/S02/S04 dan konfirmasi assignment yang diharapkan, lengkapi capability yang ditetapkan PRD serta regression test. Pemilik: Engineering full-stack + QA; PO/operasional untuk consent dan pemilik lead. Tidak menambahkan broadcast/sinkronisasi kontak.
+**Ditutup teknis untuk form lead, PIC, filter tanggal/sumber dan preferensi kontak.** [PRD](PRD.md) memuat keputusan pengguna untuk pilihan Sales wajib oleh SPV/Admin serta penolakan global + kanal pilihan. [E08](#e08)/[E13](#e13)/[E19](#e19) memverifikasi PIC/pelaku, estimasi closing yang sudah ada, scope, audit, consent dan filter. Tidak membuat migration atau memperluas akses. UAT manusia, semua kombinasi filter/pagination dan concurrency tetap gerbang terpisah; G06/G07 belum ditutup. Rincian di [catatan G05](implementation-g05-lead-contact-filters.md).
 
 ### G06
 

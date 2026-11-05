@@ -25,7 +25,7 @@ async function accessibility(page) {
         phone: '+620000000000',
         email: null,
         address: null,
-        contact_channel_preference: 'call',
+        contact_channel_preference: 'any',
         opt_out: false,
         last_contact_at: null,
         notes: null,
@@ -303,6 +303,7 @@ async function accessibility(page) {
                 ...initial.props,
                 auth: { user },
                 errors: {},
+                targetPlans: [],
                 sidebarOpen: true,
                 notifications: [
                     {
@@ -323,6 +324,19 @@ async function accessibility(page) {
         await page.goto(origin + url);
         await page.locator('h1').first().waitFor();
         await tick();
+        // Current reports keep numeric tables behind explicit disclosures.
+        if (
+            component === 'dashboard' ||
+            component === 'team-performance/index'
+        ) {
+            for (const name of [
+                'Lihat rincian angka tim',
+                'Lihat rincian angka Sales',
+            ]) {
+                const disclosure = page.getByText(name, { exact: true });
+                if (await disclosure.count()) await disclosure.click();
+            }
+        }
     };
     const openMenu = async () => {
         await page
@@ -1249,7 +1263,7 @@ async function accessibility(page) {
                     },
                     targetableUsers: [],
                 },
-                6,
+                3, // Numeric Sales rows; chart/contributor entries have their own layout.
             ],
             [
                 'analytics/index',
@@ -1617,35 +1631,33 @@ async function accessibility(page) {
             await load();
             await checkFilterDisclosure('Filter pelanggan');
             await load(
-                'dashboard',
+                'transactions/index',
                 {
                     auth: { user: { ...user, role: 'supervisor' } },
-                    dashboard: {
-                        period: '2026-11-01',
-                        targetUnits: 0,
-                        realizationUnits: 0,
-                        forecastUnits: 0,
-                        forecastValue: 0,
-                        forecastApproved: false,
-                        gapUnits: 0,
-                        stageCounts: {},
-                        stagnantCount: 0,
-                        performance: [],
-                        contributors: [],
+                    transactions: { data: [], links: [] },
+                    filters: {
+                        search: '',
+                        stage: '',
+                        tab: 'all',
+                        sales_id: null,
                     },
-                    targetableUsers: [
+                    assignableSales: [
                         { id: 1, name: 'Sales Alpha', username: 'sales.alpha' },
                         { id: 2, name: 'Sales Beta', username: 'sales.beta' },
                     ],
+                    sourceOptions: ['walk_in', 'referral'],
+                    stages: [],
+                    lostReasons: [],
                 },
-                '/dashboard',
+                '/transactions',
             );
             const expected = width >= 768 ? 36 : 44;
             for (const id of [
-                'target-sales-recipient',
-                'target-sales-period',
-                'target-sales-units',
-                'target-sales-value',
+                'search',
+                'stage',
+                'transaction-date-from',
+                'transaction-date-to',
+                'transaction-source',
             ]) {
                 const size = await page.locator(`#${id}`).boundingBox();
                 assert(
@@ -1893,41 +1905,76 @@ async function accessibility(page) {
             'Historical forecast must be unavailable',
         );
     });
-    await test('G02 target forms send independent team and Sales writes with keyboard-accessible errors', async () => {
+    await test('monthly target plan sends one atomic write and exposes keyboard-accessible errors', async () => {
         await page.setViewportSize({ width: 390, height: 1000 });
-        await load('targets/index', reportProps, '/targets');
-        await page.getByLabel('Target unit tim', { exact: true }).fill('30');
-        await page
-            .getByRole('button', { name: 'Simpan target tim', exact: true })
-            .press('Enter');
-        await page.waitForFunction(
-            () => !document.querySelector('button[disabled]'),
+        await load(
+            'targets/index',
+            {
+                ...reportProps,
+                auth: { user: { ...user, role: 'supervisor' } },
+                targetPlans: [
+                    {
+                        team_id: 'qa-team',
+                        name: 'Tim Supervisor QA',
+                        period: '2026-11',
+                        version: 0,
+                        legacy: false,
+                        target_units: null,
+                        markup_percent: 0,
+                        benchmark_units: null,
+                        members: [
+                            {
+                                user_id: 1,
+                                name: 'Sales Alpha',
+                                username: 'sales.alpha',
+                                active: true,
+                                target_units: null,
+                                allocated: false,
+                                remaining_workdays: 8,
+                                period_workdays: 24,
+                            },
+                        ],
+                    },
+                ],
+            },
+            '/targets',
         );
+        await page
+            .getByLabel('Target management (unit)', { exact: true })
+            .fill('30');
+        await page
+            .getByRole('button', { name: 'Simpan rencana target', exact: true })
+            .press('Enter');
+        await page
+            .getByRole('button', { name: 'Simpan rencana target', exact: true })
+            .waitFor({ state: 'visible' });
         await tick();
         assert(
-            lastMutation.url.endsWith('/team-targets') &&
-                lastMutation.data.team_id === 'qa-team' &&
-                lastMutation.data.target_units === '30',
-            'Wrong team target payload',
+            lastMutation.url.endsWith('/target-plans') &&
+                Number(lastMutation.data.target_units) === 30 &&
+                lastMutation.data.allocations.length === 1 &&
+                Number(lastMutation.data.allocations[0].target_units) === 30,
+            'Team target and personal allocation must be sent atomically',
         );
-        mutationErrors = { target_units: 'Target unit tidak valid.' };
-        await page.getByLabel('Target unit', { exact: true }).fill('25');
+        mutationErrors = {
+            target_units: 'Target tidak valid untuk pemeriksaan QA.',
+        };
         await page
-            .getByRole('button', { name: 'Simpan target Sales', exact: true })
+            .getByLabel('Target management (unit)', { exact: true })
+            .fill('30');
+        await page
+            .getByRole('button', { name: 'Simpan rencana target', exact: true })
             .press('Enter');
         await page
-            .getByText('Target unit tidak valid.', { exact: true })
+            .getByText('Target tidak valid untuk pemeriksaan QA.', {
+                exact: true,
+            })
             .waitFor();
         assert(
-            lastMutation.url.endsWith('/targets') &&
-                lastMutation.data.user_id === '1' &&
-                lastMutation.data.target_units === '25',
-            'Wrong Sales target payload',
-        );
-        const invalid = page.getByLabel('Target unit', { exact: true });
-        assert(
-            (await invalid.getAttribute('aria-invalid')) === 'true',
-            'Target error must identify invalid input',
+            (await page
+                .getByLabel('Target management (unit)', { exact: true })
+                .getAttribute('aria-invalid')) === 'true',
+            'Target validation must identify the invalid input',
         );
     });
     await test('G02 closing-month editor updates and clears an estimate without changing stage', async () => {

@@ -122,7 +122,16 @@ async function customerDuplicate(page) {
                     repeat_order: 0,
                     referral: 0,
                 },
-                assignableSales: [],
+                assignableSales:
+                    role === 'sales'
+                        ? []
+                        : [
+                              {
+                                  id: 7,
+                                  public_id: 'qa-pic',
+                                  name: 'Sales PIC QA',
+                              },
+                          ],
             },
         };
         await page.goto(`${origin}/customers`);
@@ -134,6 +143,10 @@ async function customerDuplicate(page) {
         await page.locator('#lead-model').fill('Model Draft QA');
         await page.locator('#lead-closing-month').fill('2026-12');
         await page.locator('#lead-notes').fill('Catatan peluang QA');
+        if (role !== 'sales') {
+            await page.locator('#lead-sales').click();
+            await page.getByRole('option', { name: 'Sales PIC QA' }).click();
+        }
     };
     const probe = async () => {
         await page
