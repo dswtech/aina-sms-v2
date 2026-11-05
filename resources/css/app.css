@@ -61,6 +61,79 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@media print {
+    html:has(.analytics-print) {
+        --background: #fff;
+        --foreground: #111;
+        --muted: #f4f4f4;
+        --muted-foreground: #333;
+        --secondary: #fff;
+        --border: #aaa;
+        --card: #fff;
+        --card-foreground: #111;
+        --sidebar: #fff;
+        background: #fff;
+        color: #111;
+        color-scheme: light;
+    }
+
+    .analytics-print {
+        padding: 8mm;
+    }
+
+    body:has(.analytics-print) [data-slot='sidebar'],
+    body:has(.analytics-print) header.sticky,
+    body:has(.analytics-print) nav[aria-label='Navigasi utama mobile'] {
+        display: none !important;
+    }
+
+    body:has(.analytics-print) [data-slot='sidebar-inset'] {
+        display: block;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+    }
+
+    .analytics-print table {
+        width: 100%;
+        table-layout: fixed;
+        font-size: 9pt;
+    }
+
+    .analytics-print th,
+    .analytics-print td {
+        padding: 2mm;
+        overflow-wrap: anywhere;
+    }
+
+    .analytics-print th:first-child {
+        width: 27%;
+    }
+
+    .analytics-print th {
+        font-size: 8pt;
+        letter-spacing: normal;
+        text-transform: none;
+    }
+
+    .analytics-print table thead {
+        display: table-header-group;
+    }
+
+    .analytics-print tr {
+        break-inside: avoid;
+    }
+
+    .analytics-print h2 {
+        break-after: avoid;
+    }
+
+    .analytics-print div:has(> table) {
+        overflow: visible;
+        border-radius: 0;
+    }
+}
+
 :root {
     --background: #ffffff;
     --foreground: #0f172a;
