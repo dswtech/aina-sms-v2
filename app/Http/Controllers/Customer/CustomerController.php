@@ -17,6 +17,7 @@ use App\Models\Customer;
 use App\Models\DealComment;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CustomerDuplicateDetector;
@@ -43,17 +44,19 @@ class CustomerController extends Controller
         $tab = $request->input('tab', 'all');
 
         $baseQuery = Customer::query()->visibleTo($actor);
+        $todayStart = CarbonImmutable::now('Asia/Jakarta')->startOfDay()->utc();
+        $tomorrowStart = $todayStart->setTimezone('Asia/Jakarta')->addDay()->utc();
 
         // Precalculate counts for tab badges
         $counts = [
             'all' => (clone $baseQuery)->count(),
-            'follow_up_today' => (clone $baseQuery)->whereHas('followUps', function (Builder $q): void {
+            'follow_up_today' => (clone $baseQuery)->whereHas('followUps', function (Builder $q) use ($todayStart, $tomorrowStart): void {
                 $q->where('status', 'pending')
-                    ->whereDate('scheduled_at', CarbonImmutable::today());
+                    ->where('scheduled_at', '>=', $todayStart)->where('scheduled_at', '<', $tomorrowStart);
             })->count(),
-            'overdue' => (clone $baseQuery)->whereHas('followUps', function (Builder $q): void {
+            'overdue' => (clone $baseQuery)->whereHas('followUps', function (Builder $q) use ($todayStart): void {
                 $q->where('status', 'pending')
-                    ->whereDate('scheduled_at', '<', CarbonImmutable::today());
+                    ->where('scheduled_at', '<', $todayStart);
             })->count(),
             'uncontacted' => (clone $baseQuery)->whereNull('last_contact_at')->count(),
             'stagnant' => (clone $baseQuery)->whereHas('transactions', function (Builder $q) use ($actor): void {
@@ -94,13 +97,13 @@ class CustomerController extends Controller
         }
 
         match ($tab) {
-            'follow_up_today' => $query->whereHas('followUps', function (Builder $q): void {
+            'follow_up_today' => $query->whereHas('followUps', function (Builder $q) use ($todayStart, $tomorrowStart): void {
                 $q->where('status', 'pending')
-                    ->whereDate('scheduled_at', CarbonImmutable::today());
+                    ->where('scheduled_at', '>=', $todayStart)->where('scheduled_at', '<', $tomorrowStart);
             }),
-            'overdue' => $query->whereHas('followUps', function (Builder $q): void {
+            'overdue' => $query->whereHas('followUps', function (Builder $q) use ($todayStart): void {
                 $q->where('status', 'pending')
-                    ->whereDate('scheduled_at', '<', CarbonImmutable::today());
+                    ->where('scheduled_at', '<', $todayStart);
             }),
             'uncontacted' => $query->whereNull('last_contact_at'),
             'stagnant' => $query->whereHas('transactions', function (Builder $q) use ($actor): void {
@@ -191,7 +194,7 @@ class CustomerController extends Controller
                 ->where('role', UserRole::Sales);
 
             if ($actor->role === UserRole::Supervisor) {
-                $teamIds = $actor->activeTeamMemberships()->select('team_id');
+                $teamIds = Team::query()->visibleTo($actor)->select('id');
                 $salesQuery->whereHas('activeTeamMemberships', function (Builder $q) use ($teamIds): void {
                     $q->whereIn('team_id', $teamIds)->whereNull('ended_at');
                 });
@@ -438,15 +441,17 @@ class CustomerController extends Controller
         $newSales = User::query()
             ->whereKey($validated['sales_id'])
             ->where('dealer_id', $customer->dealer_id)
+            ->where('role', UserRole::Sales)
             ->where('is_active', true)
             ->firstOrFail();
 
         // Supervisor may only reassign within own team
         if ($actor->role === UserRole::Supervisor) {
-            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $teamIds = Team::query()->visibleTo($actor)->select('id');
             $inTeam = TeamMembership::query()
                 ->whereIn('team_id', $teamIds)
                 ->where('user_id', $newSales->id)
+                ->where('role', UserRole::Sales)
                 ->whereNull('ended_at')
                 ->exists();
 
