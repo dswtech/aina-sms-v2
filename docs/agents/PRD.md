@@ -185,7 +185,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 
 | ID | Kebutuhan | Prioritas |
 |---|---|---|
-| CRM-01 | **Sales dapat membuat lead dengan identitas dan kebutuhan minimum pelanggan.** Form utama memuat nama, nomor telepon, kendaraan yang diminati, estimasi pembelian, sumber, dan catatan. | M |
+| CRM-01 | **Sales dapat membuat lead dengan identitas dan kebutuhan minimum pelanggan.** Form utama memuat nama, nomor telepon, kendaraan yang diminati, estimasi bulan pembelian/closing, sumber, dan catatan. Lead baru buatan Sales otomatis menjadi tanggung jawab Sales tersebut; Supervisor/Admin wajib memilih Sales aktif dalam cakupan organisasinya. Pembuat tetap tercatat sebagai pelaku, bukan otomatis sebagai PIC. Konfirmasi pelanggan lama mempertahankan penugasan yang sudah ada; pelanggan tanpa Sales aktif memerlukan pembaruan penugasan sebelum peluang baru dibuat. | M |
 | CRM-02 | **Sistem memperingatkan kemungkinan duplikat berdasarkan nomor telepon ternormalisasi sebelum data pelanggan atau transaksi baru disimpan.** Pengguna dapat membatalkan atau memilih identitas pelanggan yang sudah ada untuk membuat transaksi berbeda tanpa menggandakan identitas maupun mengubah penugasan. Kandidat hanya ditampilkan sesuai akses terkini; jika pelanggan berada di luar akses Sales, penyimpanan ditahan dengan arahan ke Supervisor/Admin untuk pemeriksaan dan penugasan tanpa membuka identitas pelanggan. Server memeriksa ulang akses dan kecocokan nomor saat konfirmasi. | S |
 | CRM-03 | **Sales hanya dapat melihat dan memperbarui lead yang ditugaskan kepadanya.** Data Sales lain tidak ikut terkirim ke client. | M |
 | CRM-04 | **Supervisor dapat melihat dan menugaskan ulang lead dalam timnya.** Riwayat penugasan lama tetap tersimpan untuk audit. | M |
@@ -199,7 +199,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | CRM-12 | **Profil pelanggan menyatukan riwayat transaksi dan aktivitas hubungan yang boleh dibaca pengguna.** Conversation coaching tetap berada pada transaksi dan mengikuti batas akses coaching. | M |
 | CRM-13 | **Data pelanggan merupakan aset dealer, sedangkan Sales menerima penugasan pengelolaan.** Penugasan ulang tidak menghapus riwayat Sales sebelumnya, aktivitas, atau transaksi. | M |
 | CRM-14 | **Supervisor dapat melihat pelanggan timnya, Admin dapat mengelola penugasan dan audit, dan Branch Manager hanya menerima agregat.** Nomor telepon, alamat, dan catatan hubungan tidak dikirim kepada Branch Manager. | M |
-| CRM-15 | **Sistem mencatat izin atau penolakan pelanggan untuk dihubungi pada kanal yang relevan.** Sinkronisasi otomatis ke kontak pribadi, broadcast massal, dan ekspor phonebook tidak disediakan pada MVP. | S |
+| CRM-15 | **Sistem mencatat izin atau penolakan pelanggan untuk dihubungi pada kanal yang relevan.** MVP memakai satu status penolakan seluruh kontak ditambah kanal pilihan WhatsApp, telepon, keduanya, atau belum ditentukan. Penolakan menonaktifkan seluruh aksi kontak; jika tidak menolak, aksi mengikuti kanal pilihan. Pengguna yang berwenang memperbarui Customer dapat memperbarui status ini dengan audit. Nilai legacy tanpa penolakan/pilihan kanal bukan bukti persetujuan eksplisit. Sinkronisasi otomatis ke kontak pribadi, broadcast massal, dan ekspor phonebook tidak disediakan pada MVP. | S |
 
 ### 7.4 Sales Pipeline (`PIP`)
 

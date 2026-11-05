@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AuditLog;
+use App\Models\Customer;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\User;
@@ -31,7 +32,7 @@ final class AuditRecorder
     public static function record(
         User $actor,
         string $action,
-        User|Team|Invitation $subject,
+        User|Team|Invitation|Customer $subject,
         array $before = [],
         array $after = [],
         array $context = [],
@@ -56,6 +57,7 @@ final class AuditRecorder
             User::class => 'user',
             Team::class => 'team',
             Invitation::class => 'invitation',
+            Customer::class => 'customer',
             default => 'unknown',
         };
     }

@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Enums\UserRole;
 use App\Models\Customer;
 use App\Support\PhoneNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCustomerLeadRequest extends FormRequest
 {
@@ -20,6 +22,9 @@ class StoreCustomerLeadRequest extends FormRequest
     {
         return [
             'existing_customer_id' => ['nullable', 'uuid'],
+            'sales_id' => $this->user()?->role === UserRole::Sales
+                ? ['prohibited']
+                : ['nullable', 'integer', Rule::requiredIf(! $this->filled('existing_customer_id'))],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:32', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! PhoneNormalizer::isValid((string) $value)) {
@@ -34,6 +39,7 @@ class StoreCustomerLeadRequest extends FormRequest
             'source' => ['required', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'contact_channel_preference' => ['nullable', 'string', 'in:whatsapp,phone,any'],
+            'opt_out' => ['sometimes', 'boolean'],
         ];
     }
 }

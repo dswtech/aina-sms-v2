@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\DealTransaction;
 use App\Models\TeamMembership;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,6 +19,11 @@ class TransactionController extends Controller
     {
         /** @var User $actor */
         $actor = $request->user();
+        $validated = $request->validate([
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])],
+            'source' => ['nullable', 'string', 'max:64'],
+        ]);
 
         $search = trim((string) $request->input('search', ''));
         $stage = $request->string('stage')->toString();
@@ -47,6 +53,15 @@ class TransactionController extends Controller
         $query = DealTransaction::query()
             ->visibleTo($actor)
             ->with(['customer:id,name,phone', 'sales:id,name,username']);
+        if (! empty($validated['date_from'])) {
+            $query->where('created_at', '>=', CarbonImmutable::parse($validated['date_from'], 'Asia/Jakarta')->startOfDay()->utc());
+        }
+        if (! empty($validated['date_to'])) {
+            $query->where('created_at', '<', CarbonImmutable::parse($validated['date_to'], 'Asia/Jakarta')->startOfDay()->addDay()->utc());
+        }
+        if (isset($validated['source']) && $validated['source'] !== '') {
+            $query->where('source', $validated['source']);
+        }
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
@@ -131,11 +146,15 @@ class TransactionController extends Controller
 
         return Inertia::render('transactions/index', [
             'transactions' => $transactions,
+            'sourceOptions' => DealTransaction::query()->visibleTo($actor)->select('source')->distinct()->orderBy('source')->pluck('source')->all(),
             'filters' => [
                 'search' => $search,
                 'stage' => $stage,
                 'tab' => $tab,
                 'sales_id' => $salesId,
+                'date_from' => $validated['date_from'] ?? null,
+                'date_to' => $validated['date_to'] ?? null,
+                'source' => $validated['source'] ?? null,
             ],
             'assignableSales' => $assignableSales,
             'stages' => array_map(fn (PipelineStage $stage): array => [

@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.23 |
+| Versi | v1.24 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #37/G04 sudah merged pada `main` `86de38b`; branch `codex/g05-lead-contact-filters` berangkat dari baseline bersih tersebut. G05 mengikuti keputusan pengguna di [PRD](PRD.md): PIC Sales aktif wajib dipilih SPV/Admin, Sales self-assignment, penolakan kontak global plus kanal pilihan. Filter tanggal Jakarta/sumber, audit preferensi serta preservasi assignment/consent duplikat tersedia sesuai [catatan G05](implementation-g05-lead-contact-filters.md) dan matriks UAT. Pest 255 lulus/3 skip (2.228 assertions), tujuh tes frontend, TypeScript, lint/format, Pint, PHPStan dan production build lulus. Browser G05 enam kombinasi beserta input tiga role/error request, G04 18 kombinasi dan audit aksesibilitas 21 kelompok lulus; write diintersep tanpa write bisnis. Review runtime/fixture serta detector desain tanpa temuan actionable. Fixture aksesibilitas yang tertinggal dari perubahan target/dashboard sudah diselaraskan, tanpa mengganti UI produksi. Tidak ada migration/seeder/dependency. UAT manusia dan concurrency PostgreSQL tetap terbuka.
 
 - Branch `codex/g04-customer-duplicate-confirmation` memakai `main`/`origin/main` `d7afd39` (PR #35/#36 sudah merged). Konfirmasi duplikat sebelum write, reuse Customer existing sesuai akses, arahan aman ke SPV/Admin serta revalidasi import mengikuti [PRD](PRD.md); bukti di [catatan G04](implementation-g04-duplicate-confirmation.md) dan [E09/matriks](uat-matrix.md#e09). Dua temuan (spasi nomor dan clipping tombol) diperbaiki dengan regresi gagal/lulus; review ulang tidak menemukan temuan actionable. Pest 231 lulus/3 skip (2.106 assertions), lima tes frontend, lint/format, TypeScript, Pint, PHPStan dan production build lulus. Browser sintetis G04 18 kombinasi plus skenario tambahan, dashboard 28 dan role/laporan 42 lulus; nol write bisnis/error JavaScript. Tidak ada migration/dependency atau write database bisnis. UAT manusia dan concurrency PostgreSQL tetap terbuka. Stash terarah pra-integrasi G04 dipertahankan sebagai backup lokal; tidak termasuk commit.
 
@@ -105,7 +107,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge branch G04 di atas; PR #35 (QA target/forecast) dan PR #36 (grafik dashboard) sudah merged pada baseline terbaru. Migration/seeder target development sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Berikutnya prioritaskan G05/G06 dan gerbang G13 pada [matriks UAT](uat-matrix.md). Audit timestamp historis sebelum koneksi UTC memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
+1. Review/merge branch G05 di atas; G04/PR #37 sudah merged. Berikutnya prioritaskan G06 (riwayat terpadu/audit revisi) dan G07 (konsistensi stagnant) serta gerbang G13 pada [matriks UAT](uat-matrix.md). Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
