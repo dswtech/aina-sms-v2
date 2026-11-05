@@ -1,15 +1,11 @@
+import { TargetPlanEditor } from '@/components/target-plan-editor';
 import { Head } from '@inertiajs/react';
 import {
     PerformanceTable,
     ReportingHeader,
-    TargetForm,
     type ReportingProps,
 } from '@/components/team-performance';
-export default function Targets({
-    dashboard: d,
-    targetableUsers,
-    targetableTeams,
-}: ReportingProps) {
+export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
     return (
         <>
             <Head title="Target" />
@@ -19,9 +15,9 @@ export default function Targets({
                     period={d.period}
                 />
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Target tim dari cabang dicatat Supervisor. Target Sales
-                    ditetapkan untuk memacu kinerja anggota. Nilainya tidak
-                    harus sama dan tidak dijumlahkan menjadi satu target.
+                    Target management dicatat SPV, kemudian ditambah markup
+                    menjadi benchmark tim. Target personal dapat disesuaikan
+                    dengan total alokasi minimal 100% dari benchmark.
                 </p>
                 <p className="text-sm leading-6 text-muted-foreground">
                     {d.forecastUnits === null
@@ -30,18 +26,7 @@ export default function Targets({
                     {!d.forecastApproved &&
                         'Bobot belum disetujui untuk production.'}
                 </p>
-                <TargetForm
-                    key={`team-${d.period}`}
-                    kind="team"
-                    options={targetableTeams}
-                    period={d.period}
-                />
-                <TargetForm
-                    key={`sales-${d.period}`}
-                    kind="sales"
-                    options={targetableUsers}
-                    period={d.period}
-                />
+                <TargetPlanEditor key={d.period} plans={targetPlans} />
                 <PerformanceTable
                     title="Target dan kinerja tim"
                     rows={d.teams}

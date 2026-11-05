@@ -56,11 +56,15 @@ Buku Pelanggan bukan sinkronisasi kontak pribadi. Nomor pelanggan tidak diekspor
 
 | Istilah | Arti |
 |---|---|
-| Target | Jumlah penjualan yang ingin dicapai pada periode tertentu. Target tim berasal dari cabang dan target Sales merupakan sasaran motivasi individu; keduanya bukan angka yang harus sama. |
+| Target | Jumlah penjualan yang ingin dicapai pada periode tertentu. Target management adalah sasaran resmi cabang untuk tim; target personal adalah sasaran kerja masing-masing Sales. |
 | Realisasi | Penjualan yang sudah benar-benar tercapai. |
 | Forecast | Perkiraan hasil akhir berdasarkan transaksi aktif dan peluang tahapnya. |
 | Estimasi bulan closing | Bulan rencana penyelesaian transaksi; bukan janji hasil atau tanggal Delivery aktual. |
 | Weighted pipeline | Cara menghitung forecast dengan mengalikan setiap transaksi dengan bobot peluang tahapnya. |
+| Markup target | Persentase tambahan yang ditetapkan SPV di atas target management. |
+| Benchmark tim | Sasaran operasional tim setelah target management ditambah markup. |
+| Alokasi tersimpan | Pembagian target personal yang terikat pada rencana tim dan bulan asalnya. |
+| Alokasi aktif | Bagian alokasi tersimpan yang penerimanya masih aktif dalam tim. |
 | Gap | Selisih antara target dan forecast atau realisasi. |
 | Conversion rate | Persentase lead yang berpindah menjadi SPK atau delivery sesuai ukuran yang dipilih. |
 

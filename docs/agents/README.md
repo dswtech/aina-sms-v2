@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [`adr/ADR-004-monthly-target-plans.md`](adr/ADR-004-monthly-target-plans.md) | ADR | Penyimpanan rencana target, presisi decimal, histori alokasi, transaksi atomik dan versi. |
+| [`implementation-target-allocation.md`](implementation-target-allocation.md) | Rencana dan bukti | Implementasi target management, markup, benchmark serta editor alokasi Sales. |
 | [`../../PRODUCT.md`](../../PRODUCT.md) | Konteks produk | Merangkum fakta produk untuk workflow desain tanpa menggantikan requirement kanonik di PRD. |
 | [`../../DESIGN.md`](../../DESIGN.md) | Sistem desain | Mencatat keputusan visual terpilih dan aturan implementasi UI. |
 | [`../../.agents/skills/aina-sms-workflow/SKILL.md`](../../.agents/skills/aina-sms-workflow/SKILL.md) | Skill proyek | Menetapkan preflight, routing skill, batas keselamatan, verifikasi, dan format handoff untuk semua agent. |

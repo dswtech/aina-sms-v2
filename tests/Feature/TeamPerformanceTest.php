@@ -256,6 +256,8 @@ it('preserves sanitized weighted contributors for managers within the closing pe
 });
 
 it('can roll back only the G02 schema without removing existing sales targets', function () {
+    $planMigration = require database_path('migrations/2026_11_05_120000_add_target_plan_allocations.php');
+    $planMigration->down();
     $migration = require database_path('migrations/2026_11_05_100000_add_team_targets_and_closing_month.php');
     $migration->down();
     expect(Schema::hasTable('team_targets'))->toBeFalse()

@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\TeamTarget;
 use App\Models\User;
 use App\Notifications\DealCommentCreated;
+use App\Support\TargetUnits;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -53,16 +54,32 @@ class DevelopmentReportingSeeder extends Seeder
                 if ($supervisor === null) {
                     continue;
                 }
-                foreach ([$month->copy()->subMonth(), $month] as $periodIndex => $period) {
+                foreach ([$month->copy()->subMonth(), $month, $month->copy()->addMonth()] as $periodIndex => $period) {
                     if (TeamTarget::query()->where('team_id', $team->id)->whereDate('period', $period->toDateString())->exists()) {
                         continue;
                     }
                     $target = TeamTarget::create(['team_id' => $team->id, 'period' => $period->toDateString(),
                         'target_units' => 90 + $index * 10 + $periodIndex * 5, 'target_value' => (90 + $index * 10 + $periodIndex * 5) * 250_000_000,
                         'created_by_id' => $supervisor->id]);
+                    $plan = null;
+                    if ($periodIndex === 2) {
+                        $members = $team->activeMemberships()->where('role', UserRole::Sales)
+                            ->whereHas('user', fn ($q) => $q->where('is_active', true)->where('role', UserRole::Sales))->pluck('user_id')->unique();
+                        if ($members->isNotEmpty()) {
+                            $benchmark = TargetUnits::benchmark(TargetUnits::scaled($target->target_units), 200000);
+                            $share = TargetUnits::number((int) ceil($benchmark / $members->count()));
+                            $target->update(['markup_percent' => 20, 'benchmark_units' => TargetUnits::number($benchmark), 'version' => 1]);
+                            foreach ($members as $id) {
+                                $target->allocations()->create(['user_id' => $id, 'target_units' => $share]);
+                            }
+                            $plan = ['target_units' => $target->target_units, 'markup_percent' => 20,
+                                'benchmark_units' => TargetUnits::number($benchmark), 'version' => 1,
+                                'allocations' => $members->map(fn ($id) => ['user_id' => $id, 'target_units' => $share])->values()->all()];
+                        }
+                    }
                     $target->revisions()->create(['changed_by_id' => $supervisor->id,
                         'old_target_units' => null, 'old_target_value' => null,
-                        'new_target_units' => $target->target_units, 'new_target_value' => $target->target_value]);
+                        'new_target_units' => $target->target_units, 'new_target_value' => $target->target_value, 'new_plan' => $plan]);
                 }
             }
             $comments = DealComment::query()->whereIn('deal_transaction_id', $deals->modelKeys())->whereIn('body', DevelopmentDemoSeeder::COMMENT_BODIES)->with('deal.sales')->orderBy('id')->get();

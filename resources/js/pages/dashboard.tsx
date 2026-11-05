@@ -5,21 +5,19 @@ import {
     PerformanceTable,
     PriorityLists,
     ReportingHeader,
-    TargetForm,
     type ReportingProps,
 } from '@/components/team-performance';
 import { StageBadge } from '@/components/stage-badge';
 
 export default function Dashboard({
     dashboard: d,
-    targetableUsers,
     title = 'Dashboard penjualan',
 }: ReportingProps & { title?: string }) {
     const role = usePage().props.auth.user.role;
     const canManage = role === 'supervisor' || role === 'admin';
     const metrics = [
         [
-            role === 'sales' ? 'Target Sales' : 'Target tim',
+            role === 'sales' ? 'Target Sales' : 'Target management',
             amount(d.targetUnits),
         ],
         ['Realisasi', amount(d.realizationUnits)],
@@ -60,7 +58,8 @@ export default function Dashboard({
                             </strong>
                             . Selisih target tim − total target Sales:{' '}
                             {amount(d.targetAllocationDifference, '—')} unit.
-                            Keduanya ditetapkan terpisah.
+                            Benchmark dan alokasi personal tersedia pada rincian
+                            tim.
                         </p>
                     )}
                     {!!d.teamTargetsMissing && role !== 'sales' && (
@@ -213,12 +212,13 @@ export default function Dashboard({
                     </>
                 )}
                 {canManage && (
-                    <TargetForm
-                        key={d.period}
-                        kind="sales"
-                        options={targetableUsers}
-                        period={d.period}
-                    />
+                    <Link
+                        href="/targets"
+                        data={{ period: d.period.slice(0, 7) }}
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+                    >
+                        Kelola rencana target tim dan Sales
+                    </Link>
                 )}
             </div>
         </>
