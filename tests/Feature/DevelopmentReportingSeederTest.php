@@ -30,8 +30,10 @@ it('adds repeatable local reporting examples without sending email or changing b
         $notifications = DB::table('notifications')->where('type', DealCommentCreated::class)->count();
         $this->seed(DevelopmentReportingSeeder::class);
         $this->seed(DevelopmentDemoSeeder::class);
-        expect(TeamTarget::query()->count())->toBe(Team::query()->count() * 2)->toBe($targets)
+        expect(TeamTarget::query()->count())->toBe(Team::query()->count() * 3)->toBe($targets)
             ->and(TeamTargetRevision::query()->count())->toBe($revisions)->toBe($targets)
+            ->and(TeamTarget::query()->where('version', 1)->count())->toBe(Team::query()->count())
+            ->and(DB::table('team_target_allocations')->count())->toBeGreaterThan(0)
             ->and(DB::table('notifications')->where('type', DealCommentCreated::class)->count())->toBe($notifications)->toBeGreaterThan(0)
             ->and(DealComment::query()->whereNotNull('stage_at_creation')->count())->toBeGreaterThan(0)
             ->and(DealTransaction::query()->whereNotNull('expected_closing_month')->count())->toBeGreaterThan(0)

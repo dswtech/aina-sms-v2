@@ -7,10 +7,12 @@ use App\Models\SalesTarget;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\TeamTarget;
+use App\Models\TeamTargetAllocation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TargetController extends Controller
 {
@@ -48,6 +50,11 @@ class TargetController extends Controller
 
         DB::transaction(function () use ($actor, $sales, $validated): void {
             User::query()->whereKey($sales->id)->lockForUpdate()->firstOrFail();
+            $managedTeam = TeamTarget::query()->whereDate('period', $validated['period'].'-01')->where('version', '>', 0)
+                ->whereIn('team_id', $sales->activeTeamMemberships()->where('role', UserRole::Sales)->select('team_id'))->exists();
+            if ($managedTeam || TeamTargetAllocation::query()->where('user_id', $sales->id)->whereHas('target', fn ($q) => $q->whereDate('period', $validated['period'].'-01'))->exists()) {
+                throw ValidationException::withMessages(['target_units' => 'Gunakan editor alokasi tim untuk mengubah target ini.']);
+            }
             $period = $validated['period'].'-01';
             $target = SalesTarget::query()->where('user_id', $sales->id)->whereDate('period', $period)->first()
                 ?? new SalesTarget(['user_id' => $sales->id, 'period' => $period]);
@@ -97,6 +104,9 @@ class TargetController extends Controller
             Team::query()->whereKey($team->id)->lockForUpdate()->firstOrFail();
             $target = TeamTarget::query()->where('team_id', $team->id)->whereDate('period', $validated['period'].'-01')->first()
                 ?? new TeamTarget(['team_id' => $team->id, 'period' => $validated['period'].'-01']);
+            if ($target->version > 0) {
+                throw ValidationException::withMessages(['target_units' => 'Gunakan editor alokasi tim untuk mengubah target ini.']);
+            }
             $oldUnits = $target->exists ? $target->target_units : null;
             $oldValue = $target->exists ? $target->target_value : null;
             if (! $target->exists) {

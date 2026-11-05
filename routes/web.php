@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TargetController;
+use App\Http\Controllers\TargetPlanController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::post('targets', [TargetController::class, 'store'])
         ->middleware(['role:supervisor,admin', 'throttle:20,1'])
         ->name('targets.store');
+
+    Route::post('target-plans', [TargetPlanController::class, 'store'])
+        ->middleware(['role:supervisor,admin', 'throttle:20,1'])->name('target-plans.store');
 
     Route::get('team-performance', [DashboardController::class, 'teams'])
         ->middleware('role:branch_manager')

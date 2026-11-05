@@ -1,8 +1,8 @@
+import type { TargetPlan } from '@/components/target-plan-editor';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
-import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -24,6 +24,13 @@ type PerformanceRow = Metrics & {
     sales_target_units?: number | null;
     sales_targets_missing?: number;
     target_allocation_difference?: number | null;
+    benchmark_units?: number | null;
+    allocation_percent?: number | null;
+    active_allocation_units?: number | null;
+    achievement_percent?: number | null;
+    benchmark_achievement_percent?: number | null;
+    benchmark_gap_units?: number | null;
+    benchmark_forecast_gap_units?: number | null;
 };
 type Priority = {
     id?: string;
@@ -68,6 +75,7 @@ export type ReportingProps = {
             unread: Priority[];
         };
     };
+    targetPlans: TargetPlan[];
     targetableUsers: { id: number; name: string; username: string }[];
     targetableTeams: { id: string; name: string }[];
 };
@@ -94,7 +102,7 @@ export function amount(
 ) {
     return value == null
         ? missing
-        : new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(
+        : new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(
               value,
           );
 }
@@ -139,182 +147,6 @@ export function PeriodPicker({ period }: { period: string }) {
     );
 }
 
-export function TargetForm({
-    kind,
-    options,
-    period,
-}: {
-    kind: 'sales' | 'team';
-    options: { id: number | string; name: string; username?: string }[];
-    period: string;
-}) {
-    const form = useForm({
-        recipient: String(options[0]?.id ?? ''),
-        period: period.slice(0, 7),
-        target_units: '',
-        target_value: '',
-    });
-    const label = kind === 'team' ? 'tim' : 'Sales';
-    const id = (suffix: string) => `target-${kind}-${suffix}`;
-    return (
-        <section className="rounded-xl border bg-card p-5 sm:p-6">
-            <h2 className="text-base font-semibold">Tetapkan target {label}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-                {kind === 'team'
-                    ? 'Target dari cabang dicatat Supervisor. Terpisah dari total target Sales.'
-                    : 'Target motivasi setiap Sales untuk periode bulanan.'}
-            </p>
-            {options.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">
-                    Belum ada {label} aktif yang dapat diberi target.
-                </p>
-            ) : (
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        form.transform(({ recipient, ...data }) => ({
-                            ...data,
-                            [kind === 'team' ? 'team_id' : 'user_id']:
-                                recipient,
-                            target_value: data.target_value || null,
-                        }));
-                        form.post(
-                            kind === 'team' ? '/team-targets' : '/targets',
-                            {
-                                preserveScroll: true,
-                                onSuccess: () =>
-                                    form.reset('target_units', 'target_value'),
-                            },
-                        );
-                    }}
-                    className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-                >
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor={id('recipient')}>
-                            {kind === 'team' ? 'Tim' : 'Sales'}
-                        </Label>
-                        <Combobox
-                            placeholder={
-                                kind === 'team' ? 'Pilih tim' : 'Pilih sales'
-                            }
-                            searchPlaceholder={
-                                kind === 'team'
-                                    ? 'Cari tim...'
-                                    : 'Cari sales...'
-                            }
-                            id={id('recipient')}
-                            aria-label={
-                                kind === 'team'
-                                    ? 'Tim penerima target'
-                                    : 'Sales'
-                            }
-                            value={form.data.recipient}
-                            onValueChange={(value) =>
-                                form.setData('recipient', value)
-                            }
-                            options={options.map((o) => ({
-                                value: String(o.id),
-                                label: o.name,
-                                hint: o.username ? `@${o.username}` : undefined,
-                            }))}
-                        />
-                        <InputError
-                            message={
-                                (form.errors as Record<string, string>)[
-                                    kind === 'team' ? 'team_id' : 'user_id'
-                                ]
-                            }
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor={id('period')}>
-                            Periode target {label}
-                        </Label>
-                        <Input
-                            id={id('period')}
-                            aria-invalid={!!form.errors.period}
-                            aria-describedby={
-                                form.errors.period
-                                    ? id('period-error')
-                                    : undefined
-                            }
-                            type="month"
-                            value={form.data.period}
-                            required
-                            onChange={(e) =>
-                                form.setData('period', e.target.value)
-                            }
-                        />
-                        <InputError
-                            id={id('period-error')}
-                            message={form.errors.period}
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor={id('units')}>
-                            Target unit{kind === 'team' ? ' tim' : ''}
-                        </Label>
-                        <Input
-                            id={id('units')}
-                            aria-invalid={!!form.errors.target_units}
-                            aria-describedby={
-                                form.errors.target_units
-                                    ? id('units-error')
-                                    : undefined
-                            }
-                            type="number"
-                            min="0"
-                            max="10000"
-                            required
-                            value={form.data.target_units}
-                            onChange={(e) =>
-                                form.setData('target_units', e.target.value)
-                            }
-                        />
-                        <InputError
-                            id={id('units-error')}
-                            message={form.errors.target_units}
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor={id('value')}>
-                            Nilai target (Rp){kind === 'team' ? ' tim' : ''}
-                        </Label>
-                        <Input
-                            id={id('value')}
-                            aria-invalid={!!form.errors.target_value}
-                            aria-describedby={
-                                form.errors.target_value
-                                    ? id('value-error')
-                                    : undefined
-                            }
-                            type="number"
-                            min="0"
-                            value={form.data.target_value}
-                            onChange={(e) =>
-                                form.setData('target_value', e.target.value)
-                            }
-                        />
-                        <InputError
-                            id={id('value-error')}
-                            message={form.errors.target_value}
-                        />
-                    </div>
-                    <Button
-                        className="md:col-span-2 md:w-fit xl:col-span-4"
-                        disabled={form.processing}
-                        type="submit"
-                    >
-                        {form.processing
-                            ? 'Menyimpan…'
-                            : `Simpan target ${label}`}
-                    </Button>
-                </form>
-            )}
-        </section>
-    );
-}
-
 export function PerformanceTable({
     title,
     rows,
@@ -325,25 +157,53 @@ export function PerformanceTable({
     team?: boolean;
 }) {
     const columns = [
-        'Target',
-        ...(team ? ['Total target Sales', 'Selisih target tim − Sales'] : []),
+        team ? 'Target management' : 'Target personal',
+        ...(team
+            ? [
+                  'Benchmark tim',
+                  'Total alokasi Sales',
+                  'Alokasi / benchmark',
+                  'Alokasi aktif',
+                  'Pencapaian management',
+                  'Pencapaian benchmark',
+              ]
+            : []),
         'Realisasi',
         'Forecast',
         'Gap ke realisasi',
         'Gap ke forecast',
+        ...(team
+            ? ['Gap benchmark ke realisasi', 'Gap benchmark ke forecast']
+            : []),
     ];
     const values = (row: PerformanceRow) => [
         amount(row.target_units),
         ...(team
             ? [
+                  amount(row.benchmark_units),
                   amount(row.sales_target_units),
-                  amount(row.target_allocation_difference, '—'),
+                  row.allocation_percent == null
+                      ? '—'
+                      : amount(row.allocation_percent) + '%',
+                  amount(row.active_allocation_units),
+                  row.achievement_percent == null
+                      ? '—'
+                      : amount(row.achievement_percent) + '%',
+                  row.benchmark_achievement_percent == null
+                      ? '—'
+                      : amount(row.benchmark_achievement_percent) + '%',
               ]
             : []),
         amount(row.realization_units),
         amount(row.forecast_units, 'Tidak tersedia'),
         amount(row.gap_units, '—'),
         amount(row.forecast_gap_units, '—'),
+        ...(team
+            ? [
+                  amount(row.benchmark_gap_units, '—'),
+                  amount(row.benchmark_forecast_gap_units, '—'),
+              ]
+            : []),
     ];
     return (
         <section className="min-w-0 overflow-hidden rounded-xl border bg-card">
@@ -360,7 +220,7 @@ export function PerformanceTable({
                 </p>
             ) : (
                 <>
-                    <div className="divide-y xl:hidden">
+                    <div className={team ? 'divide-y' : 'divide-y xl:hidden'}>
                         {rows.map((row) => (
                             <article className="striped-row p-5" key={row.id}>
                                 <h3 className="font-medium break-words">
@@ -377,7 +237,7 @@ export function PerformanceTable({
                                         tim ini
                                     </p>
                                 )}
-                                <dl className="mt-4 grid grid-cols-2 gap-4">
+                                <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                     {columns.map((column, i) => (
                                         <div key={column} className="min-w-0">
                                             <dt className="text-xs text-muted-foreground">
@@ -398,7 +258,13 @@ export function PerformanceTable({
                             </article>
                         ))}
                     </div>
-                    <table className="hidden w-full table-fixed text-sm xl:table">
+                    <table
+                        className={
+                            team
+                                ? 'hidden'
+                                : 'hidden w-full table-fixed text-sm xl:table'
+                        }
+                    >
                         <thead>
                             <tr className="border-b text-left text-xs text-muted-foreground">
                                 <th

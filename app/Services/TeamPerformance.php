@@ -10,8 +10,10 @@ use App\Models\SalesTarget;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\TeamTarget;
+use App\Models\TeamTargetAllocation;
 use App\Models\User;
 use App\Support\ReportingPeriod;
+use App\Support\TargetUnits;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -38,31 +40,57 @@ class TeamPerformance
         }
         $users = $usersQuery->orderBy('name')->get();
         $salesTargets = SalesTarget::query()->whereIn('user_id', $users->modelKeys())->whereDate('period', $period.'-01')->get()->keyBy('user_id');
-        $teamTargets = TeamTarget::query()->whereIn('team_id', $teamIds)->whereDate('period', $period.'-01')->get()->keyBy('team_id');
-        $teamRows = $teams->map(function (Team $team) use ($deals, $memberships, $salesTargets, $teamTargets, $period, $start, $end, $historical): array {
+        $teamTargets = TeamTarget::query()->with('allocations.user')->whereIn('team_id', $teamIds)->whereDate('period', $period.'-01')->get()->keyBy('team_id');
+        $allocations = TeamTargetAllocation::query()->with(['user', 'target'])->whereHas('target', fn ($q) => $q->whereDate('period', $period.'-01'))
+            ->where(function ($q) use ($actor, $teamIds): void {
+                if ($actor->role === UserRole::Sales) {
+                    $q->where('user_id', $actor->id);
+                } else {
+                    $q->whereHas('target', fn ($t) => $t->whereIn('team_id', $teamIds));
+                }
+            })->get();
+        $personalUnits = $allocations->groupBy('user_id')->map(fn ($rows) => TargetUnits::number($rows->sum(fn ($a) => TargetUnits::scaled($a->target_units))));
+        $managedMemberIds = $memberships->whereIn('team_id', $teamTargets->where('version', '>', 0)->pluck('team_id'))->pluck('user_id');
+        foreach ($salesTargets as $id => $legacyTarget) {
+            if (! $personalUnits->has($id) && ! $managedMemberIds->contains($id)) {
+                $personalUnits->put($id, $legacyTarget->target_units);
+            }
+        }
+        $teamRows = $teams->map(function (Team $team) use ($deals, $memberships, $salesTargets, $teamTargets, $allocations, $period, $start, $end, $historical): array {
             $target = $teamTargets->get($team->id);
             $memberIds = $memberships->where('team_id', $team->id)->pluck('user_id')->unique();
             $assignedTargets = $salesTargets->whereIn('user_id', $memberIds);
-            $salesTotal = $assignedTargets->isEmpty() ? null : (int) $assignedTargets->sum('target_units');
+            $saved = $allocations->filter(fn ($a) => $a->target->team_id === $team->id);
+            $managed = $target?->version > 0;
+            $salesTotal = $managed ? TargetUnits::number($saved->sum(fn ($a) => TargetUnits::scaled($a->target_units))) : ($assignedTargets->isEmpty() ? null : (int) $assignedTargets->sum('target_units'));
+            $activeTotal = $managed ? TargetUnits::number($saved->whereIn('user_id', $memberIds)->sum(fn ($a) => TargetUnits::scaled($a->target_units))) : $salesTotal;
+            $benchmark = $target?->benchmark_units === null ? null : TargetUnits::number(TargetUnits::scaled($target->benchmark_units));
+            $teamMetrics = $this->metrics($deals->where('team_id', $team->id), $target?->target_units, $period, $start, $end, $historical);
 
             return array_merge([
                 'id' => $team->public_id, 'name' => $team->name, 'is_active' => $team->is_active,
-                'sales_target_units' => $salesTotal, 'sales_targets_missing' => $memberIds->count() - $assignedTargets->count(),
+                'sales_target_units' => $salesTotal, 'sales_targets_missing' => $memberIds->diff($managed ? $saved->pluck('user_id') : $assignedTargets->pluck('user_id'))->count(),
+                'benchmark_units' => $benchmark, 'active_allocation_units' => $activeTotal,
+                'allocation_percent' => $benchmark > 0 && $salesTotal !== null ? round($salesTotal / $benchmark * 100, 2) : null,
+                'achievement_percent' => $target?->target_units > 0 ? round($teamMetrics['realization_units'] / $target->target_units * 100, 2) : null,
+                'benchmark_achievement_percent' => $benchmark > 0 ? round($teamMetrics['realization_units'] / $benchmark * 100, 2) : null,
+                'benchmark_gap_units' => $benchmark === null ? null : round($benchmark - $teamMetrics['realization_units'], 4),
+                'benchmark_forecast_gap_units' => $benchmark === null || $teamMetrics['forecast_units'] === null ? null : round($benchmark - $teamMetrics['forecast_units'], 4),
                 'target_allocation_difference' => $target !== null && $salesTotal !== null ? $target->target_units - $salesTotal : null,
-            ], $this->metrics($deals->where('team_id', $team->id), $target?->target_units, $period, $start, $end, $historical));
+            ], $teamMetrics);
         })->values();
         $missingTeamTargets = $teams->where('is_active', true)->reject(fn (Team $team): bool => $teamTargets->has($team->id))->count();
         $targetUnits = $actor->role === UserRole::Sales
-            ? $salesTargets->get($actor->id)?->target_units
-            : ($missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? (int) $teamTargets->sum('target_units') : null);
-        $salesTotal = $salesTargets->isEmpty() ? null : (int) $salesTargets->sum('target_units');
+            ? $personalUnits->get($actor->id)
+            : ($missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
+        $salesTotal = $personalUnits->isEmpty() ? null : TargetUnits::number($personalUnits->sum(fn ($n) => TargetUnits::scaled($n)));
         $metrics = $this->metrics($deals, $targetUnits, $period, $start, $end, $historical);
-        // Former members remain in transaction totals; targets follow current membership.
-        $rowUsers = $users->concat($deals->pluck('sales')->filter())->unique('id')->sortBy('name');
+        // Allocations retain their original team and period after membership changes.
+        $rowUsers = $users->concat($allocations->pluck('user'))->concat($deals->pluck('sales')->filter())->unique('id')->sortBy('name');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
             'is_current_member' => $users->contains('id', $sales->id),
-        ], $this->metrics($deals->where('sales_id', $sales->id), $salesTargets->get($sales->id)?->target_units, $period, $start, $end, $historical)))->values()->all();
+        ], $this->metrics($deals->where('sales_id', $sales->id), $personalUnits->get($sales->id), $period, $start, $end, $historical)))->values()->all();
         $contributors = $historical ? [] : $deals->filter(fn (DealTransaction $deal): bool => ! $deal->current_stage->isClosed() && $deal->expected_closing_month?->format('Y-m') === $period)
             ->sortByDesc(fn (DealTransaction $deal): float => (float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$deal->current_stage->value, 0))
             ->take(5)->map(fn (DealTransaction $deal): array => [
@@ -86,7 +114,7 @@ class TeamPerformance
         return [
             'dashboard' => [
                 'period' => $period.'-01', 'targetUnits' => $metrics['target_units'],
-                'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->count() - $salesTargets->count(),
+                'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->pluck('id')->diff($personalUnits->keys())->count(),
                 'teamTargetsMissing' => $missingTeamTargets,
                 'targetAllocationDifference' => $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
                 'realizationUnits' => $metrics['realization_units'], 'forecastUnits' => $metrics['forecast_units'],
@@ -98,6 +126,7 @@ class TeamPerformance
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
                     ? $this->metrics($deals->whereNull('team_id'), null, $period, $start, $end, $historical) : null,
             ],
+            'targetPlans' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? app(TargetPlans::class)->editor($teams, $memberships->load('user'), $teamTargets, $salesTargets, $period) : [],
             'targetableUsers' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $users->map(fn (User $u): array => ['id' => $u->id, 'name' => $u->name, 'username' => $u->username])->values()->all() : [],
             'targetableTeams' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $teams->where('is_active', true)->map(fn (Team $t): array => ['id' => $t->public_id, 'name' => $t->name])->values()->all() : [],
         ];
@@ -106,7 +135,7 @@ class TeamPerformance
     /** @param Collection<int, DealTransaction> $deals
      * @return array<string, mixed>
      */
-    private function metrics(Collection $deals, ?int $target, string $period, CarbonInterface $start, CarbonInterface $end, bool $historical): array
+    private function metrics(Collection $deals, int|float|null $target, string $period, CarbonInterface $start, CarbonInterface $end, bool $historical): array
     {
         $delivered = $deals->filter(fn (DealTransaction $d): bool => $d->stageHistories->contains(fn ($h): bool => $h->to_stage === PipelineStage::Delivery && $h->created_at->gte($start) && $h->created_at->lt($end)));
         $active = $deals->filter(fn (DealTransaction $d): bool => ! $d->current_stage->isClosed());
@@ -122,7 +151,7 @@ class TeamPerformance
             'target_units' => $target, 'realization_units' => $delivered->count(), 'forecast_units' => $forecast,
             'forecast_value' => $historical ? null : round($closing->sum(fn (DealTransaction $d): float => (float) ($d->estimated_value ?? 0) * (float) config('forecast.weights.'.$d->current_stage->value, 0)), 2),
             'gap_units' => $target === null ? null : $target - $delivered->count(),
-            'forecast_gap_units' => $target === null || $forecast === null ? null : round($target - $forecast, 2),
+            'forecast_gap_units' => $target === null || $forecast === null ? null : round($target - $forecast, 4),
             'missing_closing_month_count' => $active->whereNull('expected_closing_month')->count(),
             'missing_delivery_history_count' => $deals->filter(fn (DealTransaction $d): bool => $d->current_stage === PipelineStage::Delivery && ! $d->stageHistories->contains('to_stage', PipelineStage::Delivery))->count(),
             'stage_counts' => $stageCounts,
