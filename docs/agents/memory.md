@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.19 |
+| Versi | v1.20 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
@@ -11,8 +11,11 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- Atas perintah pengguna pada 5 November 2026, migration alokasi target diterapkan pada PostgreSQL development loopback dalam batch 7 dan `DevelopmentReportingSeeder` dijalankan. Terbentuk 3 rencana Desember 2026 dengan 24 alokasi; target tim menjadi 9 dan revisi menjadi 10. Enam target tim lama dan seluruh 48 target personal legacy terverifikasi tidak berubah. Jumlah akun 29, pelanggan 72, transaksi 168 dan notifikasi 59 tetap; tidak ada pengiriman email. Laporan read-only SPV/BM/Sales periode Desember terverifikasi tanpa error; 17 tes target/seeder lulus (211 assertions) pada database test in-memory. Rincian rollout ada pada [catatan implementasi](implementation-target-allocation.md#penerapan-development-lokal).
+
+
 - PR [#32](https://github.com/dswtech/aina-sms-v2/pull/32) dikirim dengan commit implementasi `d595f05`. Branch `codex/team-target-allocation` berangkat dari `main`/`origin/main` `9a13d35` yang bersih. Alur target management, markup SPV, benchmark, alokasi desimal dan editor interaktif mengikuti [PRD](PRD.md) serta [ADR-004](adr/ADR-004-monthly-target-plans.md); kontrak/bukti ada pada [catatan implementasi](implementation-target-allocation.md) dan [E28](uat-matrix.md#e28). Target legacy dipertahankan; histori alokasi tidak dipindah saat Sales keluar/pindah. Seeder menambah contoh bulan berikutnya bila belum ada, tanpa mengadopsi target lama otomatis.
-- Verifikasi fitur target: `composer ci:check` lulus termasuk tiga tes frontend dan Pest 216 tes (213 lulus, 3 skip, 1.675 assertions). Suite PostgreSQL test acak lulus (213 lulus, 3 skip, 1.674 assertions), database test dibersihkan. Production build dan regresi browser sintetis enam viewport/tema plus anggota/konflik lulus, nol write bisnis/error JavaScript. Review independen selesai setelah lima koreksi dengan regresi. Migration/seeder fitur baru belum diterapkan pada database bisnis; schema wajib tersedia sebelum versi aplikasi ini melayani laporan. UAT manusia, concurrency multikoneksi dan p95 tetap terbuka.
+- Verifikasi fitur target: `composer ci:check` lulus termasuk tiga tes frontend dan Pest 216 tes (213 lulus, 3 skip, 1.675 assertions). Suite PostgreSQL test acak lulus (213 lulus, 3 skip, 1.674 assertions), database test dibersihkan. Production build dan regresi browser sintetis enam viewport/tema plus anggota/konflik lulus, nol write bisnis/error JavaScript. Review independen selesai setelah lima koreksi dengan regresi. Pada verifikasi awal migration/seeder belum diterapkan; penerapan development lokal berikutnya dicatat di atas. Production tetap belum diterapkan. UAT manusia, concurrency multikoneksi dan p95 tetap terbuka.
 
 
 - PR [#31](https://github.com/dswtech/aina-sms-v2/pull/31) dikirim dengan commit implementasi `8504ac0`. Branch `codex/g03-reporting-reconciliation` berangkat dari `main` `9e13957` (PR #30 merged). Perbaikan G03 menyatukan periode Jakarta dan scope laporan, memulihkan ID drilldown, memperbaiki total target Sales per tim, serta menetapkan sesi koneksi PostgreSQL ke UTC dan query JSON kompatibel. Rincian, tes dan batas audit timestamp ada di [catatan G03](implementation-g03-reporting-reconciliation.md) dan [E27](uat-matrix.md#e27).
@@ -92,7 +95,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR #32 branch `codex/team-target-allocation`, lalu otorisasi migration dan seeder lokal baru bila diperlukan. PR #31 sudah merged pada `9a13d35`; PR #30/G02 sudah merged pada `9e13957`, migration lokal G01/G02 dan seeder laporan sudah diterapkan. Lanjutkan G04 (peringatan duplikat sebelum simpan), gerbang G13 (concurrency/performa volume) dan gap lain pada [matriks UAT](uat-matrix.md). Audit timestamp sebelum koneksi UTC memerlukan provenance; jangan menggeser data historis otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
+1. Review/merge PR #32 branch `codex/team-target-allocation`, migration dan seeder lokal fitur target sudah diterapkan sesuai catatan di atas; production tetap memerlukan otorisasi tersendiri. PR #31 sudah merged pada `9a13d35`; PR #30/G02 sudah merged pada `9e13957`, migration lokal G01/G02 dan seeder laporan sudah diterapkan. Lanjutkan G04 (peringatan duplikat sebelum simpan), gerbang G13 (concurrency/performa volume) dan gap lain pada [matriks UAT](uat-matrix.md). Audit timestamp sebelum koneksi UTC memerlukan provenance; jangan menggeser data historis otomatis. Worker/scheduler bisnis tetap belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
