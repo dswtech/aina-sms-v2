@@ -3,8 +3,8 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Aturan eksekusi agent |
-| Versi | v1.1 |
-| Tanggal | 30 Oktober 2026 |
+| Versi | v1.2 |
+| Tanggal | 5 November 2026 |
 | Status | Berlaku |
 
 Seluruh aturan berikut wajib dibaca sebelum eksekusi.

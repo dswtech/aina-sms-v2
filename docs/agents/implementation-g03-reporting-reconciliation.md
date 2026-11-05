@@ -1,6 +1,6 @@
 # G03 — Rekonsiliasi Laporan dan Data Demo Development
 
-Tanggal: 5 November 2026. Branch `codex/g03-reporting-reconciliation`, baseline `9e13957` (PR #30 merged).
+Tanggal: 5 November 2026. Commit implementasi `8504ac0`; [PR #31](https://github.com/dswtech/aina-sms-v2/pull/31). Branch `codex/g03-reporting-reconciliation`, baseline `9e13957` (PR #30 merged).
 Sumber keputusan: [PRD](PRD.md), [ADR PostgreSQL](adr/ADR-002-postgresql.md), [aturan proyek](../../rules/README.md).
 
 ## Tujuan dan perubahan
