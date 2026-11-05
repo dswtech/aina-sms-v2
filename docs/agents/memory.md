@@ -11,6 +11,9 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- G10 dikerjakan pada `codex/g10-import-export-verification` dari `main` `264d9d6`. [Rencana dan bukti G10](implementation-g10-import-export.md) serta [E31](uat-matrix.md#e31) mencatat perbaikan privasi preview dan riwayat batch, validasi impor atomik, rekonsiliasi CSV, perlindungan label formula dan PDF browser. CI lulus dengan Pest 357 lulus, tiga skip dan 3.379 assertions, tujuh tes frontend dan production build. Browser ekspor 12 kombinasi dan impor enam kombinasi lulus. Verifikasi memakai data sintetis dan database test terisolasi. UAT manusia, penerimaan cetak oleh operasional, concurrency PostgreSQL, dan p95 tetap terbuka. Langkah berikutnya G11/G13.
+
+
 - Delivery G09: [PR #41](https://github.com/dswtech/aina-sms-v2/pull/41) dibuka dari branch `codex/g09-access-reporting-verification` dengan commit implementasi `3aa9ab9`, target `main`; belum merge. Server QA loopback dan kedua sesi browser sudah dihentikan, artefak lokal tetap ignored.
 
 - G09 dikerjakan pada `codex/g09-access-reporting-verification` dari baseline bersih `main`/`origin/main` `dd93665` (PR #40 sudah merged). [Rencana dan bukti](implementation-g09-verification.md) serta [E30/matriks UAT](uat-matrix.md#e30) mencatat 28 skenario baru dan bukti lama yang digunakan kembali. Regresi menutup reassignment Customer asal di luar tim, penerima bukan Sales, akses/selector Supervisor melalui tim nonaktif, dan filter follow-up hari Jakarta. Kepemilikan transaksi tetap terpisah dari assignment Customer; atribusi laporan tidak berubah. Ledger independen menguji dua Sales, tim/dealer pembanding, dua sumber/model, periode/mode, top-five dan sanitasi seluruh props Branch Manager.
@@ -115,7 +118,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR G09 pada branch di atas; G06–G08/PR #40 sudah merged. Berikutnya prioritaskan G10–G11 serta gerbang G13 pada [matriks UAT](uat-matrix.md). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
+1. Review PR G10. G09/PR #41 dan G06–G08/PR #40 sudah merged. Berikutnya prioritaskan G11 serta gerbang G13 pada [matriks UAT](uat-matrix.md). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

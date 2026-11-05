@@ -105,9 +105,9 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 
 | Referensi PRD | Role | Skenario | Bukti assertion | Status teknis | Keterbatasan dan sisa pekerjaan | UAT |
 |---|---|---|---|---|---|---|
-| [IMP-01](PRD.md#76-csv-import-imp) | A, V | [A05](#a05), [V01](#v01) | [E17](#e17): Admin upload; Sales luar tim V rejected_count satu. | Parsial | Supervisor upload valid, batch aktor asing dan akses file belum diassert [G10](#g10). | Belum dijalankan |
+| [IMP-01](PRD.md#76-csv-import-imp) | A, V | [A05](#a05), [V01](#v01) | [E17](#e17): Admin upload; Sales luar tim V rejected_count satu. | Parsial | [E31](#e31) menambah upload Supervisor, penolakan batch aktor asing dan akses file. | Belum dijalankan |
 | [IMP-02](PRD.md#76-csv-import-imp) | A, V | [A05](#a05) | [E17](#e17): accepted satu/rejected satu pada preview. | Parsial | Belum mengassert isi errors per baris dan nihil Customer sebelum commit. | Belum dijalankan |
-| [IMP-03](PRD.md#76-csv-import-imp) | A, V | [A05](#a05) | [E17](#e17): commit campuran menghasilkan tepat satu Customer dan satu transaksi. | Parsial | Uji koreksi/resubmit, rollback gagal, duplikat dalam file dan double submit [G10](#g10). | Belum dijalankan |
+| [IMP-03](PRD.md#76-csv-import-imp) | A, V | [A05](#a05) | [E17](#e17): commit campuran menghasilkan tepat satu Customer dan satu transaksi. | Parsial | [E31](#e31) menambah koreksi/unggah ulang, rollback dan replay berurutan. | Belum dijalankan |
 | [IMP-04](PRD.md#76-csv-import-imp) | A, V | [A05](#a05) | [E17](#e17): batch ditemukan, count preview; tidak mengassert seluruh metadata audit. | Parsial | Verifikasi actor, waktu, nama file, status dan jumlah di riwayat, termasuk penolakan akses batch. | Belum dijalankan |
 | [IMP-05](PRD.md#76-csv-import-imp) | A, V | [A05](#a05) | [E17](#e17): template hanya assertOk. | Parsial | Assertion header/MIME/nama file/isi contoh dan kesesuaian form belum ada. | Belum dijalankan |
 
@@ -157,7 +157,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [ANL-05](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Jendela Jakarta dan mode Akuisisi/Pencapaian diuji E27 pada SQLite/PostgreSQL; tidak ada conversion Pencapaian. | Belum dijalankan |
 | [ANL-06](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | ID drilldown dan himpunan transaksi sumber diuji E27; UAT konteks navigasi penuh masih terbuka. | Belum dijalankan |
 | [ANL-07](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B02](#b02), [V01](#v01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Scope tim transaksi, perpindahan/ended membership dan sanitasi mengikuti E27; UAT lintas role belum dijalankan. | Belum dijalankan |
-| [ANL-08](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | CSV mengikuti periode/scope dan direkonsiliasi E27. Bukti PDF/print tetap [G10](#g10). | Belum dijalankan |
+| [ANL-08](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | [E31](#e31) menambah rekonsiliasi CSV tiga role dan PDF browser. Penerimaan cetak operasional masih terbuka. | Belum dijalankan |
 | [ANL-09](PRD.md#710-analisis-penjualan-anl) | V, B | [X04](#x04) | Belum assertion Area/MSCP; PRD secara eksplisit menunda. | Ditunda | Menunggu lokasi terstruktur serta modul leasing/definisi MSCP; bukan penghambat MVP. | Belum dijalankan |
 
 ## Katalog bukti otomatis
@@ -307,6 +307,10 @@ CI lengkap lulus: tujuh tes frontend, lint/format, TypeScript, Pint, PHPStan ser
 **G09 — akses dan rekonsiliasi, 5 November 2026.** [Rencana, ledger dan batas](implementation-g09-verification.md). `G09AccessVerificationTest` menguji reassignment Supervisor melalui HTTP, asal di luar cakupan termasuk Customer buatannya, penerima di luar tim/dealer/nonaktif/bukan Sales, histori assignment, pemisahan pemilik transaksi, pencabutan akses pada request berikutnya, selector tim nonaktif, akun nonaktif, baca/edit coaching lintas role/tim/dealer, DELETE empat role dengan revisi utuh, histori Admin pada tim nonaktif, penolakan transaksi baru serta edit tahap Delivery biasa. `FollowUpWorklistTest` membuktikan daftar/count hari ini dan overdue memakai interval UTC dari hari Jakarta, termasuk kedua batas, completed dan pelanggan asing. `StagnantConsistencyTest`, tes parent/edit-boundary/email G01 dan histori/revisi G06 dipakai kembali, tanpa menyalin assertionnya.
 
 `G09ReportingVerificationTest` memakai ledger dua Sales, tim/dealer pembanding, dua sumber/model dan tiga periode untuk metrik personal/tim, nilai/urutan top-five, porsi/tahap/conversion dua mode, kejadian tahap berulang, ID drilldown serta seluruh props halaman Branch Manager tanpa kontak/catatan/coaching/revisi. Bukti browser memakai fixture/intercept; bukan server-save E2E. Koreksi Delivery tetap belum tersedia; UAT manusia, PostgreSQL baru, concurrency dan benchmark volume belum dijalankan. Hasil pemeriksaan akhir tercatat pada dokumen implementasi.
+
+### E31
+
+**G10 — impor dan ekspor, 6 November 2026.** [Rencana dan bukti](implementation-g10-import-export.md). `ImportVerificationTest` mencakup template, preview privat, validasi baris, pembatasan role/aktor/dealer/sesi, perubahan akses setelah preview, rollback, unggah ulang, dan replay berurutan. `ExportVerificationTest` membandingkan seluruh sel CSV terhadap ledger Jakarta, termasuk periode, mode, cakupan tiga role, kutipan CSV, sanitasi dan perlindungan label formula. Regresi cetak memakai aset nyata dan fixture sintetis untuk 12 kombinasi. Pemeriksaan teks dan render PDF membuktikan hasil cetak agregat pada Chrome QA. Penerimaan cetak operasional dan UAT manusia belum dijalankan.
 
 ## Skenario UAT empat role
 
@@ -462,7 +466,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G10
 
-**Kekurangan verifikasi — ekspor dan impor.** Bukti: E17/E18; [source Analisis][analytics-source] punya CSV, [UI][analytics-ui] memakai window.print untuk Save as PDF, sehingga PDF bukan endpoint renderer tersendiri. [ImportController][import-source] menyaring validRows dan membatasi commit actor/status/session, tetapi assertion belum memeriksa rollback, replay, invalid detail, intra-file duplicate dan akses file. Tindak lanjut: uji isi CSV/PDF terhadap ledger/filter/sanitasi, template lengkap, preview tanpa mutasi bisnis dan kasus commit gagal/berulang. Pemilik: QA + Engineering; operasional memverifikasi hasil cetak yang diterima.
+**Verifikasi teknis selesai.** [E31](#e31) mencakup preview/commit Supervisor, batas akses batch dan file, kesalahan per baris, rollback, unggah ulang dan replay berurutan. Ekspor Analisis direkonsiliasi terhadap ledger Jakarta untuk tiga role, serta diperiksa dalam PDF browser pada dua mode dan tema. Penerimaan hasil cetak oleh operasional dan UAT manusia tetap terbuka. Concurrency PostgreSQL dan p95 berada di [G13](#g13).
 
 ### G11
 

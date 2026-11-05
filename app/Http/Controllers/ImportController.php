@@ -10,9 +10,11 @@ use App\Models\DealTransaction;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Support\PhoneNormalizer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -39,27 +41,18 @@ class ImportController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        $batches = CsvImportBatch::query()
-            ->where('dealer_id', $actor->dealer_id)
-            ->with('user:id,name')
-            ->latest()
-            ->limit(20)
-            ->get()
-            ->map(fn (CsvImportBatch $batch): array => [
-                'id' => $batch->id,
-                'original_filename' => $batch->original_filename,
-                'status' => $batch->status,
-                'total_rows' => $batch->total_rows,
-                'accepted_count' => $batch->accepted_count,
-                'rejected_count' => $batch->rejected_count,
-                'created_at' => $batch->created_at->toIso8601String(),
-                'actor_name' => $batch->user?->name,
-            ])->all();
-
         $preview = $request->session()->get('import_preview');
+        if (! is_array($preview) || ! CsvImportBatch::query()
+            ->whereKey($preview['batch_id'] ?? null)
+            ->where('dealer_id', $actor->dealer_id)
+            ->where('user_id', $actor->id)
+            ->where('status', 'preview')->exists()) {
+            $preview = null;
+            $request->session()->forget('import_preview');
+        }
 
         return Inertia::render('imports/index', [
-            'batches' => $batches,
+            'batches' => $this->recentBatches($actor),
             'preview' => $preview,
         ]);
     }
@@ -138,6 +131,9 @@ class ImportController extends Controller
             }
 
             $errors = $this->validateRow($actor, $record);
+            if (count($line) !== count($header)) {
+                $errors[] = 'Jumlah kolom tidak sesuai header CSV.';
+            }
             $normalizedPhone = PhoneNormalizer::normalize($record['phone']);
             if ($normalizedPhone !== null && isset($seenPhones[$normalizedPhone])) {
                 $errors[] = 'Nomor telepon berulang dalam CSV. Gunakan satu identitas pelanggan.';
@@ -201,10 +197,11 @@ class ImportController extends Controller
             abort_unless($batch->status === 'preview', 422);
             foreach ($validRows as $row) {
                 $record = $row['data'];
-                if (Customer::query()->where('dealer_id', $actor->dealer_id)->where('phone', PhoneNormalizer::normalize($record['phone']))->exists()) {
-                    throw ValidationException::withMessages(['import' => 'Nomor telepon pada baris '.$row['row_number'].' sudah terdaftar. Tidak ada baris yang disimpan; unggah ulang CSV untuk memeriksa data terbaru.']);
+                $errors = $this->validateRow($actor, $record);
+                if ($errors !== []) {
+                    throw ValidationException::withMessages(['import' => 'Baris '.$row['row_number'].': '.implode(' ', $errors).' Tidak ada baris yang disimpan; unggah ulang CSV untuk memeriksa data terbaru.']);
                 }
-                $sales = $this->resolveSales($actor, (string) $record['sales_username']);
+                $sales = $this->resolveSales($actor, trim((string) $record['sales_username']));
                 $customer = Customer::create([
                     'dealer_id' => $actor->dealer_id,
                     'created_by_id' => $actor->id,
@@ -222,7 +219,7 @@ class ImportController extends Controller
                     'dealer_id' => $actor->dealer_id,
                     'customer_id' => $customer->id,
                     'sales_id' => $sales->id,
-                    'team_id' => $sales->activeTeamMemberships()->value('team_id'),
+                    'team_id' => $this->salesMemberships($actor, $sales)->value('team_id'),
                     'vehicle_model' => trim((string) $record['vehicle_model']),
                     'estimated_value' => $this->nullableInteger($record['estimated_value']),
                     'source' => trim((string) $record['source']),
@@ -248,11 +245,24 @@ class ImportController extends Controller
      */
     private function validateRow(User $actor, array $record): array
     {
-        $errors = [];
-
-        if (trim((string) ($record['name'] ?? '')) === '') {
-            $errors[] = 'Nama wajib diisi.';
-        }
+        $record = array_map(fn ($value): ?string => $this->nullableString($value), $record);
+        $errors = Validator::make($record, [
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:32'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'vehicle_model' => ['required', 'string', 'max:255'],
+            'estimated_value' => ['nullable', 'integer', 'min:0', 'max:'.PHP_INT_MAX],
+            'source' => ['required', 'string', 'max:64'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'contact_channel_preference' => ['nullable', 'in:whatsapp,phone,any'],
+            'sales_username' => ['required', 'string', 'max:255'],
+        ], [], [
+            'name' => 'Nama', 'phone' => 'Nomor telepon', 'email' => 'Email',
+            'address' => 'Alamat', 'vehicle_model' => 'Model kendaraan',
+            'estimated_value' => 'Estimasi nilai', 'source' => 'Sumber', 'notes' => 'Catatan',
+            'contact_channel_preference' => 'Preferensi kontak', 'sales_username' => 'Username Sales',
+        ])->errors()->all();
 
         $phone = (string) ($record['phone'] ?? '');
         if (! PhoneNormalizer::isValid($phone)) {
@@ -267,37 +277,13 @@ class ImportController extends Controller
             }
         }
 
-        if (trim((string) ($record['vehicle_model'] ?? '')) === '') {
-            $errors[] = 'Model kendaraan wajib diisi.';
-        }
-
-        $source = trim((string) ($record['source'] ?? ''));
-        if ($source === '' || strlen($source) > 64) {
-            $errors[] = 'Sumber wajib diisi maksimal 64 karakter.';
-        }
-
-        $email = $this->nullableString($record['email']);
-        if ($email !== null && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Email tidak valid.';
-        }
-
-        $estimatedValue = $record['estimated_value'] ?? null;
-        if ($estimatedValue !== null && $estimatedValue !== '' && (! is_numeric($estimatedValue) || (int) $estimatedValue < 0)) {
-            $errors[] = 'Estimasi nilai harus angka positif.';
-        }
-
-        $preference = $this->nullableString($record['contact_channel_preference']);
-        if ($preference !== null && ! in_array($preference, ['whatsapp', 'phone', 'any'], true)) {
-            $errors[] = 'Preferensi kontak tidak valid.';
-        }
-
         $salesUsername = trim((string) ($record['sales_username'] ?? ''));
         if ($salesUsername === '') {
             $errors[] = 'Username sales wajib diisi.';
         } else {
             try {
                 $this->resolveSales($actor, $salesUsername);
-            } catch (\Throwable $exception) {
+            } catch (\DomainException $exception) {
                 $errors[] = $exception->getMessage();
             }
         }
@@ -315,23 +301,28 @@ class ImportController extends Controller
             ->first();
 
         if ($sales === null) {
-            throw new \RuntimeException('Sales tidak ditemukan atau tidak aktif.');
+            throw new \DomainException('Sales tidak ditemukan atau tidak aktif.');
         }
 
-        if ($actor->role === UserRole::Supervisor) {
-            $teamIds = $actor->activeTeamMemberships()->select('team_id');
-            $allowed = TeamMembership::query()
-                ->whereIn('team_id', $teamIds)
-                ->where('user_id', $sales->id)
-                ->whereNull('ended_at')
-                ->exists();
-
-            if (! $allowed) {
-                throw new \RuntimeException('Sales berada di luar tim Supervisor.');
-            }
+        if ($actor->role === UserRole::Supervisor && ! $this->salesMemberships($actor, $sales)->exists()) {
+            throw new \DomainException('Sales berada di luar tim aktif Supervisor.');
         }
 
         return $sales;
+    }
+
+    /** @return Builder<TeamMembership> */
+    private function salesMemberships(User $actor, User $sales): Builder
+    {
+        $memberships = TeamMembership::query()
+            ->where('user_id', $sales->id)->where('role', UserRole::Sales)->whereNull('ended_at')
+            ->whereHas('team', fn (Builder $team): Builder => $team->where('dealer_id', $actor->dealer_id)->where('is_active', true));
+
+        if ($actor->role === UserRole::Supervisor) {
+            $memberships->whereIn('team_id', $actor->activeTeamMemberships()->where('role', UserRole::Supervisor)->select('team_id'));
+        }
+
+        return $memberships;
     }
 
     private function nullableString(mixed $value): ?string
@@ -361,6 +352,7 @@ class ImportController extends Controller
     {
         return CsvImportBatch::query()
             ->where('dealer_id', $actor->dealer_id)
+            ->when($actor->role === UserRole::Supervisor, fn (Builder $query): Builder => $query->where('user_id', $actor->id))
             ->with('user:id,name')
             ->latest()
             ->limit(20)

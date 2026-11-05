@@ -43,7 +43,7 @@ class AnalyticsController extends Controller
             fputcsv($handle, ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)']);
             foreach ($data['sources'] as $row) {
                 fputcsv($handle, [
-                    $row['source'],
+                    $this->csvLabel($row['source']),
                     $row['total'],
                     $row['share'],
                     $row['spk'],
@@ -58,7 +58,7 @@ class AnalyticsController extends Controller
             fputcsv($handle, ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery']);
             foreach ($data['models'] as $row) {
                 fputcsv($handle, [
-                    $row['model'],
+                    $this->csvLabel($row['model']),
                     $row['total'],
                     $row['share'],
                     $row['spk'],
@@ -71,6 +71,11 @@ class AnalyticsController extends Controller
         }, "analisis-{$data['period']}-{$data['mode']}.csv", [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    private function csvLabel(string $value): string
+    {
+        return preg_match('/^\s*[=+\-@]|^[\t\r\n]/u', $value) ? "'".$value : $value;
     }
 
     /**

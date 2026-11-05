@@ -144,7 +144,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
     return (
         <>
             <Head title="Analisis" />
-            <div className="mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10 print:max-w-none print:px-0 print:pt-0 print:pb-0">
+            <div className="analytics-print mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10 print:max-w-none print:px-0 print:pt-0 print:pb-0">
                 <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                     <div className="max-w-2xl">
                         <h1 className="text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
