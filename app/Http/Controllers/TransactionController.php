@@ -6,6 +6,7 @@ use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
 use App\Models\DealTransaction;
+use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -126,7 +127,7 @@ class TransactionController extends Controller
                 ->where('role', UserRole::Sales);
 
             if ($actor->role === UserRole::Supervisor) {
-                $teamIds = $actor->activeTeamMemberships()->select('team_id');
+                $teamIds = Team::query()->visibleTo($actor)->select('id');
                 $salesQuery->whereHas('activeTeamMemberships', function ($query) use ($teamIds): void {
                     $query->whereIn('team_id', $teamIds)->whereNull('ended_at');
                 });

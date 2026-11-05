@@ -232,7 +232,7 @@ class DealTransaction extends Model
         }
 
         if ($actor->role === UserRole::Supervisor) {
-            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $teamIds = Team::query()->visibleTo($actor)->select('id');
             $salesUserIds = TeamMembership::query()
                 ->whereIn('team_id', $teamIds)
                 ->whereNull('ended_at')

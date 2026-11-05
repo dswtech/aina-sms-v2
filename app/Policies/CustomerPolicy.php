@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Enums\UserRole;
 use App\Models\Customer;
+use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 
@@ -30,7 +31,7 @@ class CustomerPolicy
         }
 
         if ($actor->role === UserRole::Supervisor) {
-            $teamIds = $actor->activeTeamMemberships()->select('team_id');
+            $teamIds = Team::query()->visibleTo($actor)->select('id');
             $assignedSalesId = $customer->activeAssignment?->sales_id;
 
             if ($assignedSalesId !== null) {
@@ -67,6 +68,15 @@ class CustomerPolicy
             return false;
         }
 
-        return in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true);
+        if ($actor->role === UserRole::Admin) {
+            return true;
+        }
+
+        return $actor->role === UserRole::Supervisor
+            && $customer->assignments()->whereNull('ended_at')
+                ->whereIn('sales_id', TeamMembership::query()->whereNull('ended_at')
+                    ->where('role', UserRole::Sales)
+                    ->whereIn('team_id', Team::query()->visibleTo($actor)->select('id'))
+                    ->select('user_id'))->exists();
     }
 }

@@ -13,6 +13,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [`implementation-g09-verification.md`](implementation-g09-verification.md) | Rencana dan bukti G09 | Verifikasi akses, reassignment, coaching, follow-up Jakarta dan rekonsiliasi; koreksi Delivery tetap terbuka. |
 | [`design-g06-g08-history-stagnant-import.md`](design-g06-g08-history-stagnant-import.md) | Rancangan G06–G08 | Rancangan disetujui untuk riwayat terpadu, audit revisi Admin, konsistensi hari kalender stagnan dan impor mobile dalam satu PR. |
 | [`implementation-g06-g08.md`](implementation-g06-g08.md) | Rencana G06–G08 | Task, kontrak, verifikasi dan ledger implementasi satu PR. |
 | [`../panduan-bobot-forecast.md`](../panduan-bobot-forecast.md) | Panduan pembaca | Penjelasan bobot forecast, simulasi unit/gap, pengaruh bobot dan cakupan role untuk dibaca ulang atau dibagikan. |

@@ -3,13 +3,18 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.25 |
+| Versi | v1.26 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Delivery G09: [PR #41](https://github.com/dswtech/aina-sms-v2/pull/41) dibuka dari branch `codex/g09-access-reporting-verification` dengan commit implementasi `3aa9ab9`, target `main`; belum merge. Server QA loopback dan kedua sesi browser sudah dihentikan, artefak lokal tetap ignored.
+
+- G09 dikerjakan pada `codex/g09-access-reporting-verification` dari baseline bersih `main`/`origin/main` `dd93665` (PR #40 sudah merged). [Rencana dan bukti](implementation-g09-verification.md) serta [E30/matriks UAT](uat-matrix.md#e30) mencatat 28 skenario baru dan bukti lama yang digunakan kembali. Regresi menutup reassignment Customer asal di luar tim, penerima bukan Sales, akses/selector Supervisor melalui tim nonaktif, dan filter follow-up hari Jakarta. Kepemilikan transaksi tetap terpisah dari assignment Customer; atribusi laporan tidak berubah. Ledger independen menguji dua Sales, tim/dealer pembanding, dua sumber/model, periode/mode, top-five dan sanitasi seluruh props Branch Manager.
+- Verifikasi G09: `composer ci:check` lulus, tujuh tes frontend dan Pest 311 tes (308 lulus/3 skip; 2.814 assertions), lint/format, TypeScript, Pint dan PHPStan. Production build lulus. Browser lead/contact/filter enam kombinasi, histori enam plus skenario izin/retry/draft, dashboard 28 dan metrik role 42 pemeriksaan lulus; nol write bisnis/pageerror, 35 submit diintersep pada dua suite pertama. Review independen tanpa temuan actionable. SQLite test in-memory; tidak ada dependency/migration/.env/write bisnis. Koreksi berwenang setelah Delivery sengaja tetap gap source; PostgreSQL baru/concurrency/p95/server-save E2E/UAT manusia dan Fase 6 belum selesai.
 
 - PR [#40](https://github.com/dswtech/aina-sms-v2/pull/40) dikirim dengan commit implementasi `2019e82` pada branch `codex/g06-g08-history-stagnant-import`, dari `origin/main` `958e983` (PR #38/G05 dan #39/panduan forecast sudah merged). Rancangan G06–G08 disetujui pengguna untuk satu PR; [rancangan](design-g06-g08-history-stagnant-import.md), [rencana dan bukti](implementation-g06-g08.md), serta [E29/matriks UAT](uat-matrix.md#e29) memuat batas cakupan. Riwayat semua transaksi berizin dan aktivitas dipaginasi, timeline tahap/aktivitas/komentar/reply dipakai bersama pada detail dan coaching, revisi hanya untuk Admin. Payload histori lama yang tidak dibatasi dihapus. Query/accessor stagnant memakai hari kalender Jakarta bersama. Preview serta batch impor menjadi kartu lengkap pada mobile. Aksi cepat/histori menunjuk transaksi yang tepat; draft bertahan saat paging/retry sementara dan dibersihkan saat perubahan transaksi/pencabutan izin.
 - Verifikasi G06–G08: `composer ci:check` lulus, tujuh tes frontend dan Pest 283 tes (280 lulus, tiga skip; 2.439 assertions), lint/format, TypeScript, Pint dan PHPStan. Production build lulus. Browser G06/G08 masing-masing enam kombinasi viewport/tema plus skenario aksi/draft/izin/retry serta impor loading/error/keyboard lulus; G04 18 kombinasi, G05 enam dan aksesibilitas 21 kelompok lulus. Semua write browser diintersep, tidak ada write bisnis/pageerror pada suite baru. Review backend/UI independen selesai setelah koreksi dengan regresi. Screenshot perwakilan diperiksa; detector impor nol FAIL, satu warning alignment angka desktop yang mengikuti tabel lama. Tanpa migration/dependency/.env atau write database bisnis. SQLite test in-memory terisolasi; PostgreSQL baru, concurrency, p95, server-save E2E dan UAT manusia belum dijalankan. Artefak QA lokal berada di `.playwright-cli` yang diabaikan Git.
@@ -110,7 +115,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review/merge PR G06–G08 pada branch di atas; G05/PR #38 sudah merged. Berikutnya prioritaskan backlog verifikasi G09–G11 serta gerbang G13 pada [matriks UAT](uat-matrix.md). Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
+1. Review/merge PR G09 pada branch di atas; G06–G08/PR #40 sudah merged. Berikutnya prioritaskan G10–G11 serta gerbang G13 pada [matriks UAT](uat-matrix.md). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
