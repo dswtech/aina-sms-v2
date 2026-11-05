@@ -43,6 +43,15 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 
 ## Interaksi dan aksesibilitas
 
+### Dashboard analitik
+
+- Setelah KPI dan catatan periode, dashboard memakai grid 2:1 mulai 1280px: kinerja tim berdampingan dengan distribusi pipeline, lalu ranking Sales dengan kontributor forecast. Di bawah 1280px panel bertumpuk; Sales memakai kinerja personal tanpa panel lintas tim.
+- Realisasi dan forecast memakai dua batang sejajar, biru solid dan biru muda, pada skala bersama per panel. Forecast sudah mencakup realisasi. Target ditandai garis dengan angka terlihat sesuai hak akses; nilai di atas target tidak dipotong. Target belum ditetapkan dan forecast tidak tersedia mempunyai label tersendiri.
+- Ranking awal menampilkan lima Sales menurut realisasi, forecast, lalu nama; tombol 44px membuka seluruh Sales. Semua angka lama tetap tersedia dalam disclosure rincian yang dapat dibuka dengan keyboard. Distribusi tujuh tahap tidak dilabeli sebagai conversion funnel.
+- Kontributor forecast menampilkan perbandingan nilai rupiah berbobot. Prioritas tindak lanjut menampilkan jumlah item yang sedang terlihat; peringatan stagnan berada di dekat daftar. Hak akses serta arti periode tetap mengikuti PRD dan server.
+
+### Pola umum
+
 - Target sentuh minimum 44×44px.
 - Focus ring biru terlihat dan tidak tertutup sticky navigation.
 - Semua dialog dapat ditutup dengan Escape dan mengembalikan focus ke pemicu.

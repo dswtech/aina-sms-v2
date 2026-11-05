@@ -9,7 +9,7 @@
         "check": "vp check resources/js package.json",
         "check:fix": "vp check --fix resources/js package.json",
         "types:check": "tsc --noEmit",
-        "test:frontend": "node --experimental-strip-types --test tests/Frontend/target-allocation.test.mjs"
+        "test:frontend": "node --experimental-strip-types --test tests/Frontend/*.test.mjs"
     },
     "dependencies": {
         "@inertiajs/react": "^3.0.0",

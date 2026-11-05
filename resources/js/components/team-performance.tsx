@@ -15,7 +15,7 @@ export type Metrics = {
     missing_closing_month_count?: number;
     missing_delivery_history_count?: number;
 };
-type PerformanceRow = Metrics & {
+export type PerformanceRow = Metrics & {
     id: number | string;
     name: string;
     username?: string;
@@ -339,8 +339,10 @@ export function PerformanceTable({
 
 export function PriorityLists({
     priorities,
+    showCounts = false,
 }: {
     priorities: ReportingProps['dashboard']['priorities'];
+    showCounts?: boolean;
 }) {
     const groups = [
         ['stagnant', 'Transaksi stagnan'],
@@ -356,6 +358,11 @@ export function PriorityLists({
                 >
                     <h2 className="border-b p-5 text-base font-semibold">
                         {title}
+                        {showCounts && (
+                            <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                ({priorities?.[key]?.length ?? 0})
+                            </span>
+                        )}
                     </h2>
                     {!priorities?.[key]?.length ? (
                         <p className="p-5 text-sm text-muted-foreground">

@@ -217,15 +217,27 @@ async function targetRoleMetrics(page) {
                                 role === 'supervisor'),
                         `Editor visibility: ${role} ${url}`,
                     );
-                    const personalSection = page.locator('section').filter({
-                        has: page.getByRole('heading', {
-                            name:
-                                component === 'targets/index'
-                                    ? 'Target dan kinerja Sales'
-                                    : 'Kinerja per Sales',
-                            exact: true,
-                        }),
-                    });
+                    if (component === 'dashboard') {
+                        await page
+                            .getByText('Lihat rincian angka Sales', {
+                                exact: true,
+                            })
+                            .click();
+                    }
+                    const personalSection = page
+                        .locator('section')
+                        .filter({
+                            has: page.getByRole('heading', {
+                                name:
+                                    component === 'targets/index'
+                                        ? 'Target dan kinerja Sales'
+                                        : component === 'dashboard'
+                                          ? 'Rincian kinerja Sales'
+                                          : 'Kinerja per Sales',
+                                exact: true,
+                            }),
+                        })
+                        .last();
                     const card = personalSection
                         .locator('article')
                         .filter({ hasText: 'Sales Alpha QA' });
