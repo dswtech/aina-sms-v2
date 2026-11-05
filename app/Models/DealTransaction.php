@@ -23,6 +23,7 @@ use InvalidArgumentException;
  * @property int $sales_id
  * @property int|null $team_id
  * @property string $vehicle_model
+ * @property CarbonInterface|null $expected_closing_month
  * @property int|null $estimated_value
  * @property string $source
  * @property PipelineStage $current_stage
@@ -40,6 +41,7 @@ use InvalidArgumentException;
     'team_id',
     'vehicle_model',
     'estimated_value',
+    'expected_closing_month',
     'source',
     'current_stage',
     'booking_fee_confirmed_at',
@@ -231,6 +233,7 @@ class DealTransaction extends Model
     protected function casts(): array
     {
         return [
+            'expected_closing_month' => 'date',
             'current_stage' => PipelineStage::class,
             'lost_reason' => LostReason::class,
             'booking_fee_confirmed_at' => 'datetime',

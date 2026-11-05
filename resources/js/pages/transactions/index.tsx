@@ -1,3 +1,4 @@
+import { ClosingMonthForm } from '@/components/team-performance';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
@@ -19,6 +20,7 @@ type Transaction = {
     current_stage: string;
     stage_label: string;
     estimated_value: number | null;
+    expected_closing_month: string | null;
     is_stagnant: boolean;
     last_activity_at: string | null;
     created_at: string;
@@ -98,7 +100,7 @@ export default function TransactionsIndex({
         event.preventDefault();
         if (!selected) return;
         router.patch(
-            `/transactions/${selected.id}/stage`,
+            `/transactions/${selected.public_id}/stage`,
             {
                 to_stage: toStage,
                 notes: notes || null,
@@ -427,7 +429,7 @@ export default function TransactionsIndex({
 
                 {selected && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                        <div className="w-full max-w-lg rounded-xl bg-background p-5 shadow-xl">
+                        <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl bg-background p-5 shadow-xl">
                             <h2 className="text-lg font-semibold">
                                 Ubah tahap transaksi
                             </h2>
@@ -435,6 +437,15 @@ export default function TransactionsIndex({
                                 {selected.customer?.name} ·{' '}
                                 {selected.vehicle_model}
                             </p>
+                            <div className="mt-4">
+                                <ClosingMonthForm
+                                    key={selected.public_id}
+                                    transactionId={selected.public_id}
+                                    month={
+                                        selected.expected_closing_month ?? null
+                                    }
+                                />
+                            </div>
                             <form
                                 onSubmit={submitUpdate}
                                 className="mt-4 space-y-4"

@@ -96,6 +96,7 @@ class TransactionController extends Controller
                     'current_stage' => $transaction->current_stage->value,
                     'stage_label' => $transaction->current_stage->label(),
                     'estimated_value' => $transaction->estimated_value,
+                    'expected_closing_month' => $transaction->expected_closing_month?->format('Y-m'),
                     'is_stagnant' => $transaction->is_stagnant,
                     'last_activity_at' => $transaction->last_activity_at?->toIso8601String(),
                     'created_at' => $transaction->created_at->toIso8601String(),

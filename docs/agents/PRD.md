@@ -178,7 +178,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ORG-03 | **Admin menempatkan Supervisor dan Sales ke tim.** Perubahan penempatan berlaku untuk akses berikutnya dan tidak mengubah penulis riwayat lama. | M |
 | ORG-04 | **Branch Manager dapat membaca kinerja seluruh tim.** Hak ini read-only dan tidak memberi kemampuan mengubah transaksi. | M |
 | ORG-05 | **Supervisor hanya mengelola tim yang ditugaskan.** Penugasan lintas tim harus dilakukan Admin. | M |
-| ORG-06 | **Target dapat ditetapkan per periode untuk tim dan Sales.** Target yang berubah menyimpan siapa dan kapan perubahan dilakukan. | S |
+| ORG-06 | **Target bulanan tim dan Sales berdiri sendiri tanpa penjumlahan atau fallback.** Untuk penggunaan saat ini, Supervisor mencatat target dari cabang bagi timnya dan menetapkan target motivasi bagi Sales aktif timnya; Admin mendukung pengelolaan. Target belum diisi dibedakan dari nol. Perubahan menyimpan nilai sebelum/sesudah, pelaku, dan waktu. Branch Manager tetap hanya baca; kewenangan menetapkan target tim ditunda. | S |
 | ORG-07 | **Admin dapat melihat status undangan dan akun.** Tampilan membedakan invited, active, dan inactive. | S |
 
 ### 7.3 Customer & Lead (`CRM`)
@@ -253,10 +253,10 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 
 | ID | Kebutuhan | Prioritas |
 |---|---|---|
-| FCT-01 | **Forecast menghitung realisasi ditambah nilai berbobot dari transaksi aktif pada periode.** Rumus dan waktu perhitungan harus konsisten di seluruh dashboard. | M |
+| FCT-01 | **Forecast bulanan menghitung realisasi ditambah bobot transaksi aktif dengan estimasi bulan closing pada periode terpilih.** Estimasi bulan closing dapat diisi saat membuat lead/transaksi dan diperbarui Sales terkait atau Supervisor berwenang pada transaksi aktif. Estimasi kosong tidak diisi otomatis dan jumlahnya ditampilkan sebagai kekurangan data; Delivery/Lost tidak masuk pipeline berbobot. Realisasi menghitung transaksi unik dari riwayat kejadian Delivery dalam bulan Asia/Jakarta, bukan tanggal edit terakhir; Delivery tanpa riwayat tanggal ditandai tanpa mengarang tanggal. Forecast bulan berjalan/mendatang memakai pipeline terkini; forecast dan gap forecast bulan lampau tidak tersedia karena snapshot historis belum disimpan. Rumus/presisi konsisten di seluruh dashboard dan rincian. | M |
 | FCT-02 | **Setiap tahap aktif mempunyai bobot peluang yang dikelola melalui konfigurasi server.** Bobot final diputuskan bersama operasional dealer sebelum forecast production diaktifkan. | M |
 | FCT-03 | **Dashboard membedakan target, realisasi, dan forecast secara tegas.** Forecast tidak boleh disajikan seolah-olah hasil pasti. | M |
-| FCT-04 | **Supervisor melihat forecast dan gap per Sales serta tim.** Branch Manager melihat agregat dan perbandingan tim. | S |
+| FCT-04 | **Supervisor melihat forecast serta gap terhadap realisasi dan forecast per Sales serta tim.** Gap adalah target dikurangi realisasi/forecast dan boleh negatif ketika target terlampaui. Agregasi tim memakai tim yang tercatat pada transaksi, sedangkan target Sales mengikuti penempatan aktif; perpindahan Sales tidak memindahkan histori transaksi. Branch Manager melihat agregat dan perbandingan tim tersanitasi. Transaksi tanpa tim ditampilkan terpisah di agregat dealer. Kelengkapan target dealer tidak mensyaratkan target baru untuk tim nonaktif; target historis tim tersebut tetap tersedia. | S |
 | FCT-05 | **Sistem menampilkan transaksi yang paling berkontribusi pada forecast.** Daftar membantu menentukan prioritas follow-up, bukan menjamin closing. | S |
 | FCT-06 | **Pembelajaran bobot otomatis atau AI tidak disediakan pada MVP.** Pengembangan tersebut menunggu data historis yang cukup dan evaluasi model. | W |
 

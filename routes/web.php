@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\TeamMembershipController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\ClosingMonthController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\DealCommentController;
 use App\Http\Controllers\DashboardController;
@@ -41,19 +42,22 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('transactions/{transaction}/comments', [DealCommentController::class, 'store'])->name('deals.comments.store');
         Route::patch('comments/{comment}', [DealCommentController::class, 'update'])->name('comments.update');
 
+        Route::patch('transactions/{transaction}/closing-month', [ClosingMonthController::class, 'update'])->name('transactions.closing-month');
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
 
-    Route::inertia('targets', 'module-status', ['module' => 'targets'])
-        ->middleware('role:supervisor')
+    Route::get('targets', [DashboardController::class, 'targets'])
+        ->middleware('role:supervisor,admin')
         ->name('targets.index');
+
+    Route::post('team-targets', [TargetController::class, 'storeTeam'])->middleware(['role:supervisor,admin', 'throttle:20,1'])->name('team-targets.store');
 
     Route::post('targets', [TargetController::class, 'store'])
         ->middleware(['role:supervisor,admin', 'throttle:20,1'])
         ->name('targets.store');
 
-    Route::inertia('team-performance', 'module-status', ['module' => 'team-performance'])
+    Route::get('team-performance', [DashboardController::class, 'teams'])
         ->middleware('role:branch_manager')
         ->name('team-performance.index');
 
