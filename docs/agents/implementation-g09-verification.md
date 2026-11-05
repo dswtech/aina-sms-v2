@@ -17,7 +17,7 @@ Rencana implementasi disetujui pengguna pada 5 November 2026. Baseline `main` ad
 - [x] Tambah ledger laporan multi-Sales/tim/dealer, sumber/model, mode/periode, top-five dan sanitasi seluruh props halaman Branch Manager.
 - [x] Jalankan pemeriksaan penuh, production build dan regresi browser relevan.
 - [x] Review independen; tidak ada temuan actionable.
-- [ ] Perbarui bukti/matriks/memory; commit Conventional Commits dan satu PR tanpa merge.
+- [x] Perbarui bukti/matriks/memory; commit Conventional Commits dan satu PR tanpa merge.
 
 ### Hasil verifikasi
 
@@ -34,6 +34,7 @@ Rencana implementasi disetujui pengguna pada 5 November 2026. Baseline `main` ad
 - Review independen seluruh diff terhadap `dd93665` tidak menemukan temuan actionable. Tidak ada minor yang ditunda dari review ini. `git diff --check` lulus.
 - Ruling: gunakan branch khusus pada checkout bersih yang ada sesuai rencana pengguna, tanpa worktree baru atau instalasi dependency. Tidak ada perubahan pengguna yang ditimpa.
 - Validasi dokumentasi: 80 referensi requirement unik tetap lengkap dan seluruh tautan lokal pada dokumen yang berubah resolve. Server QA loopback 8019 dan kedua sesi browser tugas sudah dihentikan.
+- Delivery: commit implementasi `3aa9ab9`, [PR #41](https://github.com/dswtech/aina-sms-v2/pull/41), base `main`. Branch fitur didorong tanpa merge. Konektor GitHub create PR ditolak 403 izin integrasi; PR berhasil dibuat melalui GitHub CLI yang tersedia.
 
 ## Batas penerimaan
 

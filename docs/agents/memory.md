@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- Delivery G09: [PR #41](https://github.com/dswtech/aina-sms-v2/pull/41) dibuka dari branch `codex/g09-access-reporting-verification` dengan commit implementasi `3aa9ab9`, target `main`; belum merge. Server QA loopback dan kedua sesi browser sudah dihentikan, artefak lokal tetap ignored.
+
 - G09 dikerjakan pada `codex/g09-access-reporting-verification` dari baseline bersih `main`/`origin/main` `dd93665` (PR #40 sudah merged). [Rencana dan bukti](implementation-g09-verification.md) serta [E30/matriks UAT](uat-matrix.md#e30) mencatat 28 skenario baru dan bukti lama yang digunakan kembali. Regresi menutup reassignment Customer asal di luar tim, penerima bukan Sales, akses/selector Supervisor melalui tim nonaktif, dan filter follow-up hari Jakarta. Kepemilikan transaksi tetap terpisah dari assignment Customer; atribusi laporan tidak berubah. Ledger independen menguji dua Sales, tim/dealer pembanding, dua sumber/model, periode/mode, top-five dan sanitasi seluruh props Branch Manager.
 - Verifikasi G09: `composer ci:check` lulus, tujuh tes frontend dan Pest 311 tes (308 lulus/3 skip; 2.814 assertions), lint/format, TypeScript, Pint dan PHPStan. Production build lulus. Browser lead/contact/filter enam kombinasi, histori enam plus skenario izin/retry/draft, dashboard 28 dan metrik role 42 pemeriksaan lulus; nol write bisnis/pageerror, 35 submit diintersep pada dua suite pertama. Review independen tanpa temuan actionable. SQLite test in-memory; tidak ada dependency/migration/.env/write bisnis. Koreksi berwenang setelah Delivery sengaja tetap gap source; PostgreSQL baru/concurrency/p95/server-save E2E/UAT manusia dan Fase 6 belum selesai.
 
