@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -138,7 +139,7 @@ class DealTransaction extends Model
     }
 
     /**
-     * A deal is stagnant if it is still active (not Delivery or Lost) and has no activity for > 3 days.
+     * Active deals become stagnant after more than three Jakarta calendar days without activity.
      */
     public function getIsStagnantAttribute(): bool
     {
@@ -148,7 +149,28 @@ class DealTransaction extends Model
 
         $checkDate = $this->last_activity_at ?? $this->created_at;
 
-        return $checkDate !== null && $checkDate->lessThan(now()->subDays(3));
+        return $checkDate !== null && $checkDate->lessThan(self::stagnantCutoff());
+    }
+
+    public static function stagnantCutoff(): CarbonImmutable
+    {
+        return CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays(3)->utc();
+    }
+
+    /** @param Builder<DealTransaction> $query */
+    public function scopeStagnant(Builder $query): void
+    {
+        $activityColumn = $query->qualifyColumn('last_activity_at');
+        $createdColumn = $query->qualifyColumn('created_at');
+        $cutoff = self::stagnantCutoff();
+
+        $query->whereNotIn($query->qualifyColumn('current_stage'), [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+            ->where(function (Builder $query) use ($activityColumn, $createdColumn, $cutoff): void {
+                $query->where($activityColumn, '<', $cutoff)
+                    ->orWhere(function (Builder $query) use ($activityColumn, $createdColumn, $cutoff): void {
+                        $query->whereNull($activityColumn)->where($createdColumn, '<', $cutoff);
+                    });
+            });
     }
 
     /**

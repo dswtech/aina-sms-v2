@@ -47,6 +47,25 @@ async function leadContactFilters(page) {
                 body: JSON.stringify(fixture),
             });
         }
+        if (url.pathname.endsWith('/history')) {
+            if (!customer || !url.pathname.includes(customer.public_id))
+                throw new Error('Missing synthetic customer history');
+            const emptyPage = {
+                data: [],
+                current_page: 1,
+                last_page: 1,
+                total: 0,
+            };
+            return route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    transactions: [],
+                    selected_transaction: null,
+                    activities: emptyPage,
+                    timeline: emptyPage,
+                }),
+            });
+        }
         if (request.headers()['x-inertia']) {
             queries.push(Object.fromEntries(url.searchParams));
             fixture.url = url.pathname + url.search;

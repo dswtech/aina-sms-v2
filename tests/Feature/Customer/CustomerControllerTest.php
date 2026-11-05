@@ -223,14 +223,11 @@ it('exposes stage history and recent activities for the transaction detail view'
     $customer->logActivity($sales, ActivityType::Whatsapp, 'Kirim brosur digital', $deal);
 
     $this->actingAs($sales)
-        ->get(route('customers.index'))
+        ->getJson(route('customers.history', $customer))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('customers.data.0.stage_history', 1)
-            ->where('customers.data.0.stage_history.0.to_stage', 'prospect')
-            ->where('customers.data.0.stage_history.0.to_stage_label', 'Prospect')
-            ->has('customers.data.0.recent_activities', 1)
-            ->where('customers.data.0.recent_activities.0.type', 'whatsapp')
-            ->where('customers.data.0.recent_activities.0.notes', 'Kirim brosur digital')
-        );
+        ->assertJsonCount(2, 'timeline.data')
+        ->assertJsonFragment(['kind' => 'stage', 'label' => 'Lead → Prospect'])
+        ->assertJsonCount(1, 'activities.data')
+        ->assertJsonPath('activities.data.0.type', 'whatsapp')
+        ->assertJsonPath('activities.data.0.notes', 'Kirim brosur digital');
 });

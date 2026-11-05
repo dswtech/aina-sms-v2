@@ -106,6 +106,59 @@ async function accessibility(page) {
     let mutationErrors = {};
     let mutations = 0;
     let lastMutation;
+    const historyPage = (data) => ({
+        data,
+        current_page: 1,
+        last_page: 1,
+        total: data.length,
+    });
+    const timelineFor = (item) => {
+        const events = (item.stage_history ?? []).map((entry, index) => ({
+            key: `stage-${index}`,
+            kind: 'stage',
+            occurred_at: entry.created_at,
+            actor_name: entry.actor_name,
+            body: entry.notes,
+            label: entry.from_stage_label
+                ? `${entry.from_stage_label} → ${entry.to_stage_label}`
+                : entry.to_stage_label,
+        }));
+        for (const root of item.active_deal?.comments ?? []) {
+            for (const value of [root, ...(root.replies ?? [])]) {
+                const comment = {
+                    ...value,
+                    parent_id: value.id === root.id ? null : root.id,
+                    parent_body: value.id === root.id ? null : root.body,
+                    parent_author_name:
+                        value.id === root.id ? null : root.author_name,
+                };
+                events.push({
+                    key: `comment-${comment.id}`,
+                    kind: 'comment',
+                    occurred_at: comment.created_at,
+                    actor_name: comment.author_name,
+                    body: comment.body,
+                    label: comment.parent_id === null ? 'Komentar' : 'Balasan',
+                    comment,
+                });
+            }
+        }
+        for (const [index, activity] of (
+            item.recent_activities ?? []
+        ).entries()) {
+            events.push({
+                key: `activity-${index}`,
+                kind: 'activity',
+                occurred_at: activity.occurred_at,
+                actor_name: activity.user_name,
+                body: activity.notes,
+                label: activity.type_label,
+            });
+        }
+        return historyPage(
+            events.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at)),
+        );
+    };
     const tick = () =>
         page.evaluate(
             () =>
@@ -274,6 +327,22 @@ async function accessibility(page) {
                     props: { ...fixture.props, errors: mutationErrors },
                 }),
             });
+        } else if (new URL(request.url()).pathname.endsWith('/history')) {
+            const customerId = new URL(request.url()).pathname.split('/')[2];
+            const item = fixture.props.customers?.data.find(
+                (entry) => entry.public_id === customerId,
+            );
+            if (!item)
+                throw new Error(`Missing history fixture for ${customerId}`);
+            await route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    transactions: item.active_deal ? [item.active_deal] : [],
+                    selected_transaction: item.active_deal,
+                    activities: historyPage(item.recent_activities ?? []),
+                    timeline: timelineFor(item),
+                }),
+            });
         } else if (request.isNavigationRequest()) {
             const json = JSON.stringify(fixture).replaceAll('<', '\\u003c');
             await route.fulfill({
@@ -320,6 +389,11 @@ async function accessibility(page) {
                 ...props,
             },
         };
+        if (component === 'transactions/coaching') {
+            fixture.props.timeline = timelineFor({
+                active_deal: props.transaction,
+            });
+        }
         mutationErrors = {};
         await page.goto(origin + url);
         await page.locator('h1').first().waitFor();
@@ -1496,6 +1570,7 @@ async function accessibility(page) {
                     .press('Enter');
                 const dialog = page.getByRole('dialog');
                 await dialog.waitFor({ state: 'visible' });
+                await dialog.getByLabel('Pilih transaksi').waitFor();
                 assert(
                     (await dialog
                         .getByText('Saat dikirim: Prospect', { exact: true })

@@ -11,6 +11,7 @@ use App\Models\DealTransaction;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Notifications\DealCommentCreated;
+use App\Services\TransactionTimeline;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,32 +24,20 @@ use Inertia\Response;
 
 class DealCommentController extends Controller
 {
-    public function index(Request $request, DealTransaction $transaction): Response
+    public function index(Request $request, DealTransaction $transaction, TransactionTimeline $timeline): Response
     {
         $this->authorize('view', $transaction);
         /** @var User $actor */
         $actor = $request->user();
-        $serialize = fn (DealComment $comment): array => [
-            'id' => $comment->id,
-            'body' => $comment->body,
-            'author_name' => $comment->author?->name,
-            'created_at' => $comment->created_at?->toIso8601String(),
-            'stage_at_creation_label' => $comment->stage_at_creation?->label(),
-            'can_edit' => $actor->can('update', $comment),
-        ];
+        $validated = $request->validate(['timeline_page' => ['sometimes', 'integer', 'min:1', 'max:1000000']]);
 
         return Inertia::render('transactions/coaching', [
+            'timeline' => $timeline->paginate($transaction, $actor, (int) ($validated['timeline_page'] ?? 1)),
             'transaction' => [
                 'public_id' => $transaction->public_id,
                 'vehicle_model' => $transaction->vehicle_model,
                 'stage_label' => $transaction->current_stage->label(),
                 'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
-                'comments' => $transaction->comments()->whereNull('parent_id')
-                    ->with(['author', 'replies' => fn ($replies) => $replies->with('author')->oldest('id')])
-                    ->oldest('id')->get()->map(fn (DealComment $comment): array => [
-                        ...$serialize($comment),
-                        'replies' => $comment->replies->map($serialize)->all(),
-                    ])->all(),
             ],
         ]);
     }

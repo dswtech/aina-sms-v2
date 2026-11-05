@@ -40,15 +40,38 @@ type Props = {
     flash?: { success?: string };
 };
 
+function PreviewStatus({ row }: { row: PreviewRow }) {
+    return row.valid ? (
+        <Badge>Valid</Badge>
+    ) : (
+        <div className="space-y-1">
+            <Badge variant="destructive">Ditolak</Badge>
+            <ul className="space-y-1 text-xs break-words text-muted-foreground">
+                {row.errors.map((error, index) => (
+                    <li key={`${index}-${error}`}>{error}</li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+const formatBatchTime = (value: string) =>
+    new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Jakarta',
+    }).format(new Date(value));
+
 export default function ImportsIndex({ batches, preview }: Props) {
     const { errors } = usePage().props;
     const { flash } = usePage().props as { flash?: { success?: string } };
     const [file, setFile] = useState<File | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [committing, setCommitting] = useState(false);
 
     const upload = (event: React.FormEvent) => {
         event.preventDefault();
-        if (!file) return;
+        if (!file || submitting || committing) return;
         const formData = new FormData();
         formData.append('file', file);
         setSubmitting(true);
@@ -59,14 +82,27 @@ export default function ImportsIndex({ batches, preview }: Props) {
     };
 
     const commit = () => {
-        if (!preview) return;
-        router.post(`/imports/${preview.batch_id}/commit`);
+        if (
+            !preview ||
+            preview.accepted_count === 0 ||
+            submitting ||
+            committing
+        )
+            return;
+        setCommitting(true);
+        router.post(
+            `/imports/${preview.batch_id}/commit`,
+            {},
+            {
+                onFinish: () => setCommitting(false),
+            },
+        );
     };
 
     return (
         <>
             <Head title="Import Data" />
-            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
+            <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
@@ -77,12 +113,12 @@ export default function ImportsIndex({ batches, preview }: Props) {
                             baris sebelum disimpan.
                         </p>
                     </div>
-                    <a href="/imports/template" className="inline-flex">
-                        <Button variant="outline" className="min-h-11">
+                    <Button asChild variant="outline" className="min-h-11">
+                        <a href="/imports/template">
                             <Download className="size-4" />
                             Unduh template
-                        </Button>
-                    </a>
+                        </a>
+                    </Button>
                 </div>
 
                 {flash?.success && (
@@ -105,13 +141,14 @@ export default function ImportsIndex({ batches, preview }: Props) {
                             onSubmit={upload}
                             className="flex flex-col gap-4 sm:flex-row sm:items-end"
                         >
-                            <div className="flex-1">
+                            <div className="min-w-0 flex-1">
                                 <Label htmlFor="csv">File CSV</Label>
                                 <Input
                                     id="csv"
                                     type="file"
                                     accept=".csv,text/csv"
                                     className="mt-2 min-h-11"
+                                    disabled={submitting || committing}
                                     onChange={(event) =>
                                         setFile(event.target.files?.[0] ?? null)
                                     }
@@ -119,20 +156,27 @@ export default function ImportsIndex({ batches, preview }: Props) {
                             </div>
                             <Button
                                 type="submit"
-                                disabled={!file || submitting}
+                                disabled={!file || submitting || committing}
+                                aria-busy={submitting}
                                 className="min-h-11"
                             >
                                 <Upload className="size-4" />
-                                Preview
+                                {submitting ? 'Memvalidasi' : 'Preview'}
                             </Button>
                         </form>
                     </CardContent>
                 </Card>
 
                 {preview && (
-                    <Card className="mt-6">
+                    <Card
+                        role="region"
+                        aria-label="Preview impor"
+                        className="mt-6 min-w-0"
+                    >
                         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <CardTitle>Preview: {preview.filename}</CardTitle>
+                            <CardTitle className="min-w-0 [overflow-wrap:anywhere] break-words">
+                                Preview: {preview.filename}
+                            </CardTitle>
                             <div className="flex gap-2">
                                 <Badge variant="secondary">
                                     {preview.accepted_count} valid
@@ -143,7 +187,50 @@ export default function ImportsIndex({ batches, preview }: Props) {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-x-auto">
+                            <ul
+                                className="md:hidden"
+                                aria-label="Baris preview impor"
+                            >
+                                {preview.rows.map((row) => (
+                                    <li
+                                        key={row.row_number}
+                                        className="striped-row space-y-3 border-b p-3 text-sm [overflow-wrap:anywhere] break-words"
+                                    >
+                                        <p className="font-medium">
+                                            Baris {row.row_number}
+                                        </p>
+                                        <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-x-3 gap-y-2">
+                                            <dt className="text-muted-foreground">
+                                                Nama
+                                            </dt>
+                                            <dd>{row.data.name || '—'}</dd>
+                                            <dt className="text-muted-foreground">
+                                                Telepon
+                                            </dt>
+                                            <dd>{row.data.phone || '—'}</dd>
+                                            <dt className="text-muted-foreground">
+                                                Model
+                                            </dt>
+                                            <dd>
+                                                {row.data.vehicle_model || '—'}
+                                            </dd>
+                                            <dt className="text-muted-foreground">
+                                                Sales
+                                            </dt>
+                                            <dd>
+                                                {row.data.sales_username || '—'}
+                                            </dd>
+                                            <dt className="text-muted-foreground">
+                                                Status
+                                            </dt>
+                                            <dd className="min-w-0">
+                                                <PreviewStatus row={row} />
+                                            </dd>
+                                        </dl>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="hidden overflow-x-auto md:block">
                                 <table className="w-full min-w-[720px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
@@ -177,30 +264,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                                     {row.data.sales_username}
                                                 </td>
                                                 <td className="p-2">
-                                                    {row.valid ? (
-                                                        <Badge>Valid</Badge>
-                                                    ) : (
-                                                        <div className="space-y-1">
-                                                            <Badge variant="destructive">
-                                                                Ditolak
-                                                            </Badge>
-                                                            <ul className="text-xs text-muted-foreground">
-                                                                {row.errors.map(
-                                                                    (error) => (
-                                                                        <li
-                                                                            key={
-                                                                                error
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                error
-                                                                            }
-                                                                        </li>
-                                                                    ),
-                                                                )}
-                                                            </ul>
-                                                        </div>
-                                                    )}
+                                                    <PreviewStatus row={row} />
                                                 </td>
                                             </tr>
                                         ))}
@@ -210,17 +274,28 @@ export default function ImportsIndex({ batches, preview }: Props) {
                             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                                 <Button
                                     onClick={commit}
-                                    disabled={preview.accepted_count === 0}
+                                    disabled={
+                                        preview.accepted_count === 0 ||
+                                        submitting ||
+                                        committing
+                                    }
+                                    aria-busy={committing}
                                     className="min-h-11"
                                 >
-                                    Import {preview.accepted_count} baris valid
+                                    {committing
+                                        ? 'Mengimpor'
+                                        : `Import ${preview.accepted_count} baris valid`}
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 )}
 
-                <Card className="mt-6">
+                <Card
+                    role="region"
+                    aria-label="Riwayat batch impor"
+                    className="mt-6 min-w-0"
+                >
                     <CardHeader>
                         <CardTitle>Riwayat batch</CardTitle>
                     </CardHeader>
@@ -230,29 +305,24 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                 Belum ada batch import.
                             </p>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[640px] text-sm">
-                                    <thead>
-                                        <tr className="border-b text-left">
-                                            <th className="p-2">File</th>
-                                            <th className="p-2">Status</th>
-                                            <th className="p-2">Total</th>
-                                            <th className="p-2">Diterima</th>
-                                            <th className="p-2">Ditolak</th>
-                                            <th className="p-2">Pelaku</th>
-                                            <th className="p-2">Waktu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {batches.map((batch) => (
-                                            <tr
-                                                key={batch.id}
-                                                className="striped-row border-b"
-                                            >
-                                                <td className="p-2">
-                                                    {batch.original_filename}
-                                                </td>
-                                                <td className="p-2">
+                            <>
+                                <ul
+                                    className="md:hidden"
+                                    aria-label="Batch impor"
+                                >
+                                    {batches.map((batch) => (
+                                        <li
+                                            key={batch.id}
+                                            className="striped-row space-y-3 border-b p-3 text-sm [overflow-wrap:anywhere] break-words"
+                                        >
+                                            <p className="font-medium">
+                                                {batch.original_filename}
+                                            </p>
+                                            <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-x-3 gap-y-2">
+                                                <dt className="text-muted-foreground">
+                                                    Status
+                                                </dt>
+                                                <dd>
                                                     <Badge
                                                         variant={
                                                             batch.status ===
@@ -263,29 +333,99 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                                     >
                                                         {batch.status}
                                                     </Badge>
-                                                </td>
-                                                <td className="p-2">
-                                                    {batch.total_rows}
-                                                </td>
-                                                <td className="p-2">
-                                                    {batch.accepted_count}
-                                                </td>
-                                                <td className="p-2">
-                                                    {batch.rejected_count}
-                                                </td>
-                                                <td className="p-2">
-                                                    {batch.actor_name}
-                                                </td>
-                                                <td className="p-2">
-                                                    {new Date(
+                                                </dd>
+                                                <dt className="text-muted-foreground">
+                                                    Total
+                                                </dt>
+                                                <dd>{batch.total_rows}</dd>
+                                                <dt className="text-muted-foreground">
+                                                    Diterima
+                                                </dt>
+                                                <dd>{batch.accepted_count}</dd>
+                                                <dt className="text-muted-foreground">
+                                                    Ditolak
+                                                </dt>
+                                                <dd>{batch.rejected_count}</dd>
+                                                <dt className="text-muted-foreground">
+                                                    Pelaku
+                                                </dt>
+                                                <dd>
+                                                    {batch.actor_name || '—'}
+                                                </dd>
+                                                <dt className="text-muted-foreground">
+                                                    Waktu
+                                                </dt>
+                                                <dd>
+                                                    {formatBatchTime(
                                                         batch.created_at,
-                                                    ).toLocaleString('id-ID')}
-                                                </td>
+                                                    )}
+                                                </dd>
+                                            </dl>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="hidden overflow-x-auto md:block">
+                                    <table className="w-full min-w-[640px] text-sm">
+                                        <thead>
+                                            <tr className="border-b text-left">
+                                                <th className="p-2">File</th>
+                                                <th className="p-2">Status</th>
+                                                <th className="p-2">Total</th>
+                                                <th className="p-2">
+                                                    Diterima
+                                                </th>
+                                                <th className="p-2">Ditolak</th>
+                                                <th className="p-2">Pelaku</th>
+                                                <th className="p-2">Waktu</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            {batches.map((batch) => (
+                                                <tr
+                                                    key={batch.id}
+                                                    className="striped-row border-b"
+                                                >
+                                                    <td className="p-2">
+                                                        {
+                                                            batch.original_filename
+                                                        }
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <Badge
+                                                            variant={
+                                                                batch.status ===
+                                                                'completed'
+                                                                    ? 'default'
+                                                                    : 'secondary'
+                                                            }
+                                                        >
+                                                            {batch.status}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {batch.total_rows}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {batch.accepted_count}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {batch.rejected_count}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {batch.actor_name ||
+                                                            '—'}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {formatBatchTime(
+                                                            batch.created_at,
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
                         )}
                     </CardContent>
                 </Card>

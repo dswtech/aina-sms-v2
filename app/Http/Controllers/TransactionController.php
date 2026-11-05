@@ -83,8 +83,7 @@ class TransactionController extends Controller
 
         match ($tab) {
             'active' => $query->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]),
-            'stagnant' => $query->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
-                ->where('last_activity_at', '<=', now()->subDays(3)),
+            'stagnant' => $query->stagnant(),
             'closed' => $query->whereIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]),
             default => null,
         };

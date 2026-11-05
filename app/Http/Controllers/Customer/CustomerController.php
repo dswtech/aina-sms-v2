@@ -14,11 +14,9 @@ use App\Http\Requests\Customer\StoreCustomerTransactionRequest;
 use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
-use App\Models\CustomerActivity;
 use App\Models\DealComment;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
-use App\Models\StageHistory;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CustomerDuplicateDetector;
@@ -58,9 +56,8 @@ class CustomerController extends Controller
                     ->whereDate('scheduled_at', '<', CarbonImmutable::today());
             })->count(),
             'uncontacted' => (clone $baseQuery)->whereNull('last_contact_at')->count(),
-            'stagnant' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
-                    ->where('last_activity_at', '<=', CarbonImmutable::now()->subDays(3));
+            'stagnant' => (clone $baseQuery)->whereHas('transactions', function (Builder $q) use ($actor): void {
+                $q->visibleTo($actor)->stagnant();
             })->count(),
             'active' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
@@ -106,9 +103,8 @@ class CustomerController extends Controller
                     ->whereDate('scheduled_at', '<', CarbonImmutable::today());
             }),
             'uncontacted' => $query->whereNull('last_contact_at'),
-            'stagnant' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
-                    ->where('last_activity_at', '<=', CarbonImmutable::now()->subDays(3));
+            'stagnant' => $query->whereHas('transactions', function (Builder $q) use ($actor): void {
+                $q->visibleTo($actor)->stagnant();
             }),
             'active' => $query->whereHas('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]);
@@ -139,7 +135,7 @@ class CustomerController extends Controller
         $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
         $sort = in_array($sort, ['name', 'last_contact_at', 'updated_at'], true) ? $sort : 'updated_at';
 
-        $customers = $query->with(['activeAssignment.sales', 'transactions.stageHistories.actor', 'transactions.comments.author', 'transactions.comments.replies.author', 'activities.user', 'nextFollowUp'])
+        $customers = $query->with(['activeAssignment.sales', 'transactions' => fn ($q) => $q->visibleTo($actor), 'nextFollowUp'])
             ->orderBy($sort, $direction)
             ->orderBy('id')
             ->paginate(15)
@@ -147,7 +143,6 @@ class CustomerController extends Controller
             ->through(function (Customer $c) use ($actor): array {
                 // Pick the most recent open deal, falling back to the most recent closed one.
                 $deal = $c->transactions
-                    ->filter(fn (DealTransaction $deal): bool => $actor->can('view', $deal))
                     ->sortByDesc('id')
                     ->sortBy(fn (DealTransaction $d): int => $d->current_stage->isClosed() ? 1 : 0)
                     ->first();
@@ -178,30 +173,6 @@ class CustomerController extends Controller
                         'estimated_value' => $deal->estimated_value,
                         'expected_closing_month' => $deal->expected_closing_month?->format('Y-m'),
                         'can_comment' => $actor->can('create', [DealComment::class, $deal]),
-                        'comments' => $deal->comments
-                            ->whereNull('parent_id')
-                            ->map(fn (DealComment $comment): array => [
-                                'id' => $comment->id,
-                                'body' => $comment->body,
-                                'author_name' => $comment->author?->name,
-                                'created_at' => $comment->created_at->toIso8601String(),
-                                'edited_at' => $comment->edited_at?->toIso8601String(),
-                                'stage_at_creation' => $comment->stage_at_creation?->value,
-                                'stage_at_creation_label' => $comment->stage_at_creation?->label(),
-                                'can_edit' => $actor->can('update', $comment),
-                                'replies' => $deal->comments
-                                    ->where('parent_id', $comment->id)
-                                    ->map(fn (DealComment $reply): array => [
-                                        'id' => $reply->id,
-                                        'body' => $reply->body,
-                                        'author_name' => $reply->author?->name,
-                                        'created_at' => $reply->created_at->toIso8601String(),
-                                        'edited_at' => $reply->edited_at?->toIso8601String(),
-                                        'stage_at_creation' => $reply->stage_at_creation?->value,
-                                        'stage_at_creation_label' => $reply->stage_at_creation?->label(),
-                                        'can_edit' => $actor->can('update', $reply),
-                                    ])->values()->all(),
-                            ])->values()->all(),
                     ] : null,
                     'next_follow_up' => $c->nextFollowUp ? [
                         'id' => $c->nextFollowUp->id,
@@ -209,24 +180,6 @@ class CustomerController extends Controller
                         'plan_notes' => $c->nextFollowUp->plan_notes,
                         'status' => $c->nextFollowUp->status,
                     ] : null,
-                    'stage_history' => $deal
-                        ? $deal->stageHistories->map(fn (StageHistory $history): array => [
-                            'from_stage' => $history->from_stage?->value,
-                            'from_stage_label' => $history->from_stage?->label(),
-                            'to_stage' => $history->to_stage->value,
-                            'to_stage_label' => $history->to_stage->label(),
-                            'notes' => $history->notes,
-                            'actor_name' => $history->actor?->name,
-                            'created_at' => $history->created_at->toIso8601String(),
-                        ])->values()->all()
-                        : [],
-                    'recent_activities' => $c->activities->take(10)->map(fn (CustomerActivity $activity): array => [
-                        'type' => $activity->type->value,
-                        'type_label' => $activity->type->label(),
-                        'notes' => $activity->notes,
-                        'occurred_at' => $activity->occurred_at->toIso8601String(),
-                        'user_name' => $activity->user?->name,
-                    ])->values()->all(),
                 ];
             });
 
@@ -337,6 +290,10 @@ class CustomerController extends Controller
         $deal = ! empty($validated['deal_transaction_id'])
             ? $customer->transactions()->whereKey($validated['deal_transaction_id'])->first()
             : null;
+        if (! empty($validated['deal_transaction_id'])) {
+            abort_if($deal === null, 403);
+            $this->authorize('view', $deal);
+        }
 
         $occurredAt = ! empty($validated['occurred_at'])
             ? Carbon::parse($validated['occurred_at'])
@@ -368,6 +325,10 @@ class CustomerController extends Controller
         $deal = ! empty($validated['deal_transaction_id'])
             ? $customer->transactions()->whereKey($validated['deal_transaction_id'])->first()
             : null;
+        if (! empty($validated['deal_transaction_id'])) {
+            abort_if($deal === null, 403);
+            $this->authorize('view', $deal);
+        }
 
         $scheduledAt = Carbon::parse($validated['scheduled_at']);
 
