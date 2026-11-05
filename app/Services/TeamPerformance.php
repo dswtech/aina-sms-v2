@@ -22,6 +22,7 @@ class TeamPerformance
     /** @return array<string, mixed> */
     public function build(User $actor, string $period): array
     {
+        $canViewManagementTarget = in_array($actor->role, [UserRole::Supervisor, UserRole::BranchManager], true);
         $window = new ReportingPeriod($period);
         $start = $window->start;
         $end = $window->end;
@@ -56,7 +57,7 @@ class TeamPerformance
                 $personalUnits->put($id, $legacyTarget->target_units);
             }
         }
-        $teamRows = $teams->map(function (Team $team) use ($deals, $memberships, $salesTargets, $teamTargets, $allocations, $period, $start, $end, $historical): array {
+        $teamRows = $teams->map(function (Team $team) use ($deals, $memberships, $salesTargets, $teamTargets, $allocations, $period, $start, $end, $historical, $canViewManagementTarget): array {
             $target = $teamTargets->get($team->id);
             $memberIds = $memberships->where('team_id', $team->id)->pluck('user_id')->unique();
             $assignedTargets = $salesTargets->whereIn('user_id', $memberIds);
@@ -65,24 +66,25 @@ class TeamPerformance
             $salesTotal = $managed ? TargetUnits::number($saved->sum(fn ($a) => TargetUnits::scaled($a->target_units))) : ($assignedTargets->isEmpty() ? null : (int) $assignedTargets->sum('target_units'));
             $activeTotal = $managed ? TargetUnits::number($saved->whereIn('user_id', $memberIds)->sum(fn ($a) => TargetUnits::scaled($a->target_units))) : $salesTotal;
             $benchmark = $target?->benchmark_units === null ? null : TargetUnits::number(TargetUnits::scaled($target->benchmark_units));
-            $teamMetrics = $this->metrics($deals->where('team_id', $team->id), $target?->target_units, $period, $start, $end, $historical);
+            $managementUnits = $canViewManagementTarget ? $target?->target_units : null;
+            $teamMetrics = $this->metrics($deals->where('team_id', $team->id), $managementUnits, $period, $start, $end, $historical);
 
             return array_merge([
                 'id' => $team->public_id, 'name' => $team->name, 'is_active' => $team->is_active,
                 'sales_target_units' => $salesTotal, 'sales_targets_missing' => $memberIds->diff($managed ? $saved->pluck('user_id') : $assignedTargets->pluck('user_id'))->count(),
                 'benchmark_units' => $benchmark, 'active_allocation_units' => $activeTotal,
                 'allocation_percent' => $benchmark > 0 && $salesTotal !== null ? round($salesTotal / $benchmark * 100, 2) : null,
-                'achievement_percent' => $target?->target_units > 0 ? round($teamMetrics['realization_units'] / $target->target_units * 100, 2) : null,
+                'achievement_percent' => $managementUnits > 0 ? round($teamMetrics['realization_units'] / $managementUnits * 100, 2) : null,
                 'benchmark_achievement_percent' => $benchmark > 0 ? round($teamMetrics['realization_units'] / $benchmark * 100, 2) : null,
                 'benchmark_gap_units' => $benchmark === null ? null : round($benchmark - $teamMetrics['realization_units'], 4),
                 'benchmark_forecast_gap_units' => $benchmark === null || $teamMetrics['forecast_units'] === null ? null : round($benchmark - $teamMetrics['forecast_units'], 4),
-                'target_allocation_difference' => $target !== null && $salesTotal !== null ? $target->target_units - $salesTotal : null,
+                'target_allocation_difference' => $managementUnits !== null && $salesTotal !== null ? $managementUnits - $salesTotal : null,
             ], $teamMetrics);
         })->values();
         $missingTeamTargets = $teams->where('is_active', true)->reject(fn (Team $team): bool => $teamTargets->has($team->id))->count();
         $targetUnits = $actor->role === UserRole::Sales
             ? $personalUnits->get($actor->id)
-            : ($missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
+            : ($canViewManagementTarget && $missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
         $salesTotal = $personalUnits->isEmpty() ? null : TargetUnits::number($personalUnits->sum(fn ($n) => TargetUnits::scaled($n)));
         $metrics = $this->metrics($deals, $targetUnits, $period, $start, $end, $historical);
         // Allocations retain their original team and period after membership changes.
@@ -116,7 +118,7 @@ class TeamPerformance
                 'period' => $period.'-01', 'targetUnits' => $metrics['target_units'],
                 'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->pluck('id')->diff($personalUnits->keys())->count(),
                 'teamTargetsMissing' => $missingTeamTargets,
-                'targetAllocationDifference' => $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
+                'targetAllocationDifference' => $canViewManagementTarget && $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
                 'realizationUnits' => $metrics['realization_units'], 'forecastUnits' => $metrics['forecast_units'],
                 'forecastValue' => $metrics['forecast_value'], 'forecastApproved' => (bool) config('forecast.approved', false),
                 'gapUnits' => $metrics['gap_units'], 'forecastGapUnits' => $metrics['forecast_gap_units'],
@@ -126,7 +128,7 @@ class TeamPerformance
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
                     ? $this->metrics($deals->whereNull('team_id'), null, $period, $start, $end, $historical) : null,
             ],
-            'targetPlans' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? app(TargetPlans::class)->editor($teams, $memberships->load('user'), $teamTargets, $salesTargets, $period) : [],
+            'targetPlans' => $actor->role === UserRole::Supervisor ? app(TargetPlans::class)->editor($teams, $memberships->load('user'), $teamTargets, $salesTargets, $period) : [],
             'targetableUsers' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $users->map(fn (User $u): array => ['id' => $u->id, 'name' => $u->name, 'username' => $u->username])->values()->all() : [],
             'targetableTeams' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $teams->where('is_active', true)->map(fn (Team $t): array => ['id' => $t->public_id, 'name' => $t->name])->values()->all() : [],
         ];

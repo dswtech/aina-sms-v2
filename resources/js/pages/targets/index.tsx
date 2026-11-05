@@ -1,11 +1,12 @@
 import { TargetPlanEditor } from '@/components/target-plan-editor';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import {
     PerformanceTable,
     ReportingHeader,
     type ReportingProps,
 } from '@/components/team-performance';
 export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
+    const canManage = usePage().props.auth.user.role === 'supervisor';
     return (
         <>
             <Head title="Target" />
@@ -26,7 +27,9 @@ export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
                     {!d.forecastApproved &&
                         'Bobot belum disetujui untuk production.'}
                 </p>
-                <TargetPlanEditor key={d.period} plans={targetPlans} />
+                {canManage && (
+                    <TargetPlanEditor key={d.period} plans={targetPlans} />
+                )}
                 <PerformanceTable
                     title="Target dan kinerja tim"
                     rows={d.teams}

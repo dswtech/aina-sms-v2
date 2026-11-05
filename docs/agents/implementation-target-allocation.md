@@ -16,7 +16,7 @@ Request menyertakan `team_id` UUID publik, `period` YYYY-MM, `version`, `target_
 
 Target management maksimal 10.000 unit, markup 0–1.000%, dan alokasi personal maksimal 110.000 unit. Target nol sah; persen dengan pembagi nol ditampilkan sebagai dash. Target nilai rupiah lama tidak diubah oleh editor ini.
 
-Data baca `targetPlans` hanya dikirim ke Admin/Supervisor. Setiap rencana berisi versi, status legacy, anggota aktif/keluar, alokasi tersimpan, serta jumlah hari kerja untuk saran prorata. BM hanya menerima agregat; Sales hanya target personal sesuai cakupannya.
+Data baca `targetPlans` hanya dikirim ke Supervisor; Admin tidak menerima editor beserta angka management/markup. Pembatasan angka management pada laporan mengikuti PRD. Setiap rencana berisi versi, status legacy, anggota aktif/keluar, alokasi tersimpan, serta jumlah hari kerja untuk saran prorata. BM hanya menerima agregat; Sales hanya target personal sesuai cakupannya.
 
 ## Keputusan pelaksanaan
 

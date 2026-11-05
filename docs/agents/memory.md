@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.19 |
+| Versi | v1.20 |
 | Diperbarui | 5 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch `codex/restrict-management-target-visibility` dari `main`/`origin/main` `43737a9` membatasi angka target management dan metrik turunannya ke SPV/BM sesuai [PRD](PRD.md). Admin tetap dapat membuka menu Target tetapi tidak menerima editor/markup/angka management; target personal Sales tetap tersedia. Route dan hak write tidak berubah. Regresi empat role mencakup dashboard, halaman Target, laporan BM, rencana terkelola serta target legacy. Tes baru gagal sebelum perbaikan. Pest lulus (215 lulus, 3 skip, 1.900 assertions); tiga tes frontend, lint/format frontend, TypeScript, Pint, PHPStan dan production build lulus. Pemeriksaan memakai executable dependency lokal karena shim pnpm mencoba mengunduh package manager; tidak ada dependency dipasang. Browser visual/UAT belum dijalankan untuk perubahan ini; tidak ada migration atau write database bisnis.
 
 - PR [#32](https://github.com/dswtech/aina-sms-v2/pull/32) dikirim dengan commit implementasi `d595f05`. Branch `codex/team-target-allocation` berangkat dari `main`/`origin/main` `9a13d35` yang bersih. Alur target management, markup SPV, benchmark, alokasi desimal dan editor interaktif mengikuti [PRD](PRD.md) serta [ADR-004](adr/ADR-004-monthly-target-plans.md); kontrak/bukti ada pada [catatan implementasi](implementation-target-allocation.md) dan [E28](uat-matrix.md#e28). Target legacy dipertahankan; histori alokasi tidak dipindah saat Sales keluar/pindah. Seeder menambah contoh bulan berikutnya bila belum ada, tanpa mengadopsi target lama otomatis.
 - Verifikasi fitur target: `composer ci:check` lulus termasuk tiga tes frontend dan Pest 216 tes (213 lulus, 3 skip, 1.675 assertions). Suite PostgreSQL test acak lulus (213 lulus, 3 skip, 1.674 assertions), database test dibersihkan. Production build dan regresi browser sintetis enam viewport/tema plus anggota/konflik lulus, nol write bisnis/error JavaScript. Review independen selesai setelah lima koreksi dengan regresi. Migration/seeder fitur baru belum diterapkan pada database bisnis; schema wajib tersedia sebelum versi aplikasi ini melayani laporan. UAT manusia, concurrency multikoneksi dan p95 tetap terbuka.
