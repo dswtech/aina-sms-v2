@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #45/tuning dashboard sudah merged pada `main` `8eb1743`. Branch `codex/g11-main-flow-recovery` melanjutkan G11. [Bukti G11](implementation-g11-browser-verification.md#filter-pelanggan-mobile-dan-pemulihan-analisis) mencatat filter pelanggan mobile mulai terlipat, laporan Analisis bertahan ketika permintaan gagal, dan retry menuju Laravel. Regresi launcher dan CI lokal lulus. Pengujian lintas blok, zoom, pembaca layar nyata dan UAT manusia tetap terbuka.
+
 - PR #44/G13 benchmark pilot sudah merged pada `main` `ce8c125`. Branch `codex/g13-dashboard-pilot-performance` menutup target dashboard pada profil lokal 10.000 transaksi dengan p95 Supervisor 1,01 detik dan Branch Manager 1,35 detik. Suite PostgreSQL lulus 358 tes dengan tiga skip, concurrency 13 assertions dan benchmark 323 assertions. [Hasil tuning](implementation-g13-postgres-pilot.md#tuning-dashboard-pada-profil-pilot) mencatat baseline, perubahan, dan batas bukti. Hosting pilot dan kapasitas 100.000 tetap terbuka.
 
 - PR #43/G11 sudah merged pada `main` `64be0a5`. Regresi browser lulus di GitHub Actions. Branch `codex/g13-postgres-verification` berangkat dari baseline tersebut. [Bukti G13](implementation-g13-postgres-pilot.md) mencatat suite PostgreSQL 16.4 lulus, 13 assertions concurrency impor lulus, dan benchmark 10.000 transaksi selesai. Dashboard lokal melewati target 3 detik pada Supervisor dan Branch Manager. Langkah berikutnya profiling PHP pada dashboard dan pengukuran ulang skala pilot. Kapasitas 100.000 dan penerimaan operasional tetap terbuka.

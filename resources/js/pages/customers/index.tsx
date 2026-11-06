@@ -874,6 +874,7 @@ export default function CustomersIndex({
                 <FilterPanel
                     className="mt-6"
                     title="Filter pelanggan"
+                    collapseOnMobile
                     summary={`${[filters.search, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
                     <div className="flex flex-col gap-3">

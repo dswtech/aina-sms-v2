@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
@@ -101,15 +101,33 @@ function Metric({ label, value }: { label: string; value: string | number }) {
     );
 }
 
+type AnalyticsQuery = Pick<
+    Analytics,
+    'period' | 'mode' | 'dimension' | 'value'
+>;
+
 export default function AnalyticsIndex({ analytics }: Props) {
     const [isLoading, setIsLoading] = useState(false);
+    const headingRef = useRef<HTMLHeadingElement>(null);
+    const [failure, setFailure] = useState<{
+        query: AnalyticsQuery | null;
+        message: string;
+    } | null>(null);
+    const retryQuery = failure?.query;
 
     function visitAnalytics(
-        changes: Partial<
-            Pick<Analytics, 'period' | 'mode' | 'dimension' | 'value'>
-        >,
+        changes: Partial<AnalyticsQuery>,
+        restoreFocus = false,
     ) {
-        const next = { ...analytics, ...changes };
+        const next = {
+            period: analytics.period,
+            mode: analytics.mode,
+            dimension: analytics.dimension,
+            value: analytics.value,
+            ...changes,
+        };
+        const showFailure = (message: string) =>
+            setFailure({ query: next, message });
 
         router.get(
             '/analytics',
@@ -125,6 +143,25 @@ export default function AnalyticsIndex({ analytics }: Props) {
                 replace: true,
                 onStart: () => setIsLoading(true),
                 onFinish: () => setIsLoading(false),
+                onSuccess: () => {
+                    setFailure(null);
+                    if (restoreFocus) headingRef.current?.focus();
+                },
+                onError: () =>
+                    setFailure({
+                        query: null,
+                        message: 'Periksa kembali filter Analisis.',
+                    }),
+                onNetworkError: () => {
+                    showFailure('Koneksi terputus saat memuat Analisis.');
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status === 401 || response.status === 403)
+                        return;
+                    showFailure('Analisis belum dapat dimuat.');
+                    return false;
+                },
             },
         );
     }
@@ -147,7 +184,11 @@ export default function AnalyticsIndex({ analytics }: Props) {
             <div className="analytics-print mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10 print:max-w-none print:px-0 print:pt-0 print:pb-0">
                 <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                     <div className="max-w-2xl">
-                        <h1 className="text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
+                        <h1
+                            ref={headingRef}
+                            tabIndex={-1}
+                            className="text-2xl font-semibold tracking-[-0.025em] sm:text-3xl"
+                        >
                             Analisis
                         </h1>
                         <p className="mt-3 text-base leading-7 text-muted-foreground">
@@ -194,11 +235,10 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 type="month"
                                 value={analytics.period}
                                 disabled={isLoading}
-                                onChange={(event) =>
-                                    visitAnalytics({
-                                        period: event.target.value,
-                                    })
-                                }
+                                onChange={(event) => {
+                                    const period = event.currentTarget.value;
+                                    if (period) visitAnalytics({ period });
+                                }}
                                 className="min-h-11 w-full"
                             />
                         </div>
@@ -240,6 +280,25 @@ export default function AnalyticsIndex({ analytics }: Props) {
                               : 'Pencapaian memakai tanggal kejadian tahap.'}
                     </p>
                 </FilterPanel>
+
+                {failure && (
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border bg-card px-4 py-3 print:hidden">
+                        <p role="alert" className="text-sm text-foreground">
+                            {failure.message} Laporan masih menampilkan data
+                            terakhir yang berhasil dimuat.
+                        </p>
+                        {retryQuery && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isLoading}
+                                onClick={() => visitAnalytics(retryQuery, true)}
+                            >
+                                Coba lagi
+                            </Button>
+                        )}
+                    </div>
+                )}
 
                 <aside className="mt-6 rounded-xl border bg-secondary p-5 text-sm leading-6 sm:p-6 print:border print:bg-white">
                     <h2 className="font-semibold">Cara membaca angka</h2>
