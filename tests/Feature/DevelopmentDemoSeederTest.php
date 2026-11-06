@@ -9,6 +9,7 @@ use App\Models\DealTransaction;
 use App\Models\FollowUp;
 use App\Models\Invitation;
 use App\Models\SalesTarget;
+use App\Models\StageHistory;
 use Database\Seeders\DevelopmentDemoSeeder;
 use Illuminate\Support\Facades\DB;
 
@@ -34,6 +35,11 @@ it('seeds complete and idempotent local demo data', function () {
         ->and(CsvImportBatch::query()->count())->toBe(8)
         ->and(Invitation::query()->count())->toBe(4)
         ->and(DB::table('notifications')->count())->toBeGreaterThan(0);
+
+    expect(StageHistory::query()->where('to_stage', PipelineStage::Do)->count())->toBe(44)
+        ->and(StageHistory::query()->where('from_stage', PipelineStage::Spk)->where('to_stage', PipelineStage::Do)
+            ->where('po_confirmed', true)->where('dp_confirmed', true)->where('unit_confirmed', true)->count())->toBe(44)
+        ->and(StageHistory::query()->where('from_stage', PipelineStage::Do)->where('to_stage', PipelineStage::Delivery)->count())->toBe(30);
 });
 
 it('does not seed demo records outside local environment', function () {

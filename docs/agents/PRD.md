@@ -86,7 +86,7 @@ Kewenangan selalu ditentukan server dari user yang login dan hubungan organisasi
 | Aktivitas | Tindakan bermakna pada transaksi, misalnya follow-up, perubahan tahap, penugasan, atau komentar. |
 | Stagnant | Transaksi aktif tanpa aktivitas lebih dari tiga hari kalender. |
 | Target | Hasil penjualan yang ingin dicapai pada periode tertentu. |
-| Realisasi | Delivery yang sudah selesai pada periode tersebut. |
+| Realisasi | Transaksi dengan kejadian DO yang sah pada periode tersebut. |
 | Forecast | Perkiraan hasil akhir dari realisasi ditambah nilai berbobot transaksi aktif. |
 | Conversation | Timeline komentar Sales/Supervisor dan aktivitas sistem pada satu transaksi. |
 | Coaching | Arahan Supervisor yang terkait dengan keadaan nyata sebuah transaksi. |
@@ -124,8 +124,9 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | 1 | Sales/Supervisor | Mencatat lead atau mengimpor data yang valid. | Transaksi berada pada tahap Lead dan mempunyai Sales penanggung jawab. |
 | 2 | Sales | Mencatat follow-up dan mengubah tahap sesuai hasil nyata. | Timeline dan aktivitas terakhir diperbarui. |
 | 3 | Supervisor | Memantau transaksi serta memberi coaching. | Sales menerima notifikasi dan dapat membalas di transaksi yang sama. |
-| 4 | Sales/Supervisor | Mendorong transaksi melalui Prospect, Hot Prospect, SPK, dan DO. | Riwayat tahap tersimpan tanpa menimpa kejadian sebelumnya. |
-| 5 | Sales/Supervisor | Menyelesaikan sebagai Delivery atau Lost. | Transaksi keluar dari pipeline aktif; Lost menyimpan alasan. |
+| 4 | Sales/Supervisor | Mendorong transaksi melalui Prospect, Hot Prospect, dan SPK. | Riwayat tahap tersimpan tanpa menimpa kejadian sebelumnya. |
+| 5 | Sales/Supervisor | Mencatat DO setelah PO, DP, dan Unit dikonfirmasi, atau menutup peluang sebagai Lost. | Transaksi keluar dari pipeline aktif. DO masuk realisasi dan Lost menyimpan alasan. |
+| 6 | Sales/Supervisor | Mengonfirmasi Delivery setelah kendaraan terkirim. | Waktu dan pelaku konfirmasi pengiriman tercatat. Bulan realisasi tetap mengikuti DO. |
 
 ### 6.3 Forecast dan tindak lanjut
 
@@ -211,7 +212,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | PIP-04 | **Perubahan ke Lost memerlukan alasan.** Alasan dipilih dari katalog dan dapat diberi catatan agar penyebab kehilangan dapat dievaluasi. | M |
 | PIP-05 | **Transaksi aktif tanpa aktivitas lebih dari tiga hari ditandai stagnant.** Status ini dihitung dari aktivitas terakhir, bukan disimpan sebagai status manual. | M |
 | PIP-06 | **Sales dan Supervisor dapat mencatat aktivitas follow-up tanpa mengubah tahap.** Aktivitas memperbarui waktu aktivitas terakhir dan muncul pada timeline. | M |
-| PIP-07 | **Delivery menutup transaksi dari pipeline aktif tanpa menghapus riwayat.** Koreksi setelah Delivery harus melalui tindakan berwenang yang tercatat. | M |
+| PIP-07 | **DO menutup transaksi dari pipeline aktif dan mencatat realisasi.** Sales terkait atau Supervisor berwenang hanya dapat menetapkan DO dari SPK setelah mengonfirmasi PO, DP, dan Unit. Histori DO menyimpan ketiga konfirmasi, waktu, dan pelaku. Delivery hanya dapat dikonfirmasi dari DO oleh Sales terkait atau Supervisor berwenang setelah kendaraan terkirim. Sebelum Delivery, hanya Admin dealer dapat membatalkan DO dengan alasan wajib. Pembatalan mengembalikan transaksi ke SPK, menambahkan histori koreksi yang merujuk kejadian DO asli, dan mengeluarkan kejadian itu dari realisasi. DO berikutnya memerlukan checklist baru. Setelah Delivery, perubahan tahap dan pembatalan DO dikunci. | M |
 
 ### 7.5 Conversation & Coaching (`CVS`)
 
@@ -253,7 +254,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 
 | ID | Kebutuhan | Prioritas |
 |---|---|---|
-| FCT-01 | **Forecast bulanan menghitung realisasi ditambah bobot transaksi aktif dengan estimasi bulan closing pada periode terpilih.** Estimasi bulan closing dapat diisi saat membuat lead/transaksi dan diperbarui Sales terkait atau Supervisor berwenang pada transaksi aktif. Estimasi kosong tidak diisi otomatis dan jumlahnya ditampilkan sebagai kekurangan data; Delivery/Lost tidak masuk pipeline berbobot. Realisasi menghitung transaksi unik dari riwayat kejadian Delivery dalam bulan Asia/Jakarta, bukan tanggal edit terakhir; Delivery tanpa riwayat tanggal ditandai tanpa mengarang tanggal. Forecast bulan berjalan/mendatang memakai pipeline terkini; forecast dan gap forecast bulan lampau tidak tersedia karena snapshot historis belum disimpan. Rumus/presisi konsisten di seluruh dashboard dan rincian. | M |
+| FCT-01 | **Forecast bulanan menghitung realisasi ditambah bobot transaksi aktif dengan estimasi bulan closing pada periode terpilih.** Estimasi bulan closing dapat diisi saat membuat lead/transaksi dan diperbarui Sales terkait atau Supervisor berwenang pada transaksi aktif. Estimasi kosong ditampilkan sebagai kekurangan data. DO, Delivery, dan Lost tidak masuk pipeline berbobot. Realisasi menghitung transaksi unik berdasarkan kejadian DO yang belum dibatalkan dalam bulan Asia/Jakarta. DO atau Delivery tanpa riwayat DO ditandai sebagai kekurangan data. Forecast bulan berjalan dan mendatang memakai pipeline terkini. Forecast dan gap forecast bulan lampau tidak tersedia karena snapshot historis belum disimpan. Rumus dan presisi konsisten di seluruh dashboard dan rincian. | M |
 | FCT-02 | **Setiap tahap aktif mempunyai bobot peluang yang dikelola melalui konfigurasi server.** Bobot final diputuskan bersama operasional dealer sebelum forecast production diaktifkan. | M |
 | FCT-03 | **Dashboard membedakan target, realisasi, dan forecast secara tegas.** Forecast tidak boleh disajikan seolah-olah hasil pasti. | M |
 | FCT-04 | **Supervisor melihat forecast serta gap terhadap realisasi dan forecast per Sales serta tim.** Gap adalah target dikurangi realisasi/forecast dan boleh negatif ketika target terlampaui. Agregasi tim memakai tim yang tercatat pada transaksi, sedangkan alokasi Sales tersimpan mengikuti tim dan periode rencananya; perpindahan Sales tidak memindahkan histori transaksi atau target. Target management menjadi acuan utama tim; benchmark mempunyai pencapaian dan gap tersendiri, dan laporan menunjukkan total alokasi serta alokasi anggota aktif. Target legacy dipertahankan hingga ditinjau SPV tanpa pembagian ulang otomatis. Branch Manager melihat agregat dan perbandingan tim tersanitasi. Transaksi tanpa tim ditampilkan terpisah di agregat dealer. Kelengkapan target dealer tidak mensyaratkan target baru untuk tim nonaktif; target historis tim tersebut tetap tersedia. | S |
@@ -281,7 +282,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ANL-02 | **Analisis Sumber menampilkan jumlah dan porsi transaksi menurut sumber lead serta perjalanan tahapnya.** Pengguna dapat melihat sumber yang menghasilkan lead dan kemajuan penjualan. | M |
 | ANL-03 | **Analisis Model menampilkan jumlah dan porsi transaksi menurut model kendaraan.** Tahap SPK, DO, dan Delivery dapat dibandingkan untuk periode terpilih. | M |
 | ANL-04 | **Analisis menampilkan jumlah, porsi, dan conversion rate dengan penyebut yang dijelaskan.** Angka harus dapat direkonsiliasi ke transaksi sumber. | M |
-| ANL-05 | **Filter tanggal mempunyai mode Akuisisi dan Pencapaian.** Bulan mengikuti Asia/Jakarta dengan batas awal inklusif dan akhir eksklusif. Akuisisi memakai tanggal pembuatan lead dan dapat menampilkan conversion; Pencapaian menghitung transaksi unik yang mempunyai kejadian tahap pada periode, termasuk ketika tahap yang sama dicatat berulang, dan tidak menampilkan conversion lintas-kohort yang menyesatkan. Realisasi Delivery mode Pencapaian dan dashboard memakai kejadian serta cakupan laporan yang sama. | M |
+| ANL-05 | **Filter tanggal mempunyai mode Akuisisi dan Pencapaian.** Bulan mengikuti Asia/Jakarta dengan batas awal inklusif dan akhir eksklusif. Akuisisi memakai tanggal pembuatan lead dan menghitung conversion dari proporsi transaksi dengan DO yang sah. Pencapaian menghitung transaksi unik yang mempunyai kejadian tahap pada periode tanpa conversion lintas-kohort. Realisasi DO mode Pencapaian dan dashboard memakai kejadian serta cakupan laporan yang sama. Kolom Delivery mencatat konfirmasi pengiriman. | M |
 | ANL-06 | **Pengguna dapat membuka drilldown berupa daftar transaksi yang sudah membawa filter analisis.** Menutup detail mempertahankan periode, mode tanggal, dan dimensi yang dipilih. | S |
 | ANL-07 | **Cakupan Analisis mengikuti role dan atribusi tim transaksi yang sama dengan dashboard.** Perpindahan Sales tidak memindahkan angka histori transaksi ke tim barunya. Supervisor melihat tim aktif yang ditugaskan kepadanya, Admin melihat dealer, dan Branch Manager melihat drilldown tersanitasi tanpa nomor telepon, alamat, catatan hubungan, atau coaching. Izin laporan tidak memperluas izin operasional atau coaching. | M |
 | ANL-08 | **Analisis dapat diekspor sebagai CSV dan PDF agregat.** Ekspor tidak memuat kontak pelanggan atau isi coaching. | S |
@@ -393,7 +394,7 @@ Baseline penggunaan dikumpulkan setelah dua minggu pertama; target yang bergantu
 | No | Pertanyaan | Pemutus | Yang tertahan | Prioritas |
 |---:|---|---|---|---|
 | 1 | Apa nama produk final? | Product Owner | Branding, title, logo, dan alamat deployment. | S |
-| 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, SPK, dan DO? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. | M |
+| 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, dan SPK? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. | M |
 | 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Development memakai Mailtrap Sandbox, dipilih pengguna 5 November 2026. Provider untuk pengiriman undangan dan notifikasi production masih belum ditetapkan. | M |
 | 4 | Di mana aplikasi production akan dijalankan? | Product Owner + IT | Runbook deployment, sizing, backup, dan target observability. | M |
 | 5 | Bukti booking fee apa yang cukup untuk masuk SPK? | Product Owner + operasional dealer | Validasi final transisi ke SPK. | M |

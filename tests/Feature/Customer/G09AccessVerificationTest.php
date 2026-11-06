@@ -145,6 +145,10 @@ it('never deletes comments or revisions through HTTP for any dealer role', funct
 })->with(['sales', 'supervisor', 'admin', 'branch_manager']);
 
 it('retains inactive-team history for admin while rejecting new transactions and ordinary Delivery edits', function () {
+    $this->deal->update(['current_stage' => PipelineStage::Spk]);
+    $this->deal->transitionTo(PipelineStage::Do, $this->sales, options: [
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
     $this->deal->transitionTo(PipelineStage::Delivery, $this->sales);
     $history = $this->deal->stageHistories()->get()->toJson();
     $this->team->update(['is_active' => false]);

@@ -51,7 +51,7 @@ async function analyticsExport(page) {
                         spk: 3,
                         do: 2,
                         delivery: 1,
-                        conversion: mode === 'acquisition' ? 25 : null,
+                        conversion: mode === 'acquisition' ? 50 : null,
                     }));
                     const models = sources.map((row, i) => ({
                         ...row,
@@ -168,6 +168,30 @@ async function analyticsExport(page) {
                         cells === Math.max(1, count),
                         'Printed source row count',
                     );
+                    if (count > 0) {
+                        for (const section of ['sumber', 'model']) {
+                            const row = page
+                                .locator(`#analisis-${section} tbody tr`)
+                                .first();
+                            const values = await row
+                                .locator('td')
+                                .allTextContents();
+                            assert(
+                                values[3].trim() === '2' &&
+                                    values[4].trim() === '1',
+                                'Print must show separate DO and Delivery totals',
+                            );
+                            if (
+                                section === 'sumber' &&
+                                mode === 'acquisition'
+                            ) {
+                                assert(
+                                    values[5].replace(/\s/g, '') === '50%',
+                                    'Print conversion must use DO / total',
+                                );
+                            }
+                        }
+                    }
                     const geometry = await page.evaluate(
                         () =>
                             [

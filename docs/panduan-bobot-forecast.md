@@ -8,9 +8,9 @@
 
 ## 1. Untuk apa bobot forecast?
 
-Bobot forecast membantu memperkirakan berapa transaksi aktif yang kemungkinan menjadi Delivery dalam bulan yang dipilih. Perkiraan ini membantu SPV dan BM melihat risiko kekurangan target sebelum akhir bulan, lalu menentukan prioritas follow-up dan coaching.
+Bobot forecast membantu memperkirakan berapa transaksi aktif yang kemungkinan mencapai DO dalam bulan yang dipilih. Perkiraan ini membantu SPV dan BM melihat risiko kekurangan target sebelum akhir bulan, lalu menentukan prioritas follow-up dan coaching.
 
-Transaksi pada tahap yang berbeda mempunyai tingkat kesiapan yang berbeda. Lead yang baru masuk diberi kontribusi perkiraan lebih kecil daripada transaksi yang sudah mencapai SPK atau DO.
+Transaksi pada tahap yang berbeda mempunyai tingkat kesiapan yang berbeda. Lead yang baru masuk diberi kontribusi perkiraan lebih kecil daripada transaksi yang sudah mencapai SPK.
 
 Contoh: bobot **Hot Prospect 50%** membuat satu transaksi pada tahap itu menyumbang **0,5 unit** ke forecast. Angka tersebut adalah asumsi peluang untuk perhitungan, bukan janji bahwa pelanggan tertentu akan membeli.
 
@@ -19,7 +19,7 @@ Contoh: bobot **Hot Prospect 50%** membuat satu transaksi pada tahap itu menyumb
 | Istilah | Arti |
 |---|---|
 | Target | Sasaran penjualan yang ingin dicapai pada suatu periode. |
-| Realisasi | Delivery yang sudah tercatat pada periode tersebut. |
+| Realisasi | Transaksi dengan kejadian DO yang sah pada periode tersebut. |
 | Peluang berbobot | Jumlah kontribusi perkiraan dari transaksi aktif yang direncanakan closing pada periode tersebut. |
 | Forecast | Perkiraan hasil akhir: realisasi ditambah peluang berbobot. |
 | Gap ke forecast | Target dikurangi forecast. Positif berarti masih ada perkiraan kekurangan; negatif berarti forecast melampaui target. |
@@ -42,13 +42,12 @@ Jika transaksi dikelompokkan per tahap, kontribusi setiap tahap adalah **jumlah 
 | Prospect | 25% | 0,25 unit |
 | Hot Prospect | 50% | 0,50 unit |
 | SPK | 75% | 0,75 unit |
-| DO | 90% | 0,90 unit |
 
-Delivery dihitung sebagai realisasi. Delivery dan Lost tidak ikut dihitung lagi sebagai peluang aktif, sehingga realisasi tidak dihitung dua kali.
+DO dihitung sebagai realisasi. DO, Delivery, dan Lost berada di luar pipeline berbobot. Konfirmasi pengiriman pada tahap Delivery tetap memakai bulan realisasi DO.
 
 ## 4. Simulasi satu bulan: target 25 unit
 
-Misalkan target bulan ini **25 unit** dan sudah ada **8 Delivery**. Seluruh transaksi aktif dalam tabel berikut mempunyai estimasi closing pada bulan yang sama.
+Misalkan target bulan ini **25 unit** dan sudah ada **8 DO sah**. Seluruh transaksi aktif dalam tabel berikut mempunyai estimasi closing pada bulan yang sama.
 
 | Tahap | Jumlah transaksi aktif | Perhitungan | Kontribusi forecast |
 |---|---:|---|---:|
@@ -56,29 +55,28 @@ Misalkan target bulan ini **25 unit** dan sudah ada **8 Delivery**. Seluruh tran
 | Prospect | 10 | 10 × 25% | 2,5 unit |
 | Hot Prospect | 6 | 6 × 50% | 3 unit |
 | SPK | 4 | 4 × 75% | 3 unit |
-| DO | 2 | 2 × 90% | 1,8 unit |
-| **Total** | **42** | | **12,3 unit** |
+| **Total** | **40** | | **10,5 unit** |
 
 Hasilnya:
 
 ```text
-Forecast        = 8 + 12,3 = 20,3 unit
-Gap ke forecast = 25 − 20,3 = 4,7 unit
+Forecast        = 8 + 10,5 = 18,5 unit
+Gap ke forecast = 25 − 18,5 = 6,5 unit
 ```
 
-Pipeline saat ini diperkirakan menghasilkan sekitar **20 unit**, dengan risiko kekurangan sekitar **5 unit** dari target. Angka 20,3 adalah hasil perhitungan perkiraan; jumlah kendaraan yang benar-benar Delivery tetap utuh.
+Forecast saat ini **18,5 unit**, dengan perkiraan kekurangan **6,5 unit** dari target. Realisasi tercatat tetap **8 unit**.
 
 Informasi ini membantu SPV menentukan transaksi yang perlu didorong, memeriksa hambatan closing, serta mencari tambahan peluang. Hasil akhir tetap bergantung pada perkembangan nyata transaksi.
 
 ## 5. Simulasi pengaruh perubahan bobot
 
-Gunakan data yang sama persis. Ubah hanya bobot enam transaksi Hot Prospect; semua bobot lain dan delapan Delivery tetap.
+Gunakan data yang sama. Ubah hanya bobot enam transaksi Hot Prospect. Semua bobot lain dan delapan DO sah tetap.
 
 | Bobot Hot Prospect | Kontribusi 6 Hot Prospect | Forecast akhir bulan | Gap ke target 25 unit |
 |---|---:|---:|---:|
-| 30% | 1,8 unit | 19,1 unit | 5,9 unit |
-| 50% | 3 unit | 20,3 unit | 4,7 unit |
-| 70% | 4,2 unit | 21,5 unit | 3,5 unit |
+| 30% | 1,8 unit | 17,3 unit | 7,7 unit |
+| 50% | 3 unit | 18,5 unit | 6,5 unit |
+| 70% | 4,2 unit | 19,7 unit | 5,3 unit |
 
 Jumlah pelanggan dan tahap transaksi tidak berubah, tetapi forecast berubah karena asumsi peluang berubah. Karena itu, bobot yang terlalu optimistis dapat memberi kesan bahwa target lebih aman daripada kondisi sebenarnya.
 
@@ -89,8 +87,8 @@ Gunakan riwayat closing dealer sebagai dasar, dengan definisi tahap dan periode 
 Contoh pendekatan:
 
 1. Ambil 100 transaksi yang tercatat sebagai Hot Prospect pada awal suatu bulan.
-2. Periksa berapa dari kelompok yang sama menjadi Delivery dalam bulan tersebut.
-3. Jika 50 transaksi menjadi Delivery, hasil pengamatan kelompok itu adalah 50%.
+2. Periksa berapa dari kelompok yang sama mencapai DO sah dalam bulan tersebut.
+3. Jika 50 transaksi mencapai DO sah, hasil pengamatan kelompok itu adalah 50%.
 4. Bandingkan beberapa bulan dan periksa kualitas datanya sebelum menjadikannya bobot operasional.
 
 Perhitungan ini memerlukan riwayat tahap pada waktu pengamatan. Daftar tahap transaksi hari ini saja tidak cukup untuk merekonstruksi kelompok awal bulan. Jumlah sampel dan sisa waktu menuju akhir bulan juga perlu dipertimbangkan saat mengevaluasi bobot.

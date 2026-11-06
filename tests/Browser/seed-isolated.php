@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PipelineStage;
 use App\Models\Customer;
 use App\Models\DealTransaction;
 use App\Models\Team;
@@ -47,5 +48,14 @@ for ($i = 1; $i <= 16; $i++) {
     DealTransaction::create([
         'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
         'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 Pagination Model {$i}", 'source' => 'walk_in',
+    ]);
+}
+
+User::factory()->admin()->create(['dealer_id' => $sales->dealer_id, 'username' => 'g11.admin']);
+foreach (['Ship', 'Cancel'] as $scenario) {
+    DealTransaction::create([
+        'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
+        'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 DO {$scenario}", 'source' => 'walk_in',
+        'current_stage' => PipelineStage::Spk,
     ]);
 }

@@ -13,7 +13,7 @@ export type Metrics = {
     gap_units: number | null;
     forecast_gap_units: number | null;
     missing_closing_month_count?: number;
-    missing_delivery_history_count?: number;
+    missing_do_history_count?: number;
 };
 export type PerformanceRow = Metrics & {
     id: number | string;
@@ -58,7 +58,7 @@ export type ReportingProps = {
         stageCounts: Record<string, number>;
         stagnantCount: number;
         missingClosingMonthCount: number;
-        missingDeliveryHistoryCount: number;
+        missingDoHistoryCount: number;
         contributors: {
             public_id: string;
             vehicle_model: string;

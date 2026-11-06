@@ -39,6 +39,8 @@ export type HistoryTransaction = {
     current_stage: string;
     stage_label: string;
     is_closed: boolean;
+    can_record_do: boolean;
+    stage_event_id: number | null;
     is_stagnant: boolean;
     estimated_value: number | null;
     expected_closing_month: string | null;

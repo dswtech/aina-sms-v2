@@ -114,6 +114,17 @@ class DealTransaction extends Model
         return $this->hasMany(StageHistory::class)->orderBy('created_at');
     }
 
+    public function currentDoEvent(): ?StageHistory
+    {
+        return $this->stageHistories()->where('to_stage', PipelineStage::Do)
+            ->notReversed()->reorder()->latest('created_at')->latest('id')->first();
+    }
+
+    public function stageEventId(): int
+    {
+        return (int) $this->stageHistories()->reorder()->max('id');
+    }
+
     /**
      * @return HasMany<CustomerActivity, $this>
      */
@@ -164,7 +175,7 @@ class DealTransaction extends Model
         $createdColumn = $query->qualifyColumn('created_at');
         $cutoff = self::stagnantCutoff();
 
-        $query->whereNotIn($query->qualifyColumn('current_stage'), [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+        $query->whereNotIn($query->qualifyColumn('current_stage'), PipelineStage::closedValues())
             ->where(function (Builder $query) use ($activityColumn, $createdColumn, $cutoff): void {
                 $query->where($activityColumn, '<', $cutoff)
                     ->orWhere(function (Builder $query) use ($activityColumn, $createdColumn, $cutoff): void {
@@ -186,8 +197,25 @@ class DealTransaction extends Model
             throw new InvalidArgumentException('Alasan lost wajib diisi.');
         }
 
+        if ($toStage === PipelineStage::Do && (empty($options['po_confirmed']) || empty($options['dp_confirmed']) || empty($options['unit_confirmed']))) {
+            throw new InvalidArgumentException('Konfirmasi PO, DP, dan Unit diperlukan untuk tahap DO.');
+        }
+
         return DB::transaction(function () use ($toStage, $actor, $notes, $options): StageHistory {
+            $this->refreshLockedStage();
             $fromStage = $this->current_stage;
+            if ($toStage === PipelineStage::Do && $fromStage !== PipelineStage::Spk) {
+                throw new InvalidArgumentException('DO hanya dapat dicatat dari tahap SPK.');
+            }
+            if ($toStage === PipelineStage::Delivery && $fromStage !== PipelineStage::Do) {
+                throw new InvalidArgumentException('Delivery hanya dapat dikonfirmasi dari tahap DO.');
+            }
+            if ($toStage === PipelineStage::Delivery && ! $this->currentDoEvent()?->hasDoChecklist()) {
+                throw new InvalidArgumentException('Delivery memerlukan riwayat DO dengan checklist lengkap.');
+            }
+            if ($fromStage->isClosed() && $toStage !== PipelineStage::Delivery) {
+                throw new InvalidArgumentException('Tahap transaksi yang selesai terkunci.');
+            }
             $this->current_stage = $toStage;
             $this->last_activity_at = now();
 
@@ -204,14 +232,24 @@ class DealTransaction extends Model
 
             $this->save();
 
+            $checklist = $toStage === PipelineStage::Do
+                ? ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true] : [];
+
             return $this->stageHistories()->create([
                 'from_stage' => $fromStage,
                 'to_stage' => $toStage,
                 'actor_id' => $actor->id,
                 'notes' => $notes,
                 'created_at' => now(),
+                ...$checklist,
             ]);
         });
+    }
+
+    private function refreshLockedStage(): void
+    {
+        $locked = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+        $this->setRawAttributes($locked->getAttributes(), true);
     }
 
     /**

@@ -352,7 +352,7 @@ class DevelopmentDemoSeeder extends Seeder
                 : now()->subDays(mt_rand(20, 180))->subMinutes(mt_rand(0, 1440));
 
             $finalAt = match (true) {
-                $stage === PipelineStage::Delivery => $this->randomThisMonth(),
+                in_array($stage, [PipelineStage::Do, PipelineStage::Delivery], true) => $this->randomThisMonth(),
                 $stage === PipelineStage::Lost => $this->clamp($createdAt->copy()->addDays(mt_rand(4, 25)), $createdAt, now()),
                 $index % 9 === 4 => now()->subDays(mt_rand(4, 12)),
                 default => now()->subHours(mt_rand(1, 96)),
@@ -450,8 +450,8 @@ class DevelopmentDemoSeeder extends Seeder
             PipelineStage::Prospect->value => 'Pelanggan menunjukkan minat pada unit.',
             PipelineStage::HotProspect->value => 'Sudah test drive dan meminta simulasi kredit.',
             PipelineStage::Spk->value => 'Booking fee diterima, SPK dibuat.',
-            PipelineStage::Do->value => 'Dokumen dan pembayaran diverifikasi.',
-            PipelineStage::Delivery->value => 'Unit diserahkan ke pelanggan.',
+            PipelineStage::Do->value => 'PO, DP, dan Unit dikonfirmasi.',
+            PipelineStage::Delivery->value => 'Pengiriman unit dikonfirmasi.',
             PipelineStage::Lost->value => 'Peluang ditutup karena alasan yang tercatat.',
         ];
 
@@ -466,6 +466,13 @@ class DevelopmentDemoSeeder extends Seeder
                 $at = $finalAt->copy();
             }
 
+            if ($toStage === PipelineStage::Do && $stage === PipelineStage::Delivery) {
+                $monthStart = $finalAt->copy()->setTimezone('Asia/Jakarta')->startOfMonth()->utc();
+                if ($at->lt($monthStart)) {
+                    $at = $monthStart;
+                }
+            }
+
             $actor = $toStage === PipelineStage::Spk && $supervisor !== null
                 ? $supervisor
                 : $sales;
@@ -477,6 +484,9 @@ class DevelopmentDemoSeeder extends Seeder
                 'actor_id' => $actor->id,
                 'notes' => $notes[$toStage->value],
                 'created_at' => $at,
+                'po_confirmed' => $toStage === PipelineStage::Do ? true : null,
+                'dp_confirmed' => $toStage === PipelineStage::Do ? true : null,
+                'unit_confirmed' => $toStage === PipelineStage::Do ? true : null,
             ]);
 
             $previousStage = $toStage;
@@ -827,7 +837,7 @@ class DevelopmentDemoSeeder extends Seeder
 
     private function randomThisMonth(): CarbonInterface
     {
-        $start = now()->startOfMonth();
+        $start = now('Asia/Jakarta')->startOfMonth()->utc();
         $seconds = max(1, (int) $start->diffInSeconds(now()));
 
         return $start->copy()->addSeconds(mt_rand(1, $seconds));

@@ -1827,7 +1827,7 @@ async function accessibility(page) {
         gapUnits: 29,
         forecastGapUnits: 28.75,
         missingClosingMonthCount: 2,
-        missingDeliveryHistoryCount: 1,
+        missingDoHistoryCount: 1,
         stageCounts: {
             lead: 0,
             prospect: 1,

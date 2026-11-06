@@ -69,6 +69,8 @@ Data pelanggan tetap menjadi aset dealer, bukan phonebook pribadi Sales. Bila ta
 
 Menu Analisis membantu Supervisor membandingkan dari mana lead berasal dan model kendaraan apa yang paling banyak bergerak menuju SPK, DO, atau Delivery. Setiap angka dapat dibuka untuk melihat daftar transaksi pembentuknya sesuai hak akses.
 
+DO masuk realisasi setelah PO, DP, dan Unit dikonfirmasi. Delivery mencatat kendaraan sudah terkirim. Jika DO salah dicatat, Admin dealer dapat membatalkannya sebelum Delivery dengan alasan yang tersimpan pada riwayat.
+
 Analisis Sumber dan Model masuk tahap awal. Analisis Area dibuat setelah data wilayah sudah rapi, sedangkan analisis pembiayaan/MSCP dibuat bersama modul leasing.
 
 ## Memasukkan data lama

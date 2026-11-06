@@ -26,7 +26,7 @@ function g03Team(Dealer $dealer): array
     return compact('dealer', 'team', 'supervisor', 'sales', 'customer');
 }
 
-function g03Deal(array $f, string $source, string $createdAt, string $eventAt, PipelineStage $stage = PipelineStage::Delivery): DealTransaction
+function g03Deal(array $f, string $source, string $createdAt, string $eventAt, PipelineStage $stage = PipelineStage::Do): DealTransaction
 {
     $deal = DealTransaction::create([
         'dealer_id' => $f['dealer']->id, 'team_id' => $f['team']->id, 'sales_id' => $f['sales']->id,
@@ -34,7 +34,11 @@ function g03Deal(array $f, string $source, string $createdAt, string $eventAt, P
         'current_stage' => $stage, 'expected_closing_month' => '2026-11-01',
     ]);
     $deal->forceFill(['created_at' => Carbon::parse($createdAt, 'UTC')])->save();
-    $deal->stageHistories()->create(['to_stage' => $stage, 'actor_id' => $f['sales']->id, 'created_at' => $eventAt]);
+    $deal->stageHistories()->create([
+        'to_stage' => $stage, 'actor_id' => $f['sales']->id, 'created_at' => $eventAt,
+        'po_confirmed' => $stage === PipelineStage::Do, 'dp_confirmed' => $stage === PipelineStage::Do,
+        'unit_confirmed' => $stage === PipelineStage::Do,
+    ]);
 
     return $deal;
 }
@@ -45,13 +49,18 @@ function g03Ledger(): array
     $other = g03Team($f['dealer']);
     $foreign = g03Team(Dealer::factory()->create());
     $old = g03Deal($f, 'old_lead', '2026-10-01 00:00:00', '2026-10-31 17:00:00');
-    $old->stageHistories()->create(['to_stage' => 'delivery', 'actor_id' => $f['sales']->id, 'created_at' => '2026-11-02 00:00:00']);
+    $old->stageHistories()->create([
+        'to_stage' => 'do', 'actor_id' => $f['sales']->id, 'created_at' => '2026-11-02 00:00:00',
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
     $old->update(['updated_at' => '2026-12-10 00:00:00']);
     $active = g03Deal($f, 'walk_in', '2026-10-31 17:00:00', '2026-11-02 00:00:00', PipelineStage::Do);
     foreach (['2026-11-03 00:00:00', '2026-11-04 00:00:00'] as $at) {
         $active->stageHistories()->create(['to_stage' => 'spk', 'actor_id' => $f['sales']->id, 'created_at' => $at]);
     }
     $last = g03Deal($f, 'walk_in', '2026-11-30 16:59:59', '2026-11-30 16:59:59');
+    $last->update(['current_stage' => PipelineStage::Delivery]);
+    $last->stageHistories()->create(['to_stage' => 'delivery', 'actor_id' => $f['sales']->id, 'created_at' => '2026-11-30 17:00:00']);
     g03Deal($f, 'next_month', '2026-11-30 17:00:00', '2026-11-30 17:00:00');
     g03Deal($f, 'prior_month', '2026-10-31 16:59:59', '2026-10-31 16:59:59');
     g03Deal($other, 'other_team', '2026-11-05 00:00:00', '2026-11-06 00:00:00');
@@ -60,19 +69,61 @@ function g03Ledger(): array
     return compact('f', 'other', 'foreign', 'old', 'active', 'last');
 }
 
-it('reconciles unique Jakarta delivery events between dashboard and achievement analysis', function (string $role) {
+it('reconciles unique Jakarta DO events between dashboard and achievement analysis', function (string $role) {
     $this->travelTo(Carbon::parse('2026-11-30 16:59:59', 'UTC'));
     $ledger = g03Ledger();
     $f = $ledger['f'];
     $actor = $role === 'supervisor' ? $f['supervisor'] : User::factory()->role(UserRole::from($role))->create(['dealer_id' => $f['dealer']->id]);
-    $expected = $role === 'supervisor' ? 2 : 3;
+    $expected = $role === 'supervisor' ? 3 : 4;
     $this->actingAs($actor)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
-        ->where('dashboard.realizationUnits', $expected)->where('dashboard.stageCounts.delivery', $expected));
+        ->where('dashboard.realizationUnits', $expected)->where('dashboard.stageCounts.do', $expected)
+        ->where('dashboard.stageCounts.delivery', 0));
     $this->get('/analytics?period=2026-11&mode=achievement')->assertInertia(fn (Assert $p) => $p
-        ->where('analytics.sources', fn ($rows): bool => collect($rows)->sum('delivery') === $expected)
-        ->where('analytics.models.0.delivery', $expected)
+        ->where('analytics.sources', fn ($rows): bool => collect($rows)->sum('do') === $expected)
+        ->where('analytics.models.0.do', $expected)
         ->where('analytics.sources', fn ($rows): bool => ! collect($rows)->pluck('source')->intersect(['next_month', 'prior_month', 'foreign_dealer'])->count()));
 })->with(['supervisor', 'branch_manager', 'admin']);
+
+it('omits a cancelled DO and counts its replacement only in the new Jakarta month', function () {
+    $f = g03Team(Dealer::factory()->create());
+    $deal = g03Deal($f, 'walk_in', '2026-11-29 00:00:00', '2026-11-30 16:59:59');
+    $original = $deal->stageHistories()->sole();
+    $deal->stageHistories()->create([
+        'from_stage' => 'do', 'to_stage' => 'spk', 'actor_id' => $f['sales']->id,
+        'created_at' => '2026-11-30 17:00:00', 'reverses_stage_history_id' => $original->id,
+    ]);
+    $deal->stageHistories()->create([
+        'from_stage' => 'spk', 'to_stage' => 'do', 'actor_id' => $f['sales']->id,
+        'created_at' => '2026-11-30 17:00:01', 'po_confirmed' => true,
+        'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
+
+    $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')
+        ->assertInertia(fn (Assert $p) => $p->where('dashboard.realizationUnits', 0));
+    $this->get('/analytics?period=2026-11&mode=achievement')
+        ->assertInertia(fn (Assert $p) => $p->where('analytics.sources', [])->where('analytics.drilldown', []));
+    $this->get('/dashboard?period=2026-12')
+        ->assertInertia(fn (Assert $p) => $p->where('dashboard.realizationUnits', 1));
+    $this->get('/analytics?period=2026-12&mode=achievement')
+        ->assertInertia(fn (Assert $p) => $p
+            ->where('analytics.sources.0.do', 1)->where('analytics.sources.0.spk', 0)
+            ->where('analytics.sources.0.delivery', 0));
+});
+
+it('excludes DO history without a complete checklist', function () {
+    $f = g03Team(Dealer::factory()->create());
+    $deal = g03Deal($f, 'walk_in', '2026-11-05 00:00:00', '2026-11-07 00:00:00');
+    $deal->stageHistories()->update(['unit_confirmed' => false]);
+
+    $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')
+        ->assertInertia(fn (Assert $p) => $p->where('dashboard.realizationUnits', 0)
+            ->where('dashboard.missingDoHistoryCount', 1));
+    $this->get('/analytics?period=2026-11&mode=achievement')
+        ->assertInertia(fn (Assert $p) => $p->where('analytics.sources', []));
+    $this->get('/analytics?period=2026-11&mode=acquisition')
+        ->assertInertia(fn (Assert $p) => $p->where('analytics.sources.0.do', 0)
+            ->where('analytics.sources.0.conversion', 0));
+});
 
 it('uses the Jakarta acquisition cohort and distinct stage progress with a clear denominator', function () {
     $ledger = g03Ledger();
@@ -80,8 +131,8 @@ it('uses the Jakarta acquisition cohort and distinct stage progress with a clear
         ->assertInertia(fn (Assert $p) => $p
             ->has('analytics.sources', 1)->where('analytics.sources.0.source', 'walk_in')
             ->where('analytics.sources.0.total', 2)->where('analytics.sources.0.spk', 1)
-            ->where('analytics.sources.0.do', 1)->where('analytics.sources.0.delivery', 1)
-            ->where('analytics.sources.0.share', 100)->where('analytics.sources.0.conversion', 50)
+            ->where('analytics.sources.0.do', 2)->where('analytics.sources.0.delivery', 1)
+            ->where('analytics.sources.0.share', 100)->where('analytics.sources.0.conversion', 100)
             ->has('analytics.drilldown', 2)->where('analytics.drilldown', fn ($rows): bool => collect($rows)->pluck('public_id')->sort()->values()->all() === collect([$ledger['active']->public_id, $ledger['last']->public_id])->sort()->values()->all()));
 });
 
@@ -91,10 +142,10 @@ it('keeps reporting attribution on the recorded team after a sales transfer', fu
     $other = $ledger['other'];
     $f['sales']->activeTeamMemberships()->update(['ended_at' => now()]);
     TeamMembership::create(['team_id' => $other['team']->id, 'user_id' => $f['sales']->id, 'role' => 'sales', 'started_at' => now()]);
-    foreach ([[$f['supervisor'], 2], [$other['supervisor'], 1]] as [$actor, $count]) {
+    foreach ([[$f['supervisor'], 3], [$other['supervisor'], 1]] as [$actor, $count]) {
         $this->actingAs($actor)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p->where('dashboard.realizationUnits', $count));
         $this->get('/analytics?period=2026-11&mode=achievement')->assertInertia(fn (Assert $p) => $p
-            ->where('analytics.sources', fn ($rows): bool => collect($rows)->sum('delivery') === $count));
+            ->where('analytics.sources', fn ($rows): bool => collect($rows)->sum('do') === $count));
     }
 });
 
@@ -146,6 +197,6 @@ it('reconciles filtered CSV to screen totals and never accepts caller supplied d
     $csv = $response->streamedContent();
     $rows = array_map(fn (string $row): array => str_getcsv($row, escape: ''), explode("\n", trim($csv)));
     $source = collect($rows)->first(fn (array $row): bool => $row[0] === 'walk_in');
-    expect($source)->toBe(['walk_in', '2', '100', '1', '1', '1', '50'])
+    expect($source)->toBe(['walk_in', '2', '100', '1', '2', '1', '100'])
         ->and($csv)->not->toContain('foreign_dealer', 'other_team', 'JANGAN_KIRIM_CATATAN', $f['customer']->phone);
 });

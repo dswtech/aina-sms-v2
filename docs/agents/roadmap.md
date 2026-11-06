@@ -83,7 +83,7 @@ Customer dan transaksi dikerjakan lebih awal karena seluruh aktivitas, coaching,
 
 **Test wajib:** normalisasi nomor telepon dan kandidat duplikat, relasi satu Customer ke banyak transaksi, assignment/reassignment, pembatasan data per Sales/tim, opt-out, transisi tahap, Lost wajib beralasan, stagnant, serta alur utama pada tiga viewport.
 
-**Gerbang keluar:** Sales dapat menemukan pelanggan, menghubungi, mencatat hasil, menjadwalkan langkah berikutnya, dan menggerakkan transaksi sampai Delivery/Lost tanpa kebocoran data.
+**Gerbang keluar:** Sales dapat menemukan pelanggan, menghubungi, mencatat hasil, menjadwalkan langkah berikutnya, mencatat realisasi DO, dan mengonfirmasi Delivery tanpa kebocoran data. Jalur Lost dan pembatalan DO berwenang diuji terpisah.
 
 ## Fase 3 — Pekerjaan harian, coaching, dan notifikasi
 

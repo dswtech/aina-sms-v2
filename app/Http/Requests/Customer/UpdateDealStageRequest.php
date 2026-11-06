@@ -23,6 +23,11 @@ class UpdateDealStageRequest extends FormRequest
             'to_stage' => ['required', new Enum(PipelineStage::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'booking_fee_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,spk'],
+            'po_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
+            'dp_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
+            'unit_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
+            'do_event_id' => ['nullable', 'integer', 'required_if:to_stage,delivery'],
+            'stage_event_id' => ['nullable', 'integer', 'min:0', 'required_if:to_stage,do'],
             'lost_reason' => [
                 'nullable',
                 'required_if:to_stage,lost',
@@ -37,6 +42,9 @@ class UpdateDealStageRequest extends FormRequest
     {
         return [
             'booking_fee_confirmed.accepted_if' => 'Konfirmasi booking fee diperlukan untuk tahap SPK.',
+            'po_confirmed.accepted_if' => 'Konfirmasi PO diperlukan untuk tahap DO.',
+            'dp_confirmed.accepted_if' => 'Konfirmasi DP diperlukan untuk tahap DO.',
+            'unit_confirmed.accepted_if' => 'Konfirmasi Unit diperlukan untuk tahap DO.',
         ];
     }
 }

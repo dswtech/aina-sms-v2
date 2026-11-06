@@ -83,9 +83,9 @@ class TransactionController extends Controller
         }
 
         match ($tab) {
-            'active' => $query->whereNotIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]),
+            'active' => $query->whereNotIn('current_stage', PipelineStage::closedValues()),
             'stagnant' => $query->stagnant(),
-            'closed' => $query->whereIn('current_stage', [PipelineStage::Delivery->value, PipelineStage::Lost->value]),
+            'closed' => $query->whereIn('current_stage', PipelineStage::closedValues()),
             default => null,
         };
 
@@ -95,6 +95,10 @@ class TransactionController extends Controller
             ->paginate(15)
             ->withQueryString()
             ->through(function (DealTransaction $transaction) use ($actor): array {
+                $confirmDelivery = $actor->can('confirmDelivery', $transaction);
+                $cancelDo = $actor->can('cancelDo', $transaction);
+                $doEvent = ($confirmDelivery || $cancelDo) ? $transaction->currentDoEvent() : null;
+
                 return [
                     'id' => $transaction->id,
                     'public_id' => $transaction->public_id,
@@ -116,6 +120,11 @@ class TransactionController extends Controller
                     'last_activity_at' => $transaction->last_activity_at?->toIso8601String(),
                     'created_at' => $transaction->created_at->toIso8601String(),
                     'can_update' => ! $transaction->current_stage->isClosed() && $actor->can('update', $transaction),
+                    'can_record_do' => $transaction->current_stage === PipelineStage::Spk && $actor->can('recordDo', $transaction),
+                    'stage_event_id' => $transaction->current_stage === PipelineStage::Spk ? $transaction->stageEventId() : null,
+                    'can_confirm_delivery' => $confirmDelivery && $doEvent?->hasDoChecklist(),
+                    'can_cancel_do' => $cancelDo && $doEvent !== null,
+                    'do_event_id' => $doEvent?->id,
                 ];
             });
 

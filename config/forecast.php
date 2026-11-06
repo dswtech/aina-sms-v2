@@ -11,6 +11,5 @@ return [
         'prospect' => 0.25,
         'hot_prospect' => 0.50,
         'spk' => 0.75,
-        'do' => 0.90,
     ],
 ];

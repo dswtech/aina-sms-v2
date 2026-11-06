@@ -142,7 +142,7 @@ async function dashboardLayout(page) {
                     teamTargetsMissing: 1,
                     targetAllocationDifference: canViewManagement ? -4 : null,
                     missingClosingMonthCount: 1,
-                    missingDeliveryHistoryCount: 0,
+                    missingDoHistoryCount: 0,
                     stageCounts: empty
                         ? {}
                         : role === 'sales'

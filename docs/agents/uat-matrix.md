@@ -84,7 +84,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [PIP-04](PRD.md#74-sales-pipeline-pip) | S, V | [S05](#s05) | [E14](#e14), [E08](#e08): alasan kosong ditolak; enum alasan dan catatan Lost tersimpan. | Parsial | Uji pilihan katalog, validasi UI dan percobaan tahap tidak sah. | Belum dijalankan |
 | [PIP-05](PRD.md#74-sales-pipeline-pip) | S, V | [S04](#s04), [V02](#v02) | [E14](#e14), [E12](#e12), [E29](#e29): cutoff hari kalender Jakarta bersama, null fallback, tepat ambang, closed serta kesamaan accessor/filter/count/dashboard. | Terverifikasi teknis | UAT manusia belum dijalankan; [G07](#g07). | Belum dijalankan |
 | [PIP-06](PRD.md#74-sales-pipeline-pip) | S, V | [S04](#s04) | [E12](#e12): activity, actor dan timestamp Customer/deal diperbarui. | Parsial | Belum mengassert tahap tetap sama serta endpoint positif Supervisor. | Belum dijalankan |
-| [PIP-07](PRD.md#74-sales-pipeline-pip) | S, V | [S05](#s05) | [E07](#e07), [E30](#e30): edit tahap biasa ditolak bagi Sales/SPV/Admin; Delivery dan histori tetap utuh. | Parsial / Gap source | Mekanisme koreksi berwenang setelah Delivery belum tersedia, tetap terbuka di [G09](#g09) sesuai pilihan pengguna. | Belum dijalankan |
+| [PIP-07](PRD.md#74-sales-pipeline-pip) | S, V, A | [S05](#s05) | [E07](#e07), [E30](#e30) merekam baseline lama. | Revalidasi | Uji SPK → DO, Delivery setelah DO, dan pembatalan DO sebelum Delivery melalui [G09](#g09). | Belum dijalankan |
 
 ### Conversation dan coaching
 
@@ -126,7 +126,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 
 | Referensi PRD | Role | Skenario | Bukti assertion | Status teknis | Keterbatasan dan sisa pekerjaan | UAT |
 |---|---|---|---|---|---|---|
-| [FCT-01](PRD.md#78-sales-forecasting-fct) | V, B | [V02](#v02), [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Batas Jakarta, sumber Delivery, scope dan instan UTC diuji E26/E27; bobot production dan gerbang performa masih terbuka. | Belum dijalankan |
+| [FCT-01](PRD.md#78-sales-forecasting-fct) | V, B | [V02](#v02), [B01](#b01) | [E27](#e27), [E26](#e26) merekam rekonsiliasi baseline Delivery. | Revalidasi | Cocokkan realisasi dengan ledger DO sah, termasuk koreksi dan Delivery lintas bulan. Bobot production dan gerbang performa masih terbuka. | Belum dijalankan |
 | [FCT-02](PRD.md#78-sales-forecasting-fct) | V, B, PO | [V02](#v02), [O05](#o05) | Belum assertion konfigurasi bobot; [config forecast][forecast-source] masih approved=false. | Belum ada / Keputusan | Bobot dev tersedia server-side, persetujuan production belum ada [G12](#g12). | Belum dijalankan |
 | [FCT-03](PRD.md#78-sales-forecasting-fct) | V, B | [V02](#v02), [X03](#x03) | [E26](#e26): target/kinerja/periode dan sanitasi sesuai skenario G02; bukti awal tetap historis. | Parsial | Forecast diberi label estimasi/bobot belum disetujui; bulan lampau null. UAT belum dijalankan. | Belum dijalankan |
 | [FCT-04](PRD.md#78-sales-forecasting-fct) | V, B | [V02](#v02), [B01](#b01) | [E26](#e26): target/kinerja/periode dan sanitasi sesuai skenario G02; bukti awal tetap historis. | Parsial | Forecast dan kedua basis gap management/benchmark tersedia; histori alokasi dan presisi empat desimal diuji pada [E28](#e28). | Belum dijalankan |
@@ -154,7 +154,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [ANL-02](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E18](#e18), [E30](#e30): dua sumber, jumlah/porsi/SPK/DO/Delivery/conversion dan drilldown cocok dengan ledger independen di dua mode. | Terverifikasi teknis | UAT manusia belum dijalankan. | Belum dijalankan |
 | [ANL-03](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E18](#e18), [E30](#e30): dua model, jumlah/porsi/SPK/DO/Delivery dan ID drilldown direkonsiliasi di dua mode. | Terverifikasi teknis | UAT manusia belum dijalankan. | Belum dijalankan |
 | [ANL-04](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Rekonsiliasi sumber/model, transaksi unik dan penyebut diuji E27; penerimaan operasional belum dijalankan. | Belum dijalankan |
-| [ANL-05](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Jendela Jakarta dan mode Akuisisi/Pencapaian diuji E27 pada SQLite/PostgreSQL; tidak ada conversion Pencapaian. | Belum dijalankan |
+| [ANL-05](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26) merekam rekonsiliasi baseline Delivery. | Revalidasi | Cocokkan conversion Akuisisi dan total Pencapaian dengan DO sah, serta kolom Delivery dengan waktu konfirmasi pengiriman. | Belum dijalankan |
 | [ANL-06](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | ID drilldown dan himpunan transaksi sumber diuji E27; UAT konteks navigasi penuh masih terbuka. | Belum dijalankan |
 | [ANL-07](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B02](#b02), [V01](#v01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Scope tim transaksi, perpindahan/ended membership dan sanitasi mengikuti E27; UAT lintas role belum dijalankan. | Belum dijalankan |
 | [ANL-08](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | [E31](#e31) menambah rekonsiliasi CSV tiga role dan PDF browser. Penerimaan cetak operasional masih terbuka. | Belum dijalankan |
@@ -354,7 +354,7 @@ Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan
 
 ### S05
 
-**Pipeline — Sales, diulang Supervisor.** Prasyarat: dua peluang uji terpisah untuk jalur Delivery dan Lost; kebijakan booking fee yang disetujui atau tandai bagian SPK terblokir. Langkah: lakukan Lead→Prospect→Hot Prospect→SPK→DO→Delivery; coba SPK tanpa konfirmasi dan Lost tanpa alasan; pada peluang kedua pilih Lost dengan katalog/catatan; coba perubahan closed dan request asing; buka histori setiap langkah. Hasil: stage tunggal, histori append-only lengkap actor/waktu/from/to, penolakan tidak menambah histori, Delivery/Lost keluar dari aktif; koreksi closed hanya lewat mekanisme berwenang yang disetujui. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
+**Pipeline — Sales dan Supervisor, dengan pembatalan oleh Admin.** Prasyarat: peluang terpisah untuk Delivery, pembatalan DO, dan Lost. Coba SPK tanpa konfirmasi, DO dari luar SPK, DO dengan checklist tidak lengkap, Delivery dari luar DO, Lost tanpa alasan, dan request asing. Catat DO lengkap pada akhir bulan Jakarta, lalu konfirmasi Delivery pada bulan berikutnya. Pada peluang kedua, batalkan DO sebagai Admin dengan alasan, periksa histori dan laporan, lalu catat ulang DO dengan checklist baru. Coba pembatalan sebagai non-Admin dan setelah Delivery. Hasil: penolakan tidak menambah histori. DO keluar dari pipeline aktif dan menentukan bulan realisasi. Delivery mencatat pengiriman. Pembatalan yang sah mengembalikan SPK dan mengecualikan DO yang dibatalkan tanpa menghapus histori. **Hasil aktual/bukti: Belum dijalankan.**
 
 ### S06
 
@@ -462,7 +462,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G09
 
-**Verifikasi teknis diperluas; koreksi Delivery tetap gap source.** [E30](#e30) melengkapi assignment Supervisor, pencabutan akses, non-deletion, kelompok follow-up Jakarta, sanitasi laporan dan ledger multi-Sales/tim/periode/source/model/top-five. Regresi membuktikan dan menutup asal reassignment di luar cakupan, penerima bukan Sales, akses/selector tim nonaktif dan tanggal follow-up UTC. Batas edit/parent/email dan histori/revisi memakai bukti E25/E29 serta regresi suite terbaru. Koreksi berwenang setelah Delivery belum tersedia dan sengaja dipisahkan untuk rancangan berikutnya sesuai pilihan pengguna; penolakan edit biasa bukan penutupan requirement tersebut. UAT manusia dan gerbang G11/G13/G15 tetap terbuka. Pemilik: QA + Engineering; pemutus alur koreksi: PO + operasional.
+**Revalidasi alur DO.** [E30](#e30) merekam verifikasi baseline untuk akses, coaching, follow-up, dan rekonsiliasi. [S05](#s05) sekarang menguji realisasi pada DO, konfirmasi pengiriman pada Delivery, serta koreksi Admin sebelum Delivery sesuai [PRD Pipeline](PRD.md#74-sales-pipeline-pip). UAT manusia dan gerbang G11/G13/G15 tetap terbuka. Pemilik: QA + Engineering.
 
 ### G10
 

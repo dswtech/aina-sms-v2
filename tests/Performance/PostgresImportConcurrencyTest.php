@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\CsvImportBatch;
+use App\Models\Customer;
 use App\Models\Dealer;
+use App\Models\DealTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
@@ -72,4 +74,48 @@ it('serializes simultaneous PostgreSQL import commits and rejects replay or dupl
     $this->assertDatabaseCount('customer_assignments', 2);
     $this->assertDatabaseCount('deal_transactions', 2);
     expect(CsvImportBatch::query()->where('status', 'completed')->count())->toBe(2);
+
+    $sales = User::query()->where('username', 'g13.sales')->sole();
+    $deal = DealTransaction::create([
+        'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
+        'customer_id' => Customer::query()->firstOrFail()->id,
+        'vehicle_model' => 'Concurrent DO', 'current_stage' => 'spk',
+    ]);
+    $workers = [];
+    $db->beginTransaction();
+    try {
+        DealTransaction::query()->whereKey($deal->id)->lockForUpdate()->firstOrFail();
+        foreach ([1, 2] as $slot) {
+            $worker = new Process([PHP_BINARY, __DIR__.'/do-worker.php', 'g13-do-'.$slot, (string) $sales->id, $deal->public_id]);
+            $worker->setTimeout(20);
+            $worker->start();
+            $workers[] = $worker;
+        }
+        $waiting = 0;
+        $deadline = microtime(true) + 8;
+        while ($waiting < 2 && microtime(true) < $deadline) {
+            $db->statement('select pg_stat_clear_snapshot()');
+            $waiting = (int) $db->scalar("select count(*) from pg_stat_activity where application_name like 'g13-do-%' and wait_event_type = 'Lock'");
+            usleep(20000);
+        }
+        expect($waiting)->toBe(2);
+        $db->commit();
+        $outcomes = [];
+        foreach ($workers as $worker) {
+            expect($worker->wait())->toBe(0, $worker->getErrorOutput());
+            $outcomes[] = trim($worker->getOutput());
+        }
+        sort($outcomes);
+        expect($outcomes)->toBe(['302', '403'])
+            ->and($deal->stageHistories()->where('to_stage', 'do')->count())->toBe(1);
+    } finally {
+        if ($db->transactionLevel() > 0) {
+            $db->rollBack();
+        }
+        foreach ($workers as $worker) {
+            if ($worker->isRunning()) {
+                $worker->stop();
+            }
+        }
+    }
 });

@@ -1,4 +1,5 @@
 import { CustomerHistory } from '@/components/customer-history';
+import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import type { HistoryTransaction, TimelineComment } from '@/types/history';
 import { ClosingMonthForm } from '@/components/team-performance';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
@@ -67,6 +68,8 @@ export type CustomerItem = {
         current_stage: string;
         stage_label: string;
         is_closed: boolean;
+        can_record_do: boolean;
+        stage_event_id: number | null;
         is_stagnant: boolean;
         estimated_value: number | null;
         expected_closing_month: string | null;
@@ -205,8 +208,10 @@ export default function CustomersIndex({
 
     const [nextStage, setNextStage] = useState('prospect');
     const [stageNotes, setStageNotes] = useState('');
+    const stageEventId = useRef<number | null>(null);
     const [lostReason, setLostReason] = useState('price_budget');
     const [bookingFee, setBookingFee] = useState(false);
+    const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
 
     const [txVehicleModel, setTxVehicleModel] = useState('');
     const [txEstimatedValue, setTxEstimatedValue] = useState('');
@@ -425,6 +430,14 @@ export default function CustomersIndex({
         );
     }
 
+    function openStage(stage: string) {
+        stageEventId.current =
+            selectedCustomer?.active_deal?.stage_event_id ?? null;
+        setNextStage(stage);
+        setDoChecklist(emptyDoChecklist);
+        setStageOpen(true);
+    }
+
     function handleUpdateStage(e: React.FormEvent) {
         e.preventDefault();
         if (!selectedCustomer || !selectedCustomer.active_deal) return;
@@ -432,8 +445,10 @@ export default function CustomersIndex({
             `/transactions/${selectedCustomer.active_deal.public_id}/stage`,
             {
                 to_stage: nextStage,
+                stage_event_id: stageEventId.current,
                 notes: stageNotes,
                 booking_fee_confirmed: bookingFee,
+                ...doChecklist,
                 lost_reason: nextStage === 'lost' ? lostReason : undefined,
                 lost_notes: nextStage === 'lost' ? stageNotes : undefined,
             },
@@ -1245,11 +1260,10 @@ export default function CustomersIndex({
                                                             selectQuickCustomer(
                                                                 c,
                                                             );
-                                                            setNextStage(
+                                                            openStage(
                                                                 c.active_deal!
                                                                     .current_stage,
                                                             );
-                                                            setStageOpen(true);
                                                         }}
                                                     >
                                                         Ubah Tahap
@@ -1474,13 +1488,10 @@ export default function CustomersIndex({
                                                                 selectQuickCustomer(
                                                                     c,
                                                                 );
-                                                                setNextStage(
+                                                                openStage(
                                                                     c
                                                                         .active_deal!
                                                                         .current_stage,
-                                                                );
-                                                                setStageOpen(
-                                                                    true,
                                                                 );
                                                             }}
                                                         >
@@ -1697,12 +1708,12 @@ export default function CustomersIndex({
                                         <SelectItem value="spk">
                                             SPK (Pemesanan)
                                         </SelectItem>
-                                        <SelectItem value="do">
-                                            DO (Delivery Order)
-                                        </SelectItem>
-                                        <SelectItem value="delivery">
-                                            Delivery (Selesai)
-                                        </SelectItem>
+                                        {selectedCustomer?.active_deal
+                                            ?.can_record_do && (
+                                            <SelectItem value="do">
+                                                DO (Delivery Order)
+                                            </SelectItem>
+                                        )}
                                         <SelectItem value="lost">
                                             Lost (Gagal Closing)
                                         </SelectItem>
@@ -1729,6 +1740,13 @@ export default function CustomersIndex({
                                         terverifikasi sesuai kebijakan dealer.
                                     </Label>
                                 </div>
+                            )}
+
+                            {nextStage === 'do' && (
+                                <DoChecklist
+                                    value={doChecklist}
+                                    onChange={setDoChecklist}
+                                />
                             )}
 
                             {nextStage === 'lost' && (
@@ -1788,7 +1806,14 @@ export default function CustomersIndex({
                                 />
                             </div>
 
-                            <Button type="submit" className="min-h-11 w-full">
+                            <Button
+                                type="submit"
+                                className="min-h-11 w-full"
+                                disabled={
+                                    nextStage === 'do' &&
+                                    !Object.values(doChecklist).every(Boolean)
+                                }
+                            >
                                 Konfirmasi Perubahan Tahap
                             </Button>
                         </form>
@@ -2297,11 +2322,10 @@ export default function CustomersIndex({
                                         className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
                                         onClick={() => {
                                             setDetailOpen(false);
-                                            setNextStage(
+                                            openStage(
                                                 selectedCustomer.active_deal!
                                                     .current_stage,
                                             );
-                                            setStageOpen(true);
                                         }}
                                     >
                                         Ubah Tahap
