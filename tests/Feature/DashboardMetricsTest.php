@@ -5,11 +5,48 @@ use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\SalesTarget;
+use App\Models\StageHistory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
+
+it('counts distinct Jakarta stage events without hydrating dashboard history models', function () {
+    $this->travelTo(now('Asia/Jakarta')->setDate(2026, 11, 20));
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
+    $deal = fn (PipelineStage $stage, ?string $closing = null) => DealTransaction::create([
+        'dealer_id' => $dealer->id, 'customer_id' => $customer->id, 'sales_id' => $sales->id,
+        'vehicle_model' => 'Synthetic model', 'current_stage' => $stage, 'expected_closing_month' => $closing,
+    ]);
+    $deal(PipelineStage::Prospect, '2026-11-18');
+    $deal(PipelineStage::Delivery);
+    $deal(PipelineStage::Delivery)->stageHistories()->create([
+        'to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => '2026-10-31 16:59:59',
+    ]);
+    $corrected = $deal(PipelineStage::Lost);
+    foreach (['2026-10-31 17:00:00', '2026-11-30 16:59:59'] as $at) {
+        $corrected->stageHistories()->create(['to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => $at]);
+    }
+    $corrected->stageHistories()->create(['to_stage' => PipelineStage::Lost, 'actor_id' => $sales->id, 'created_at' => '2026-11-05 00:00:00']);
+
+    $hydrated = 0;
+    Event::listen('eloquent.retrieved: '.StageHistory::class, function () use (&$hydrated): void {
+        $hydrated++;
+    });
+
+    $this->actingAs($sales)->get(route('dashboard', ['period' => '2026-11']))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('dashboard.realizationUnits', 1)
+            ->where('dashboard.stageCounts.delivery', 1)
+            ->where('dashboard.stageCounts.lost', 1)
+            ->where('dashboard.stageCounts.prospect', 1)
+            ->where('dashboard.missingDeliveryHistoryCount', 1));
+    expect($hydrated)->toBe(0);
+});
 
 it('reconciles sales dashboard metrics to visible source transactions', function () {
     $dealer = Dealer::factory()->create();
