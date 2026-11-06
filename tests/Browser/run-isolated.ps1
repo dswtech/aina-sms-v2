@@ -46,7 +46,7 @@ try {
 
     playwright-cli "-s=$session" open "$env:APP_URL/login" --browser chrome
     if ($LASTEXITCODE -ne 0) { throw 'G11 browser failed to start' }
-    foreach ($script in @('lead-server-save.js', 'analytics-recovery.js', 'transaction-filter-recovery.js')) {
+    foreach ($script in @('lead-server-save.js', 'analytics-recovery.js', 'transaction-filter-recovery.js', 'transaction-stage-save.js')) {
         playwright-cli "-s=$session" run-code --filename "tests/Browser/$script"
         if ($LASTEXITCODE -ne 0) { throw "G11 browser regression failed: $script" }
     }

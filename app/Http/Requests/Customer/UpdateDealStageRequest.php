@@ -22,13 +22,21 @@ class UpdateDealStageRequest extends FormRequest
         return [
             'to_stage' => ['required', new Enum(PipelineStage::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'booking_fee_confirmed' => ['nullable', 'boolean'],
+            'booking_fee_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,spk'],
             'lost_reason' => [
                 'nullable',
                 'required_if:to_stage,lost',
                 new Enum(LostReason::class),
             ],
             'lost_notes' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'booking_fee_confirmed.accepted_if' => 'Konfirmasi booking fee diperlukan untuk tahap SPK.',
         ];
     }
 }

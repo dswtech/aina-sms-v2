@@ -159,6 +159,13 @@ it('updates deal stage with audit and validation', function () {
 
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::HotProspect);
 
+    foreach ([[], ['booking_fee_confirmed' => false]] as $confirmation) {
+        $this->patch(route('transactions.stage', $deal), ['to_stage' => 'spk', ...$confirmation])
+            ->assertSessionHasErrors(['booking_fee_confirmed']);
+    }
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::HotProspect)
+        ->and($deal->stageHistories()->count())->toBe(1);
+
     // Transition to Lost requires lost_reason
     $this->actingAs($sales)
         ->patch(route('transactions.stage', $deal), [

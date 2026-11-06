@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.33 |
+| Versi | v1.34 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #53 merged pada `main` `d3b2e26`. Branch `codex/g11-transaction-stage-browser` memperbaiki validasi booking fee SPK dan memverifikasi penolakan, preservasi draft, serta penyimpanan setelah konfirmasi pada Chrome 390×844. [Bukti G11](implementation-g11-browser-verification.md#validasi-dan-penyimpanan-tahap-transaksi) mencatat build, empat skenario browser dan CI lokal lulus.
 
 - PR #52 merged pada `main` `5e24217`. Branch `codex/g13-analytics-stage-flags` memakai flag histori SQL untuk Analisis. [Benchmark kapasitas](implementation-g13-postgres-pilot.md#flag-histori-tahap-untuk-analisis) mencatat p95 Analisis Pencapaian 0,84 detik dan kedua dashboard di bawah 3 detik. CI, suite PostgreSQL, concurrency impor dan benchmark lulus.
 
