@@ -10,6 +10,8 @@ use App\Models\TeamMembership;
 use App\Models\TeamTarget;
 use App\Models\User;
 use App\Notifications\DealCommentCreated;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -143,6 +145,35 @@ it('keeps transaction team attribution after membership changes and sanitizes ma
     expect(json_encode($payload))->not->toContain($f['customer']->phone, 'customer_id', 'body', 'email', 'address');
     $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.forecastUnits', 0.5));
+});
+
+it('counts stagnant deals in SQL within the branch manager reporting scope', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-05 09:00:00', 'Asia/Jakarta'));
+    $f = g02Fixture();
+    $beforeCutoff = '2026-11-01 16:59:59';
+    $atCutoff = '2026-11-01 17:00:00';
+
+    g02Deal($f, ['last_activity_at' => $beforeCutoff]);
+    g02Deal($f, ['team_id' => null])->forceFill([
+        'last_activity_at' => null,
+        'created_at' => $beforeCutoff,
+    ])->save();
+    g02Deal($f, ['last_activity_at' => $atCutoff])->forceFill(['created_at' => $beforeCutoff])->save();
+    g02Deal($f, ['current_stage' => PipelineStage::Delivery, 'last_activity_at' => $beforeCutoff]);
+    g02Deal(g02Fixture(), ['last_activity_at' => $beforeCutoff]);
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
+
+    DB::enableQueryLog();
+    try {
+        $this->actingAs($manager)->get('/dashboard?period=2026-10')->assertInertia(fn (Assert $p) => $p
+            ->where('dashboard.stagnantCount', 2)->where('dashboard.priorities.stagnant', []));
+        expect(collect(DB::getQueryLog())->contains(fn (array $entry): bool => str_starts_with($entry['query'], 'select count(*)')
+            && str_contains($entry['query'], 'deal_transactions')
+            && str_contains($entry['query'], 'last_activity_at')))->toBeTrue();
+    } finally {
+        DB::disableQueryLog();
+        DB::flushQueryLog();
+    }
 });
 
 it('lists stagnant and closing priorities without exposing revoked coaching notifications', function () {
