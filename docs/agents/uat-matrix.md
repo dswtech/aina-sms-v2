@@ -478,7 +478,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G13
 
-**Target dashboard tercapai pada profil pilot lokal, kapasitas masih terbuka.** [Suite PostgreSQL, concurrency impor dan benchmark pilot](implementation-g13-postgres-pilot.md) mencatat suite penuh lulus serta replay dan duplikasi impor serentak ditolak. Pada 10.000 transaksi, p95 dashboard setelah tuning mencapai 1,01 detik untuk Supervisor dan 1,35 detik untuk Branch Manager. Pada [100.000 transaksi](implementation-g13-postgres-pilot.md#hasil-profil-kapasitas-100000-transaksi), dashboard Supervisor masih memenuhi target (2,51 detik), sedangkan dashboard Branch Manager (13,67 detik) dan Analisis Pencapaian (2,42 detik) melewati target masing-masing. Tindak lanjut O02 mencakup profiling kedua jalur tersebut serta pengukuran pada konfigurasi hosting dan beban pilot.
+**Target dashboard tercapai pada profil pilot lokal, kapasitas masih terbuka.** [Suite PostgreSQL, concurrency impor dan benchmark pilot](implementation-g13-postgres-pilot.md) mencatat suite penuh lulus serta replay dan duplikasi impor serentak ditolak. Pada 10.000 transaksi, p95 dashboard setelah tuning mencapai 1,01 detik untuk Supervisor dan 1,35 detik untuk Branch Manager. Pada [benchmark ulang 100.000 transaksi](implementation-g13-postgres-pilot.md#penghitungan-stagnan-branch-manager-di-sql), dashboard Supervisor memenuhi target (2,12 detik), sementara dashboard Branch Manager (6,82 detik) dan Analisis Pencapaian (2,72 detik) masih melewati target masing-masing. Tindak lanjut O02 mencakup profiling pemuatan dan agregasi transaksi serta pengukuran pada konfigurasi hosting dan beban pilot.
 
 ### G14
 

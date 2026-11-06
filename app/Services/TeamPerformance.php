@@ -114,8 +114,11 @@ class TeamPerformance
                 'sales_name' => $deal->sales?->name, 'weighted_value' => round((float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$deal->current_stage->value, 0), 2),
             ])->values()->all();
         $priorities = ['stagnant' => [], 'closing' => [], 'unread' => []];
-        $stagnant = $deals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
-        if (in_array($actor->role, [UserRole::Sales, UserRole::Supervisor, UserRole::Admin], true)) {
+        if ($actor->role === UserRole::BranchManager) {
+            $stagnantCount = DealTransaction::query()->visibleInReportsTo($actor)->stagnant()->count();
+        } else {
+            $stagnant = $deals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
+            $stagnantCount = $stagnant->count();
             $visibleIds = DealTransaction::query()->visibleTo($actor)->pluck('id')->flip();
             $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
                 ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
@@ -136,7 +139,7 @@ class TeamPerformance
                 'realizationUnits' => $metrics['realization_units'], 'forecastUnits' => $metrics['forecast_units'],
                 'forecastValue' => $metrics['forecast_value'], 'forecastApproved' => (bool) config('forecast.approved', false),
                 'gapUnits' => $metrics['gap_units'], 'forecastGapUnits' => $metrics['forecast_gap_units'],
-                'stageCounts' => $metrics['stage_counts'], 'stagnantCount' => $stagnant->count(),
+                'stageCounts' => $metrics['stage_counts'], 'stagnantCount' => $stagnantCount,
                 'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDeliveryHistoryCount' => $metrics['missing_delivery_history_count'],
                 'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)

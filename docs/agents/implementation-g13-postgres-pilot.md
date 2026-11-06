@@ -90,3 +90,19 @@ Pada request ketiga, Dashboard memerlukan 12,69 detik dengan 0,33 detik waktu SQ
 Eksperimen kedua menjalankan kedua filter stagnan pada koleksi yang sama. Filter standar memerlukan 7,12–7,74 detik. Filter yang menghitung cutoff sekali sebelum loop memerlukan 5,19–5,34 detik dan menghasilkan urutan ID yang identik pada ketiga request. Penghematan di tahap ini sekitar 1,90–2,40 detik per request, dengan lebih dari lima detik tersisa untuk pemrosesan baris di PHP. Karena kedua filter dijalankan berurutan, hasil ini mengukur biaya tahap, bukan p95 endpoint setelah perubahan.
 
 Langkah berikutnya adalah mengukur penghitungan stagnan melalui scope SQL yang sudah ada untuk Branch Manager dan menjaga kecocokan dengan batas hari Jakarta serta scope laporan. Setelah itu, ukur ulang biaya pemuatan transaksi dan agregasi Dashboard. Untuk Analisis, ukur dampak flag keberadaan histori SPK, DO, dan Delivery terhadap penghitungan kedua dimensi sambil menjaga semantik Akuisisi, Pencapaian, dan ekspor. Kedua run diagnostik lulus delapan assertions masing-masing pada PostgreSQL terisolasi. Instrumentasi dan percobaan dilepas dari source setelah pengukuran.
+
+## Penghitungan stagnan Branch Manager di SQL
+
+Baseline `1e51e4a` setelah PR #49. Branch Manager menghitung transaksi stagnan melalui scope laporan dan scope stagnan yang sudah ada. Regresi dashboard menguji dealer lain, transaksi tertutup dan tanpa tim, batas hari Jakarta, fallback ke tanggal pembuatan, serta pemakaian agregasi SQL. Regresi gagal sebelum perubahan pada pemeriksaan query dan lulus setelahnya.
+
+Benchmark kapasitas diulang dengan `pwsh -NoProfile -File tests/Performance/run-postgres.ps1 -Profile capacity` pada PostgreSQL 16.4 lokal, PHP 8.4.13 dengan batas 512 MiB dan fixture 100.000 transaksi yang sama. Setiap jalur memakai 30 sampel setelah dua pemanasan.
+
+| Jalur | p95 awal (detik) | p95 setelah perubahan (detik) |
+|---|---:|---:|
+| Dashboard Branch Manager | 13,67 | 6,82 |
+| Dashboard Supervisor | 2,51 | 2,12 |
+| Analisis Pencapaian Branch Manager | 2,42 | 2,72 |
+
+Dashboard Branch Manager sekitar 50% lebih cepat pada p95 dan masih di atas target 3 detik. Waktu SQL p95 sebesar 0,42 detik dengan maksimum sembilan query. Pengukuran berikutnya berfokus pada pemuatan dan agregasi transaksi Dashboard. Analisis masih di atas target 2 detik. Puncak alokasi PHP untuk seluruh proses benchmark turun dari 418 ke 380 MiB. Pengukuran memakai request berurutan dan belum mencakup hosting atau beban pengguna pilot.
+
+`composer ci:check` lulus dengan 359 tes Pest, tiga skip, 3.408 assertions dan tujuh tes frontend. Suite PostgreSQL terisolasi lulus 359 tes, tiga skip dan 3.409 assertions. Uji impor serentak lulus 13 assertions dan benchmark kapasitas lulus 323 assertions. Cluster sementara dibersihkan.
