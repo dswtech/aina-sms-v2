@@ -3,13 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.26 |
-| Diperbarui | 5 November 2026 |
+| Versi | v1.27 |
+| Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Benchmark kapasitas G13 dari baseline `d578124` lulus 323 assertions pada 100.000 transaksi sintetis. Dashboard Supervisor p95 2,51 detik, Dashboard Branch Manager 13,67 detik dan Analisis Pencapaian 2,42 detik. [Bukti kapasitas](implementation-g13-postgres-pilot.md#hasil-profil-kapasitas-100000-transaksi) mencatat target yang terlampaui, profil dan batas pengukuran.
+
+- PR #47/pemulihan filter Transaksi sudah merged pada `main` `d578124`. [Bukti G11](implementation-g11-browser-verification.md#pemulihan-filter-transaksi) mencatat loading, pemulihan jaringan/503 dan validasi tanggal lewat Laravel. Pagination, penyimpanan tahap, zoom, pembaca layar nyata dan UAT masih terbuka.
 
 - PR #45/tuning dashboard sudah merged pada `main` `8eb1743`. Branch `codex/g11-main-flow-recovery` melanjutkan G11. [Bukti G11](implementation-g11-browser-verification.md#filter-pelanggan-mobile-dan-pemulihan-analisis) mencatat filter pelanggan mobile mulai terlipat, laporan Analisis bertahan ketika permintaan gagal, dan retry menuju Laravel. Regresi launcher dan CI lokal lulus. Pengujian lintas blok, zoom, pembaca layar nyata dan UAT manusia tetap terbuka.
 
@@ -126,7 +130,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Review PR G10. G09/PR #41 dan G06–G08/PR #40 sudah merged. Berikutnya prioritaskan G11 serta gerbang G13 pada [matriks UAT](uat-matrix.md). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Migration/seeder development terdahulu sudah diterapkan; production tetap memerlukan otorisasi tersendiri. Audit timestamp historis memerlukan provenance; jangan menggeser data otomatis. Worker/scheduler bisnis belum diaktifkan.
+1. Profilkan Dashboard Branch Manager lalu Analisis Pencapaian pada profil kapasitas G13. Lanjutkan verifikasi G11 sesuai [matriks UAT](uat-matrix.md#g11). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 
