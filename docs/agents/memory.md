@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #59 sudah merged pada `main` `926838b`. Migrasi DO di `aina.test` diterapkan manual oleh pengguna dan statusnya terverifikasi. [Verifikasi browser lokal](implementation-g09-verification.md#verifikasi-do-dan-delivery-di-ainatest) lulus untuk checklist, pembatalan dan DO ulang, serta konfirmasi Delivery dan rekonsiliasi laporan. Dua transaksi sintetis tersimpan di development. Buffer FastCGI virtual host lokal diperbarui untuk memperbaiki 502 pada Pelanggan.
+
 - Branch `codex/do-sales-realization` berangkat dari `main` `9012967`. [PRD Pipeline](PRD.md#74-sales-pipeline-pip) dan [skenario UAT](uat-matrix.md#s05) mengikuti definisi realisasi DO. ID kejadian tahap memblokir pengiriman ulang formulir lama setelah pembatalan dan pencatatan DO baru. CI dan suite PostgreSQL masing-masing lulus 364 tes, tiga skip dan 3.569 assertions. Uji concurrency lulus 18 assertions, termasuk dua request DO pada baris yang sama. Tujuh skenario Chrome dan 12 varian cetak lulus. Seeder baru menyiapkan 44 kejadian DO dengan checklist lengkap dan 30 konfirmasi Delivery pada database demo baru. Seeder tidak mengarang checklist untuk histori lama. Database development belum direset.
 
 - PR #57 merged pada `main` `7b45303`. Branch `codex/g11-chrome-native-zoom` memverifikasi reflow empat halaman Supervisor dan formulir tahap pada zoom bawaan Chrome 200%. [Bukti G11](implementation-g11-browser-verification.md#zoom-bawaan-chrome-200) mencatat build, enam skenario browser dan CI lokal lulus. Pembaca layar nyata dan UAT manusia masih terbuka.

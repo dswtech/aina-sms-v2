@@ -462,7 +462,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G09
 
-**Revalidasi alur DO.** [E30](#e30) merekam verifikasi baseline untuk akses, coaching, follow-up, dan rekonsiliasi. [S05](#s05) sekarang menguji realisasi pada DO, konfirmasi pengiriman pada Delivery, serta koreksi Admin sebelum Delivery sesuai [PRD Pipeline](PRD.md#74-sales-pipeline-pip). UAT manusia dan gerbang G11/G13/G15 tetap terbuka. Pemilik: QA + Engineering.
+**Revalidasi alur DO.** [E30](#e30) merekam verifikasi baseline untuk akses, coaching, follow-up, dan rekonsiliasi. [S05](#s05) menguji realisasi pada DO, konfirmasi pengiriman pada Delivery, serta koreksi Admin sebelum Delivery sesuai [PRD Pipeline](PRD.md#74-sales-pipeline-pip). [Verifikasi browser di aina.test](implementation-g09-verification.md#verifikasi-do-dan-delivery-di-ainatest) membuktikan checklist, pembatalan dan pencatatan ulang, serta rekonsiliasi DO dan Delivery pada periode berjalan. UAT manusia dan gerbang G11/G13/G15 tetap terbuka. Pemilik: QA + Engineering.
 
 ### G10
 
