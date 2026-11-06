@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Support\ReportingPeriod;
 use App\Support\TargetUnits;
 use Illuminate\Support\Collection;
+use stdClass;
 
 class TeamPerformance
 {
@@ -28,20 +29,21 @@ class TeamPerformance
         $historical = $period < now('Asia/Jakarta')->format('Y-m');
         $teams = Team::query()->visibleTo($actor)->orderBy('name')->get();
         $teamIds = $teams->modelKeys();
-        $dealsQuery = DealTransaction::query()->visibleInReportsTo($actor);
-        $deals = $dealsQuery
+        $isBranchManager = $actor->role === UserRole::BranchManager;
+        $dealsQuery = DealTransaction::query()->visibleInReportsTo($actor)
             ->select(['id', 'public_id', 'team_id', 'sales_id', 'current_stage', 'vehicle_model', 'estimated_value', 'expected_closing_month', 'last_activity_at', 'created_at'])
             ->selectRaw('case when expected_closing_month >= ? and expected_closing_month < ? then 1 else 0 end as closing_in_period', [
                 $period.'-01', $end->setTimezone('Asia/Jakarta')->toDateString(),
             ])
-            ->with('sales:id,name,username')
             ->withExists([
                 'stageHistories as delivered_in_period' => fn ($query) => $query->where('to_stage', PipelineStage::Delivery)
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as current_stage_in_period' => fn ($query) => $query->whereColumn('stage_histories.to_stage', 'deal_transactions.current_stage')
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as has_delivery_history' => fn ($query) => $query->where('to_stage', PipelineStage::Delivery),
-            ])->get();
+            ]);
+        $operationalDeals = $isBranchManager ? collect() : $dealsQuery->with('sales:id,name,username')->get();
+        $deals = $isBranchManager ? $dealsQuery->toBase()->get() : $operationalDeals;
         $dealsByTeam = $deals->groupBy('team_id');
         $dealsBySales = $deals->groupBy('sales_id');
         $memberships = TeamMembership::query()->whereIn('team_id', $teamIds)->whereNull('ended_at')
@@ -100,32 +102,41 @@ class TeamPerformance
             : ($canViewManagementTarget && $missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
         $salesTotal = $personalUnits->isEmpty() ? null : TargetUnits::number($personalUnits->sum(fn ($n) => TargetUnits::scaled($n)));
         $metrics = $this->metrics($deals, $targetUnits, $historical);
-        $dealSales = $dealsBySales->map(fn (Collection $group): ?User => $group->first()?->sales)->filter();
+        if ($isBranchManager) {
+            $salesById = User::query()->whereKey($dealsBySales->keys()->all())->get(['id', 'name', 'username'])->keyBy('id');
+            $dealSales = $dealsBySales->map(fn (Collection $group, int $id): ?User => $salesById->get($id))->filter();
+        } else {
+            $dealSales = $dealsBySales->map(fn (Collection $group): ?User => $group->first()?->sales)->filter();
+        }
         // Allocations retain their original team and period after membership changes.
         $rowUsers = $users->concat($allocations->pluck('user'))->concat($dealSales)->unique('id')->sortBy('name');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
             'is_current_member' => $users->contains('id', $sales->id),
         ], $this->metrics($dealsBySales->get($sales->id, collect()), $personalUnits->get($sales->id), $historical)))->values()->all();
-        $closing = $historical ? collect() : $deals->filter(fn (DealTransaction $deal): bool => ! $deal->current_stage->isClosed() && (bool) $deal->getAttribute('closing_in_period'));
+        $closing = $historical ? collect() : $deals->filter(function (DealTransaction|stdClass $deal): bool {
+            $inPeriod = $deal instanceof DealTransaction ? $deal->getAttribute('closing_in_period') : $deal->closing_in_period;
+
+            return $inPeriod && ! $this->stage($deal)->isClosed();
+        });
         $contributors = $closing
-            ->sortByDesc(fn (DealTransaction $deal): float => (float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$deal->current_stage->value, 0))
-            ->take(5)->map(fn (DealTransaction $deal): array => [
-                'public_id' => $deal->public_id, 'vehicle_model' => $deal->vehicle_model, 'stage_label' => $deal->current_stage->label(),
-                'sales_name' => $deal->sales?->name, 'weighted_value' => round((float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$deal->current_stage->value, 0), 2),
+            ->sortByDesc(fn (DealTransaction|stdClass $deal): float => (float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$this->stage($deal)->value, 0))
+            ->take(5)->map(fn (DealTransaction|stdClass $deal): array => [
+                'public_id' => $deal->public_id, 'vehicle_model' => $deal->vehicle_model, 'stage_label' => $this->stage($deal)->label(),
+                'sales_name' => $dealSales->get($deal->sales_id)?->name, 'weighted_value' => round((float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$this->stage($deal)->value, 0), 2),
             ])->values()->all();
         $priorities = ['stagnant' => [], 'closing' => [], 'unread' => []];
-        if ($actor->role === UserRole::BranchManager) {
+        if ($isBranchManager) {
             $stagnantCount = DealTransaction::query()->visibleInReportsTo($actor)->stagnant()->count();
         } else {
-            $stagnant = $deals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
+            $stagnant = $operationalDeals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
             $stagnantCount = $stagnant->count();
             $visibleIds = DealTransaction::query()->visibleTo($actor)->pluck('id')->flip();
             $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
                 ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             if (! $historical) {
-                $priorities['closing'] = $closing->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
-                    ->sortByDesc(fn (DealTransaction $deal): float => (float) config('forecast.weights.'.$deal->current_stage->value, 0))
+                $priorities['closing'] = $closing->filter(fn (DealTransaction|stdClass $deal): bool => $deal instanceof DealTransaction && $visibleIds->has($deal->id))
+                    ->sortByDesc(fn (DealTransaction|stdClass $deal): float => (float) config('forecast.weights.'.$this->stage($deal)->value, 0))
                     ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             }
             $priorities['unread'] = $this->unread($actor);
@@ -144,7 +155,7 @@ class TeamPerformance
                 'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDeliveryHistoryCount' => $metrics['missing_delivery_history_count'],
                 'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
-                    ? $this->metrics($deals->whereNull('team_id'), null, $historical) : null,
+                    ? $this->metrics($dealsByTeam->get('', collect()), null, $historical) : null,
             ],
             'targetPlans' => $actor->role === UserRole::Supervisor ? app(TargetPlans::class)->editor($teams, $memberships->load('user'), $teamTargets, $salesTargets, $period) : [],
             'targetableUsers' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $users->map(fn (User $u): array => ['id' => $u->id, 'name' => $u->name, 'username' => $u->username])->values()->all() : [],
@@ -152,10 +163,15 @@ class TeamPerformance
         ];
     }
 
-    /** @param Collection<int, DealTransaction> $deals
+    private function stage(DealTransaction|stdClass $deal): PipelineStage
+    {
+        return $deal instanceof DealTransaction ? $deal->current_stage : PipelineStage::from($deal->current_stage);
+    }
+
+    /** @param iterable<DealTransaction|stdClass> $deals
      * @return array<string, mixed>
      */
-    private function metrics(Collection $deals, int|float|null $target, bool $historical): array
+    private function metrics(iterable $deals, int|float|null $target, bool $historical): array
     {
         $stageCounts = array_fill_keys(array_column(PipelineStage::cases(), 'value'), 0);
         $missingClosingMonth = $missingDeliveryHistory = 0;
@@ -163,7 +179,7 @@ class TeamPerformance
         $weights = config('forecast.weights', []);
         foreach ($deals as $deal) {
             // Work with the selected flags and raw values to avoid repeating model casts for each report row.
-            $row = $deal->getAttributes();
+            $row = $deal instanceof DealTransaction ? $deal->getAttributes() : (array) $deal;
             $stage = PipelineStage::from($row['current_stage']);
             if ($row['delivered_in_period']) {
                 $stageCounts[PipelineStage::Delivery->value]++;

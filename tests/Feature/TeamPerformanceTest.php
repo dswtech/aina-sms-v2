@@ -292,6 +292,10 @@ it('lists each current, allocated and historical sales user once in manager perf
     g02Deal($f, ['sales_id' => $historical->id]);
 
     $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
+    $loadedDeals = 0;
+    DealTransaction::retrieved(function () use (&$loadedDeals): void {
+        $loadedDeals++;
+    });
     $this->actingAs($manager)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->has('dashboard.performance', 3)
         ->where('dashboard.performance.0.id', $f['sales']->id)
@@ -301,6 +305,7 @@ it('lists each current, allocated and historical sales user once in manager perf
         ->where('dashboard.performance.2.id', $historical->id)
         ->where('dashboard.performance.2.is_current_member', false)
         ->where('dashboard.performance.2.stage_counts.hot_prospect', 2));
+    expect($loadedDeals)->toBe(0);
 });
 
 it('preserves sanitized weighted contributors for managers within the closing period', function () {

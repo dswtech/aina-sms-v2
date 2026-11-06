@@ -131,3 +131,13 @@ Baseline `64128ce` setelah PR #50. Dashboard mengambil satu relasi Sales dari se
 Regresi menguji Sales aktif tanpa transaksi, penerima alokasi desimal tanpa transaksi, dan Sales nonaktif dengan dua transaksi. Kontrak lulus pada baseline, gagal ketika sumber Sales historis sengaja dihilangkan, dan lulus dengan roster berbasis kelompok. `composer ci:check` lulus dengan 360 tes Pest, tiga skip, 3.431 assertions dan tujuh tes frontend. Suite PostgreSQL lulus 360 tes, tiga skip dan 3.432 assertions. Uji impor serentak lulus 13 assertions.
 
 Benchmark `run-postgres.ps1 -Profile capacity` lulus 323 assertions. Pada 100.000 transaksi sintetis dan 30 sampel per jalur setelah pemanasan, p95 Dashboard Branch Manager turun dari 6,82 ke 5,58 detik, sekitar 18%. Supervisor terukur 2,23 detik dan Analisis Pencapaian 2,80 detik. Branch Manager dan Analisis masih melewati target masing-masing. Pengukuran memakai PostgreSQL lokal dengan request berurutan. Cluster test dibersihkan.
+
+## Baris laporan ringan untuk Branch Manager
+
+Baseline `da6e3bd` setelah PR #51. Dashboard Branch Manager memakai hasil query builder dengan proyeksi dan flag histori yang sama. Data Sales dimuat berdasarkan ID dari kelompok transaksi, termasuk Sales historis. Rumus metrik tetap dipakai bersama, sedangkan alur prioritas operasional tetap memakai model transaksi. Ringkasan transaksi tanpa tim memakai kelompok yang sudah terbentuk.
+
+Regresi roster memeriksa bahwa dashboard tetap menampilkan Sales aktif, penerima alokasi dan Sales historis tanpa memuat model transaksi. Pemeriksaan hidrasi gagal pada baseline dengan dua model dan lulus setelah perubahan. `composer ci:check` lulus dengan 360 tes Pest, tiga skip, 3.434 assertions, tujuh tes frontend, serta PHPStan tanpa error.
+
+Benchmark ulang `run-postgres.ps1 -Profile capacity` pada PostgreSQL 16.4 lokal memakai 100.000 transaksi sintetis dan 30 sampel per jalur setelah pemanasan. P95 Dashboard Branch Manager turun dari 5,58 ke 1,04 detik. Supervisor terukur 2,00 detik. Keduanya memenuhi target Dashboard 3 detik. Analisis Pencapaian terukur 2,44 detik, masih di atas target navigasi 2 detik. Puncak alokasi PHP seluruh proses turun dari 378 ke 188 MiB. Pengujian memakai request berurutan dengan batas PHP 512 MiB. Validasi pada hosting dan beban pengguna pilot tetap terbuka.
+
+Suite PostgreSQL lulus 360 tes, tiga skip dan 3.435 assertions. Uji impor serentak lulus 13 assertions dan benchmark kapasitas lulus 323 assertions. Cluster sementara dibersihkan.
