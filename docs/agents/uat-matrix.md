@@ -470,7 +470,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G11
 
-**Verifikasi teknis parsial.** [Bukti G11](implementation-g11-browser-verification.md) mencakup simpan lead melalui Laravel, draft dan retry offline, fokus dialog dan tiga viewport termasuk forced colors. Regresi awal lulus di GitHub Actions pada PR #43. PR #46 memverifikasi daftar pelanggan pada layar pertama 390×844 serta loading, data terakhir, kegagalan jaringan/503, retry dan empty state Analisis. Regresi lanjutan mencakup pemulihan filter Transaksi, validasi tanggal, serta validasi booking fee dan penyimpanan tahap SPK melalui Laravel. Skenario blok lain, zoom, pembaca layar nyata dan UAT X02/X03 masih terbuka. Pemilik QA + Engineering frontend/CI.
+**Verifikasi teknis parsial.** [Bukti G11](implementation-g11-browser-verification.md) mencakup simpan lead melalui Laravel, draft dan retry offline, fokus dialog dan tiga viewport termasuk forced colors. Regresi awal lulus di GitHub Actions pada PR #43. PR #46 memverifikasi daftar pelanggan pada layar pertama 390×844 serta loading, data terakhir, kegagalan jaringan/503, retry dan empty state Analisis. Regresi lanjutan mencakup pemulihan filter dan pagination Transaksi, validasi tanggal, validasi booking fee dan penyimpanan tahap SPK melalui Laravel. Zoom bawaan Chrome 200% diverifikasi lokal untuk empat halaman Supervisor dan formulir tahap. Skenario blok lain, pembaca layar nyata dan UAT X02/X03 masih terbuka. Pemilik QA + Engineering frontend/CI.
 
 ### G12
 

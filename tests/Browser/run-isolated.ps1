@@ -44,7 +44,7 @@ try {
     }
     if (!$ready) { throw 'G11 loopback server failed readiness check' }
 
-    playwright-cli "-s=$session" open "$env:APP_URL/login" --browser chrome
+    playwright-cli "-s=$session" open "$env:APP_URL/login" --browser chrome --persistent
     if ($LASTEXITCODE -ne 0) { throw 'G11 browser failed to start' }
     foreach ($script in @('lead-server-save.js', 'analytics-recovery.js', 'transaction-filter-recovery.js', 'transaction-stage-save.js', 'transaction-pagination.js', 'narrow-viewport-reflow.js')) {
         playwright-cli "-s=$session" run-code --filename "tests/Browser/$script"
@@ -53,6 +53,7 @@ try {
 } finally {
     if ($server) {
         playwright-cli "-s=$session" close | Out-Null
+        playwright-cli "-s=$session" delete-data | Out-Null
         if (!$server.HasExited) { Stop-Process -Id $server.Id }
     }
     Remove-Item -LiteralPath $database -ErrorAction SilentlyContinue
