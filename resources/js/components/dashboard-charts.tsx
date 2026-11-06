@@ -292,8 +292,9 @@ export function PipelineChart({
                 </p>
             )}
             <p className="mt-5 text-xs leading-5 text-muted-foreground">
-                Tahap saat ini dengan estimasi closing atau kejadian tahap pada
-                periode ini. Delivery dihitung dari riwayat penyerahan.
+                Tahap aktif mengikuti estimasi closing atau kejadian pada
+                periode ini. DO mencatat realisasi, sedangkan Delivery mencatat
+                konfirmasi pengiriman.
             </p>
         </section>
     );

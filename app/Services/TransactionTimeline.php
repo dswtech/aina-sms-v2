@@ -46,7 +46,9 @@ class TransactionTimeline
 
                 return [...$base, 'occurred_at' => $stage->created_at->toIso8601String(),
                     'actor_name' => $stage->actor?->name, 'body' => $stage->notes,
-                    'label' => ($stage->from_stage ? $stage->from_stage->label().' → ' : '').$stage->to_stage->label()];
+                    'label' => $stage->reverses_stage_history_id !== null
+                        ? 'Pembatalan DO · DO → SPK'
+                        : ($stage->from_stage ? $stage->from_stage->label().' → ' : '').$stage->to_stage->label()];
             }
             if ($row->kind === 'activity') {
                 $activity = $activities->get($row->id) ?? abort(409, 'Riwayat berubah. Muat ulang.');

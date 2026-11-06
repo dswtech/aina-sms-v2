@@ -306,8 +306,8 @@ export default function AnalyticsIndex({ analytics }: Props) {
                         <p className="mt-1 text-muted-foreground print:text-black">
                             Penyebut porsi adalah seluruh lead yang dibuat pada
                             periode dan cakupan akses ini. Conversion dihitung
-                            dari jumlah Delivery dibagi jumlah lead pada sumber
-                            yang sama.
+                            dari jumlah DO dibagi jumlah lead pada sumber yang
+                            sama.
                         </p>
                     ) : (
                         <p className="mt-1 text-muted-foreground print:text-black">

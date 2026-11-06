@@ -74,15 +74,18 @@ it('keeps personal targets realization and forecasts identical in sales and mana
     $this->actingAs($f['supervisor'])->post('/target-plans', allocationPayload($f))->assertSessionHasNoErrors();
     foreach ($f['sales'] as $sales) {
         $customer = Customer::factory()->create(['dealer_id' => $f['dealer']->id]);
-        foreach (['delivery', 'hot_prospect'] as $stage) {
+        foreach (['do', 'hot_prospect'] as $stage) {
             $deal = DealTransaction::create([
                 'dealer_id' => $f['dealer']->id, 'team_id' => $f['team']->id,
                 'sales_id' => $sales->id, 'customer_id' => $customer->id,
                 'vehicle_model' => 'Model QA', 'current_stage' => $stage,
                 'expected_closing_month' => '2026-11-01',
             ]);
-            if ($stage === 'delivery') {
-                $deal->stageHistories()->create(['to_stage' => $stage, 'actor_id' => $sales->id, 'created_at' => now()]);
+            if ($stage === 'do') {
+                $deal->stageHistories()->create([
+                    'to_stage' => $stage, 'actor_id' => $sales->id, 'created_at' => now(),
+                    'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+                ]);
             }
         }
     }

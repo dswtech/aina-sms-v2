@@ -27,7 +27,7 @@ class CustomerHistoryController extends Controller
             'timeline_page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
         ]);
         $deals = $customer->transactions()->visibleTo($actor)
-            ->orderByRaw('CASE WHEN current_stage IN (?, ?) THEN 1 ELSE 0 END', [PipelineStage::Delivery->value, PipelineStage::Lost->value])
+            ->orderByRaw('CASE WHEN current_stage IN (?, ?, ?) THEN 1 ELSE 0 END', PipelineStage::closedValues())
             ->orderByDesc('id')->get();
         $selected = isset($validated['transaction']) ? $deals->firstWhere('public_id', $validated['transaction']) : $deals->first();
         abort_if(isset($validated['transaction']) && $selected === null, 403);
@@ -36,6 +36,8 @@ class CustomerHistoryController extends Controller
             'id' => $deal->id, 'public_id' => $deal->public_id, 'vehicle_model' => $deal->vehicle_model,
             'current_stage' => $deal->current_stage->value, 'stage_label' => $deal->current_stage->label(),
             'is_closed' => $deal->current_stage->isClosed(), 'is_stagnant' => $deal->is_stagnant,
+            'can_record_do' => $deal->current_stage === PipelineStage::Spk && $actor->can('recordDo', $deal),
+            'stage_event_id' => $deal->current_stage === PipelineStage::Spk ? $deal->stageEventId() : null,
             'estimated_value' => $deal->estimated_value, 'expected_closing_month' => $deal->expected_closing_month?->format('Y-m'),
             'can_comment' => $actor->can('create', [DealComment::class, $deal]), 'comments' => [],
         ];

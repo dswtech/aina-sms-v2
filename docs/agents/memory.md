@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.38 |
+| Versi | v1.39 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch `codex/do-sales-realization` berangkat dari `main` `9012967`. [PRD Pipeline](PRD.md#74-sales-pipeline-pip) dan [skenario UAT](uat-matrix.md#s05) mengikuti definisi realisasi DO. ID kejadian tahap memblokir pengiriman ulang formulir lama setelah pembatalan dan pencatatan DO baru. CI dan suite PostgreSQL masing-masing lulus 364 tes, tiga skip dan 3.569 assertions. Uji concurrency lulus 18 assertions, termasuk dua request DO pada baris yang sama. Tujuh skenario Chrome dan 12 varian cetak lulus. Seeder baru menyiapkan 44 kejadian DO dengan checklist lengkap dan 30 konfirmasi Delivery pada database demo baru. Seeder tidak mengarang checklist untuk histori lama. Database development belum direset.
 
 - PR #57 merged pada `main` `7b45303`. Branch `codex/g11-chrome-native-zoom` memverifikasi reflow empat halaman Supervisor dan formulir tahap pada zoom bawaan Chrome 200%. [Bukti G11](implementation-g11-browser-verification.md#zoom-bawaan-chrome-200) mencatat build, enam skenario browser dan CI lokal lulus. Pembaca layar nyata dan UAT manusia masih terbuka.
 
@@ -152,7 +154,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Lanjutkan verifikasi browser G11 sesuai [matriks UAT](uat-matrix.md#g11). Ukur performa G13 pada hosting dan beban pilot setelah lingkungan ditetapkan. Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
+1. Revalidasi realisasi DO dan konfirmasi Delivery pada [matriks UAT](uat-matrix.md#g09). Konfirmasi target sebelum reset database development. Lanjutkan verifikasi G11 dan ukur performa G13 pada hosting dan beban pilot setelah lingkungan ditetapkan. Audit timestamp historis memerlukan provenance. Worker dan scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

@@ -36,11 +36,14 @@ class TeamPerformance
                 $period.'-01', $end->setTimezone('Asia/Jakarta')->toDateString(),
             ])
             ->withExists([
+                'stageHistories as realized_in_period' => fn ($query) => $query->realizedDo()
+                    ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as delivered_in_period' => fn ($query) => $query->where('to_stage', PipelineStage::Delivery)
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as current_stage_in_period' => fn ($query) => $query->whereColumn('stage_histories.to_stage', 'deal_transactions.current_stage')
+                    ->whereNull('reverses_stage_history_id')
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
-                'stageHistories as has_delivery_history' => fn ($query) => $query->where('to_stage', PipelineStage::Delivery),
+                'stageHistories as has_do_history' => fn ($query) => $query->realizedDo(),
             ]);
         $operationalDeals = $isBranchManager ? collect() : $dealsQuery->with('sales:id,name,username')->get();
         $deals = $isBranchManager ? $dealsQuery->toBase()->get() : $operationalDeals;
@@ -152,7 +155,7 @@ class TeamPerformance
                 'forecastValue' => $metrics['forecast_value'], 'forecastApproved' => (bool) config('forecast.approved', false),
                 'gapUnits' => $metrics['gap_units'], 'forecastGapUnits' => $metrics['forecast_gap_units'],
                 'stageCounts' => $metrics['stage_counts'], 'stagnantCount' => $stagnantCount,
-                'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDeliveryHistoryCount' => $metrics['missing_delivery_history_count'],
+                'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDoHistoryCount' => $metrics['missing_do_history_count'],
                 'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
                     ? $this->metrics($dealsByTeam->get('', collect()), null, $historical) : null,
@@ -174,18 +177,21 @@ class TeamPerformance
     private function metrics(iterable $deals, int|float|null $target, bool $historical): array
     {
         $stageCounts = array_fill_keys(array_column(PipelineStage::cases(), 'value'), 0);
-        $missingClosingMonth = $missingDeliveryHistory = 0;
+        $missingClosingMonth = $missingDoHistory = 0;
         $weighted = $weightedValue = 0.0;
         $weights = config('forecast.weights', []);
         foreach ($deals as $deal) {
             // Work with the selected flags and raw values to avoid repeating model casts for each report row.
             $row = $deal instanceof DealTransaction ? $deal->getAttributes() : (array) $deal;
             $stage = PipelineStage::from($row['current_stage']);
+            if ($row['realized_in_period']) {
+                $stageCounts[PipelineStage::Do->value]++;
+            }
             if ($row['delivered_in_period']) {
                 $stageCounts[PipelineStage::Delivery->value]++;
             }
-            if ($stage === PipelineStage::Delivery) {
-                $missingDeliveryHistory += (int) ! $row['has_delivery_history'];
+            if ($stage === PipelineStage::Do || $stage === PipelineStage::Delivery) {
+                $missingDoHistory += (int) ! $row['has_do_history'];
 
                 continue;
             }
@@ -201,16 +207,16 @@ class TeamPerformance
                 }
             }
         }
-        $delivered = $stageCounts[PipelineStage::Delivery->value];
-        $forecast = $historical ? null : round($delivered + $weighted, 2);
+        $realized = $stageCounts[PipelineStage::Do->value];
+        $forecast = $historical ? null : round($realized + $weighted, 2);
 
         return [
-            'target_units' => $target, 'realization_units' => $delivered, 'forecast_units' => $forecast,
+            'target_units' => $target, 'realization_units' => $realized, 'forecast_units' => $forecast,
             'forecast_value' => $historical ? null : round($weightedValue, 2),
-            'gap_units' => $target === null ? null : $target - $delivered,
+            'gap_units' => $target === null ? null : $target - $realized,
             'forecast_gap_units' => $target === null || $forecast === null ? null : round($target - $forecast, 4),
             'missing_closing_month_count' => $missingClosingMonth,
-            'missing_delivery_history_count' => $missingDeliveryHistory,
+            'missing_do_history_count' => $missingDoHistory,
             'stage_counts' => $stageCounts,
         ];
     }

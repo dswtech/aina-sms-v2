@@ -23,10 +23,16 @@ it('shows acquisition analysis by source and model with conversion', function ()
         'sales_id' => $sales->id,
         'vehicle_model' => 'Creta',
         'source' => 'walk_in',
-        'current_stage' => PipelineStage::Lead,
+        'current_stage' => PipelineStage::Delivery,
         'created_at' => now(),
     ]);
-    $deal->transitionTo(PipelineStage::Delivery, $sales);
+    foreach ([PipelineStage::Do, PipelineStage::Delivery] as $stage) {
+        $deal->stageHistories()->create([
+            'to_stage' => $stage, 'actor_id' => $sales->id, 'created_at' => now(),
+            'po_confirmed' => $stage === PipelineStage::Do, 'dp_confirmed' => $stage === PipelineStage::Do,
+            'unit_confirmed' => $stage === PipelineStage::Do,
+        ]);
+    }
 
     $this->actingAs($admin)
         ->get(route('analytics.index', ['period' => now()->format('Y-m'), 'mode' => 'acquisition']))

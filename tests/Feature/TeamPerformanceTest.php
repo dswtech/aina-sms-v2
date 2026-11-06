@@ -89,7 +89,7 @@ it('requires active sales and rejects unrelated dealer targets', function () {
     $this->assertDatabaseCount('sales_targets', 0);
 });
 
-it('reconciles forecast to closing month and delivery events at Jakarta boundaries', function () {
+it('reconciles forecast to closing month and DO events at Jakarta boundaries', function () {
     $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
     $f = g02Fixture();
     g02Deal($f);
@@ -97,15 +97,21 @@ it('reconciles forecast to closing month and delivery events at Jakarta boundari
     g02Deal($f, ['expected_closing_month' => null]);
     $delivered = g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
     foreach (['2026-10-31 17:00:00', '2026-11-02 00:00:00'] as $at) {
-        $delivered->stageHistories()->create(['from_stage' => 'do', 'to_stage' => 'delivery', 'actor_id' => $f['sales']->id, 'created_at' => $at]);
+        $delivered->stageHistories()->create([
+            'from_stage' => 'spk', 'to_stage' => 'do', 'actor_id' => $f['sales']->id, 'created_at' => $at,
+            'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+        ]);
     }
     $delivered->update(['updated_at' => '2026-12-10 00:00:00']);
     $outside = g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
-    $outside->stageHistories()->create(['to_stage' => 'delivery', 'actor_id' => $f['sales']->id, 'created_at' => '2026-10-31 16:59:59']);
+    $outside->stageHistories()->create([
+        'to_stage' => 'do', 'actor_id' => $f['sales']->id, 'created_at' => '2026-10-31 16:59:59',
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
     g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
     $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.realizationUnits', 1)->where('dashboard.forecastUnits', 1.5)
-        ->where('dashboard.missingClosingMonthCount', 1)->where('dashboard.missingDeliveryHistoryCount', 1)
+        ->where('dashboard.missingClosingMonthCount', 1)->where('dashboard.missingDoHistoryCount', 1)
         ->where('dashboard.performance.0.forecast_units', 1.5));
     $this->get('/dashboard?period=2026-10')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.forecastUnits', null)->where('dashboard.forecastGapUnits', null));
@@ -312,7 +318,8 @@ it('preserves sanitized weighted contributors for managers within the closing pe
     $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
     $f = g02Fixture();
     g02Deal($f, ['vehicle_model' => 'Kontributor besar', 'current_stage' => PipelineStage::Prospect, 'estimated_value' => 1_000_000_000]);
-    g02Deal($f, ['vehicle_model' => 'Kontributor kecil', 'current_stage' => PipelineStage::Do, 'estimated_value' => 100_000_000]);
+    g02Deal($f, ['vehicle_model' => 'Kontributor kecil', 'current_stage' => PipelineStage::Spk, 'estimated_value' => 100_000_000]);
+    g02Deal($f, ['vehicle_model' => 'DO selesai', 'current_stage' => PipelineStage::Do, 'estimated_value' => 2_000_000_000]);
     g02Deal($f, ['vehicle_model' => 'Bulan lain', 'expected_closing_month' => '2026-12-01', 'estimated_value' => 2_000_000_000]);
     $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
     $this->actingAs($manager)->get('/team-performance?period=2026-11')->assertInertia(fn (Assert $p) => $p

@@ -108,10 +108,10 @@ export default function Dashboard({
                             forecast.
                         </p>
                     )}
-                    {!!d.missingDeliveryHistoryCount && (
+                    {!!d.missingDoHistoryCount && (
                         <p role="status">
-                            {d.missingDeliveryHistoryCount} transaksi Delivery
-                            tidak memiliki riwayat tanggal Delivery; belum
+                            {d.missingDoHistoryCount} transaksi DO atau Delivery
+                            tidak memiliki riwayat DO yang sah dan belum
                             dihitung sebagai realisasi.
                         </p>
                     )}

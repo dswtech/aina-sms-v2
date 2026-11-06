@@ -70,10 +70,15 @@ it('measures real Laravel endpoints on a synthetic PostgreSQL workload', functio
         select customer_id, sales_id, created_at, created_at, created_at from deal_transactions
         SQL);
     DB::statement(<<<'SQL'
-        insert into stage_histories (deal_transaction_id, to_stage, actor_id, created_at)
-        select id, 'lead', sales_id, created_at from deal_transactions
+        insert into stage_histories (deal_transaction_id, to_stage, actor_id, created_at, po_confirmed, dp_confirmed, unit_confirmed)
+        select id, 'lead', sales_id, created_at, false, false, false from deal_transactions
         union all
-        select id, current_stage, sales_id, created_at + interval '3 days' from deal_transactions where current_stage <> 'lead'
+        select id, current_stage, sales_id, created_at + interval '3 days',
+            current_stage = 'do', current_stage = 'do', current_stage = 'do'
+        from deal_transactions where current_stage <> 'lead'
+        union all
+        select id, 'do', sales_id, created_at + interval '2 days', true, true, true
+        from deal_transactions where current_stage = 'delivery'
         SQL);
     DB::statement('analyze');
     $this->assertDatabaseCount('deal_transactions', $transactions);

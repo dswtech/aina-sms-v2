@@ -1,4 +1,5 @@
 import { ClosingMonthForm } from '@/components/team-performance';
+import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
@@ -8,6 +9,13 @@ import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -26,6 +34,11 @@ type Transaction = {
     last_activity_at: string | null;
     created_at: string;
     can_update: boolean;
+    can_record_do: boolean;
+    can_confirm_delivery: boolean;
+    can_cancel_do: boolean;
+    do_event_id: number | null;
+    stage_event_id: number | null;
 };
 
 type Paginated<T> = {
@@ -87,9 +100,13 @@ export default function TransactionsIndex({
         filters.sales_id ? String(filters.sales_id) : '',
     );
     const [selected, setSelected] = useState<Transaction | null>(null);
+    const [fulfillmentAction, setFulfillmentAction] = useState<
+        'delivery' | 'cancel' | null
+    >(null);
     const [toStage, setToStage] = useState('');
     const [notes, setNotes] = useState('');
     const [bookingFee, setBookingFee] = useState(false);
+    const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
     const [lostReason, setLostReason] = useState('');
     const [lostNotes, setLostNotes] = useState('');
     const [isSavingStage, setIsSavingStage] = useState(false);
@@ -100,6 +117,7 @@ export default function TransactionsIndex({
         message: string;
     } | null>(null);
     const headingRef = useRef<HTMLHeadingElement>(null);
+    const actionTriggerRef = useRef<HTMLButtonElement>(null);
     const draft = {
         search,
         stage,
@@ -156,11 +174,16 @@ export default function TransactionsIndex({
     const applyFilters = (nextTab = filters.tab) =>
         visitTransactions({ ...draft, tab: nextTab });
 
-    const openUpdate = (transaction: Transaction) => {
+    const openUpdate = (
+        transaction: Transaction,
+        action: typeof fulfillmentAction,
+    ) => {
         setSelected(transaction);
+        setFulfillmentAction(action);
         setToStage(transaction.current_stage);
         setNotes('');
         setBookingFee(false);
+        setDoChecklist(emptyDoChecklist);
         setLostReason('');
         setLostNotes('');
         setStageNetworkError(false);
@@ -169,29 +192,76 @@ export default function TransactionsIndex({
     const submitUpdate = (event: React.FormEvent) => {
         event.preventDefault();
         if (!selected || isSavingStage) return;
+        const options = {
+            onStart: () => {
+                setStageNetworkError(false);
+                setIsSavingStage(true);
+            },
+            onFinish: () => setIsSavingStage(false),
+            onNetworkError: () => {
+                setStageNetworkError(true);
+                return false;
+            },
+            onSuccess: () => setSelected(null),
+        };
+        const url = `/transactions/${selected.public_id}`;
+        if (fulfillmentAction === 'cancel') {
+            router.post(
+                `${url}/cancel-do`,
+                { reason: notes.trim(), do_event_id: selected.do_event_id },
+                options,
+            );
+            return;
+        }
         router.patch(
-            `/transactions/${selected.public_id}/stage`,
+            `${url}/stage`,
             {
-                to_stage: toStage,
+                to_stage: fulfillmentAction ?? toStage,
+                do_event_id: selected.do_event_id,
+                stage_event_id: selected.stage_event_id,
                 notes: notes || null,
                 booking_fee_confirmed: bookingFee,
+                ...doChecklist,
                 lost_reason: lostReason || null,
                 lost_notes: lostNotes || null,
             },
-            {
-                onStart: () => {
-                    setStageNetworkError(false);
-                    setIsSavingStage(true);
-                },
-                onFinish: () => setIsSavingStage(false),
-                onNetworkError: () => {
-                    setStageNetworkError(true);
-                    return false;
-                },
-                onSuccess: () => setSelected(null),
-            },
+            options,
         );
     };
+
+    const renderStageAction = (transaction: Transaction, mobile = false) => {
+        const action = transaction.can_confirm_delivery
+            ? 'delivery'
+            : transaction.can_cancel_do
+              ? 'cancel'
+              : null;
+        if (!action && !transaction.can_update) return null;
+
+        return (
+            <Button
+                variant="outline"
+                size="sm"
+                className={mobile ? 'mt-3 min-h-11 w-full' : 'min-h-9'}
+                onClick={(event) => {
+                    actionTriggerRef.current = event.currentTarget;
+                    openUpdate(transaction, action);
+                }}
+            >
+                {action === 'delivery'
+                    ? 'Konfirmasi Delivery'
+                    : action === 'cancel'
+                      ? 'Batalkan DO'
+                      : mobile
+                        ? 'Ubah tahap'
+                        : 'Ubah'}
+            </Button>
+        );
+    };
+
+    const fulfillmentTitle =
+        fulfillmentAction === 'delivery'
+            ? 'Konfirmasi Delivery'
+            : 'Batalkan DO';
 
     return (
         <>
@@ -474,17 +544,9 @@ export default function TransactionsIndex({
                                                     </p>
                                                 </div>
                                             </div>
-                                            {transaction.can_update && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="mt-3 min-h-10 w-full"
-                                                    onClick={() =>
-                                                        openUpdate(transaction)
-                                                    }
-                                                >
-                                                    Ubah tahap
-                                                </Button>
+                                            {renderStageAction(
+                                                transaction,
+                                                true,
                                             )}
                                         </div>
                                     ))}
@@ -570,19 +632,8 @@ export default function TransactionsIndex({
                                                                 : '-'}
                                                         </td>
                                                         <td className="table-actions p-2">
-                                                            {transaction.can_update && (
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="min-h-9"
-                                                                    onClick={() =>
-                                                                        openUpdate(
-                                                                            transaction,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Ubah
-                                                                </Button>
+                                                            {renderStageAction(
+                                                                transaction,
                                                             )}
                                                         </td>
                                                     </tr>
@@ -616,7 +667,7 @@ export default function TransactionsIndex({
                     </CardContent>
                 </Card>
 
-                {selected && (
+                {selected && !fulfillmentAction && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                         <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl bg-background p-5 shadow-xl">
                             <h2 className="text-lg font-semibold">
@@ -649,14 +700,21 @@ export default function TransactionsIndex({
                                         }
                                         className="native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3"
                                     >
-                                        {stages.map((item) => (
-                                            <option
-                                                key={item.value}
-                                                value={item.value}
-                                            >
-                                                {item.label}
-                                            </option>
-                                        ))}
+                                        {stages
+                                            .filter(
+                                                (item) =>
+                                                    item.value !== 'delivery' &&
+                                                    (item.value !== 'do' ||
+                                                        selected.can_record_do),
+                                            )
+                                            .map((item) => (
+                                                <option
+                                                    key={item.value}
+                                                    value={item.value}
+                                                >
+                                                    {item.label}
+                                                </option>
+                                            ))}
                                     </select>
                                 </div>
                                 <div>
@@ -683,6 +741,12 @@ export default function TransactionsIndex({
                                         />
                                         Konfirmasi booking fee
                                     </label>
+                                )}
+                                {toStage === 'do' && (
+                                    <DoChecklist
+                                        value={doChecklist}
+                                        onChange={setDoChecklist}
+                                    />
                                 )}
                                 {toStage === 'lost' && (
                                     <>
@@ -760,7 +824,13 @@ export default function TransactionsIndex({
                                     <Button
                                         type="submit"
                                         className="min-h-11"
-                                        disabled={isSavingStage}
+                                        disabled={
+                                            isSavingStage ||
+                                            (toStage === 'do' &&
+                                                !Object.values(
+                                                    doChecklist,
+                                                ).every(Boolean))
+                                        }
                                     >
                                         {isSavingStage
                                             ? 'Menyimpan…'
@@ -771,6 +841,99 @@ export default function TransactionsIndex({
                         </div>
                     </div>
                 )}
+
+                <Dialog
+                    open={Boolean(selected && fulfillmentAction)}
+                    onOpenChange={(open) => {
+                        if (!open && !isSavingStage) setSelected(null);
+                    }}
+                >
+                    <DialogContent
+                        className="max-h-[90dvh] overflow-y-auto sm:max-w-md"
+                        onCloseAutoFocus={(event) => {
+                            event.preventDefault();
+                            if (actionTriggerRef.current?.isConnected) {
+                                actionTriggerRef.current.focus();
+                            } else {
+                                headingRef.current?.focus();
+                            }
+                        }}
+                    >
+                        <DialogHeader>
+                            <DialogTitle>{fulfillmentTitle}</DialogTitle>
+                            <DialogDescription>
+                                {selected?.vehicle_model}.{' '}
+                                {fulfillmentAction === 'delivery'
+                                    ? 'Konfirmasi bahwa kendaraan sudah terkirim.'
+                                    : 'Transaksi akan kembali ke SPK dan DO ini dikeluarkan dari realisasi.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={submitUpdate} className="space-y-4">
+                            {fulfillmentAction === 'cancel' && (
+                                <div className="space-y-1">
+                                    <Label htmlFor="cancel-do-reason">
+                                        Alasan pembatalan
+                                    </Label>
+                                    <Input
+                                        id="cancel-do-reason"
+                                        required
+                                        maxLength={2000}
+                                        value={notes}
+                                        onChange={(event) =>
+                                            setNotes(event.target.value)
+                                        }
+                                    />
+                                </div>
+                            )}
+                            {stageNetworkError ? (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    Koneksi terputus. Periksa status transaksi
+                                    sebelum mencoba lagi.
+                                </p>
+                            ) : (
+                                errors &&
+                                Object.keys(errors).length > 0 && (
+                                    <p
+                                        role="alert"
+                                        className="text-sm text-destructive"
+                                    >
+                                        {Object.values(errors).join(' ')}
+                                    </p>
+                                )
+                            )}
+                            <div className="flex flex-wrap justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={isSavingStage}
+                                    onClick={() => setSelected(null)}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant={
+                                        fulfillmentAction === 'cancel'
+                                            ? 'destructive'
+                                            : 'default'
+                                    }
+                                    disabled={
+                                        isSavingStage ||
+                                        (fulfillmentAction === 'cancel' &&
+                                            !notes.trim())
+                                    }
+                                >
+                                    {isSavingStage
+                                        ? 'Menyimpan…'
+                                        : fulfillmentTitle}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );

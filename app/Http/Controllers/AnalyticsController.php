@@ -97,7 +97,12 @@ class AnalyticsController extends Controller
             ->with('sales:id,name');
         foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
             $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
-                $history->where('to_stage', $stage);
+                $history->whereNull('reverses_stage_history_id');
+                if ($stage === PipelineStage::Do) {
+                    $history->scopes(['realizedDo']);
+                } else {
+                    $history->where('to_stage', $stage);
+                }
                 if ($achievement) {
                     $inPeriod($history);
                 }
@@ -105,7 +110,10 @@ class AnalyticsController extends Controller
         }
 
         if ($achievement) {
-            $query->whereHas('stageHistories', $inPeriod);
+            $query->whereHas('stageHistories', function (Builder $history) use ($inPeriod): void {
+                $history->reportableAchievement();
+                $inPeriod($history);
+            });
         } else {
             $query->where('created_at', '>=', $start)->where('created_at', '<', $end);
         }
@@ -127,7 +135,7 @@ class AnalyticsController extends Controller
                 'share' => round(($group->count() / $totalDeals) * 100, 1),
                 ...$counts,
                 'conversion' => ! $achievement
-                    ? round(($counts['delivery'] / max(1, $group->count())) * 100, 1)
+                    ? round(($counts['do'] / max(1, $group->count())) * 100, 1)
                     : null,
             ];
         })->sortByDesc('total')->values()->all();
@@ -175,7 +183,7 @@ class AnalyticsController extends Controller
         foreach ($deals as $deal) {
             $row = $deal->getAttributes();
             foreach ($counts as $stage => $count) {
-                if ($row['reached_'.$stage] || (! $achievement && $row['current_stage'] === $stage)) {
+                if ($row['reached_'.$stage] || (! $achievement && $stage !== PipelineStage::Do->value && $row['current_stage'] === $stage)) {
                     $counts[$stage] = $count + 1;
                 }
             }

@@ -16,7 +16,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 | [`implementation-g13-postgres-pilot.md`](implementation-g13-postgres-pilot.md) | Bukti G13 | Profil pilot, suite PostgreSQL, concurrency impor, dan batas benchmark kapasitas. |
 | [`implementation-g11-browser-verification.md`](implementation-g11-browser-verification.md) | Bukti G11 | Regresi browser dengan Laravel dan SQLite test, bukti awal X02/X03, serta status integrasi CI. |
 | [`implementation-g10-import-export.md`](implementation-g10-import-export.md) | Rencana dan bukti G10 | Verifikasi impor, rollback, replay, akses dan rekonsiliasi ekspor CSV/PDF browser. |
-| [`implementation-g09-verification.md`](implementation-g09-verification.md) | Rencana dan bukti G09 | Verifikasi akses, reassignment, coaching, follow-up Jakarta dan rekonsiliasi; koreksi Delivery tetap terbuka. |
+| [`implementation-g09-verification.md`](implementation-g09-verification.md) | Rencana dan bukti historis G09 | Verifikasi akses, reassignment, coaching, follow-up Jakarta dan rekonsiliasi sebelum realisasi dipindahkan ke DO. |
 | [`design-g06-g08-history-stagnant-import.md`](design-g06-g08-history-stagnant-import.md) | Rancangan G06–G08 | Rancangan disetujui untuk riwayat terpadu, audit revisi Admin, konsistensi hari kalender stagnan dan impor mobile dalam satu PR. |
 | [`implementation-g06-g08.md`](implementation-g06-g08.md) | Rencana G06–G08 | Task, kontrak, verifikasi dan ledger implementasi satu PR. |
 | [`../panduan-bobot-forecast.md`](../panduan-bobot-forecast.md) | Panduan pembaca | Penjelasan bobot forecast, simulasi unit/gap, pengaruh bobot dan cakupan role untuk dibaca ulang atau dibagikan. |

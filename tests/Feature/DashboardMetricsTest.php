@@ -25,11 +25,15 @@ it('counts distinct Jakarta stage events without hydrating dashboard history mod
     $deal(PipelineStage::Prospect, '2026-11-18');
     $deal(PipelineStage::Delivery);
     $deal(PipelineStage::Delivery)->stageHistories()->create([
-        'to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => '2026-10-31 16:59:59',
+        'to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => '2026-10-31 16:59:59',
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
     $corrected = $deal(PipelineStage::Lost);
     foreach (['2026-10-31 17:00:00', '2026-11-30 16:59:59'] as $at) {
-        $corrected->stageHistories()->create(['to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => $at]);
+        $corrected->stageHistories()->create([
+            'to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => $at,
+            'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+        ]);
     }
     $corrected->stageHistories()->create(['to_stage' => PipelineStage::Lost, 'actor_id' => $sales->id, 'created_at' => '2026-11-05 00:00:00']);
 
@@ -41,10 +45,10 @@ it('counts distinct Jakarta stage events without hydrating dashboard history mod
     $this->actingAs($sales)->get(route('dashboard', ['period' => '2026-11']))->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('dashboard.realizationUnits', 1)
-            ->where('dashboard.stageCounts.delivery', 1)
+            ->where('dashboard.stageCounts.do', 1)
             ->where('dashboard.stageCounts.lost', 1)
             ->where('dashboard.stageCounts.prospect', 1)
-            ->where('dashboard.missingDeliveryHistoryCount', 1));
+            ->where('dashboard.missingDoHistoryCount', 1));
     expect($hydrated)->toBe(0);
 });
 
@@ -80,7 +84,10 @@ it('reconciles sales dashboard metrics to visible source transactions', function
         'updated_at' => now(),
     ]);
 
-    $delivered->stageHistories()->create(['to_stage' => PipelineStage::Delivery, 'actor_id' => $sales->id, 'created_at' => now()]);
+    $delivered->stageHistories()->create([
+        'to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => now(),
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
 
     $this->actingAs($sales)
         ->get(route('dashboard'))
@@ -90,7 +97,7 @@ it('reconciles sales dashboard metrics to visible source transactions', function
             ->where('dashboard.realizationUnits', 1)
             ->where('dashboard.gapUnits', 4)
             ->where('dashboard.stageCounts.hot_prospect', 1)
-            ->where('dashboard.stageCounts.delivery', 1)
+            ->where('dashboard.stageCounts.do', 1)
         );
 });
 
@@ -113,6 +120,6 @@ it('does not expose another sales dashboard data', function () {
         ->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('dashboard.realizationUnits', 0)
-            ->where('dashboard.stageCounts.delivery', 0)
+            ->where('dashboard.stageCounts.do', 0)
         );
 });

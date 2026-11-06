@@ -27,6 +27,12 @@ enum PipelineStage: string
 
     public function isClosed(): bool
     {
-        return in_array($this, [self::Delivery, self::Lost], true);
+        return in_array($this->value, self::closedValues(), true);
+    }
+
+    /** @return list<string> */
+    public static function closedValues(): array
+    {
+        return [self::Do->value, self::Delivery->value, self::Lost->value];
     }
 }

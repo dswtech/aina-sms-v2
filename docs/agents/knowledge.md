@@ -30,8 +30,8 @@ Hierarki kewenangan: `Admin → Branch Manager → Supervisor → Sales`.
 | Prospect | Lead yang sudah dihubungi dan sedang melalui follow-up awal. |
 | Hot Prospect | Prospect dengan minat dan langkah berikutnya yang konkret, misalnya test drive atau pembahasan pembelian. |
 | SPK | Surat Pemesanan Kendaraan; komitmen pemesanan yang memenuhi bukti dan ketentuan dealer. |
-| DO | Tahap operasional setelah pemesanan siap diproses menuju penyerahan kendaraan. |
-| Delivery | Kendaraan sudah diserahkan dan transaksi dinyatakan selesai. |
+| DO | Tahap yang menandai realisasi penjualan setelah PO, DP, dan Unit dikonfirmasi. |
+| Delivery | Konfirmasi bahwa kendaraan sudah terkirim setelah transaksi mencapai DO. |
 | Lost | Peluang penjualan berakhir tanpa transaksi dan wajib memiliki alasan yang dapat dievaluasi. |
 | Stagnant lead | Lead yang tidak memiliki aktivitas dalam ambang waktu yang ditetapkan produk. |
 | Pipeline | Urutan tahap yang menunjukkan perjalanan calon pelanggan menuju penjualan atau lost. |
@@ -57,16 +57,16 @@ Buku Pelanggan bukan sinkronisasi kontak pribadi. Nomor pelanggan tidak diekspor
 | Istilah | Arti |
 |---|---|
 | Target | Jumlah penjualan yang ingin dicapai pada periode tertentu. Target management adalah sasaran resmi cabang untuk tim; target personal adalah sasaran kerja masing-masing Sales. |
-| Realisasi | Penjualan yang sudah benar-benar tercapai. |
+| Realisasi | Penjualan yang sudah tercatat sebagai DO sah pada periode laporan. |
 | Forecast | Perkiraan hasil akhir berdasarkan transaksi aktif dan peluang tahapnya. |
-| Estimasi bulan closing | Bulan rencana penyelesaian transaksi; bukan janji hasil atau tanggal Delivery aktual. |
+| Estimasi bulan closing | Bulan yang diperkirakan untuk mencapai DO. |
 | Weighted pipeline | Cara menghitung forecast dengan mengalikan setiap transaksi dengan bobot peluang tahapnya. |
 | Markup target | Persentase tambahan yang ditetapkan SPV di atas target management. |
 | Benchmark tim | Sasaran operasional tim setelah target management ditambah markup. |
 | Alokasi tersimpan | Pembagian target personal yang terikat pada rencana tim dan bulan asalnya. |
 | Alokasi aktif | Bagian alokasi tersimpan yang penerimanya masih aktif dalam tim. |
 | Gap | Selisih antara target dan forecast atau realisasi. |
-| Conversion rate | Persentase lead yang berpindah menjadi SPK atau delivery sesuai ukuran yang dipilih. |
+| Conversion rate | Persentase transaksi dalam kohort Akuisisi yang sudah mencapai DO sah. |
 
 Bobot forecast belum ditetapkan. Nilai final harus diputuskan Product Owner bersama pihak operasional dealer dan kemudian dicatat di PRD.
 
