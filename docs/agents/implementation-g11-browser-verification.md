@@ -45,3 +45,9 @@ Build, lint regresi, empat skenario browser dan `composer ci:check` lulus lokal.
 Baseline `22d5c58` setelah PR #55. Fixture memuat 16 transaksi yang cocok dengan pencarian. Pada Chrome 390×844, baseline gagal mengumumkan loading saat halaman kedua diminta. Pagination sekarang memakai penanganan loading dan kegagalan yang sama dengan filter.
 
 Regresi menahan permintaan halaman kedua lalu mengembalikan 503. Daftar dan URL halaman pertama tetap tampil. Coba lagi mencapai Laravel dengan nomor halaman, pencarian aktif dan tab yang sama, lalu mengganti isi daftar sambil mempertahankan draft pencarian yang belum diterapkan. Build, lint, lima skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.443 assertions.
+
+## Reflow pada viewport sempit
+
+Baseline `945e0ae` setelah PR #56. Chrome menguji Supervisor pada 320×400 dan 720×450 CSS px. Dashboard, Pelanggan, Analisis dan Transaksi mencapai URL yang diharapkan dan tidak memiliki scroll horizontal pada dokumen. Form ubah tahap juga tidak memperlebar dokumen, dan tombol Simpan berada di dalam lebar viewport setelah digulir.
+
+Build, lint regresi, enam skenario browser dan CI lokal lulus. Pest mencatat 360 lulus, tiga skip dan 3.441 assertions. Viewport diperkecil untuk menguji reflow. Zoom browser 200%, pembaca layar nyata dan UAT manusia masih terbuka.

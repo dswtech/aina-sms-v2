@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.36 |
+| Versi | v1.37 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #56 merged pada `main` `945e0ae`. Branch `codex/g11-narrow-viewport-reflow` memverifikasi reflow empat halaman Supervisor dan form tahap pada 320×400 dan 720×450 CSS px. [Bukti G11](implementation-g11-browser-verification.md#reflow-pada-viewport-sempit) mencatat enam skenario browser dan CI lokal lulus. Zoom browser 200% masih terbuka.
 
 - PR #55 merged pada `main` `22d5c58`. Branch `codex/g11-transaction-pagination` menambahkan pemulihan pagination Transaksi. [Bukti G11](implementation-g11-browser-verification.md#pemulihan-pagination-transaksi) mencatat loading, 503, retry dengan filter aktif, dan preservasi draft. Lima skenario browser dan CI lokal lulus.
 
