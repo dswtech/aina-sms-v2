@@ -39,3 +39,17 @@ Rencana implementasi disetujui pengguna pada 5 November 2026. Baseline `main` ad
 ## Batas penerimaan
 
 Hasil teknis G09 tidak menutup koreksi Delivery, UAT manusia, server-save browser E2E, PostgreSQL/concurrency, benchmark p95, kesiapan operasional atau go-live. Gerbang G11/G13/G14/G15 tetap terpisah. Browser memeriksa konsumsi payload sintetis oleh asset produksi; assertion HTTP memakai database test dan menjadi bukti penegakan backend. Tidak ada perubahan kontrak publik atau tipe frontend.
+
+## Verifikasi DO dan Delivery di aina.test
+
+Pada 7 November 2026, Chrome menguji hasil merge PR #59 (`926838b`) pada lebar 390 px. Dua transaksi sintetis baru dibuat melalui aplikasi dengan akun demo Sales. Admin dealer menjalankan pembatalan dan Branch Manager merekonsiliasi Dashboard serta Analisis Pencapaian untuk periode November 2026.
+
+| Skenario | Bukti aktual |
+|---|---|
+| Checklist SPK → DO | Checklist kosong atau tanpa Unit menonaktifkan Simpan. Setelah PO, DP, dan Unit dicentang, tahap DO tersimpan. Realisasi naik dari 44 ke 45 dan jumlah Delivery tetap 30. |
+| Batalkan dan catat ulang DO | Pembatalan Admin dengan alasan mengembalikan tahap ke SPK dan realisasi ke 44. Histori mempertahankan DO asli dan mencatat pembatalan yang merujuk ke DO tersebut. Saat dicatat ulang, ketiga konfirmasi mulai kosong. Setelah pencatatan ulang dan DO pada transaksi kedua, realisasi menjadi 46. |
+| Konfirmasi Delivery | Transaksi kedua berubah menjadi Delivery. Realisasi tetap 46 dan jumlah Delivery naik dari 30 ke 31. Total DO pada Analisis Sumber dan Model cocok dengan Dashboard pada setiap pemeriksaan. |
+
+Kedua transaksi sintetis tetap tersedia pada database development, satu berstatus DO dan satu berstatus Delivery. Tidak ada reset atau seeding. Percobaan awal terhenti pada 502 di halaman Pelanggan. Log Nginx menunjukkan header respons melebihi buffer FastCGI. Buffer pada virtual host lokal `aina.test` diselaraskan menjadi 32 KiB dan konfigurasi lulus pemeriksaan sebelum reload.
+
+Verifikasi browser memakai periode berjalan. Kasus pembatalan dan pencatatan ulang lintas bulan Jakarta serta pemisahan tanggal DO dan Delivery diuji pada fixture otomatis terisolasi. Pemeriksaan terarah pipeline, rekonsiliasi dan ekspor lulus 35 tes dengan 420 assertions. Penerimaan pengguna tetap dicatat terpisah pada UAT manusia.
