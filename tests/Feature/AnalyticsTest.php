@@ -4,6 +4,7 @@ use App\Enums\PipelineStage;
 use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\StageHistory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -58,6 +59,13 @@ it('hides conversion in achievement mode and sanitizes drilldown', function () {
         'current_stage' => PipelineStage::Lead,
     ]);
     $deal->transitionTo(PipelineStage::Spk, $sales, options: ['booking_fee_confirmed' => true]);
+    $deal->stageHistories()->create([
+        'to_stage' => PipelineStage::Spk, 'actor_id' => $sales->id, 'created_at' => now(),
+    ]);
+    $loadedHistories = 0;
+    StageHistory::retrieved(function () use (&$loadedHistories): void {
+        $loadedHistories++;
+    });
 
     $this->actingAs($manager)
         ->get(route('analytics.index', [
@@ -70,9 +78,12 @@ it('hides conversion in achievement mode and sanitizes drilldown', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('analytics.mode', 'achievement')
             ->where('analytics.sources.0.conversion', null)
+            ->where('analytics.sources.0.spk', 1)
+            ->where('analytics.models.0.spk', 1)
             ->has('analytics.drilldown', 1)
             ->missing('analytics.drilldown.0.phone')
             ->missing('analytics.drilldown.0.address')
             ->missing('analytics.drilldown.0.notes')
         );
+    expect($loadedHistories)->toBe(0);
 });

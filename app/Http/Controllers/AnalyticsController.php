@@ -7,7 +7,6 @@ use App\Http\Requests\AnalyticsRequest;
 use App\Models\DealTransaction;
 use App\Models\User;
 use App\Support\ReportingPeriod;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -88,20 +87,27 @@ class AnalyticsController extends Controller
         $window = new ReportingPeriod($period);
         $start = $window->start;
         $end = $window->end;
+        $achievement = $mode === 'achievement';
+        $inPeriod = fn (Builder $history): Builder => $history
+            ->where('created_at', '>=', $start)->where('created_at', '<', $end);
 
         $query = DealTransaction::query()
             ->visibleInReportsTo($actor)
-            ->select(['id', 'public_id', 'dealer_id', 'customer_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'estimated_value', 'created_at', 'updated_at'])
-            ->with([
-                'stageHistories' => fn ($history): mixed => $history->select(['id', 'deal_transaction_id', 'to_stage', 'created_at']),
-                'sales:id,name',
-            ]);
+            ->select(['id', 'public_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'created_at'])
+            ->with('sales:id,name');
+        foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
+            $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
+                $history->where('to_stage', $stage);
+                if ($achievement) {
+                    $inPeriod($history);
+                }
+            }]);
+        }
 
-        if ($mode === 'acquisition') {
-            $query->where('created_at', '>=', $start)->where('created_at', '<', $end);
+        if ($achievement) {
+            $query->whereHas('stageHistories', $inPeriod);
         } else {
-            $query->whereHas('stageHistories', fn (Builder $history): Builder => $history
-                ->where('created_at', '>=', $start)->where('created_at', '<', $end));
+            $query->where('created_at', '>=', $start)->where('created_at', '<', $end);
         }
 
         $deals = $query->get();
@@ -112,26 +118,26 @@ class AnalyticsController extends Controller
         $modelGroups = $deals->groupBy('vehicle_model');
         $totalDeals = max(1, $deals->count());
 
-        $sources = $sourceGroups->map(function (Collection $group, string $source) use ($mode, $start, $end, $totalDeals): array {
-            $counts = $this->stageCounts($group, $mode, $start, $end);
+        $sources = $sourceGroups->map(function (Collection $group, string $source) use ($achievement, $totalDeals): array {
+            $counts = $this->stageCounts($group, $achievement);
 
             return [
                 'source' => $source,
                 'total' => $group->count(),
                 'share' => round(($group->count() / $totalDeals) * 100, 1),
                 ...$counts,
-                'conversion' => $mode === 'acquisition'
+                'conversion' => ! $achievement
                     ? round(($counts['delivery'] / max(1, $group->count())) * 100, 1)
                     : null,
             ];
         })->sortByDesc('total')->values()->all();
 
-        $models = $modelGroups->map(function (Collection $group, string $model) use ($mode, $start, $end, $totalDeals): array {
+        $models = $modelGroups->map(function (Collection $group, string $model) use ($achievement, $totalDeals): array {
             return [
                 'model' => $model,
                 'total' => $group->count(),
                 'share' => round(($group->count() / $totalDeals) * 100, 1),
-                ...$this->stageCounts($group, $mode, $start, $end),
+                ...$this->stageCounts($group, $achievement),
             ];
         })->sortByDesc('total')->values()->all();
 
@@ -163,24 +169,18 @@ class AnalyticsController extends Controller
      * @param  Collection<int, DealTransaction>  $deals
      * @return array{spk: int, do: int, delivery: int}
      */
-    private function stageCounts(Collection $deals, string $mode, CarbonInterface $start, CarbonInterface $end): array
+    private function stageCounts(Collection $deals, bool $achievement): array
     {
-        $count = function (PipelineStage $stage) use ($deals, $mode, $start, $end): int {
-            return $deals->filter(function (DealTransaction $deal) use ($stage, $mode, $start, $end): bool {
-                if ($mode === 'achievement') {
-                    return $deal->stageHistories->contains(fn ($history): bool => $history->to_stage === $stage
-                        && $history->created_at->gte($start) && $history->created_at->lt($end));
+        $counts = ['spk' => 0, 'do' => 0, 'delivery' => 0];
+        foreach ($deals as $deal) {
+            $row = $deal->getAttributes();
+            foreach ($counts as $stage => $count) {
+                if ($row['reached_'.$stage] || (! $achievement && $row['current_stage'] === $stage)) {
+                    $counts[$stage] = $count + 1;
                 }
+            }
+        }
 
-                return $deal->current_stage === $stage
-                    || $deal->stageHistories->contains(fn ($history): bool => $history->to_stage === $stage);
-            })->count();
-        };
-
-        return [
-            'spk' => $count(PipelineStage::Spk),
-            'do' => $count(PipelineStage::Do),
-            'delivery' => $count(PipelineStage::Delivery),
-        ];
+        return $counts;
     }
 }

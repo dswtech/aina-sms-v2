@@ -141,3 +141,11 @@ Regresi roster memeriksa bahwa dashboard tetap menampilkan Sales aktif, penerima
 Benchmark ulang `run-postgres.ps1 -Profile capacity` pada PostgreSQL 16.4 lokal memakai 100.000 transaksi sintetis dan 30 sampel per jalur setelah pemanasan. P95 Dashboard Branch Manager turun dari 5,58 ke 1,04 detik. Supervisor terukur 2,00 detik. Keduanya memenuhi target Dashboard 3 detik. Analisis Pencapaian terukur 2,44 detik, masih di atas target navigasi 2 detik. Puncak alokasi PHP seluruh proses turun dari 378 ke 188 MiB. Pengujian memakai request berurutan dengan batas PHP 512 MiB. Validasi pada hosting dan beban pengguna pilot tetap terbuka.
 
 Suite PostgreSQL lulus 360 tes, tiga skip dan 3.435 assertions. Uji impor serentak lulus 13 assertions dan benchmark kapasitas lulus 323 assertions. Cluster sementara dibersihkan.
+
+## Flag histori tahap untuk Analisis
+
+Baseline `5e24217` setelah PR #52. Analisis Sumber dan Model menghitung SPK, DO, dan Delivery dari flag keberadaan histori per transaksi di SQL. Mode Pencapaian membatasi histori ke periode Jakarta. Mode Akuisisi tetap menghitung tahap saat ini atau histori pada transaksi yang dibuat dalam periode. Halaman dan CSV memakai perhitungan yang sama.
+
+Regresi menguji SPK berulang pada satu transaksi dan memastikan laporan tidak menghidrasi model histori tahap. Pemeriksaan hidrasi gagal pada baseline dan lulus setelah perubahan. CI lokal dan suite PostgreSQL masing-masing lulus 360 tes, tiga skip dan 3.438 assertions, termasuk ekspor CSV kedua mode dan batas periode. Uji impor serentak lulus 13 assertions.
+
+Benchmark `run-postgres.ps1 -Profile capacity` lulus 323 assertions dan cluster sementara dibersihkan. Pada 100.000 transaksi sintetis, p95 Analisis Pencapaian turun dari 2,44 ke 0,84 detik dengan maksimum dua query. Dashboard Branch Manager dan Supervisor terukur 0,93 dan 1,76 detik. Pengukuran memakai PostgreSQL 16.4 lokal dengan request berurutan dan 30 sampel per jalur setelah dua pemanasan. Validasi pada hosting dan beban pengguna pilot tetap terbuka.
