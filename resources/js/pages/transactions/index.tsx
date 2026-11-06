@@ -3,7 +3,7 @@ import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,16 @@ type Paginated<T> = {
 };
 
 type SalesUser = { id: number; name: string; username: string };
+type FilterQuery = Record<
+    | 'search'
+    | 'stage'
+    | 'tab'
+    | 'sales_id'
+    | 'date_from'
+    | 'date_to'
+    | 'source',
+    string | null
+>;
 
 type Props = {
     transactions: Paginated<Transaction>;
@@ -82,22 +92,60 @@ export default function TransactionsIndex({
     const [bookingFee, setBookingFee] = useState(false);
     const [lostReason, setLostReason] = useState('');
     const [lostNotes, setLostNotes] = useState('');
-
-    const applyFilters = (nextTab?: string) => {
-        router.get(
-            '/transactions',
-            {
-                search,
-                stage,
-                tab: nextTab ?? filters.tab,
-                sales_id: salesId || null,
-                date_from: dateFrom || null,
-                date_to: dateTo || null,
-                source: source || null,
-            },
-            { preserveState: true, replace: true },
-        );
+    const [isLoading, setIsLoading] = useState(false);
+    const [failedFilter, setFailedFilter] = useState<{
+        query: FilterQuery;
+        message: string;
+    } | null>(null);
+    const headingRef = useRef<HTMLHeadingElement>(null);
+    const draft = {
+        search,
+        stage,
+        sales_id: salesId || null,
+        date_from: dateFrom || null,
+        date_to: dateTo || null,
+        source: source || null,
     };
+    const draftChanged =
+        failedFilter &&
+        (Object.keys(draft) as (keyof typeof draft)[]).some(
+            (key) => draft[key] !== failedFilter.query[key],
+        );
+
+    const visitFilters = (query: FilterQuery, retry = false) => {
+        router.get('/transactions', query, {
+            preserveState: true,
+            replace: true,
+            onStart: () => {
+                setIsLoading(true);
+                if (!retry) setFailedFilter(null);
+            },
+            onFinish: () => setIsLoading(false),
+            onSuccess: () => {
+                setFailedFilter(null);
+                if (retry) headingRef.current?.focus();
+            },
+            onError: () => setFailedFilter(null),
+            onNetworkError: () => {
+                setFailedFilter({
+                    query,
+                    message: 'Koneksi terputus saat memuat transaksi.',
+                });
+                return false;
+            },
+            onHttpException: (response) => {
+                if (response.status < 500) return;
+                setFailedFilter({
+                    query,
+                    message: 'Daftar transaksi belum dapat dimuat.',
+                });
+                return false;
+            },
+        });
+    };
+
+    const applyFilters = (nextTab = filters.tab) =>
+        visitFilters({ ...draft, tab: nextTab });
 
     const openUpdate = (transaction: Transaction) => {
         setSelected(transaction);
@@ -132,7 +180,11 @@ export default function TransactionsIndex({
             <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-10 lg:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
+                        <h1
+                            ref={headingRef}
+                            tabIndex={-1}
+                            className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
+                        >
                             Transaksi
                         </h1>
                         <p className="mt-2 max-w-prose text-muted-foreground">
@@ -285,6 +337,7 @@ export default function TransactionsIndex({
                         <div className="flex items-end">
                             <Button
                                 onClick={() => applyFilters()}
+                                disabled={isLoading}
                                 className="min-h-11 w-full"
                             >
                                 Terapkan
@@ -302,6 +355,7 @@ export default function TransactionsIndex({
                                 }
                                 size="sm"
                                 className="min-h-10"
+                                disabled={isLoading}
                                 onClick={() => applyFilters(tab.value)}
                             >
                                 {tab.label}
@@ -310,7 +364,40 @@ export default function TransactionsIndex({
                     </div>
                 </FilterPanel>
 
-                <Card className="mt-6">
+                <p
+                    role="status"
+                    className={
+                        isLoading
+                            ? 'mt-3 text-sm text-muted-foreground'
+                            : 'sr-only'
+                    }
+                >
+                    {isLoading ? 'Memuat transaksi untuk filter terbaru…' : ''}
+                </p>
+                {failedFilter && (
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border bg-card px-4 py-3">
+                        <p role="alert" className="text-sm">
+                            {failedFilter.message} Daftar masih menampilkan data
+                            terakhir yang berhasil dimuat.
+                            {draftChanged &&
+                                ' Terapkan filter yang telah diubah.'}
+                        </p>
+                        {!draftChanged && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isLoading}
+                                onClick={() =>
+                                    visitFilters(failedFilter.query, true)
+                                }
+                            >
+                                Coba lagi
+                            </Button>
+                        )}
+                    </div>
+                )}
+
+                <Card className="mt-6" aria-busy={isLoading}>
                     <CardHeader>
                         <CardTitle>Daftar transaksi</CardTitle>
                     </CardHeader>
@@ -496,7 +583,7 @@ export default function TransactionsIndex({
                                         link.active ? 'default' : 'outline'
                                     }
                                     size="sm"
-                                    disabled={!link.url}
+                                    disabled={!link.url || isLoading}
                                     className="min-h-9"
                                     onClick={() =>
                                         link.url &&
