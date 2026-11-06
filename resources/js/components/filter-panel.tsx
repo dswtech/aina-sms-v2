@@ -7,6 +7,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export function FilterPanel({
@@ -14,16 +15,20 @@ export function FilterPanel({
     summary,
     children,
     className,
+    collapseOnMobile = false,
 }: {
     title: string;
     summary: string;
     children: ReactNode;
     className?: string;
+    collapseOnMobile?: boolean;
 }) {
-    const [open, setOpen] = useState(true);
+    const isMobile = useIsMobile();
+    const [expanded, setExpanded] = useState<boolean>();
+    const open = expanded ?? !(collapseOnMobile && isMobile);
 
     return (
-        <Collapsible open={open} onOpenChange={setOpen} asChild>
+        <Collapsible open={open} onOpenChange={setExpanded} asChild>
             <section
                 aria-label={title}
                 className={cn(

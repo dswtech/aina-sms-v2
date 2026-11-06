@@ -12,7 +12,7 @@ async function leadServerSave(page) {
     };
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${origin}/login`);
-    await page.getByLabel('Username').fill('g11.synthetic.sales');
+    await page.getByLabel('Username').fill('g11.sales');
     await page.locator('input[name="password"]').fill('password');
     await page.locator('[data-test="login-button"]').click();
     await page.waitForURL('**/dashboard');
@@ -61,6 +61,32 @@ async function leadServerSave(page) {
         .getByText('G11 Lead Persisted', { exact: true })
         .first()
         .waitFor();
+    const filter = page.getByRole('region', { name: 'Filter pelanggan' });
+    const showFilter = filter.getByRole('button', { name: 'Tampilkan filter' });
+    await showFilter.waitFor();
+    const lead = page
+        .getByRole('heading', { name: 'G11 Lead Persisted' })
+        .first();
+    assert(
+        await lead.evaluate(
+            (element) => element.getBoundingClientRect().bottom <= innerHeight,
+        ),
+        'The first customer is below the initial mobile viewport',
+    );
+    await showFilter.press('Enter');
+    const search = filter.getByRole('textbox', { name: 'Pencarian pelanggan' });
+    await search.fill('G11 Lead Persisted');
+    await search.press('Enter');
+    await page.waitForURL(
+        (url) => url.searchParams.get('search') === 'G11 Lead Persisted',
+    );
+    await filter
+        .getByRole('button', { name: 'Sembunyikan filter' })
+        .press('Enter');
+    assert(
+        new URL(page.url()).searchParams.get('search') === 'G11 Lead Persisted',
+        'Collapsing the mobile filter cleared its URL',
+    );
     const viewports = [
         { width: 390, height: 844, forcedColors: 'none' },
         { width: 768, height: 360, forcedColors: 'active' },

@@ -470,9 +470,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G11
 
-[Bukti awal G11](implementation-g11-browser-verification.md) memverifikasi login Sales, pesan offline dan draft, retry melalui Laravel, lead tersimpan setelah reload, serta fokus dialog dan overflow pada tiga viewport termasuk forced colors. Workflow sudah memuat regresi browser. Eksekusi di runner GitHub dan skenario lintas blok masih terbuka.
-
-**Kekurangan verifikasi — browser nyata, aksesibilitas dan CI.** Bukti: [E20](#e20), [laporan QA][qa], [workflow][ci-source]. Browser memakai fixture/intercept dan dijalankan terpisah; state gagal/stale/loading seluruh blok, server-save E2E, pembaca layar, zoom, forced colors, landscape pendek dan posisi filter belum lengkap. Tindak lanjut: UAT X02/X03 dan regresi browser melalui server pada target test terisolasi, masukkan regresi yang stabil ke CI. Pemilik: QA + Engineering frontend/CI. Tidak menjalankan UAT pada DB bisnis sebagai bagian tugas dokumentasi ini.
+**Verifikasi teknis parsial.** [Bukti G11](implementation-g11-browser-verification.md) mencakup simpan lead melalui Laravel, draft dan retry offline, fokus dialog dan tiga viewport termasuk forced colors. Regresi awal lulus di GitHub Actions pada PR #43. Regresi lanjutan memeriksa daftar pelanggan pada layar pertama 390×844 serta loading, data terakhir, kegagalan jaringan/503, retry dan empty state Analisis. Keduanya memakai launcher CI. Skenario blok lain, zoom, pembaca layar nyata dan UAT X02/X03 masih terbuka. Pemilik QA + Engineering frontend/CI.
 
 ### G12
 

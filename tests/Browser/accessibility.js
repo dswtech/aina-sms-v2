@@ -211,6 +211,11 @@ async function accessibility(page) {
     const results = [];
     const checkFilterDisclosure = async (title) => {
         const panel = page.getByRole('region', { name: title, exact: true });
+        if (title === 'Filter pelanggan' && page.viewportSize().width < 768) {
+            await panel
+                .getByRole('button', { name: 'Tampilkan filter', exact: true })
+                .click();
+        }
         const hide = panel.getByRole('button', {
             name: 'Sembunyikan filter',
             exact: true,
@@ -218,7 +223,7 @@ async function accessibility(page) {
         await hide.waitFor();
         assert(
             (await hide.getAttribute('aria-expanded')) === 'true',
-            'Filter should start expanded',
+            'Filter should announce expanded state',
         );
         const field = panel.locator('input').first();
         const hasField = (await field.count()) > 0;
@@ -948,6 +953,12 @@ async function accessibility(page) {
     });
     await test('customer search retains a label after typing', async () => {
         await load();
+        if (page.viewportSize().width < 768) {
+            await page
+                .getByRole('region', { name: 'Filter pelanggan' })
+                .getByRole('button', { name: 'Tampilkan filter', exact: true })
+                .click();
+        }
         const search = page.getByRole('textbox', {
             name: 'Pencarian pelanggan',
             exact: true,

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\DealTransaction;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
@@ -28,6 +30,15 @@ if (Artisan::call('migrate', ['--force' => true]) !== 0) {
     throw new RuntimeException(Artisan::output());
 }
 
-$sales = User::factory()->sales()->create(['name' => 'G11 Synthetic Sales', 'username' => 'g11.synthetic.sales']);
+$sales = User::factory()->sales()->create(['name' => 'G11 Synthetic Sales', 'username' => 'g11.sales']);
 $team = Team::factory()->create(['dealer_id' => $sales->dealer_id]);
 TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $sales->id, 'role' => 'sales', 'ended_at' => null]);
+$supervisor = User::factory()->supervisor()->create(['dealer_id' => $sales->dealer_id, 'username' => 'g11.spv']);
+TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $supervisor->id, 'role' => 'supervisor', 'ended_at' => null]);
+
+$reportCustomer = Customer::factory()->create(['dealer_id' => $sales->dealer_id]);
+$reportDeal = DealTransaction::create([
+    'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
+    'customer_id' => $reportCustomer->id, 'vehicle_model' => 'G11 Report Model', 'source' => 'walk_in',
+]);
+$reportDeal->forceFill(['created_at' => '2001-01-12 00:00:00'])->save();
