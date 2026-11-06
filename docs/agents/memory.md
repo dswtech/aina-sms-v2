@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.37 |
+| Versi | v1.38 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #57 merged pada `main` `7b45303`. Branch `codex/g11-chrome-native-zoom` memverifikasi reflow empat halaman Supervisor dan formulir tahap pada zoom bawaan Chrome 200%. [Bukti G11](implementation-g11-browser-verification.md#zoom-bawaan-chrome-200) mencatat build, enam skenario browser dan CI lokal lulus. Pembaca layar nyata dan UAT manusia masih terbuka.
 
 - PR #56 merged pada `main` `945e0ae`. Branch `codex/g11-narrow-viewport-reflow` memverifikasi reflow empat halaman Supervisor dan form tahap pada 320×400 dan 720×450 CSS px. [Bukti G11](implementation-g11-browser-verification.md#reflow-pada-viewport-sempit) mencatat enam skenario browser dan CI lokal lulus. Zoom browser 200% masih terbuka.
 

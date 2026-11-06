@@ -51,3 +51,9 @@ Regresi menahan permintaan halaman kedua lalu mengembalikan 503. Daftar dan URL 
 Baseline `945e0ae` setelah PR #56. Chrome menguji Supervisor pada 320×400 dan 720×450 CSS px. Dashboard, Pelanggan, Analisis dan Transaksi mencapai URL yang diharapkan dan tidak memiliki scroll horizontal pada dokumen. Form ubah tahap juga tidak memperlebar dokumen, dan tombol Simpan berada di dalam lebar viewport setelah digulir.
 
 Build, lint regresi, enam skenario browser dan CI lokal lulus. Pest mencatat 360 lulus, tiga skip dan 3.441 assertions. Viewport diperkecil untuk menguji reflow. Zoom browser 200%, pembaca layar nyata dan UAT manusia masih terbuka.
+
+## Zoom bawaan Chrome 200%
+
+Baseline `7b45303` setelah PR #57. Launcher menggunakan profil Chrome terpisah untuk mengakses pengaturan Page zoom. Regresi memilih 200% pada viewport awal 1440×900 dan memverifikasi bahwa rasio piksel menjadi dua kali lipat dan lebar layout menjadi separuh sebelum menguji halaman.
+
+Dashboard, Pelanggan, Analisis, Transaksi dan formulir ubah tahap Supervisor lulus pemeriksaan overflow horizontal. Tombol Simpan berada dalam viewport setelah formulir digulir. Build, lint regresi, enam skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.444 assertions. Pengujian pembaca layar nyata dan UAT manusia masih terbuka.
