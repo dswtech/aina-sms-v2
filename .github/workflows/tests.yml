@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -23,6 +23,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
+          extensions: pdo_sqlite
           tools: composer:v2
           coverage: none
 
@@ -39,3 +40,10 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+      - name: Run isolated browser regression
+        timeout-minutes: 5
+        run: |
+          npm install --prefix "$RUNNER_TEMP/aina-browser" --ignore-scripts --no-save --no-audit --no-fund @playwright/cli@0.1.22
+          export PATH="$RUNNER_TEMP/aina-browser/node_modules/.bin:$PATH"
+          pwsh -NoProfile -File tests/Browser/run-isolated.ps1
