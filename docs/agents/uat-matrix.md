@@ -480,7 +480,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G13
 
-**Gerbang operasional — performa dan concurrency tetap terbuka.** E27 memverifikasi baseline terbaru pada PostgreSQL test terisolasi; ini belum membuktikan concurrency atau p95 pada 100.000 transaksi. Bukti awal: [E23](#e23), target PRD bagian 11; belum ditemukan benchmark p95 volume 100.000 transaksi atau bukti pengulangan baseline penuh pada PostgreSQL. Tindak lanjut: O02, ukur juga biaya query dashboard/Analisis/import dan concurrency; verifikasi fitur PostgreSQL yang relevan. Pemilik: Engineering/IT/QA. Tes SQLite lulus tidak menutup gerbang ini.
+**Verifikasi pilot parsial.** [Suite PostgreSQL, concurrency impor dan benchmark pilot](implementation-g13-postgres-pilot.md) mencatat suite penuh lulus serta replay dan duplikasi impor serentak ditolak. Pada 10.000 transaksi, p95 dashboard Supervisor 4,94 detik dan Branch Manager 9,49 detik, melewati target 3 detik. Jalur Analisis, daftar pelanggan, buat lead dan impor 100 baris terukur di bawah 0,6 detik. Tindak lanjut O02 adalah profiling dan pengukuran ulang dashboard pada skala pilot. Kapasitas 100.000 tetap terbuka untuk pengujian bertahap.
 
 ### G14
 

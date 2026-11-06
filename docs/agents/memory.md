@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #43/G11 sudah merged pada `main` `64be0a5`. Regresi browser lulus di GitHub Actions. Branch `codex/g13-postgres-verification` berangkat dari baseline tersebut. [Bukti G13](implementation-g13-postgres-pilot.md) mencatat suite PostgreSQL 16.4 lulus, 13 assertions concurrency impor lulus, dan benchmark 10.000 transaksi selesai. Dashboard lokal melewati target 3 detik pada Supervisor dan Branch Manager. Langkah berikutnya profiling PHP pada dashboard dan pengukuran ulang skala pilot. Kapasitas 100.000 dan penerimaan operasional tetap terbuka.
+
 - PR #42/G10 sudah merged di `main` `8c67ea6`. Branch `codex/g11-browser-verification` berangkat dari baseline tersebut. [Bukti awal G11](implementation-g11-browser-verification.md) mencatat simpan lead via Laravel dan SQLite test, pemulihan offline, keyboard, dan tiga viewport. CI lokal lulus. Workflow sudah memuat regresi browser dengan package yang disetujui. Eksekusi di runner GitHub menunggu PR dan G11 masih terbuka.
 
 - G10 dikerjakan pada `codex/g10-import-export-verification` dari `main` `264d9d6`. [Rencana dan bukti G10](implementation-g10-import-export.md) serta [E31](uat-matrix.md#e31) mencatat perbaikan privasi preview dan riwayat batch, validasi impor atomik, rekonsiliasi CSV, perlindungan label formula dan PDF browser. CI lulus dengan Pest 357 lulus, tiga skip dan 3.379 assertions, tujuh tes frontend dan production build. Browser ekspor 12 kombinasi dan impor enam kombinasi lulus. Verifikasi memakai data sintetis dan database test terisolasi. UAT manusia, penerimaan cetak oleh operasional, concurrency PostgreSQL, dan p95 tetap terbuka. Langkah berikutnya G11/G13.
