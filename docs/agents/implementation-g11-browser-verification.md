@@ -25,3 +25,11 @@ Branch `codex/g11-transaction-filter-recovery` berangkat dari `e8f4da7` setelah 
 Regresi juga mengirim rentang tanggal terbalik ke Laravel dan memeriksa error pada field, draft tanggal serta daftar lama tetap terlihat. Validasi meminta koreksi input. Review menemukan bahwa draft yang diedit setelah gagal bisa berbeda dari permintaan yang dikirim ulang. Regresi baru mereproduksi masalah itu. Sekarang jika draft berubah, pesan mengarahkan pengguna ke Terapkan dan tombol retry hanya tersedia ketika draft cocok lagi. Tes memakai launcher SQLite terisolasi yang sama dengan GitHub Actions.
 
 Build produksi, launcher browser final, serta 21 kelompok regresi aksesibilitas lulus secara lokal. Regresi aksesibilitas memakai fixture sintetis dan menyadap aksi tulis. Status pagination, penyimpanan tahap Transaksi, dan pembaca layar nyata berada di luar skenario filter ini.
+
+## Validasi dan penyimpanan tahap Transaksi
+
+Baseline `d3b2e26` setelah PR #53. Pada Chrome 390×844, Supervisor membuka perubahan tahap dari daftar Transaksi dan mengirim SPK tanpa konfirmasi booking fee. Regresi awal gagal karena request Laravel memicu exception domain sebelum UI menerima pesan validasi.
+
+Validasi request kini mensyaratkan konfirmasi booking fee untuk SPK. Tes fitur membuktikan input kosong atau `false` ditolak tanpa perubahan tahap atau tambahan histori. Tes browser memeriksa pesan validasi, pilihan tahap dan catatan yang tetap tersedia, serta tahap Lead yang tetap tampil. Setelah konfirmasi, retry mencapai transaksi yang sama dan tahap SPK tetap terlihat setelah reload.
+
+Build produksi, lint regresi, empat skenario launcher browser dan `composer ci:check` lulus secara lokal. Pest mencatat 360 lulus, tiga skip dan 3.444 assertions. Browser memakai Laravel dengan SQLite sementara. Pemulihan setelah jaringan terputus saat penyimpanan tahap, pagination, zoom browser, pembaca layar nyata, dan UAT manusia masih terbuka.
