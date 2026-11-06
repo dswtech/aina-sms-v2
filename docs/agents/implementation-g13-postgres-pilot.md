@@ -123,3 +123,11 @@ Baseline `661cfc9` pada branch PR #50. Tiga request Dashboard Branch Manager pad
 Setelah payload asli terbentuk, eksperimen menjalankan proyeksi transaksi yang sama lewat query builder tanpa hidrasi model dan pemuatan relasi Sales. Pengambilan baris memerlukan 242–302 ms dan pengelompokan memerlukan 299–483 ms. Jumlah transaksi per kelompok tim dan Sales cocok pada ketiga request. Percobaan roster memakai satu transaksi dari setiap kelompok Sales yang sudah tersedia. Pengambilan roster beserta pemeriksaan jumlah per kelompok memerlukan 0,9–1,2 ms dan menghasilkan urutan ID roster yang sama.
 
 Angka ini mengukur tahap terpisah. Percobaan query builder belum mencakup pemuatan data Sales, perhitungan metrik, atau kesetaraan payload Dashboard penuh. Langkah berikutnya adalah menguji roster berbasis kelompok terhadap fixture Sales historis dan target alokasi, lalu mengukur representasi baris ringan untuk laporan Branch Manager. Run diagnostik PostgreSQL lulus lima assertions. Setelah instrumentasi dilepas, 23 tes Dashboard dan TeamPerformance lulus dengan 294 assertions.
+
+## Roster Sales dari kelompok transaksi
+
+Baseline `64128ce` setelah PR #50. Dashboard mengambil satu relasi Sales dari setiap kelompok transaksi per Sales yang sudah dibentuk untuk agregasi. Roster tetap menggabungkan Sales aktif, penerima alokasi dan Sales dari transaksi historis, lalu mengurutkan berdasarkan nama dan menghapus duplikasi ID.
+
+Regresi menguji Sales aktif tanpa transaksi, penerima alokasi desimal tanpa transaksi, dan Sales nonaktif dengan dua transaksi. Kontrak lulus pada baseline, gagal ketika sumber Sales historis sengaja dihilangkan, dan lulus dengan roster berbasis kelompok. `composer ci:check` lulus dengan 360 tes Pest, tiga skip, 3.431 assertions dan tujuh tes frontend. Suite PostgreSQL lulus 360 tes, tiga skip dan 3.432 assertions. Uji impor serentak lulus 13 assertions.
+
+Benchmark `run-postgres.ps1 -Profile capacity` lulus 323 assertions. Pada 100.000 transaksi sintetis dan 30 sampel per jalur setelah pemanasan, p95 Dashboard Branch Manager turun dari 6,82 ke 5,58 detik, sekitar 18%. Supervisor terukur 2,23 detik dan Analisis Pencapaian 2,80 detik. Branch Manager dan Analisis masih melewati target masing-masing. Pengukuran memakai PostgreSQL lokal dengan request berurutan. Cluster test dibersihkan.

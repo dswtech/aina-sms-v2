@@ -100,8 +100,9 @@ class TeamPerformance
             : ($canViewManagementTarget && $missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
         $salesTotal = $personalUnits->isEmpty() ? null : TargetUnits::number($personalUnits->sum(fn ($n) => TargetUnits::scaled($n)));
         $metrics = $this->metrics($deals, $targetUnits, $historical);
+        $dealSales = $dealsBySales->map(fn (Collection $group): ?User => $group->first()?->sales)->filter();
         // Allocations retain their original team and period after membership changes.
-        $rowUsers = $users->concat($allocations->pluck('user'))->concat($deals->pluck('sales')->filter())->unique('id')->sortBy('name');
+        $rowUsers = $users->concat($allocations->pluck('user'))->concat($dealSales)->unique('id')->sortBy('name');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
             'is_current_member' => $users->contains('id', $sales->id),

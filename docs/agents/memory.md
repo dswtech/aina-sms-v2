@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.30 |
+| Versi | v1.31 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #50 merged pada `main` `64128ce`. Branch baru `codex/g13-dashboard-sales-roster` menggunakan kelompok transaksi yang sudah tersedia untuk menyusun roster. [Benchmark roster](implementation-g13-postgres-pilot.md#roster-sales-dari-kelompok-transaksi) mencatat p95 Branch Manager 5,58 detik, turun dari 6,82 detik. CI, suite PostgreSQL, concurrency impor dan benchmark lulus.
 
 - Profiling lanjutan tetap pada branch PR #50, dari `661cfc9`. [Profiling pemuatan dan agregasi](implementation-g13-postgres-pilot.md#profiling-pemuatan-dan-agregasi-dashboard) mengukur pemuatan model dan relasi Sales sebesar 2,44–2,63 detik dan penyusunan roster sebesar 0,80–0,85 detik. Eksperimen query builder dan roster berbasis kelompok memverifikasi jumlah per kelompok dan urutan ID roster pada fixture kapasitas. Instrumentasi dilepas dan 23 tes fitur lulus.
 
@@ -136,7 +138,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Uji roster Sales berbasis kelompok dan representasi baris ringan untuk Dashboard Branch Manager berdasarkan [profiling pemuatan dan agregasi](implementation-g13-postgres-pilot.md#profiling-pemuatan-dan-agregasi-dashboard). Lanjutkan optimasi Analisis sesuai [profiling G13](implementation-g13-postgres-pilot.md#profiling-branch-manager-pada-kapasitas-100000) dan verifikasi G11 sesuai [matriks UAT](uat-matrix.md#g11). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
+1. Uji representasi baris ringan untuk Dashboard Branch Manager berdasarkan [profiling pemuatan dan agregasi](implementation-g13-postgres-pilot.md#profiling-pemuatan-dan-agregasi-dashboard). Lanjutkan optimasi Analisis sesuai [profiling G13](implementation-g13-postgres-pilot.md#profiling-branch-manager-pada-kapasitas-100000) dan verifikasi G11 sesuai [matriks UAT](uat-matrix.md#g11). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

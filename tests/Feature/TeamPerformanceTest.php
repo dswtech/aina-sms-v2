@@ -273,6 +273,36 @@ it('does not require a new target for an inactive historical team', function () 
         ->where('dashboard.targetUnits', 30)->where('dashboard.teamTargetsMissing', 0)->has('dashboard.teams', 2));
 });
 
+it('lists each current, allocated and historical sales user once in manager performance', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-05 09:00:00', 'Asia/Jakarta'));
+    $f = g02Fixture();
+    $f['sales']->update(['name' => 'A Current']);
+    $allocated = User::factory()->sales()->create([
+        'dealer_id' => $f['dealer']->id, 'name' => 'B Allocated', 'is_active' => false,
+    ]);
+    $historical = User::factory()->sales()->create([
+        'dealer_id' => $f['dealer']->id, 'name' => 'C Historical', 'is_active' => false,
+    ]);
+    $target = TeamTarget::create([
+        'team_id' => $f['team']->id, 'period' => '2026-11-01', 'target_units' => 10,
+        'created_by_id' => $f['supervisor']->id,
+    ]);
+    $target->allocations()->create(['user_id' => $allocated->id, 'target_units' => 2.5]);
+    g02Deal($f, ['sales_id' => $historical->id]);
+    g02Deal($f, ['sales_id' => $historical->id]);
+
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
+    $this->actingAs($manager)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->has('dashboard.performance', 3)
+        ->where('dashboard.performance.0.id', $f['sales']->id)
+        ->where('dashboard.performance.0.is_current_member', true)
+        ->where('dashboard.performance.1.id', $allocated->id)
+        ->where('dashboard.performance.1.target_units', 2.5)
+        ->where('dashboard.performance.2.id', $historical->id)
+        ->where('dashboard.performance.2.is_current_member', false)
+        ->where('dashboard.performance.2.stage_counts.hot_prospect', 2));
+});
+
 it('preserves sanitized weighted contributors for managers within the closing period', function () {
     $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
     $f = g02Fixture();
