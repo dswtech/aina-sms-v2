@@ -33,3 +33,9 @@ Baseline `d3b2e26` setelah PR #53. Pada Chrome 390×844, Supervisor membuka peru
 Validasi request kini mensyaratkan konfirmasi booking fee untuk SPK. Tes fitur membuktikan input kosong atau `false` ditolak tanpa perubahan tahap atau tambahan histori. Tes browser memeriksa pesan validasi, pilihan tahap dan catatan yang tetap tersedia, serta tahap Lead yang tetap tampil. Setelah konfirmasi, retry mencapai transaksi yang sama dan tahap SPK tetap terlihat setelah reload.
 
 Build produksi, lint regresi, empat skenario launcher browser dan `composer ci:check` lulus secara lokal. Pest mencatat 360 lulus, tiga skip dan 3.444 assertions. Browser memakai Laravel dengan SQLite sementara. Pemulihan setelah jaringan terputus saat penyimpanan tahap, pagination, zoom browser, pembaca layar nyata, dan UAT manusia masih terbuka.
+
+## Pemulihan penyimpanan tahap saat offline
+
+Baseline `f445af3` setelah PR #54. Regresi Chrome 390×844 memutus koneksi sebelum Supervisor mengirim SPK yang sudah dikonfirmasi. Baseline gagal karena formulir tidak menampilkan alert jaringan. Formulir kini mengumumkan gangguan, mempertahankan pilihan tahap, catatan dan centang booking fee, serta menonaktifkan Simpan dan Batal selama permintaan aktif. Setelah koneksi pulih, penyimpanan ulang manual mencapai transaksi yang sama dan SPK tetap terlihat setelah reload.
+
+Build, lint regresi, empat skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.443 assertions. Skenario memakai SQLite test dan memutus koneksi sebelum request terkirim. Respons yang hilang setelah server menyimpan, pagination, zoom, pembaca layar nyata dan UAT manusia masih terbuka.
