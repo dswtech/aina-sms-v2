@@ -92,6 +92,8 @@ export default function TransactionsIndex({
     const [bookingFee, setBookingFee] = useState(false);
     const [lostReason, setLostReason] = useState('');
     const [lostNotes, setLostNotes] = useState('');
+    const [isSavingStage, setIsSavingStage] = useState(false);
+    const [stageNetworkError, setStageNetworkError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [failedFilter, setFailedFilter] = useState<{
         query: FilterQuery;
@@ -154,11 +156,12 @@ export default function TransactionsIndex({
         setBookingFee(false);
         setLostReason('');
         setLostNotes('');
+        setStageNetworkError(false);
     };
 
     const submitUpdate = (event: React.FormEvent) => {
         event.preventDefault();
-        if (!selected) return;
+        if (!selected || isSavingStage) return;
         router.patch(
             `/transactions/${selected.public_id}/stage`,
             {
@@ -169,6 +172,15 @@ export default function TransactionsIndex({
                 lost_notes: lostNotes || null,
             },
             {
+                onStart: () => {
+                    setStageNetworkError(false);
+                    setIsSavingStage(true);
+                },
+                onFinish: () => setIsSavingStage(false),
+                onNetworkError: () => {
+                    setStageNetworkError(true);
+                    return false;
+                },
                 onSuccess: () => setSelected(null),
             },
         );
@@ -714,21 +726,41 @@ export default function TransactionsIndex({
                                         </div>
                                     </>
                                 )}
-                                {errors && Object.keys(errors).length > 0 && (
-                                    <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                                        {Object.values(errors).join(' ')}
+                                {stageNetworkError ? (
+                                    <div
+                                        role="alert"
+                                        className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                                    >
+                                        Koneksi terputus saat menyimpan tahap.
+                                        Draft tetap tersedia. Periksa koneksi
+                                        dan status transaksi sebelum mencoba
+                                        lagi.
                                     </div>
+                                ) : (
+                                    errors &&
+                                    Object.keys(errors).length > 0 && (
+                                        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                                            {Object.values(errors).join(' ')}
+                                        </div>
+                                    )
                                 )}
                                 <div className="flex justify-end gap-2">
                                     <Button
                                         type="button"
                                         variant="outline"
+                                        disabled={isSavingStage}
                                         onClick={() => setSelected(null)}
                                     >
                                         Batal
                                     </Button>
-                                    <Button type="submit" className="min-h-11">
-                                        Simpan
+                                    <Button
+                                        type="submit"
+                                        className="min-h-11"
+                                        disabled={isSavingStage}
+                                    >
+                                        {isSavingStage
+                                            ? 'Menyimpan…'
+                                            : 'Simpan'}
                                     </Button>
                                 </div>
                             </form>

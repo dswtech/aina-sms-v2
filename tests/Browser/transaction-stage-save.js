@@ -49,9 +49,31 @@ async function transactionStageSave(page) {
         .filter({ visible: true })
         .waitFor();
 
-    await page
-        .getByRole('checkbox', { name: 'Konfirmasi booking fee' })
-        .check();
+    const confirmation = page.getByRole('checkbox', {
+        name: 'Konfirmasi booking fee',
+    });
+    await confirmation.check();
+    await page.context().setOffline(true);
+    try {
+        await save.click();
+        await page
+            .getByRole('alert')
+            .filter({ hasText: 'Koneksi terputus saat menyimpan tahap.' })
+            .waitFor();
+        if (
+            (await stage.inputValue()) !== 'spk' ||
+            (await notes.inputValue()) !== 'G11 stage validation draft' ||
+            !(await confirmation.isChecked())
+        ) {
+            throw new Error('Offline save discarded the stage draft');
+        }
+        await page
+            .getByText('Lead', { exact: true })
+            .filter({ visible: true })
+            .waitFor();
+    } finally {
+        await page.context().setOffline(false);
+    }
     const [saved] = await Promise.all([patchStage(), save.click()]);
     if (
         ![302, 303].includes(saved.status()) ||
@@ -66,5 +88,9 @@ async function transactionStageSave(page) {
         .filter({ visible: true })
         .waitFor();
 
-    return { validated: true, persistedAfterReload: true };
+    return {
+        validated: true,
+        offlineDraftPreserved: true,
+        persistedAfterReload: true,
+    };
 }
