@@ -36,3 +36,20 @@ Windows, Ryzen 7 8700F, PHP CLI 8.4.13 dengan batas 512 MiB, PostgreSQL 16.4 lok
 Dashboard melewati target PRD 3 detik pada kedua role. Selisih waktu respons dengan waktu SQL menunjukkan bahwa profiling berikutnya perlu berfokus pada pemuatan model dan agregasi di PHP, lalu mengulang benchmark yang sama. Analisis, daftar dan buat lead berada di bawah target 2 detik pada profil ini. Latensi impor merupakan baseline batch 100 baris. Data mentah tersimpan lokal di `.playwright-cli/g13-pilot-512.txt`.
 
 G13 tetap terbuka untuk dashboard pada profil pilot, kapasitas 100.000, dan verifikasi pada konfigurasi hosting serta beban pilot. Pengukuran ini tidak mengubah runtime aplikasi atau target PRD.
+
+## Tuning dashboard pada profil pilot
+
+Branch `codex/g13-dashboard-pilot-performance` berangkat dari `main` `ce8c125` setelah PR #44. Instrumentasi sementara pada tiga request per role menunjukkan dashboard Branch Manager menghabiskan sekitar 0,65–0,72 detik memuat transaksi dan riwayat, 1,68–1,89 detik untuk ringkasan tim, 1,51–1,70 detik untuk total, dan 3,33–3,76 detik untuk rincian Sales. Penghitungan stagnant menambah sekitar 0,70 detik. Instrumentasi tidak dipertahankan dalam source aplikasi.
+
+Dashboard kini memilih kolom yang dibutuhkan, mengambil flag keberadaan riwayat dengan `EXISTS`, mengelompokkan transaksi menurut tim dan Sales, serta menghitung setiap ringkasan dalam satu lintasan. Kandidat closing dan stagnant dipakai ulang oleh daftar prioritas dengan izin operasional yang sama. Rumus, pembulatan, bobot, periode Jakarta, dan perlakuan Delivery tanpa riwayat mengikuti kontrak sebelumnya. Regresi baru menghitung Delivery berulang dan batas periode, serta gagal pada baseline karena empat model riwayat ikut dimuat.
+
+Pengukuran ulang memakai mesin, profil 10.000 transaksi, batas PHP 512 MiB, dan 30 sampel terukur per jalur seperti baseline.
+
+| Dashboard | p95 baseline | p95 setelah tuning | p95 waktu SQL setelah tuning |
+|---|---:|---:|---:|
+| Supervisor | 4.944 ms | 1.006 ms | 30 ms |
+| Branch Manager | 9.490 ms | 1.349 ms | 39 ms |
+
+Kedua role memenuhi target 3 detik pada benchmark lokal. Puncak alokasi proses benchmark turun dari 132 ke 92 MiB. Jalur pembanding berada di bawah 0,51 detik pada p95, termasuk commit impor 100 baris. Suite PostgreSQL lulus 358 tes dengan tiga skip dan 3.398 assertions. Uji impor serentak lulus 13 assertions dan benchmark lulus 323 assertions. Review independen tidak menemukan temuan actionable. Data mentah tersimpan lokal di `.playwright-cli/g13-dashboard-after.txt`.
+
+Kapasitas 100.000, batas PHP 128 MiB, dan hasil pada konfigurasi hosting serta beban pengguna pilot belum diuji ulang.

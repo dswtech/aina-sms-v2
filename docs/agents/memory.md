@@ -11,6 +11,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Keadaan terverifikasi
 
+- PR #44/G13 benchmark pilot sudah merged pada `main` `ce8c125`. Branch `codex/g13-dashboard-pilot-performance` menutup target dashboard pada profil lokal 10.000 transaksi dengan p95 Supervisor 1,01 detik dan Branch Manager 1,35 detik. Suite PostgreSQL lulus 358 tes dengan tiga skip, concurrency 13 assertions dan benchmark 323 assertions. [Hasil tuning](implementation-g13-postgres-pilot.md#tuning-dashboard-pada-profil-pilot) mencatat baseline, perubahan, dan batas bukti. Hosting pilot dan kapasitas 100.000 tetap terbuka.
+
 - PR #43/G11 sudah merged pada `main` `64be0a5`. Regresi browser lulus di GitHub Actions. Branch `codex/g13-postgres-verification` berangkat dari baseline tersebut. [Bukti G13](implementation-g13-postgres-pilot.md) mencatat suite PostgreSQL 16.4 lulus, 13 assertions concurrency impor lulus, dan benchmark 10.000 transaksi selesai. Dashboard lokal melewati target 3 detik pada Supervisor dan Branch Manager. Langkah berikutnya profiling PHP pada dashboard dan pengukuran ulang skala pilot. Kapasitas 100.000 dan penerimaan operasional tetap terbuka.
 
 - PR #42/G10 sudah merged di `main` `8c67ea6`. Branch `codex/g11-browser-verification` berangkat dari baseline tersebut. [Bukti awal G11](implementation-g11-browser-verification.md) mencatat simpan lead via Laravel dan SQLite test, pemulihan offline, keyboard, dan tiga viewport. CI lokal lulus. Workflow sudah memuat regresi browser dengan package yang disetujui. Eksekusi di runner GitHub menunggu PR dan G11 masih terbuka.
