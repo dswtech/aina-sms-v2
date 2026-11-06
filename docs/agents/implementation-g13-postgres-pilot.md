@@ -106,3 +106,20 @@ Benchmark kapasitas diulang dengan `pwsh -NoProfile -File tests/Performance/run-
 Dashboard Branch Manager sekitar 50% lebih cepat pada p95 dan masih di atas target 3 detik. Waktu SQL p95 sebesar 0,42 detik dengan maksimum sembilan query. Pengukuran berikutnya berfokus pada pemuatan dan agregasi transaksi Dashboard. Analisis masih di atas target 2 detik. Puncak alokasi PHP untuk seluruh proses benchmark turun dari 418 ke 380 MiB. Pengukuran memakai request berurutan dan belum mencakup hosting atau beban pengguna pilot.
 
 `composer ci:check` lulus dengan 359 tes Pest, tiga skip, 3.408 assertions dan tujuh tes frontend. Suite PostgreSQL terisolasi lulus 359 tes, tiga skip dan 3.409 assertions. Uji impor serentak lulus 13 assertions dan benchmark kapasitas lulus 323 assertions. Cluster sementara dibersihkan.
+
+## Profiling pemuatan dan agregasi Dashboard
+
+Baseline `661cfc9` pada branch PR #50. Tiga request Dashboard Branch Manager pada fixture kapasitas yang sama mengukur jalur setelah penghitungan stagnan dipindah ke SQL. Tahap stagnan dan prioritas memerlukan 13,5–14,1 ms.
+
+| Tahap Dashboard | Rentang (ms) |
+|---|---:|
+| Memuat model transaksi dan relasi Sales | 2.438–2.630 |
+| Mengelompokkan model per tim dan Sales | 786–880 |
+| Menyusun roster Sales dari seluruh transaksi | 799–854 |
+| Merangkum metrik Sales | 92–165 |
+| Menyaring closing dan memilih kontributor | 524–598 |
+| Menyusun payload, termasuk ringkasan transaksi tanpa tim | 431–485 |
+
+Setelah payload asli terbentuk, eksperimen menjalankan proyeksi transaksi yang sama lewat query builder tanpa hidrasi model dan pemuatan relasi Sales. Pengambilan baris memerlukan 242–302 ms dan pengelompokan memerlukan 299–483 ms. Jumlah transaksi per kelompok tim dan Sales cocok pada ketiga request. Percobaan roster memakai satu transaksi dari setiap kelompok Sales yang sudah tersedia. Pengambilan roster beserta pemeriksaan jumlah per kelompok memerlukan 0,9–1,2 ms dan menghasilkan urutan ID roster yang sama.
+
+Angka ini mengukur tahap terpisah. Percobaan query builder belum mencakup pemuatan data Sales, perhitungan metrik, atau kesetaraan payload Dashboard penuh. Langkah berikutnya adalah menguji roster berbasis kelompok terhadap fixture Sales historis dan target alokasi, lalu mengukur representasi baris ringan untuk laporan Branch Manager. Run diagnostik PostgreSQL lulus lima assertions. Setelah instrumentasi dilepas, 23 tes Dashboard dan TeamPerformance lulus dengan 294 assertions.
