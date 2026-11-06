@@ -52,4 +52,20 @@ Pengukuran ulang memakai mesin, profil 10.000 transaksi, batas PHP 512 MiB, dan 
 
 Kedua role memenuhi target 3 detik pada benchmark lokal. Puncak alokasi proses benchmark turun dari 132 ke 92 MiB. Jalur pembanding berada di bawah 0,51 detik pada p95, termasuk commit impor 100 baris. Suite PostgreSQL lulus 358 tes dengan tiga skip dan 3.398 assertions. Uji impor serentak lulus 13 assertions dan benchmark lulus 323 assertions. Review independen tidak menemukan temuan actionable. Data mentah tersimpan lokal di `.playwright-cli/g13-dashboard-after.txt`.
 
-Kapasitas 100.000, batas PHP 128 MiB, dan hasil pada konfigurasi hosting serta beban pengguna pilot belum diuji ulang.
+## Hasil profil kapasitas 100.000 transaksi
+
+Pada 6 November 2026, baseline `d578124` diuji dengan `pwsh -NoProfile -File tests/Performance/run-postgres.ps1 -Profile capacity -BenchmarkOnly`. Profil memuat 100.000 transaksi, 185.715 kejadian tahap, 10 tim, dan 50 Sales dalam satu dealer sintetis. Pengukuran memakai Windows, Ryzen 7 8700F, PHP CLI 8.4.13 dengan batas 512 MiB, dan PostgreSQL 16.4 pada cluster loopback terisolasi. Metode tetap 30 sampel terukur per jalur setelah dua pemanasan.
+
+| Jalur | p50 (ms) | p95 (ms) | p95 waktu SQL (ms) | Maks. query |
+|---|---:|---:|---:|---:|
+| Dashboard Supervisor | 2.093,87 | 2.511,03 | 137,87 | 14 |
+| Dashboard Branch Manager | 12.739,13 | 13.674,66 | 380,99 | 8 |
+| Analisis Pencapaian Branch Manager | 2.259,60 | 2.424,62 | 93,33 | 3 |
+| Daftar Pelanggan Sales | 150,50 | 183,35 | 164,42 | 33 |
+| Buat lead Sales | 11,28 | 13,11 | 5,30 | 16 |
+| Preview impor 100 baris | 149,18 | 169,95 | 65,74 | 203 |
+| Commit impor 100 baris | 512,52 | 544,51 | 259,58 | 804 |
+
+Benchmark lulus 323 assertions fungsional, dengan puncak alokasi proses PHP 418 MiB. Cluster sementara dihentikan dan dibersihkan. Dashboard Supervisor memenuhi target p95 3 detik. Dashboard Branch Manager melewati 3 detik, dan Analisis Pencapaian melewati target navigasi 2 detik. Selisih antara waktu respons dan waktu SQL mengarahkan profiling berikutnya ke pekerjaan PHP di kedua jalur, dimulai dari Dashboard Branch Manager.
+
+Batas PHP 128 MiB belum diuji ulang. Sampel berasal dari satu proses pengujian dengan request berurutan. Validasi pada hosting dan beban pengguna pilot tetap terbuka.
