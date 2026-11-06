@@ -42,3 +42,10 @@ $reportDeal = DealTransaction::create([
     'customer_id' => $reportCustomer->id, 'vehicle_model' => 'G11 Report Model', 'source' => 'walk_in',
 ]);
 $reportDeal->forceFill(['created_at' => '2001-01-12 00:00:00'])->save();
+
+for ($i = 1; $i <= 16; $i++) {
+    DealTransaction::create([
+        'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
+        'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 Pagination Model {$i}", 'source' => 'walk_in',
+    ]);
+}

@@ -95,8 +95,8 @@ export default function TransactionsIndex({
     const [isSavingStage, setIsSavingStage] = useState(false);
     const [stageNetworkError, setStageNetworkError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [failedFilter, setFailedFilter] = useState<{
-        query: FilterQuery;
+    const [failedVisit, setFailedVisit] = useState<{
+        target: FilterQuery | string;
         message: string;
     } | null>(null);
     const headingRef = useRef<HTMLHeadingElement>(null);
@@ -108,46 +108,53 @@ export default function TransactionsIndex({
         date_to: dateTo || null,
         source: source || null,
     };
+    const failedQuery =
+        typeof failedVisit?.target === 'string' ? null : failedVisit?.target;
     const draftChanged =
-        failedFilter &&
+        failedQuery &&
         (Object.keys(draft) as (keyof typeof draft)[]).some(
-            (key) => draft[key] !== failedFilter.query[key],
+            (key) => draft[key] !== failedQuery[key],
         );
 
-    const visitFilters = (query: FilterQuery, retry = false) => {
-        router.get('/transactions', query, {
-            preserveState: true,
-            replace: true,
-            onStart: () => {
-                setIsLoading(true);
-                if (!retry) setFailedFilter(null);
+    const visitTransactions = (target: FilterQuery | string, retry = false) => {
+        const pagination = typeof target === 'string';
+        router.get(
+            pagination ? target : '/transactions',
+            pagination ? {} : target,
+            {
+                preserveState: true,
+                replace: !pagination,
+                onStart: () => {
+                    setIsLoading(true);
+                    if (!retry) setFailedVisit(null);
+                },
+                onFinish: () => setIsLoading(false),
+                onSuccess: () => {
+                    setFailedVisit(null);
+                    if (retry) headingRef.current?.focus();
+                },
+                onError: () => setFailedVisit(null),
+                onNetworkError: () => {
+                    setFailedVisit({
+                        target,
+                        message: 'Koneksi terputus saat memuat transaksi.',
+                    });
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status < 500) return;
+                    setFailedVisit({
+                        target,
+                        message: 'Daftar transaksi belum dapat dimuat.',
+                    });
+                    return false;
+                },
             },
-            onFinish: () => setIsLoading(false),
-            onSuccess: () => {
-                setFailedFilter(null);
-                if (retry) headingRef.current?.focus();
-            },
-            onError: () => setFailedFilter(null),
-            onNetworkError: () => {
-                setFailedFilter({
-                    query,
-                    message: 'Koneksi terputus saat memuat transaksi.',
-                });
-                return false;
-            },
-            onHttpException: (response) => {
-                if (response.status < 500) return;
-                setFailedFilter({
-                    query,
-                    message: 'Daftar transaksi belum dapat dimuat.',
-                });
-                return false;
-            },
-        });
+        );
     };
 
     const applyFilters = (nextTab = filters.tab) =>
-        visitFilters({ ...draft, tab: nextTab });
+        visitTransactions({ ...draft, tab: nextTab });
 
     const openUpdate = (transaction: Transaction) => {
         setSelected(transaction);
@@ -384,12 +391,12 @@ export default function TransactionsIndex({
                             : 'sr-only'
                     }
                 >
-                    {isLoading ? 'Memuat transaksi untuk filter terbaru…' : ''}
+                    {isLoading ? 'Memuat transaksi…' : ''}
                 </p>
-                {failedFilter && (
+                {failedVisit && (
                     <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border bg-card px-4 py-3">
                         <p role="alert" className="text-sm">
-                            {failedFilter.message} Daftar masih menampilkan data
+                            {failedVisit.message} Daftar masih menampilkan data
                             terakhir yang berhasil dimuat.
                             {draftChanged &&
                                 ' Terapkan filter yang telah diubah.'}
@@ -400,7 +407,7 @@ export default function TransactionsIndex({
                                 variant="outline"
                                 disabled={isLoading}
                                 onClick={() =>
-                                    visitFilters(failedFilter.query, true)
+                                    visitTransactions(failedVisit.target, true)
                                 }
                             >
                                 Coba lagi
@@ -598,10 +605,7 @@ export default function TransactionsIndex({
                                     disabled={!link.url || isLoading}
                                     className="min-h-9"
                                     onClick={() =>
-                                        link.url &&
-                                        router.visit(link.url, {
-                                            preserveState: true,
-                                        })
+                                        link.url && visitTransactions(link.url)
                                     }
                                     dangerouslySetInnerHTML={{
                                         __html: link.label,
