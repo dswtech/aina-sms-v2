@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.27 |
+| Versi | v1.28 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #48 sudah merged pada `main` `eb91e3f`. Branch `codex/g13-capacity-profiling` mengukur Dashboard Branch Manager dan Analisis Pencapaian pada fixture kapasitas yang sama. [Profiling G13](implementation-g13-postgres-pilot.md#profiling-branch-manager-pada-kapasitas-100000) menunjukkan pemeriksaan stagnan sebagai tahap paling lambat pada Dashboard, dengan penghitungan tahap dua dimensi sebagai tahap gabungan paling lambat pada Analisis. Dua run diagnostik PostgreSQL lulus dan perubahan instrumentasi dilepas.
 
 - Benchmark kapasitas G13 dari baseline `d578124` lulus 323 assertions pada 100.000 transaksi sintetis. Dashboard Supervisor p95 2,51 detik, Dashboard Branch Manager 13,67 detik dan Analisis Pencapaian 2,42 detik. [Bukti kapasitas](implementation-g13-postgres-pilot.md#hasil-profil-kapasitas-100000-transaksi) mencatat target yang terlampaui, profil dan batas pengukuran.
 
@@ -130,7 +132,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
-1. Profilkan Dashboard Branch Manager lalu Analisis Pencapaian pada profil kapasitas G13. Lanjutkan verifikasi G11 sesuai [matriks UAT](uat-matrix.md#g11). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
+1. Ukur penghitungan stagnan lewat scope SQL Branch Manager, lalu lanjutkan optimasi Dashboard dan Analisis sesuai [profiling G13](implementation-g13-postgres-pilot.md#profiling-branch-manager-pada-kapasitas-100000). Lanjutkan verifikasi G11 sesuai [matriks UAT](uat-matrix.md#g11). Rancang koreksi Delivery secara terpisah sebelum menyatakan G09 ditutup penuh. Audit timestamp historis memerlukan provenance. Worker/scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.
 

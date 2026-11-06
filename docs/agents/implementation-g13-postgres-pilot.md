@@ -69,3 +69,24 @@ Pada 6 November 2026, baseline `d578124` diuji dengan `pwsh -NoProfile -File tes
 Benchmark lulus 323 assertions fungsional, dengan puncak alokasi proses PHP 418 MiB. Cluster sementara dihentikan dan dibersihkan. Dashboard Supervisor memenuhi target p95 3 detik. Dashboard Branch Manager melewati 3 detik, dan Analisis Pencapaian melewati target navigasi 2 detik. Selisih antara waktu respons dan waktu SQL mengarahkan profiling berikutnya ke pekerjaan PHP di kedua jalur, dimulai dari Dashboard Branch Manager.
 
 Batas PHP 128 MiB belum diuji ulang. Sampel berasal dari satu proses pengujian dengan request berurutan. Validasi pada hosting dan beban pengguna pilot tetap terbuka.
+
+## Profiling Branch Manager pada kapasitas 100.000
+
+Baseline `eb91e3f` setelah PR #48. Instrumentasi sementara mengukur tiga request Dashboard Branch Manager dan tiga request Analisis Pencapaian November 2026 dengan fixture, mesin, dan batas 512 MiB yang sama dengan benchmark kapasitas. Angka per tahap adalah rentang waktu dinding dari tiga sampel. Gunakan benchmark kapasitas sebelumnya untuk p95.
+
+| Jalur dan tahap | Rentang (detik) |
+|---|---:|
+| Dashboard — memuat transaksi dan Sales | 2,51–2,65 |
+| Dashboard — mengelompokkan transaksi per tim dan Sales | 0,91–0,97 |
+| Dashboard — merangkum Sales | 1,00–1,10 |
+| Dashboard — menghitung transaksi stagnan | 6,56–6,76 |
+| Analisis — memuat transaksi, histori tahap dan Sales | 0,56–0,61 |
+| Analisis — menghitung tahap per Sumber | 0,56–0,57 |
+| Analisis — menghitung tahap per Model | 0,50–0,57 |
+| Analisis — membentuk payload drilldown | 0,44–0,50 |
+
+Pada request ketiga, Dashboard memerlukan 12,69 detik dengan 0,33 detik waktu SQL. Analisis memerlukan 2,39 detik dengan 0,09 detik waktu SQL. Dashboard memanggil accessor stagnan per transaksi dan membentuk cutoff Jakarta untuk setiap transaksi aktif yang memiliki tanggal. Analisis memuat model histori, lalu memeriksa SPK, DO, dan Delivery lagi untuk masing-masing dimensi. Profiling mengisolasi biaya jalur tersebut sebelum optimasi.
+
+Eksperimen kedua menjalankan kedua filter stagnan pada koleksi yang sama. Filter standar memerlukan 7,12–7,74 detik. Filter yang menghitung cutoff sekali sebelum loop memerlukan 5,19–5,34 detik dan menghasilkan urutan ID yang identik pada ketiga request. Penghematan di tahap ini sekitar 1,90–2,40 detik per request, dengan lebih dari lima detik tersisa untuk pemrosesan baris di PHP. Karena kedua filter dijalankan berurutan, hasil ini mengukur biaya tahap, bukan p95 endpoint setelah perubahan.
+
+Langkah berikutnya adalah mengukur penghitungan stagnan melalui scope SQL yang sudah ada untuk Branch Manager dan menjaga kecocokan dengan batas hari Jakarta serta scope laporan. Setelah itu, ukur ulang biaya pemuatan transaksi dan agregasi Dashboard. Untuk Analisis, ukur dampak flag keberadaan histori SPK, DO, dan Delivery terhadap penghitungan kedua dimensi sambil menjaga semantik Akuisisi, Pencapaian, dan ekspor. Kedua run diagnostik lulus delapan assertions masing-masing pada PostgreSQL terisolasi. Instrumentasi dan percobaan dilepas dari source setelah pengukuran.
