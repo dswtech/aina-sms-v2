@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.35 |
+| Versi | v1.36 |
 | Diperbarui | 6 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- PR #55 merged pada `main` `22d5c58`. Branch `codex/g11-transaction-pagination` menambahkan pemulihan pagination Transaksi. [Bukti G11](implementation-g11-browser-verification.md#pemulihan-pagination-transaksi) mencatat loading, 503, retry dengan filter aktif, dan preservasi draft. Lima skenario browser dan CI lokal lulus.
 
 - PR #54 merged pada `main` `f445af3`. Branch `codex/g11-stage-save-recovery` menambahkan alert jaringan dan memverifikasi draft serta penyimpanan ulang setelah koneksi pulih. [Bukti G11](implementation-g11-browser-verification.md#pemulihan-penyimpanan-tahap-saat-offline) mencatat build, empat skenario browser dan CI lokal lulus.
 

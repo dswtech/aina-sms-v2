@@ -39,3 +39,9 @@ Build produksi, lint regresi, empat skenario launcher browser dan `composer ci:c
 Baseline `f445af3` setelah PR #54. Regresi Chrome 390×844 memutus koneksi sebelum Supervisor mengirim SPK yang sudah dikonfirmasi. Baseline gagal karena formulir tidak menampilkan alert jaringan. Formulir kini mengumumkan gangguan, mempertahankan pilihan tahap, catatan dan centang booking fee, serta menonaktifkan Simpan dan Batal selama permintaan aktif. Setelah koneksi pulih, penyimpanan ulang manual mencapai transaksi yang sama dan SPK tetap terlihat setelah reload.
 
 Build, lint regresi, empat skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.443 assertions. Skenario memakai SQLite test dan memutus koneksi sebelum request terkirim. Respons yang hilang setelah server menyimpan, pagination, zoom, pembaca layar nyata dan UAT manusia masih terbuka.
+
+## Pemulihan pagination Transaksi
+
+Baseline `22d5c58` setelah PR #55. Fixture memuat 16 transaksi yang cocok dengan pencarian. Pada Chrome 390×844, baseline gagal mengumumkan loading saat halaman kedua diminta. Pagination sekarang memakai penanganan loading dan kegagalan yang sama dengan filter.
+
+Regresi menahan permintaan halaman kedua lalu mengembalikan 503. Daftar dan URL halaman pertama tetap tampil. Coba lagi mencapai Laravel dengan nomor halaman, pencarian aktif dan tab yang sama, lalu mengganti isi daftar sambil mempertahankan draft pencarian yang belum diterapkan. Build, lint, lima skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.443 assertions.
