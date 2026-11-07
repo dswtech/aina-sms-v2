@@ -108,6 +108,7 @@ function PlanForm({ plan }: { plan: TargetPlan }) {
             plan.members.some((m) => m.allocated),
     );
     const [saved, setSaved] = useState(plan.version > 0);
+    const [saveFailure, setSaveFailure] = useState<string | null>(null);
     const bench = benchmark(form.data.target_units, form.data.markup_percent);
     const activeCount = plan.members.filter((m) => m.active).length;
     const originalCount =
@@ -166,8 +167,9 @@ function PlanForm({ plan }: { plan: TargetPlan }) {
         <form
             onSubmit={(event) => {
                 event.preventDefault();
-                if (!valid) return;
+                if (!valid || form.processing) return;
                 setSaved(false);
+                setSaveFailure(null);
                 form.transform((data) => ({
                     ...data,
                     target_units: data.target_units.replace(',', '.'),
@@ -182,6 +184,19 @@ function PlanForm({ plan }: { plan: TargetPlan }) {
                 form.post('/target-plans', {
                     preserveScroll: true,
                     onSuccess: () => setSaved(true),
+                    onNetworkError: () => {
+                        setSaveFailure(
+                            'Koneksi terputus saat menyimpan rencana target.',
+                        );
+                        return false;
+                    },
+                    onHttpException: (response) => {
+                        if (response.status < 500) return;
+                        setSaveFailure(
+                            'Penyimpanan rencana target belum dapat dikonfirmasi.',
+                        );
+                        return false;
+                    },
                 });
             }}
         >
@@ -447,6 +462,12 @@ function PlanForm({ plan }: { plan: TargetPlan }) {
                     </div>
                     <InputError message={error('allocations')} />
                     <InputError message={error('version')} />
+                    {saveFailure && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {saveFailure} Isian tetap tersedia; tekan Simpan
+                            untuk mencoba lagi.
+                        </p>
+                    )}
                     {error('version') && (
                         <Button
                             type="button"

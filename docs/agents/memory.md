@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.40 |
+| Versi | v1.41 |
 | Diperbarui | 7 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch codex/g11-operational-form-recovery memakai baseline main 830b546. [Bukti pemulihan formulir operasional](implementation-g11-browser-verification.md#pemulihan-formulir-operasional) mencatat loading, draft, gangguan jaringan/503, retry dan reload untuk aktivitas/follow-up, impor CSV dan rencana target. Pesan sukses impor yang belum diteruskan ke frontend diperbaiki dengan regresi backend. Build, CI lokal (364 lulus, tiga skip, 3.579 assertions, tujuh tes frontend) dan sepuluh skenario browser lulus; review independen selesai. Respons commit impor yang hilang direkonsiliasi melalui riwayat. Respons yang hilang setelah write aktivitas/follow-up masih perlu pemeriksaan riwayat sebelum pengulangan; formulir lain dan UAT manusia tetap terbuka.
 
 - Branch codex/backup-restore-drill berangkat dari origin/main 830b546. [Drill backup dan restore lokal](../operations/backup-restore.md#hasil-drill-lokal-pada-7-november-2026) memakai cluster PostgreSQL sintetis sementara. Isi 29 tabel dan sequence identik setelah restore; login dan halaman utama empat role lulus. Verifikasi composer ci:check lulus dengan 364 tes backend lulus, tiga skip, 3.572 assertions dan tujuh tes frontend. O03 production, hosting, retensi, RPO/RTO dan rollback deployment masih terbuka.
 

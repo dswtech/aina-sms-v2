@@ -57,3 +57,17 @@ Build, lint regresi, enam skenario browser dan CI lokal lulus. Pest mencatat 360
 Baseline `7b45303` setelah PR #57. Launcher menggunakan profil Chrome terpisah untuk mengakses pengaturan Page zoom. Regresi memilih 200% pada viewport awal 1440×900 dan memverifikasi bahwa rasio piksel menjadi dua kali lipat dan lebar layout menjadi separuh sebelum menguji halaman.
 
 Dashboard, Pelanggan, Analisis, Transaksi dan formulir ubah tahap Supervisor lulus pemeriksaan overflow horizontal. Tombol Simpan berada dalam viewport setelah formulir digulir. Build, lint regresi, enam skenario browser dan `composer ci:check` lulus lokal. Pest mencatat 360 lulus, tiga skip dan 3.444 assertions. Pengujian pembaca layar nyata dan UAT manusia masih terbuka.
+
+## Pemulihan formulir operasional
+
+Branch codex/g11-operational-form-recovery berangkat dari main 830b546. Regresi awal gagal pada tombol simpan aktivitas yang tetap aktif saat request tertahan, serta alert gangguan yang belum tersedia pada impor dan rencana target. Perubahan mencakup Catat Aktivitas, Jadwalkan Tindak Lanjut, preview dan commit CSV, serta editor rencana target.
+
+Regresi Chrome 390×844 menahan request untuk memeriksa kontrol yang terkunci, lalu memutus request sebelum write atau mengembalikan 503. Isian aktivitas, tanggal/rencana follow-up, file/preview impor, dan alokasi desimal target tetap tersedia. Percobaan ulang manual mencapai Laravel dan hasilnya diperiksa setelah reload. Target mempertahankan payload serta versi yang sama pada retry, dan versi hanya maju setelah penyimpanan berhasil.
+
+Untuk impor, satu skenario tambahan meneruskan commit ke Laravel lalu memutus respons sebelum browser menerimanya. Pesan hasil belum pasti mempertahankan preview dan menyediakan tautan pemeriksaan riwayat. Riwayat menunjukkan satu batch completed dan satu pelanggan setelah reload. Skenario ini memeriksa rekonsiliasi melalui riwayat. Replay batch yang telah selesai mengikuti perlindungan backend yang diuji pada G10.
+
+Regresi impor juga menemukan bahwa pesan sukses session belum diteruskan oleh halaman index. Assertion backend gagal karena properti flash.success tidak ada. Controller kini meneruskan pesan tersebut dan test memeriksa pesan sukses serta preview yang telah dibersihkan.
+
+Screenshot pesan gagal diperiksa pada HP dan desktop. Kegagalan autentikasi, izin, sesi kedaluwarsa dan validasi tetap mengikuti penanganan Inertia untuk respons 4xx. Script baru menguji gangguan jaringan dan 503, dengan kegagalan sebelum write untuk aktivitas, follow-up dan target. Kehilangan respons setelah server menyimpan aktivitas/follow-up belum tercakup. Pengguna perlu memeriksa riwayat sebelum mengulang karena operasi tersebut dapat menghasilkan catatan tambahan. Formulir operasional lain dan UAT manusia masih terbuka.
+
+Build produksi, lint/format tiga script baru, pemeriksaan TypeScript/Pint/PHPStan dan composer ci:check lulus. Pest mencatat 364 lulus, tiga skip dan 3.579 assertions; tujuh tes frontend lulus. Kesepuluh skenario launcher browser lulus pada Laravel dan SQLite terisolasi, termasuk tiga regresi baru. Review independen tidak menemukan masalah penting. Detector desain tidak menemukan temuan; screenshot pesan gagal diperiksa pada lebar 390 dan 1440.

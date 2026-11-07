@@ -54,6 +54,7 @@ class ImportController extends Controller
         return Inertia::render('imports/index', [
             'batches' => $this->recentBatches($actor),
             'preview' => $preview,
+            'flash' => ['success' => $request->session()->get('success')],
         ]);
     }
 

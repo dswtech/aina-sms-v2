@@ -58,6 +58,8 @@ it('imports to the supervisors active team and rejects replay with the old sessi
     $this->assertDatabaseHas('deal_transactions', ['sales_id' => $this->sales->id, 'team_id' => $this->team->id, 'current_stage' => 'lead']);
     $this->assertDatabaseHas('customers', ['phone' => '+6281234567890', 'created_by_id' => $this->actor->id]);
     expect($batch->fresh()->status)->toBe('completed')->and($batch->fresh()->completed_at)->not->toBeNull();
+    $this->get(route('imports.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('flash.success', '1 baris berhasil diimport.')->where('preview', null));
     $this->withSession(['import_preview' => $preview])->post(route('imports.commit', $batch))->assertUnprocessable();
     $this->assertDatabaseCount('customers', 1);
     $this->assertDatabaseCount('customer_assignments', 1);
