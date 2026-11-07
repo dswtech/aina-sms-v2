@@ -50,11 +50,17 @@ Build container pada Vercel dari commit 1e95dda mencapai READY pada deployment d
 | MAIL_FROM_ADDRESS | Alamat pengirim yang diizinkan akun Gmail |
 | MAIL_FROM_NAME | Nama pengirim yang disetujui |
 
-Gunakan target environment dan cabang database yang sesuai. DB_URL bila diisi mengungguli DATABASE_URL. URL migration memakai koneksi langsung dari integrasi bila diperlukan provider. Secret disimpan sebagai variable sensitive. Catatan QA hanya mencatat keberadaan nama variable dan hasil pemeriksaan.
+Gunakan target environment dan cabang database yang sesuai. DB_URL bila diisi mengungguli URL integrasi. Runtime memilih DATABASE_URL_UNPOOLED sebelum DATABASE_URL karena transaksi PDO pada pooler Neon aktual gagal dengan SQLSTATE 25P02; bootstrap melalui koneksi langsung sudah berhasil mengirim undangan. URL migration juga memakai koneksi langsung. Ini konfigurasi pilot: pantau batas koneksi Neon saat menguji concurrency sebelum menaikkan beban. Secret disimpan sebagai variable sensitive. Catatan QA hanya mencatat keberadaan nama variable dan hasil pemeriksaan.
 
 App Password dibuat oleh pemilik akun Google yang mengaktifkan verifikasi dua langkah. Pemilik memasukkan credential langsung di Vercel. Lakukan redeploy setelah perubahan environment agar instance memakai konfigurasi baru.
 
 ## Penerapan schema dan aktivasi Admin
+
+### Hasil undangan preview pada 7 November 2026
+
+Commit 23b3369 pada deployment dpl_4BRKBKbMrRPQaMWdwZZnRKud8AuW berhasil mengirim undangan melalui Brevo pukul 19:02 WIB. Bootstrap memakai DATABASE_URL_UNPOOLED (atau POSTGRES_URL_NON_POOLING), setelah host, nama database dan pengguna dibandingkan dengan koneksi aplikasi agar tetap menunjuk target yang sama. Koneksi pooled sebelumnya gagal dengan SQLSTATE 25P02. Log server menyatakan accepted by SMTP; log Brevo menunjukkan satu email dengan event Sent dan Delivered. Brevo menampilkan alamat pengirim yang ditulis ulang ke domain brevosend.com. Ini belum membuktikan aktivasi, login pemilik atau penempatan pada inbox utama.
+
+Flag bootstrap sudah dimatikan untuk deployment berikutnya. Pemilik membuka tautan email dan menetapkan password sendiri. Hindari deployment/alias tambahan sampai aktivasi dipastikan; jangan membuat atau mengirim ulang undangan yang masih aktif. Credential Brevo production, worker/scheduler dan gerbang lain tetap terpisah.
 
 1. Pastikan target merupakan database Neon yang disepakati dan periksa status migration. Buat backup jika target sudah berisi data.
 2. Setelah otorisasi write, jalankan migration pada release yang sama dengan web. Catat hasil dan jalankan pemeriksaan status migration.

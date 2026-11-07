@@ -68,8 +68,29 @@ it('uses the Neon integration URL when no explicit Laravel URL is configured', f
         'APP_ENV' => 'testing',
         'APP_CONFIG_CACHE' => sys_get_temp_dir().'/aina-no-db-config-'.bin2hex(random_bytes(8)).'.php',
         'DB_URL' => false,
+        'DATABASE_URL_UNPOOLED' => false,
         'DATABASE_URL' => $url,
     ]);
     $process->mustRun();
     expect(json_decode($process->getOutput(), true, flags: JSON_THROW_ON_ERROR))->toBe($url);
 });
+
+it('resolves the direct Neon host for transactions while retaining an explicit DB URL override', function (bool $explicit) {
+    $code = <<<'PHP'
+    require 'vendor/autoload.php';
+    $app = require 'bootstrap/app.php';
+    $app->useEnvironmentPath(sys_get_temp_dir().'/aina-no-env-'.bin2hex(random_bytes(8)));
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    echo json_encode(Illuminate\Support\Facades\DB::connection('pgsql')->getConfig('host'), JSON_THROW_ON_ERROR);
+    PHP;
+    $process = new Process([PHP_BINARY, '-r', $code], base_path(), [
+        'APP_ENV' => 'testing',
+        'APP_CONFIG_CACHE' => sys_get_temp_dir().'/aina-direct-config-'.bin2hex(random_bytes(8)).'.php',
+        'DB_URL' => $explicit ? 'postgresql://demo:dummy@explicit.example.test/pilot?sslmode=require' : false,
+        'DATABASE_URL_UNPOOLED' => 'postgresql://demo:dummy@direct.example.test/pilot?sslmode=require',
+        'DATABASE_URL' => 'postgresql://demo:dummy@pooled.example.test/pilot?sslmode=require',
+    ]);
+    $process->mustRun();
+    expect(json_decode($process->getOutput(), true, flags: JSON_THROW_ON_ERROR))
+        ->toBe($explicit ? 'explicit.example.test' : 'direct.example.test');
+})->with([false, true]);
