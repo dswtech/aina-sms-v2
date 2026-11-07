@@ -13,6 +13,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../operations/backup-restore.md](../operations/backup-restore.md) | Runbook dan bukti O03 | Prosedur backup, restore terisolasi, drill sintetis dan batas kesiapan operasional. |
 | [`implementation-g13-postgres-pilot.md`](implementation-g13-postgres-pilot.md) | Bukti G13 | Profil pilot, suite PostgreSQL, concurrency impor, dan batas benchmark kapasitas. |
 | [`implementation-g11-browser-verification.md`](implementation-g11-browser-verification.md) | Bukti G11 | Regresi browser dengan Laravel dan SQLite test, bukti awal X02/X03, serta status integrasi CI. |
 | [`implementation-g10-import-export.md`](implementation-g10-import-export.md) | Rencana dan bukti G10 | Verifikasi impor, rollback, replay, akses dan rekonsiliasi ekspor CSV/PDF browser. |
