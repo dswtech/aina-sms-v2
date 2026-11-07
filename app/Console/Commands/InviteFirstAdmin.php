@@ -8,6 +8,7 @@ use App\Models\Invitation;
 use App\Models\User;
 use App\Notifications\InvitationCreated;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
@@ -119,6 +120,16 @@ class InviteFirstAdmin extends Command
                 $this->line('Bootstrap diagnostic: SMTP status '.$match[1]);
             } else {
                 $this->line('Bootstrap diagnostic: '.get_class($exception));
+                if (preg_match('/^[A-Z0-9]{5}$/D', (string) $exception->getCode())) {
+                    $this->line('Bootstrap diagnostic: error code '.$exception->getCode());
+                }
+                if ($exception instanceof QueryException) {
+                    foreach (['users', 'invitations', 'dealers'] as $table) {
+                        if (str_contains($exception->getSql(), '"'.$table.'"')) {
+                            $this->line('Bootstrap diagnostic: database table '.$table);
+                        }
+                    }
+                }
             }
 
             return self::FAILURE;

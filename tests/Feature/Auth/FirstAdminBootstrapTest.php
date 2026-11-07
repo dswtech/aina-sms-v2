@@ -115,6 +115,14 @@ it('reports only a safe SMTP status when delivery fails', function () {
     expect(Invitation::query()->count())->toBe(0);
 });
 
+it('reports a database SQLSTATE without exposing its query or credentials', function () {
+    Notification::shouldReceive('send')->once()
+        ->andThrow(new RuntimeException('PRIVATE_QUERY_WITH_SECRET', 42501));
+    $this->artisan('app:invite-first-admin', firstAdminOptions())
+        ->expectsOutputToContain('Bootstrap diagnostic: error code 42501')
+        ->doesntExpectOutputToContain('PRIVATE_QUERY_WITH_SECRET')->assertFailed();
+});
+
 it('validates required owner inputs before creating any data', function (array $overrides) {
     Notification::fake();
     $this->artisan('app:invite-first-admin', firstAdminOptions($overrides))->assertFailed();
