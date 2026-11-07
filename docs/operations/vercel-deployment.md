@@ -101,6 +101,12 @@ Tentukan instance/region, kuota dan mekanisme restart sebelum mengaktifkan daemo
 
 ## Pemantauan dan penanganan gangguan
 
+Monitoring dasar memakai workflow production-monitor pada main, dijadwalkan menit 7/22/37/52 setiap jam UTC dan dapat dijalankan manual dari tab Actions. Script deploy/vercel/monitor.mjs memeriksa HTTPS /up dan /login dengan timeout 30 detik, validasi TLS standar, tanpa mengikuti redirect, mengirim cookie/credential atau melakukan mutasi data bisnis. Middleware Laravel dapat membuat sesi anonim sementara untuk GET /login; monitor tidak menyimpan/menggunakan ulang cookie sesi. HTTP harus 200 dan memuat penanda halaman yang diharapkan. Path yang gagal dicoba sekali lagi setelah 10 detik. Kegagalan yang bertahan menghasilkan exit nonzero dan ringkasan path/status/kategori aman; body respons dan exception mentah tidak dipublikasikan pada repository publik.
+
+Notifikasi memakai pengaturan GitHub Actions milik pengelola. Pada 8 November 2026 UI akun menunjukkan Email (Failed workflows only) sudah aktif; preferensi global tidak diubah. Ringkasan pemeriksaan ada pada Actions run. Pengiriman email kegagalan yang sebenarnya belum diuji; jangan mengklaim Delivered tanpa konfirmasi penerima. Memasang workflow pada main tidak menerbitkan release atau mengganti deployment aplikasi.
+
+Jadwal GitHub bersifat best effort, dapat terlambat/dilewati ketika layanan sibuk, dan schedule repository publik dapat dinonaktifkan setelah 60 hari tanpa aktivitas; periksa status workflow berkala. Interval sekitar 15 menit ini bukan SLA uptime. /up menguji bootstrap, sedangkan /login menguji halaman masuk/session publik; keduanya bukan bukti login terautentikasi, semua query database, seluruh role, queue atau SMTP berfungsi. HTTP 500 pada route lain tetap memerlukan pemeriksaan log Vercel; workflow ini tidak menyalin log/secret ke GitHub. Kegagalan GitHub runner/setup sendiri juga dapat memicu notifikasi, sehingga bedakan dari kegagalan endpoint lewat step summary.
+
 - Periksa deployment/build log dan runtime stderr di Vercel. Catat ID deployment, waktu, jalur yang gagal dan ringkasan error tersanitasi.
 - Pantau /up untuk bootstrap aplikasi. Tambahkan smoke login dan pembacaan data sintetis untuk membuktikan koneksi database, session dan scope.
 - Pantau error 5xx, durasi request, koneksi dan kapasitas Neon, ukuran antrean, umur job tertua, failed jobs serta intent pending/queued yang melewati target.

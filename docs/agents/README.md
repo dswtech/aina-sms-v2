@@ -13,6 +13,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../superpowers/plans/2026-11-08-production-monitoring.md](../superpowers/plans/2026-11-08-production-monitoring.md) | Rencana | Monitor HTTPS production, retry terbatas, notifikasi Actions dan batas cakupan. |
 | [adr/ADR-006-versioned-production-releases.md](adr/ADR-006-versioned-production-releases.md) | ADR | Rilis production hanya dari GitHub Release stable bernomor dengan commit main dan CI terverifikasi. |
 | [../superpowers/plans/2026-11-08-versioned-releases.md](../superpowers/plans/2026-11-08-versioned-releases.md) | Rencana | Pengujian dan penerapan workflow rilis bernomor serta penghentian auto-deploy main. |
 | [../superpowers/plans/2026-11-07-production-release.md](../superpowers/plans/2026-11-07-production-release.md) | Rencana production | Guard bootstrap production, migrasi terotorisasi, undangan Admin, domain final dan ledger rilis. |
