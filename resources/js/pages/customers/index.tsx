@@ -202,9 +202,13 @@ export default function CustomersIndex({
 
     const [actType, setActType] = useState('call');
     const [actNotes, setActNotes] = useState('');
+    const [activitySaving, setActivitySaving] = useState(false);
+    const [activityError, setActivityError] = useState('');
 
     const [fuDate, setFuDate] = useState('');
     const [fuNotes, setFuNotes] = useState('');
+    const [followUpSaving, setFollowUpSaving] = useState(false);
+    const [followUpError, setFollowUpError] = useState('');
 
     const [nextStage, setNextStage] = useState('prospect');
     const [stageNotes, setStageNotes] = useState('');
@@ -312,6 +316,8 @@ export default function CustomersIndex({
     }
 
     function selectQuickCustomer(customer: CustomerItem) {
+        setActivityError('');
+        setFollowUpError('');
         setHistoryMode(false);
         setHistoryDeal(null);
         setHistoryReady(false);
@@ -393,7 +399,9 @@ export default function CustomersIndex({
 
     function handleLogActivity(e: React.FormEvent) {
         e.preventDefault();
-        if (!selectedCustomer) return;
+        if (!selectedCustomer || activitySaving) return;
+        setActivitySaving(true);
+        setActivityError('');
         router.post(
             `/customers/${selectedCustomer.public_id}/activities`,
             {
@@ -406,13 +414,29 @@ export default function CustomersIndex({
                     setActivityOpen(false);
                     setActNotes('');
                 },
+                onFinish: () => setActivitySaving(false),
+                onNetworkError: () => {
+                    setActivityError(
+                        'Koneksi terputus. Penyimpanan aktivitas belum dapat dipastikan. Isian tetap tersedia. Periksa riwayat pelanggan sebelum mencoba lagi.',
+                    );
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status < 500) return;
+                    setActivityError(
+                        'Penyimpanan aktivitas belum dapat dipastikan. Isian tetap tersedia. Periksa riwayat pelanggan sebelum mencoba lagi.',
+                    );
+                    return false;
+                },
             },
         );
     }
 
     function handleScheduleFollowUp(e: React.FormEvent) {
         e.preventDefault();
-        if (!selectedCustomer) return;
+        if (!selectedCustomer || followUpSaving) return;
+        setFollowUpSaving(true);
+        setFollowUpError('');
         router.post(
             `/customers/${selectedCustomer.public_id}/follow-ups`,
             {
@@ -425,6 +449,20 @@ export default function CustomersIndex({
                     setFollowUpOpen(false);
                     setFuNotes('');
                     setFuDate('');
+                },
+                onFinish: () => setFollowUpSaving(false),
+                onNetworkError: () => {
+                    setFollowUpError(
+                        'Koneksi terputus. Penyimpanan jadwal belum dapat dipastikan. Isian tetap tersedia. Periksa jadwal pelanggan sebelum mencoba lagi.',
+                    );
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status < 500) return;
+                    setFollowUpError(
+                        'Penyimpanan jadwal belum dapat dipastikan. Isian tetap tersedia. Periksa jadwal pelanggan sebelum mencoba lagi.',
+                    );
+                    return false;
                 },
             },
         );
@@ -1541,7 +1579,14 @@ export default function CustomersIndex({
                 )}
 
                 {/* Dialog: Catat Aktivitas */}
-                <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+                <Dialog
+                    open={activityOpen}
+                    onOpenChange={(open) => {
+                        if (activitySaving) return;
+                        setActivityOpen(open);
+                        setActivityError('');
+                    }}
+                >
                     <DialogContent
                         className="sm:max-w-md"
                         onCloseAutoFocus={restoreCustomerActionFocus}
@@ -1557,63 +1602,95 @@ export default function CustomersIndex({
                             onSubmit={handleLogActivity}
                             className="space-y-4 pt-2"
                         >
-                            <div className="space-y-1">
-                                <Label htmlFor="act-type">
-                                    Kanal Aktivitas
-                                </Label>
-                                <Select
-                                    value={actType}
-                                    onValueChange={setActType}
+                            {activityError && (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-destructive"
                                 >
-                                    <SelectTrigger
-                                        id="act-type"
-                                        className="min-h-11 w-full"
+                                    {activityError}
+                                </p>
+                            )}
+                            {activitySaving && (
+                                <p
+                                    role="status"
+                                    className="text-sm text-muted-foreground"
+                                >
+                                    Menyimpan aktivitas…
+                                </p>
+                            )}
+                            <fieldset
+                                disabled={activitySaving}
+                                className="space-y-4"
+                            >
+                                <div className="space-y-1">
+                                    <Label htmlFor="act-type">
+                                        Kanal Aktivitas
+                                    </Label>
+                                    <Select
+                                        value={actType}
+                                        onValueChange={setActType}
                                     >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="call">
-                                            Telepon Langsung
-                                        </SelectItem>
-                                        <SelectItem value="whatsapp">
-                                            Chat WhatsApp
-                                        </SelectItem>
-                                        <SelectItem value="visit">
-                                            Kunjungan Rumah / Kantor
-                                        </SelectItem>
-                                        <SelectItem value="meeting">
-                                            Pertemuan Showroom
-                                        </SelectItem>
-                                        <SelectItem value="note">
-                                            Catatan Tambahan
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="act-notes">
-                                    Hasil Komunikasi *
-                                </Label>
-                                <Input
-                                    id="act-notes"
-                                    required
-                                    value={actNotes}
-                                    onChange={(e) =>
-                                        setActNotes(e.target.value)
-                                    }
-                                    placeholder="Pelanggan menanyakan simulasi kredit 5 tahun..."
-                                    className="min-h-11"
-                                />
-                            </div>
-                            <Button type="submit" className="min-h-11 w-full">
-                                Simpan Aktivitas
-                            </Button>
+                                        <SelectTrigger
+                                            id="act-type"
+                                            className="min-h-11 w-full"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="call">
+                                                Telepon Langsung
+                                            </SelectItem>
+                                            <SelectItem value="whatsapp">
+                                                Chat WhatsApp
+                                            </SelectItem>
+                                            <SelectItem value="visit">
+                                                Kunjungan Rumah / Kantor
+                                            </SelectItem>
+                                            <SelectItem value="meeting">
+                                                Pertemuan Showroom
+                                            </SelectItem>
+                                            <SelectItem value="note">
+                                                Catatan Tambahan
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="act-notes">
+                                        Hasil Komunikasi *
+                                    </Label>
+                                    <Input
+                                        id="act-notes"
+                                        required
+                                        value={actNotes}
+                                        onChange={(e) =>
+                                            setActNotes(e.target.value)
+                                        }
+                                        placeholder="Pelanggan menanyakan simulasi kredit 5 tahun..."
+                                        className="min-h-11"
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    aria-busy={activitySaving}
+                                    className="min-h-11 w-full"
+                                >
+                                    Simpan Aktivitas
+                                </Button>
+                            </fieldset>
                         </form>
                     </DialogContent>
                 </Dialog>
 
                 {/* Dialog: Jadwalkan Next Follow-Up */}
-                <Dialog open={followUpOpen} onOpenChange={setFollowUpOpen}>
+                <Dialog
+                    open={followUpOpen}
+                    onOpenChange={(open) => {
+                        if (followUpSaving) return;
+                        setFollowUpOpen(open);
+                        setFollowUpError('');
+                    }}
+                >
                     <DialogContent
                         className="sm:max-w-md"
                         onCloseAutoFocus={restoreCustomerActionFocus}
@@ -1631,35 +1708,64 @@ export default function CustomersIndex({
                             onSubmit={handleScheduleFollowUp}
                             className="space-y-4 pt-2"
                         >
-                            <div className="space-y-1">
-                                <Label htmlFor="fu-date">
-                                    Waktu Janji / Rencana *
-                                </Label>
-                                <Input
-                                    id="fu-date"
-                                    type="datetime-local"
-                                    required
-                                    value={fuDate}
-                                    onChange={(e) => setFuDate(e.target.value)}
-                                    className="min-h-11"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="fu-notes">
-                                    Rencana Tindakan *
-                                </Label>
-                                <Input
-                                    id="fu-notes"
-                                    required
-                                    value={fuNotes}
-                                    onChange={(e) => setFuNotes(e.target.value)}
-                                    placeholder="Konfirmasi kelengkapan berkas KTP dan NPWP..."
-                                    className="min-h-11"
-                                />
-                            </div>
-                            <Button type="submit" className="min-h-11 w-full">
-                                Jadwalkan Tindak Lanjut
-                            </Button>
+                            {followUpError && (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    {followUpError}
+                                </p>
+                            )}
+                            {followUpSaving && (
+                                <p
+                                    role="status"
+                                    className="text-sm text-muted-foreground"
+                                >
+                                    Menyimpan jadwal…
+                                </p>
+                            )}
+                            <fieldset
+                                disabled={followUpSaving}
+                                className="space-y-4"
+                            >
+                                <div className="space-y-1">
+                                    <Label htmlFor="fu-date">
+                                        Waktu Janji / Rencana *
+                                    </Label>
+                                    <Input
+                                        id="fu-date"
+                                        type="datetime-local"
+                                        required
+                                        value={fuDate}
+                                        onChange={(e) =>
+                                            setFuDate(e.target.value)
+                                        }
+                                        className="min-h-11"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="fu-notes">
+                                        Rencana Tindakan *
+                                    </Label>
+                                    <Input
+                                        id="fu-notes"
+                                        required
+                                        value={fuNotes}
+                                        onChange={(e) =>
+                                            setFuNotes(e.target.value)
+                                        }
+                                        placeholder="Konfirmasi kelengkapan berkas KTP dan NPWP..."
+                                        className="min-h-11"
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    aria-busy={followUpSaving}
+                                    className="min-h-11 w-full"
+                                >
+                                    Jadwalkan Tindak Lanjut
+                                </Button>
+                            </fieldset>
                         </form>
                     </DialogContent>
                 </Dialog>

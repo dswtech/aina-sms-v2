@@ -3,13 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.39 |
-| Diperbarui | 6 November 2026 |
+| Versi | v1.41 |
+| Diperbarui | 7 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch codex/g11-operational-form-recovery memakai baseline main 830b546. [Bukti pemulihan formulir operasional](implementation-g11-browser-verification.md#pemulihan-formulir-operasional) mencatat loading, draft, gangguan jaringan/503, retry dan reload untuk aktivitas/follow-up, impor CSV dan rencana target. Pesan sukses impor yang belum diteruskan ke frontend diperbaiki dengan regresi backend. Build, CI lokal (364 lulus, tiga skip, 3.579 assertions, tujuh tes frontend) dan sepuluh skenario browser lulus; review independen selesai. Respons commit impor yang hilang direkonsiliasi melalui riwayat. Respons yang hilang setelah write aktivitas/follow-up masih perlu pemeriksaan riwayat sebelum pengulangan; formulir lain dan UAT manusia tetap terbuka.
 
 - PR #59 sudah merged pada `main` `926838b`. Migrasi DO di `aina.test` diterapkan manual oleh pengguna dan statusnya terverifikasi. [Verifikasi browser lokal](implementation-g09-verification.md#verifikasi-do-dan-delivery-di-ainatest) lulus untuk checklist, pembatalan dan DO ulang, serta konfirmasi Delivery dan rekonsiliasi laporan. Dua transaksi sintetis tersimpan di development. Buffer FastCGI virtual host lokal diperbarui untuk memperbaiki 502 pada Pelanggan.
 

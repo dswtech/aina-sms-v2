@@ -1,7 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Download, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,33 +68,65 @@ export default function ImportsIndex({ batches, preview }: Props) {
     const [file, setFile] = useState<File | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [committing, setCommitting] = useState(false);
+    const [failure, setFailure] = useState<string | null>(null);
+    const pending = useRef(false);
 
     const upload = (event: React.FormEvent) => {
         event.preventDefault();
-        if (!file || submitting || committing) return;
+        if (!file || pending.current) return;
         const formData = new FormData();
         formData.append('file', file);
+        pending.current = true;
+        setFailure(null);
         setSubmitting(true);
         router.post('/imports/preview', formData, {
             forceFormData: true,
-            onFinish: () => setSubmitting(false),
+            onNetworkError: () => {
+                setFailure(
+                    'Preview belum dapat dimuat. File tetap dipilih. Periksa koneksi lalu tekan Preview untuk mencoba lagi.',
+                );
+                return false;
+            },
+            onHttpException: (response) => {
+                if (response.status < 500) return;
+                setFailure(
+                    'Preview belum dapat dimuat. File tetap dipilih. Tekan Preview untuk mencoba lagi.',
+                );
+                return false;
+            },
+            onFinish: () => {
+                pending.current = false;
+                setSubmitting(false);
+            },
         });
     };
 
     const commit = () => {
-        if (
-            !preview ||
-            preview.accepted_count === 0 ||
-            submitting ||
-            committing
-        )
-            return;
+        if (!preview || preview.accepted_count === 0 || pending.current) return;
+        pending.current = true;
+        setFailure(null);
         setCommitting(true);
         router.post(
             `/imports/${preview.batch_id}/commit`,
             {},
             {
-                onFinish: () => setCommitting(false),
+                onNetworkError: () => {
+                    setFailure(
+                        'Hasil impor belum dapat dipastikan. Preview tetap tersedia. Periksa riwayat batch sebelum mencoba lagi dengan tombol Import.',
+                    );
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status < 500) return;
+                    setFailure(
+                        'Hasil impor belum dapat dipastikan. Preview tetap tersedia. Periksa riwayat batch sebelum mencoba lagi dengan tombol Import.',
+                    );
+                    return false;
+                },
+                onFinish: () => {
+                    pending.current = false;
+                    setCommitting(false);
+                },
             },
         );
     };
@@ -129,6 +161,17 @@ export default function ImportsIndex({ batches, preview }: Props) {
                 {(errors.import || errors.file) && (
                     <div role="alert" className="mt-6">
                         <InputError message={errors.import || errors.file} />
+                    </div>
+                )}
+                {failure && (
+                    <div className="mt-6">
+                        <InputError message={failure} />
+                        <a
+                            href="/imports"
+                            className="mt-2 inline-flex min-h-11 items-center text-sm underline"
+                        >
+                            Periksa riwayat batch
+                        </a>
                     </div>
                 )}
 
