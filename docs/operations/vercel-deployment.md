@@ -12,7 +12,7 @@ Dockerfile.vercel memasang dependency PHP production dari composer.lock dan memb
 
 Docker build context mengecualikan file environment, credential Composer, dependency lokal, database SQLite, log, storage, artefak tes dan metadata agent. Startup hanya membuat direktori sementara lalu menjalankan proses yang diminta. Migration dan seeder merupakan langkah operator tersendiri.
 
-Docker belum tersedia pada mesin lokal yang dipakai untuk persiapan ini. Build container perlu diverifikasi melalui build Vercel sebelum status rilis dinyatakan siap.
+Build container pada Vercel dari commit 1e95dda mencapai READY pada deployment dpl_9PAcVzTFFzV2Y1n3c1ojMNBVepzS. Endpoint /up menampilkan Application up melalui HTTPS. Login, koneksi database runtime dan pengiriman email memerlukan secret serta penerapan schema berikutnya.
 
 ## Konfigurasi server
 
@@ -92,7 +92,7 @@ Saat rollback Vercel, operator mengembalikan traffic ke deployment baik yang kom
 
 ## Hal yang masih harus diverifikasi
 
-Build container pada Vercel, APP_KEY dan Gmail App Password, migration database Neon, aktivasi Admin, storage privat persisten untuk CSV, worker/scheduler, alert, rollback deployment, uji provider email serta UAT manusia. Paket Free dan resource beta perlu dievaluasi terhadap beban pilot aktual.
+APP_KEY dan Gmail App Password, migration database Neon, login/aktivasi Admin, storage privat persisten untuk CSV, worker/scheduler, alert, rollback deployment, uji provider email serta UAT manusia. Paket Free dan resource beta perlu dievaluasi terhadap beban pilot aktual.
 
 ## Referensi
 
@@ -105,3 +105,5 @@ Build container pada Vercel, APP_KEY dan Gmail App Password, migration database 
 ## Verifikasi persiapan source
 
 CI lokal lulus dengan 385 tes backend, tiga skip, 3.669 assertions dan tujuh tes frontend. Pada PostgreSQL test sementara, 31 tes/196 assertions lulus untuk migration, bootstrap Admin, aktivasi dan konfigurasi deployment. Cluster dihentikan dan dibersihkan. Review independen selesai. Build dan operasi pada Vercel/Neon mengikuti gerbang verifikasi di atas.
+
+Build awal tersedia pada [preview](https://aina-ec42kp99n-dhny1.vercel.app/up). Nilai secret yang diperlukan sudah disiapkan nama variabelnya pada formulir Vercel untuk diisi pemilik. Simpan perubahan environment dan redeploy sebelum smoke test login.
