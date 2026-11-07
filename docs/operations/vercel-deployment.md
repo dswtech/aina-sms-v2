@@ -10,7 +10,11 @@ Project Vercel bernama aina-sms. Database aina-sms-db memakai paket Neon Free di
 
 Dockerfile.vercel memasang dependency PHP production dari composer.lock dan membangun aset dari pnpm-lock.yaml. Build memerlukan PHP saat plugin Wayfinder berjalan. Runtime FrankenPHP melayani hanya public dan membaca environment dari Vercel.
 
-Docker build context mengecualikan file environment, credential Composer, dependency lokal, database SQLite, log, storage, artefak tes dan metadata agent. Startup hanya membuat direktori sementara lalu menjalankan proses yang diminta. Migration dan seeder merupakan langkah operator tersendiri.
+Docker build context mengecualikan file environment, credential Composer, dependency lokal, database SQLite, log, storage, artefak tes dan metadata agent. Startup membuat direktori sementara lalu menjalankan proses yang diminta. Migration dan seeder merupakan langkah operator tersendiri.
+
+Untuk uji undangan yang diotorisasi pada pilot preview, startup dapat memanggil app:invite-preview-admin ketika AINA_PREVIEW_INVITATION_ENABLED=true. Command menolak production, branch selain codex/vercel-pilot-deployment, serta deadline kedaluwarsa atau lebih dari 15 menit. AINA_PREVIEW_INVITATION_EXPIRES_AT berisi Unix timestamp; identitas operator memakai AINA_PREVIEW_ADMIN_DEALER/NAME/EMAIL/USERNAME pada server. Command memakai bootstrap yang sama dengan lock transaksi dan penolakan Admin/undangan aktif. Tidak ada migration, seeder, password atau token aktivasi pada startup/log. Matikan flag setelah satu pengamatan hasil; deadline membatasi deployment lama agar tidak mengirim ulang ketika undangan kedaluwarsa.
+
+Pada 7 November 2026 operator melaporkan seluruh migration pada cabang preview Neon sudah diterapkan melalui koneksi langsung; tidak ada migration tertunda. Percobaan Gmail diganti dengan uji Brevo SMTP (smtp-relay.brevo.com:587, SMTP login dan SMTP key). Credential Brevo preview sudah disimpan pemilik dan redeploy dpl_B9X6xmTfwPxo4yroCv6qiAwRdw4n mencapai READY; halaman login terbuka. Credential production belum diganti. Pengiriman undangan dari server masih menunggu bukti runtime.
 
 Build container pada Vercel dari commit 1e95dda mencapai READY pada deployment dpl_9PAcVzTFFzV2Y1n3c1ojMNBVepzS. Endpoint /up menampilkan Application up melalui HTTPS. Login, koneksi database runtime dan pengiriman email memerlukan secret serta penerapan schema berikutnya.
 
