@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [adr/ADR-006-versioned-production-releases.md](adr/ADR-006-versioned-production-releases.md) | ADR | Rilis production hanya dari GitHub Release stable bernomor dengan commit main dan CI terverifikasi. |
+| [../superpowers/plans/2026-11-08-versioned-releases.md](../superpowers/plans/2026-11-08-versioned-releases.md) | Rencana | Pengujian dan penerapan workflow rilis bernomor serta penghentian auto-deploy main. |
 | [../superpowers/plans/2026-11-07-production-release.md](../superpowers/plans/2026-11-07-production-release.md) | Rencana production | Guard bootstrap production, migrasi terotorisasi, undangan Admin, domain final dan ledger rilis. |
 | [../operations/vercel-deployment.md](../operations/vercel-deployment.md) | Runbook deployment | Audit Vercel, Neon, Gmail SMTP, bootstrap Admin, worker, scheduler, monitoring dan gerbang rilis. |
 | [adr/ADR-005-vercel-neon-pilot.md](adr/ADR-005-vercel-neon-pilot.md) | ADR | Pilihan deployment awal Vercel, Neon dan Gmail SMTP serta konsekuensi operasional. |

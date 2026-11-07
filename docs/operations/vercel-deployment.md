@@ -110,6 +110,14 @@ Tentukan instance/region, kuota dan mekanisme restart sebelum mengaktifkan daemo
 
 ## Rilis dan rollback
 
+Pemicu rilis production mengikuti [ADR 006](../agents/adr/ADR-006-versioned-production-releases.md). Merge main menjalankan CI dan tidak memicu deployment Git Vercel setelah konfigurasi baru digabung. Preview branch tetap aktif. Di Vercel, Auto-Assign Custom Production Domains harus false; deployment current tetap melayani domain.
+
+Persiapan satu kali: pemilik menyimpan Vercel token yang dibatasi ke tim deployment sebagai GitHub Actions Secret VERCEL_TOKEN (dapat memakai environment production). Jangan menaruh token pada chat, argumen command line atau file repository. Workflow tidak memerlukan salinan APP_KEY, koneksi Neon, atau credential Brevo. Secret belum terpasang sampai metadata GitHub menyatakan tersedia.
+
+Untuk merilis, tunggu workflow tests pada push main untuk commit pilihan selesai sukses; buat GitHub Release dengan tag baru vMAJOR.MINOR.PATCH pada commit tersebut, isi catatan perubahan, lalu Publish sebagai stable release. Draft, prerelease atau push tag tanpa publikasi tidak mengubah production. Workflow production-release memeriksa commit/tag/CI sebelum menggunakan token, membangun SHA tersebut, menunggu READY dan promote eksplisit. Periksa Actions summary, deployment Vercel, health domain serta fungsi utama setelah rilis. Jangan memublikasikan release percobaan untuk sekadar menguji konfigurasi.
+
+Tidak ada migration otomatis pada workflow ini. Terapkan perubahan schema hanya melalui rencana kompatibilitas, backup dan otorisasi operator yang terpisah sebelum merilis kode yang membutuhkannya. Bootstrap Admin awal tetap nonaktif. Kegagalan API atau timeout memerlukan rekonsiliasi deployment sebelum retry; pengiriman request ulang tidak otomatis.
+
 Sebelum promotion, verifikasi commit, CI, build container, schema kompatibel, variabel environment, koneksi Neon, email sintetis dan akses empat role. Simpan deployment baik terakhir beserta hubungan versi schema dan konfigurasi.
 
 Saat rollback Vercel, operator mengembalikan traffic ke deployment baik yang kompatibel. Periksa worker dan scheduler pada release tersebut karena daemon mengikuti production deployment. Lakukan smoke test dan amati log. Perubahan environment dan data database ditangani melalui rencana tersendiri. Pemulihan database mengikuti otorisasi dan runbook backup.

@@ -1,0 +1,47 @@
+name: production-release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: aina-production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.release.prerelease == false && github.event.release.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://aiia.toyotabandung.web.id
+    steps:
+      - name: Checkout reviewed release tooling from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Verify stable version and exact main CI
+        id: verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node deploy/vercel/release.mjs verify
+
+      - name: Build and promote the verified production version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.verified.outputs.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node deploy/vercel/release.mjs deploy
