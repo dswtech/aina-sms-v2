@@ -474,7 +474,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G12
 
-**Keputusan produk — belum ditutup di sumber kanonik.** Bukti: [PRD bagian 14](PRD.md#14-keputusan-terbuka) memuat enam keputusan, [config forecast][forecast-source] masih approved=false. Bobot forecast, booking-fee evidence, provider email dan hosting menghambat gerbang terkait; nama final serta retensi perlu pemutus/target penyelesaian, tanpa otomatis mengubah prioritas PRD. Tindak lanjut: PO bersama operasional/IT/legal sebagaimana PRD merekam keputusan; baru sesuaikan konfigurasi dan acceptance. Pemilik: pemutus yang tercantum pada PRD, Engineering mendukung opsi teknis. Jangan menyatakan forecast produksi aktif.
+**Keputusan produk — belum ditutup di sumber kanonik.** Bukti: [PRD bagian 14](PRD.md#14-keputusan-terbuka) memuat enam keputusan, [config forecast][forecast-source] masih approved=false. Pilihan awal provider email dan hosting dicatat di [PRD bagian 14](PRD.md#14-keputusan-terbuka) pada 7 November 2026 serta [ADR 005](adr/ADR-005-vercel-neon-pilot.md); konfigurasi dan verifikasi pengirimannya mengikuti [runbook Vercel](../operations/vercel-deployment.md). Bobot forecast dan booking-fee evidence menghambat gerbang terkait; nama final serta retensi perlu pemutus/target penyelesaian, tanpa otomatis mengubah prioritas PRD. Tindak lanjut: PO bersama operasional/IT/legal sebagaimana PRD merekam keputusan; baru sesuaikan konfigurasi dan acceptance. Pemilik: pemutus yang tercantum pada PRD, Engineering mendukung opsi teknis. Jangan menyatakan forecast produksi aktif.
 
 ### G13
 
@@ -482,7 +482,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G14
 
-**Gerbang operasional — deployment, monitoring dan pemulihan.** Bukti: [runbook backup dasar](../operations/backup-restore.md) memuat drill PostgreSQL sintetis lokal yang lulus untuk 29 tabel, sequence dan login empat role; drill operasional hosting dan rollback deployment masih terbuka; [E22](#e22) hanya header/health 200; hosting/email masih terbuka di PRD. Tindak lanjut: O01/O03/O05, tetapkan pemilik/jadwal/retensi/RPO/RTO, deployment/rollback, worker/scheduler, alert error/antrean dan respons insiden. Pemilik: IT + Engineering, PO menyetujui kebutuhan operasional. Bukan klaim runbook sama sekali belum ada.
+**Gerbang operasional — deployment, monitoring dan pemulihan.** Bukti: [runbook backup dasar](../operations/backup-restore.md) memuat drill PostgreSQL sintetis lokal yang lulus untuk 29 tabel, sequence dan login empat role; drill operasional hosting dan rollback deployment masih terbuka; [E22](#e22) hanya header/health 200; deployment awal Vercel/Neon dan Gmail SMTP dipilih di PRD, dengan pelaksanaan/verifikasi yang masih terbuka pada [runbook deployment](../operations/vercel-deployment.md). Tindak lanjut: O01/O03/O05, tetapkan pemilik/jadwal/retensi/RPO/RTO, deployment/rollback, worker/scheduler, alert error/antrean dan respons insiden. Pemilik: IT + Engineering, PO menyetujui kebutuhan operasional. Bukan klaim runbook sama sekali belum ada.
 
 ### G15
 

@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $dealer_id
  * @property int|null $team_id
- * @property int $invited_by_id
+ * @property int|null $invited_by_id
  * @property string $public_id
  * @property string $name
  * @property string $username

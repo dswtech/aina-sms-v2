@@ -1,0 +1,49 @@
+FROM dunglas/frankenphp:1-php8.4-bookworm AS php-base
+
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && install-php-extensions pdo_pgsql mbstring intl zip pcntl
+WORKDIR /app
+
+FROM php-base AS dependencies
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist
+COPY . .
+RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
+    && composer dump-autoload --no-dev --classmap-authoritative
+
+FROM dependencies AS assets
+COPY --from=node:24-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN node /usr/local/lib/node_modules/corepack/dist/corepack.js pnpm install --frozen-lockfile \
+    && node /usr/local/lib/node_modules/corepack/dist/corepack.js pnpm run build
+
+FROM php-base AS runtime
+COPY --from=dependencies --chown=www-data:www-data /app /app
+COPY --from=assets --chown=www-data:www-data /app/public/build /app/public/build
+COPY deploy/vercel/Caddyfile /etc/frankenphp/Caddyfile
+RUN chown -R www-data:www-data /config/caddy /data/caddy /app/bootstrap/cache \
+    && chmod +x /app/deploy/vercel/start.sh
+
+ENV PORT=8080 \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    LARAVEL_STORAGE_PATH=/tmp/aina-storage \
+    LOG_CHANNEL=stderr \
+    DB_CONNECTION=pgsql \
+    DB_SSLMODE=require \
+    SESSION_DRIVER=database \
+    SESSION_SECURE_COOKIE=true \
+    CACHE_STORE=database \
+    QUEUE_CONNECTION=database \
+    INERTIA_SSR_ENABLED=false \
+    MAIL_MAILER=smtp \
+    MAIL_SCHEME=smtp \
+    MAIL_HOST=smtp.gmail.com \
+    MAIL_PORT=587 \
+    MAIL_TIMEOUT=30
+
+USER www-data
+EXPOSE 8080
+ENTRYPOINT ["/app/deploy/vercel/start.sh"]
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]

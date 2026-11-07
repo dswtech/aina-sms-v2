@@ -3,13 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.41 |
+| Versi | v1.42 |
 | Diperbarui | 7 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Branch codex/vercel-pilot-deployment memakai baseline main 57bc972 setelah PR #62 merged dan CI GitHub lulus. [Runbook deployment Vercel](../operations/vercel-deployment.md) mencatat persiapan container, koneksi Neon, Gmail SMTP dan bootstrap undangan Admin. Project aina-sms dan Neon Free aina-sms-db di Singapore dibuat dan terhubung; cabang preview diaktifkan. Konfigurasi live proxy/server masih menunggu persetujuan khusus setelah automatic approval review menolak bundel production/preview. APP_KEY, Gmail credential, build container, migration Neon dan pengiriman email aktual belum diverifikasi.
+
+- CI lokal persiapan deployment lulus dengan 385 tes backend, tiga skip, 3.669 assertions dan tujuh tes frontend. PostgreSQL terisolasi lulus 31 tes/196 assertions untuk bootstrap Admin, konfigurasi deployment dan aktivasi. Review independen tidak menemukan cacat penting. Tes PostgreSQL ini memverifikasi migration dan jalur command secara berurutan; concurrency bootstrap belum diuji. Arsip CSV privat persisten, daemon/monitoring dan gerbang pilot tetap mengikuti runbook.
 
 - Branch codex/g11-operational-form-recovery memakai baseline main 830b546. [Bukti pemulihan formulir operasional](implementation-g11-browser-verification.md#pemulihan-formulir-operasional) mencatat loading, draft, gangguan jaringan/503, retry dan reload untuk aktivitas/follow-up, impor CSV dan rencana target. Pesan sukses impor yang belum diteruskan ke frontend diperbaiki dengan regresi backend. Build, CI lokal (364 lulus, tiga skip, 3.579 assertions, tujuh tes frontend) dan sepuluh skenario browser lulus; review independen selesai. Respons commit impor yang hilang direkonsiliasi melalui riwayat. Respons yang hilang setelah write aktivitas/follow-up masih perlu pemeriksaan riwayat sebelum pengulangan; formulir lain dan UAT manusia tetap terbuka.
 
@@ -157,8 +161,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 |---|---|---|
 | Nama produk final | Product Owner | Branding dan judul aplikasi tetap memakai nama kerja. |
 | Bobot forecast per tahap | Product Owner + operasional dealer | Forecast produksi belum dapat diaktifkan dengan nilai final. |
-| Penyedia email | Product Owner + IT | Undangan dan email notifikasi belum dapat dikirim di production. |
-| Lingkungan deployment | Product Owner + IT | Target konfigurasi dan runbook production belum dapat ditulis. |
+| Pengiriman Gmail SMTP awal | Product Owner + IT | Pilihan provider dicatat di PRD bagian 14; credential dan verifikasi pengiriman masih diperlukan. |
+| Verifikasi deployment awal | Product Owner + IT | Pilihan Vercel/Neon dicatat di PRD bagian 14 dan ADR 005; build, secret, worker dan gerbang rilis masih diperlukan. |
 
 ## Langkah berikutnya
 
