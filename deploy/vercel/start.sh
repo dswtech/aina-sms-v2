@@ -12,4 +12,8 @@ if [ "${AINA_PREVIEW_INVITATION_ENABLED:-false}" = "true" ]; then
     php artisan app:invite-preview-admin --no-interaction || true
 fi
 
+if [ "${AINA_PRODUCTION_SETUP_ENABLED:-false}" = "true" ]; then
+    php artisan app:prepare-production --no-interaction || true
+fi
+
 exec "$@"

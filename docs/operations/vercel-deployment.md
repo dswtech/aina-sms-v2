@@ -2,7 +2,7 @@
 
 ## Status dan tujuan
 
-Panduan ini menyiapkan rilis awal Laravel pada Vercel dengan Neon dan Gmail SMTP. Pilihan pengguna dicatat di [PRD bagian 14](../agents/PRD.md#14-keputusan-terbuka) dan [ADR 005](../agents/adr/ADR-005-vercel-neon-pilot.md). Jalankan setiap perintah pada target dan versi aplikasi yang sudah disetujui.
+Panduan ini menyiapkan rilis awal Laravel pada Vercel dengan Neon dan Brevo SMTP (menggantikan percobaan Gmail). Pilihan pengguna dicatat di [PRD bagian 14](../agents/PRD.md#14-keputusan-terbuka) dan konteks hosting pada [ADR 005](../agents/adr/ADR-005-vercel-neon-pilot.md). Jalankan setiap perintah pada target dan versi aplikasi yang sudah disetujui.
 
 Project Vercel bernama aina-sms. Database aina-sms-db memakai paket Neon Free di Singapore dan sudah terhubung ke project. Integrasi menyediakan variabel koneksi sensitif untuk production/preview dan mengaktifkan cabang database untuk deployment preview. Metadata koneksi diverifikasi melalui nama variabel.
 
@@ -42,17 +42,27 @@ Build container pada Vercel dari commit 1e95dda mencapai READY pada deployment d
 | TRUSTED_PROXIES | * hanya pada deployment yang seluruh aksesnya melalui ingress Vercel |
 | MAIL_MAILER | smtp |
 | MAIL_SCHEME | smtp |
-| MAIL_HOST | smtp.gmail.com |
+| MAIL_HOST | smtp-relay.brevo.com |
 | MAIL_PORT | 587 |
 | MAIL_TIMEOUT | 30 |
-| MAIL_USERNAME | Gmail pengirim, dimasukkan pemilik ke environment server |
-| MAIL_PASSWORD | Google App Password, dimasukkan pemilik ke environment server |
-| MAIL_FROM_ADDRESS | Alamat pengirim yang diizinkan akun Gmail |
+| MAIL_USERNAME | SMTP login Brevo, dimasukkan pemilik ke environment server |
+| MAIL_PASSWORD | SMTP key Brevo, dimasukkan pemilik ke environment server |
+| MAIL_FROM_ADDRESS | Sender yang diverifikasi pada Brevo |
 | MAIL_FROM_NAME | Nama pengirim yang disetujui |
 
 Gunakan target environment dan cabang database yang sesuai. DB_URL bila diisi mengungguli URL integrasi. Runtime memilih DATABASE_URL_UNPOOLED sebelum DATABASE_URL karena transaksi PDO pada pooler Neon aktual gagal dengan SQLSTATE 25P02; bootstrap melalui koneksi langsung sudah berhasil mengirim undangan. URL migration juga memakai koneksi langsung. Ini konfigurasi pilot: pantau batas koneksi Neon saat menguji concurrency sebelum menaikkan beban. Secret disimpan sebagai variable sensitive. Catatan QA hanya mencatat keberadaan nama variable dan hasil pemeriksaan.
 
-App Password dibuat oleh pemilik akun Google yang mengaktifkan verifikasi dua langkah. Pemilik memasukkan credential langsung di Vercel. Lakukan redeploy setelah perubahan environment agar instance memakai konfigurasi baru.
+SMTP key dibuat oleh pemilik di Brevo, lalu dimasukkan langsung ke Vercel. Ini berbeda dari API key dan password akun Brevo. Lakukan redeploy setelah perubahan environment agar instance memakai konfigurasi baru.
+
+## Penyiapan production yang diotorisasi
+
+Pemilik mengotorisasi migration tanpa reset/seeder pada Neon production (main), diikuti undangan Admin melalui email. Akun dan password preview tidak disalin. Domain final adalah aiia.toyotabandung.web.id. DNS dikelola melalui Exabytes; pengguna menyatakan tidak ada layanan lain yang memakai domain. Zona baru mempertahankan A root yang terlihat sebelumnya dan menambahkan CNAME aiia sesuai target khusus project Vercel. Nameserver dipindahkan ke nilai yang ditampilkan zona Exabytes; Vercel sudah memverifikasi CNAME dan nameserver publik yang sesuai.
+
+Command app:prepare-production hanya aktif jika AINA_PRODUCTION_SETUP_ENABLED=true, VERCEL_ENV=production, branch main, source commit sama dengan AINA_PRODUCTION_SETUP_COMMIT, dan deadline AINA_PRODUCTION_SETUP_EXPIRES_AT masih berlaku maksimal 15 menit. Koneksi wajib PostgreSQL langsung, dengan host dan database cocok PGHOST_UNPOOLED/PGDATABASE. APP_URL HTTPS wajib cocok AINA_PRODUCTION_DOMAIN. Identitas undangan berasal dari AINA_PRODUCTION_ADMIN_DEALER/NAME/EMAIL/USERNAME pada server.
+
+Command mengambil session advisory lock pada koneksi langsung. Schema kosong (atau hanya ledger migration kosong) dapat dimigrasikan; schema existing dengan migration tertunda ditolak untuk backup dan review operator. Schema yang sudah lengkap boleh melewati migration. Bootstrap kemudian memakai command undangan yang sama, tanpa membuat password atau mencetak token. Matikan flag setelah hasil pertama diamati. Tidak ada reset, seeder atau migrasi tanpa otorisasi pada startup biasa.
+
+Credential Brevo production telah diisi pemilik; setup masih dinonaktifkan sampai commit rilis, TLS domain dan persetujuan merge dipastikan. Rencana dan ledger berada di [rencana production](../superpowers/plans/2026-11-07-production-release.md).
 
 ## Penerapan schema dan aktivasi Admin
 
@@ -106,7 +116,7 @@ Saat rollback Vercel, operator mengembalikan traffic ke deployment baik yang kom
 
 ## Hal yang masih harus diverifikasi
 
-APP_KEY dan Gmail App Password, migration database Neon, login/aktivasi Admin, storage privat persisten untuk CSV, worker/scheduler, alert, rollback deployment, uji provider email serta UAT manusia. Paket Free dan resource beta perlu dievaluasi terhadap beban pilot aktual.
+Preview: pemilik sudah mengonfirmasi aktivasi/login Admin berhasil sesudah koneksi langsung diterapkan. Production: migration dan undangan menunggu rilis yang diotorisasi, lalu aktivasi/login perlu dikonfirmasi pemilik. Storage privat persisten untuk CSV, worker/scheduler, alert, rollback deployment, pengukuran beban aktual dan UAT manusia tetap gerbang terpisah. Paket Free dan resource beta perlu dievaluasi terhadap beban pilot aktual.
 
 ## Referensi
 

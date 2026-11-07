@@ -395,7 +395,7 @@ Baseline penggunaan dikumpulkan setelah dua minggu pertama; target yang bergantu
 |---:|---|---|---|---|
 | 1 | Apa nama produk final? | Product Owner | Branding, title, logo, dan alamat deployment. | S |
 | 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, dan SPK? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. | M |
-| 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Development memakai Mailtrap Sandbox, dipilih pengguna 5 November 2026. Pada 7 November 2026 pengguna memilih Gmail pribadi melalui SMTP untuk pengiriman awal. Credential dan pengiriman aktual mengikuti runbook deployment; kapasitas provider dievaluasi pada pilot. | M |
+| 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Development memakai Mailtrap Sandbox, dipilih pengguna 5 November 2026. Pada 7 November 2026 pengguna mula-mula memilih Gmail pribadi, lalu mengganti pengiriman awal ke Brevo SMTP. Undangan preview tercatat Delivered; credential production diisi pemilik secara langsung. Konfigurasi dan gerbang aktual mengikuti runbook deployment; kapasitas provider dievaluasi pada pilot. | M |
 | 4 | Di mana aplikasi production akan dijalankan? | Product Owner + IT | Pada 7 November 2026 pengguna memilih Vercel untuk deployment awal dan Neon Free baru sebagai PostgreSQL. Implementasi dan batas kesiapan mengikuti ADR 005 serta runbook Vercel. | M |
 | 5 | Bukti booking fee apa yang cukup untuk masuk SPK? | Product Owner + operasional dealer | Validasi final transisi ke SPK. | M |
 | 6 | Berapa lama data pelanggan dan audit disimpan? | Product Owner + legal/operasional | Kebijakan retensi, archive, dan penghapusan. | S |
