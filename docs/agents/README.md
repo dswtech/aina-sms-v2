@@ -13,6 +13,9 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../superpowers/plans/2026-11-07-production-release.md](../superpowers/plans/2026-11-07-production-release.md) | Rencana production | Guard bootstrap production, migrasi terotorisasi, undangan Admin, domain final dan ledger rilis. |
+| [../operations/vercel-deployment.md](../operations/vercel-deployment.md) | Runbook deployment | Audit Vercel, Neon, Gmail SMTP, bootstrap Admin, worker, scheduler, monitoring dan gerbang rilis. |
+| [adr/ADR-005-vercel-neon-pilot.md](adr/ADR-005-vercel-neon-pilot.md) | ADR | Pilihan deployment awal Vercel, Neon dan Gmail SMTP serta konsekuensi operasional. |
 | [../operations/backup-restore.md](../operations/backup-restore.md) | Runbook dan bukti O03 | Prosedur backup, restore terisolasi, drill sintetis dan batas kesiapan operasional. |
 | [`implementation-g13-postgres-pilot.md`](implementation-g13-postgres-pilot.md) | Bukti G13 | Profil pilot, suite PostgreSQL, concurrency impor, dan batas benchmark kapasitas. |
 | [`implementation-g11-browser-verification.md`](implementation-g11-browser-verification.md) | Bukti G11 | Regresi browser dengan Laravel dan SQLite test, bukti awal X02/X03, serta status integrasi CI. |

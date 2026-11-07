@@ -3,13 +3,29 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.41 |
+| Versi | v1.42 |
 | Diperbarui | 7 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
 ## Keadaan terverifikasi
+
+- Pemilik mengonfirmasi aktivasi/login Admin preview berhasil setelah e187a21. Berikutnya pemilik meminta production dan secara eksplisit mengotorisasi migration pada Neon main tanpa reset/seeder serta undangan Admin production. Credential Brevo production diisi langsung di Vercel. Domain aiia.toyotabandung.web.id ditambahkan; zona Exabytes/CNAME/nameserver dikonfigurasi setelah pemilik menyatakan domain tidak dipakai layanan lain. Vercel mengembalikan misconfigured=false. APP_URL production memakai domain final. Setup production masih nonaktif; merge PR #63, rilis, migration aktual, delivery dan aktivasi production belum dilakukan. Persiapan guard lulus CI (404 backend, lima skip, 3.723 assertions, tujuh frontend), dan PostgreSQL test terisolasi lulus 42 tes/153 assertions. Review independen selesai tanpa temuan kritis/penting; [rencana production](../superpowers/plans/2026-11-07-production-release.md) menjadi ledger.
+
+- Pemilik mencoba aktivasi dari email; POST aktivasi pada preview gagal HTTP 500 dengan SQLSTATE 25P02 (transaksi pooled). Perbaikan konfigurasi runtime memprioritaskan DATABASE_URL_UNPOOLED setelah DB_URL eksplisit, konsisten dengan koneksi bootstrap yang berhasil. Regresi proses konfigurasi sempat gagal karena host pooled terpilih, lalu konfigurasi diperbaiki. Pengujian dan redeploy perbaikan masih berlangsung; jangan mengirim ulang undangan atau menganggap aktivasi sudah selesai. Token/password tidak dicatat.
+
+- **Undangan Admin preview berhasil dikirim dari Vercel pada 7 November 2026 pukul 19:02 WIB.** Commit 23b3369/deployment dpl_4BRKBKbMrRPQaMWdwZZnRKud8AuW memakai koneksi langsung Neon yang divalidasi menunjuk database sama; log menyatakan accepted by SMTP dan log Transactional Brevo menunjukkan satu email dengan event Sent serta Delivered. Flag bootstrap sudah dimatikan untuk deployment berikutnya; jendela deployment lama terbatas waktu. Pemilik perlu membuka email dan menetapkan password sendiri; aktivasi/login Admin belum terverifikasi. Jangan mencoba bootstrap lagi atau mengubah alias sebelum aktivasi dipastikan. CI terakhir: 394 backend lulus, tiga skip, 3.697 assertions dan tujuh frontend. Catatan hasil ini masih lokal agar tidak memicu deployment tambahan sebelum aktivasi; source terakhir sudah dipush ke PR #63.
+
+- Pemilik sudah menyetujui secara khusus penonaktifan pembatasan IP SMTP Brevo; status Deactivated diverifikasi melalui UI. Percobaan ulang pada dpl_BVfpiZNjiVMsAjVR9vuwkqAqNLja READY dengan /up sehat, tetapi bootstrap gagal dengan QueryException dan belum ada email terkonfirmasi. Flag dimatikan kembali. Diagnosis SQLSTATE aman lulus CI: 393 backend lulus, tiga skip, 3.695 assertions dan tujuh frontend. Penelusuran database runtime masih berlangsung; lihat [runbook](../operations/vercel-deployment.md).
+
+- Bootstrap undangan preview pada commit 4e829a8/deployment dpl_HskhBN4Mms6y937gmxSbQ8CobHo4 sudah dicoba; build READY dan web tetap terbuka, tetapi SMTP belum mengonfirmasi undangan. Flag bootstrap dimatikan untuk deployment berikutnya; deadline membatasi deployment lama. Operator menunjukkan notifikasi pemblokiran IP SMTP Brevo, sesuai SMTP 525 pada tes lokal. Keputusan pembatasan IP masih menunggu pemilik; belum ada perubahan kontrol keamanan Brevo. Diagnosis aman tambahan lulus CI (392 backend lulus, tiga skip, 3.694 assertions, tujuh frontend); [runbook Vercel](../operations/vercel-deployment.md) mencatat blocker dan pilihan.
+
+- Tindak lanjut pilot: operator melaporkan migration cabang preview Neon selesai tanpa pending melalui koneksi langsung. Uji lokal Brevo ditolak SMTP 525; konfigurasi Brevo dan credential preview kemudian disimpan langsung di Vercel. Redeploy dpl_B9X6xmTfwPxo4yroCv6qiAwRdw4n READY dan halaman login terbuka. Pengguna meminta kembali jalur undangan Admin. Bootstrap preview dengan flag dan deadline maksimal 15 menit sedang disiapkan menurut [runbook Vercel](../operations/vercel-deployment.md); email aktual/aktivasi belum terverifikasi. Credential production Brevo belum diperbarui.
+
+- Branch codex/vercel-pilot-deployment memakai baseline main 57bc972 setelah PR #62 merged dan CI GitHub lulus. [Runbook deployment Vercel](../operations/vercel-deployment.md) mencatat persiapan container, koneksi Neon, Gmail SMTP dan bootstrap undangan Admin. Project aina-sms dan Neon Free aina-sms-db di Singapore dibuat dan terhubung; cabang preview diaktifkan. Pengguna menyetujui konfigurasi proxy/server secara khusus setelah penolakan awal automatic approval review; variabel non-secret telah diterapkan. Build container Vercel dari commit 1e95dda mencapai READY dan /up menampilkan Application up. Draft PR #63 memuat source deployment. APP_KEY dan Gmail credential masih menunggu pengisian pemilik; migration Neon dan pengiriman email aktual belum dijalankan.
+
+- CI lokal persiapan deployment lulus dengan 385 tes backend, tiga skip, 3.669 assertions dan tujuh tes frontend. PostgreSQL terisolasi lulus 31 tes/196 assertions untuk bootstrap Admin, konfigurasi deployment dan aktivasi. Review independen tidak menemukan cacat penting. Tes PostgreSQL ini memverifikasi migration dan jalur command secara berurutan; concurrency bootstrap belum diuji. Arsip CSV privat persisten, daemon/monitoring dan gerbang pilot tetap mengikuti runbook.
 
 - Branch codex/g11-operational-form-recovery memakai baseline main 830b546. [Bukti pemulihan formulir operasional](implementation-g11-browser-verification.md#pemulihan-formulir-operasional) mencatat loading, draft, gangguan jaringan/503, retry dan reload untuk aktivitas/follow-up, impor CSV dan rencana target. Pesan sukses impor yang belum diteruskan ke frontend diperbaiki dengan regresi backend. Build, CI lokal (364 lulus, tiga skip, 3.579 assertions, tujuh tes frontend) dan sepuluh skenario browser lulus; review independen selesai. Respons commit impor yang hilang direkonsiliasi melalui riwayat. Respons yang hilang setelah write aktivitas/follow-up masih perlu pemeriksaan riwayat sebelum pengulangan; formulir lain dan UAT manusia tetap terbuka.
 
@@ -157,8 +173,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 |---|---|---|
 | Nama produk final | Product Owner | Branding dan judul aplikasi tetap memakai nama kerja. |
 | Bobot forecast per tahap | Product Owner + operasional dealer | Forecast produksi belum dapat diaktifkan dengan nilai final. |
-| Penyedia email | Product Owner + IT | Undangan dan email notifikasi belum dapat dikirim di production. |
-| Lingkungan deployment | Product Owner + IT | Target konfigurasi dan runbook production belum dapat ditulis. |
+| Pengiriman Gmail SMTP awal | Product Owner + IT | Pilihan provider dicatat di PRD bagian 14; credential dan verifikasi pengiriman masih diperlukan. |
+| Verifikasi deployment awal | Product Owner + IT | Pilihan Vercel/Neon dicatat di PRD bagian 14 dan ADR 005; build, secret, worker dan gerbang rilis masih diperlukan. |
 
 ## Langkah berikutnya
 
