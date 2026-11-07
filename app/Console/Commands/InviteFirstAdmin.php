@@ -112,9 +112,14 @@ class InviteFirstAdmin extends Command
 
                 return self::SUCCESS;
             });
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             // Transport exceptions can include credentials or the activation link.
             $this->error('Invitation creation or delivery failed; no bootstrap data was committed. Correct the configuration and retry.');
+            if (preg_match('/got code ["\x27]?([245]\d{2})/', $exception->getMessage(), $match)) {
+                $this->line('Bootstrap diagnostic: SMTP status '.$match[1]);
+            } else {
+                $this->line('Bootstrap diagnostic: '.get_class($exception));
+            }
 
             return self::FAILURE;
         }

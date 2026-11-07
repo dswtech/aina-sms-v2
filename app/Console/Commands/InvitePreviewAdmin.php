@@ -32,6 +32,9 @@ class InvitePreviewAdmin extends Command
             '--no-interaction' => true,
         ]);
 
+        // Bootstrap output contains only validated, fixed messages and safe diagnostics.
+        $this->output->write(Artisan::output());
+
         $this->line($status === self::SUCCESS
             ? 'Preview bootstrap: Admin invitation accepted by SMTP.'
             : 'Preview bootstrap: no invitation sent; an Admin/invitation exists or delivery failed.');

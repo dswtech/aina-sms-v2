@@ -106,6 +106,15 @@ it('rolls back failed delivery so a safe rerun can succeed', function () {
     $this->artisan('app:invite-first-admin', firstAdminOptions())->assertSuccessful();
 });
 
+it('reports only a safe SMTP status when delivery fails', function () {
+    Notification::shouldReceive('send')->once()
+        ->andThrow(new RuntimeException('Failed to authenticate with PRIVATE_KEY; got code "525"'));
+    $this->artisan('app:invite-first-admin', firstAdminOptions())
+        ->expectsOutputToContain('Bootstrap diagnostic: SMTP status 525')
+        ->doesntExpectOutputToContain('PRIVATE_KEY')->assertFailed();
+    expect(Invitation::query()->count())->toBe(0);
+});
+
 it('validates required owner inputs before creating any data', function (array $overrides) {
     Notification::fake();
     $this->artisan('app:invite-first-admin', firstAdminOptions($overrides))->assertFailed();

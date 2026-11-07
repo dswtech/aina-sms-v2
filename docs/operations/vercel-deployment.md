@@ -16,6 +16,8 @@ Untuk uji undangan yang diotorisasi pada pilot preview, startup dapat memanggil 
 
 Pada 7 November 2026 operator melaporkan seluruh migration pada cabang preview Neon sudah diterapkan melalui koneksi langsung; tidak ada migration tertunda. Percobaan Gmail diganti dengan uji Brevo SMTP (smtp-relay.brevo.com:587, SMTP login dan SMTP key). Credential Brevo preview sudah disimpan pemilik dan redeploy dpl_B9X6xmTfwPxo4yroCv6qiAwRdw4n mencapai READY; halaman login terbuka. Credential production belum diganti. Pengiriman undangan dari server masih menunggu bukti runtime.
 
+Percobaan server pada deployment dpl_HskhBN4Mms6y937gmxSbQ8CobHo4 mencapai READY dan halaman login terbuka, tetapi log bootstrap tidak mengonfirmasi pengiriman. Flag bootstrap sudah dimatikan untuk deployment berikutnya. Operator kemudian memberikan notifikasi Brevo bahwa IP yang tidak diotorisasi diblokir untuk SMTP keys; kode 525 pada uji lokal sesuai kondisi ini. Pembatasan IP Brevo perlu diselesaikan sebelum mencoba ulang. Vercel Hobby tidak menyediakan Static IP; pilihan mempertahankan allowlist dengan IP keluar tetap atau menonaktifkan pembatasan khusus SMTP diputuskan pemilik. Jangan mematikan kontrol keamanan tanpa persetujuan khusus. Lihat [Brevo IP security](https://help.brevo.com/hc/en-us/articles/5740111683858-Authorize-and-block-IP-addresses-for-API-and-SMTP-security) dan [Vercel Static IPs](https://vercel.com/docs/networking/static-ips).
+
 Build container pada Vercel dari commit 1e95dda mencapai READY pada deployment dpl_9PAcVzTFFzV2Y1n3c1ojMNBVepzS. Endpoint /up menampilkan Application up melalui HTTPS. Login, koneksi database runtime dan pengiriman email memerlukan secret serta penerapan schema berikutnya.
 
 ## Konfigurasi server
