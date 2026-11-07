@@ -26,6 +26,19 @@ it('sends the preview invitation through the existing bootstrap command only onc
     expect(Invitation::query()->count())->toBe(1);
 });
 
+it('refuses a direct bootstrap URL pointing at a different database', function () {
+    Notification::fake();
+    previewInvitationConfiguration(['database_url' => 'postgresql://dummy:dummy@ep-other.neon.tech/neondb']);
+    $default = config('database.default');
+    config(['database.default' => 'pgsql', 'database.connections.pgsql.url' => 'postgresql://dummy:dummy@ep-preview-pooler.neon.tech/neondb']);
+    try {
+        $this->artisan('app:invite-preview-admin')->expectsOutputToContain('direct database target mismatch')->assertFailed();
+    } finally {
+        config(['database.default' => $default]);
+    }
+    Notification::assertNothingSent();
+});
+
 it('does not access bootstrap when its preview window is not enabled', function (array $overrides) {
     Notification::fake();
     previewInvitationConfiguration($overrides);

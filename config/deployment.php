@@ -6,6 +6,7 @@ return [
         'environment' => env('VERCEL_ENV'),
         'branch' => env('VERCEL_GIT_COMMIT_REF'),
         'expires_at' => env('AINA_PREVIEW_INVITATION_EXPIRES_AT', 0),
+        'database_url' => env('DATABASE_URL_UNPOOLED', env('POSTGRES_URL_NON_POOLING')),
         'dealer' => env('AINA_PREVIEW_ADMIN_DEALER'),
         'name' => env('AINA_PREVIEW_ADMIN_NAME'),
         'email' => env('AINA_PREVIEW_ADMIN_EMAIL'),

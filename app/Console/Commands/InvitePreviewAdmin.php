@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class InvitePreviewAdmin extends Command
 {
@@ -20,6 +21,23 @@ class InvitePreviewAdmin extends Command
             || $settings['branch'] !== 'codex/vercel-pilot-deployment'
             || $remaining <= 0 || $remaining > 900) {
             return self::SUCCESS;
+        }
+
+        $direct = $settings['database_url'] ?? null;
+        if (config('database.default') === 'pgsql' && is_string($direct) && $direct !== '') {
+            $current = parse_url((string) config('database.connections.pgsql.url'));
+            $target = parse_url($direct);
+            if (! is_array($current) || ! is_array($target)
+                || str_replace('-pooler.', '.', $current['host'] ?? '') !== ($target['host'] ?? '')
+                || ($current['path'] ?? '') !== ($target['path'] ?? '')
+                || ($current['user'] ?? '') !== ($target['user'] ?? '')) {
+                $this->error('Preview bootstrap: direct database target mismatch; no invitation attempted.');
+
+                return self::FAILURE;
+            }
+            // Administrative bootstrap uses the same database without transaction pooling.
+            config(['database.connections.pgsql.url' => $direct]);
+            DB::purge('pgsql');
         }
 
         // The existing command serializes bootstrap and rolls back if SMTP fails.
