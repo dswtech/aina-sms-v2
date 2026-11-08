@@ -44,7 +44,6 @@ function AreaReport({
     const [applied, setApplied] = useState({ from: '2026-11', to: '2026-11' });
     const result = summarizeArea(deals, applied.from, applied.to);
     const periodLabel = formatMonthRange(applied.from, applied.to);
-    const circumference = 2 * Math.PI * 80;
     const chart = makeAreaChartExport(
         { ...applied, periodLabel, mode: 'do', synthetic: true },
         result,
@@ -165,21 +164,12 @@ function AreaReport({
                                                 `${row.name}: ${row.count} DO, ${percentage(row.count, result.total)}`,
                                         )
                                         .join('. ')}
-                                    className="size-56 sm:size-64"
+                                    className="h-auto w-full max-w-80"
                                 >
-                                    <circle
-                                        cx="100"
-                                        cy="100"
-                                        r="80"
-                                        fill="none"
-                                        stroke="var(--muted)"
-                                        strokeWidth="30"
-                                    />
                                     {result.rows.map((row, index) => {
-                                        const length =
-                                            (row.count / result.total) *
-                                            circumference;
-                                        const offset =
+                                        if (!row.count) return null;
+                                        const start =
+                                            -Math.PI / 2 +
                                             (result.rows
                                                 .slice(0, index)
                                                 .reduce(
@@ -188,45 +178,83 @@ function AreaReport({
                                                     0,
                                                 ) /
                                                 result.total) *
-                                            circumference;
+                                                Math.PI *
+                                                2;
+                                        const sweep =
+                                            (row.count / result.total) *
+                                            Math.PI *
+                                            2;
+                                        const end = start + sweep;
+                                        const middle = start + sweep / 2;
+                                        const x = 100 + Math.cos(middle) * 57;
+                                        const y = 100 + Math.sin(middle) * 57;
+                                        const showName =
+                                            row.count / result.total >= 0.15;
+                                        const label =
+                                            row.category === 'foa'
+                                                ? row.districtName
+                                                : row.category === 'other'
+                                                  ? 'Area lain'
+                                                  : 'Belum diisi';
                                         return (
-                                            row.count > 0 && (
-                                                <circle
-                                                    key={row.id}
-                                                    cx="100"
-                                                    cy="100"
-                                                    r="80"
-                                                    fill="none"
-                                                    stroke={chartRowColor(
-                                                        'area',
-                                                        row.id,
-                                                    )}
-                                                    strokeWidth="30"
-                                                    strokeDasharray={`${length} ${circumference - length}`}
-                                                    strokeDashoffset={-offset}
-                                                    transform="rotate(-90 100 100)"
-                                                />
-                                            )
+                                            <g key={row.id}>
+                                                {row.count === result.total ? (
+                                                    <circle
+                                                        cx="100"
+                                                        cy="100"
+                                                        r="96"
+                                                        fill={chartRowColor(
+                                                            'area',
+                                                            row.id,
+                                                        )}
+                                                    />
+                                                ) : (
+                                                    <path
+                                                        d={`M 100 100 L ${100 + 96 * Math.cos(start)} ${100 + 96 * Math.sin(start)} A 96 96 0 ${sweep > Math.PI ? 1 : 0} 1 ${100 + 96 * Math.cos(end)} ${100 + 96 * Math.sin(end)} Z`}
+                                                        fill={chartRowColor(
+                                                            'area',
+                                                            row.id,
+                                                        )}
+                                                        stroke="white"
+                                                        strokeWidth="1"
+                                                    />
+                                                )}
+                                                {row.count / result.total >=
+                                                    0.04 && (
+                                                    <text
+                                                        x={x}
+                                                        y={y}
+                                                        textAnchor="middle"
+                                                        fill="white"
+                                                        fontSize="8"
+                                                        fontWeight="600"
+                                                    >
+                                                        {showName && (
+                                                            <tspan
+                                                                x={x}
+                                                                dy="-3"
+                                                            >
+                                                                {label}
+                                                            </tspan>
+                                                        )}
+                                                        <tspan
+                                                            x={x}
+                                                            dy={
+                                                                showName
+                                                                    ? '11'
+                                                                    : '3'
+                                                            }
+                                                        >
+                                                            {percentage(
+                                                                row.count,
+                                                                result.total,
+                                                            )}
+                                                        </tspan>
+                                                    </text>
+                                                )}
+                                            </g>
                                         );
                                     })}
-                                    <text
-                                        x="100"
-                                        y="97"
-                                        textAnchor="middle"
-                                        fill="currentColor"
-                                        className="text-3xl font-semibold"
-                                    >
-                                        {result.total}
-                                    </text>
-                                    <text
-                                        x="100"
-                                        y="119"
-                                        textAnchor="middle"
-                                        fill="var(--muted-foreground)"
-                                        className="text-xs"
-                                    >
-                                        transaksi DO
-                                    </text>
                                 </svg>
                             </div>
                             <dl className="space-y-4">

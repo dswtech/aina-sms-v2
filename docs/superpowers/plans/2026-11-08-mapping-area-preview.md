@@ -4,7 +4,7 @@ Disetujui melalui wireframe dan instruksi implementasi pemilik pada 8 November 2
 
 ## Cakupan
 
-- Analisis → Mapping Area: rentang bulan, realisasi DO, donut per kecamatan FOA, Area lain dan Kecamatan belum diisi, serta rincian yang merekonsiliasi seluruh DO sah.
+- Analisis → Mapping Area: rentang bulan, realisasi DO, pie penuh per kecamatan FOA, Area lain dan Kecamatan belum diisi, serta rincian yang merekonsiliasi seluruh DO sah.
 - Pengaturan Dealer → Area & FOA untuk Admin. Snapshot master resmi BPS SIG/kode Kemendagri berisi 106 kecamatan: Bandung Barat 16, Bandung 31, Sumedang 26, Kota Bandung 30, Kota Cimahi 3. Nama/kode tidak diedit; hanya penanda FOA.
 - Contoh FOA Padalarang, Ngamprah dan Batujajar bukan ketetapan operasional dealer. Status FOA dan nama wilayah di-snapshot saat DO; perubahan master tidak mengubah histori.
 - Dialog contoh pengisian area transaksi berdasarkan KTP/STNK: kabupaten/kota lalu kecamatan yang cocok. Kota Lain cukup nama kota dan selalu Area lain. Seluruh area boleh kosong; pilihan wilayah parsial harus dilengkapi kecamatan.
@@ -22,3 +22,5 @@ Snapshot 8 November 2026 dari [BPS SIG](https://sig.bps.go.id/rest-bridging-dagr
 - Browser Admin: 46 DO = 33 FOA + 10 Area lain + 3 belum diisi. Menghapus FOA Padalarang tidak mengubah DO lama; form Prospect mengikuti master terbaru. Kota Lain hanya meminta nama kota dan penyimpanan contoh berhasil.
 - Unduhan nyata PNG 2400×1764 diperiksa visual: seluruh label, legenda, metadata dan Data contoh terbaca; CSV berisi lima kategori yang merekonsiliasi 46 DO. Rentang bulan dapat diubah melalui keyboard. Layout 390px tidak mempunyai overflow horizontal.
 - Review independen tidak menemukan cacat penting. UAT pengguna dan integrasi server tetap tahap berikutnya.
+
+- Tindak lanjut visual: pie penuh menggantikan donut sesuai contoh pemilik, dengan persentase dalam irisan serta nama pada irisan yang cukup lebar. PNG aktual 2400×1764 sudah diperiksa ulang. Seluruh 37 tes frontend, TypeScript, lint dan build lulus setelah perubahan.
