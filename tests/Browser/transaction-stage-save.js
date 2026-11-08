@@ -12,7 +12,7 @@ async function transactionStageSave(page) {
     await page.locator('input[name="password"]').fill('password');
     await page.locator('[data-test="login-button"]').click();
     await page.waitForURL('**/dashboard');
-    await page.goto(`${origin}/transactions?search=G11%20Report%20Model`);
+    await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
     await page
         .getByText('Lead', { exact: true })
         .filter({ visible: true })

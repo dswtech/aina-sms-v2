@@ -30,6 +30,7 @@ use Illuminate\Support\Str;
  * @property bool $opt_out
  * @property CarbonInterface|null $last_contact_at
  * @property string|null $notes
+ * @property string|null $social_media_account
  * @property-read CustomerAssignment|null $activeAssignment
  * @property-read User|null $assignedSales
  * @property-read FollowUp|null $nextFollowUp

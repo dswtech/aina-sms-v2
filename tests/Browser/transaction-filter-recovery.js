@@ -15,7 +15,7 @@ async function transactionFilterRecovery(page) {
 
     const checked = [];
     for (const failure of ['network', 'http']) {
-        await page.goto(`${origin}/transactions?search=G11%20Report%20Model`);
+        await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
         const panel = page.getByRole('region', { name: 'Filter transaksi' });
         const search = panel.getByRole('textbox', { name: 'Pencarian' });
         const previous = page
@@ -107,9 +107,9 @@ async function transactionFilterRecovery(page) {
         }
         checked.push(failure);
     }
-    await page.goto(`${origin}/transactions?search=G11%20Report%20Model`);
-    await page.getByLabel('Lead dibuat mulai').fill('2001-02-01');
-    const end = page.getByLabel('Lead dibuat sampai');
+    await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
+    await page.getByLabel('Progress mulai').fill('2001-02-01');
+    const end = page.getByLabel('Progress sampai');
     await end.fill('2001-01-01');
     await page.getByRole('button', { name: 'Terapkan', exact: true }).click();
     await page.locator('#transaction-date-to[aria-invalid="true"]').waitFor();

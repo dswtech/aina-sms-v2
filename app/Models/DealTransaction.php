@@ -33,6 +33,7 @@ use InvalidArgumentException;
  * @property LostReason|null $lost_reason
  * @property string|null $lost_notes
  * @property CarbonInterface|null $last_activity_at
+ * @property CarbonInterface|null $progress_at
  * @property-read bool $is_stagnant
  */
 #[Fillable([

@@ -281,6 +281,18 @@ export default function TransactionsIndex({
                             tahap dari satu halaman.
                         </p>
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline" className="min-h-11">
+                            <a
+                                href={`/transactions/export.csv${typeof window === 'undefined' ? '' : window.location.search}`}
+                            >
+                                Ekspor CSV
+                            </a>
+                        </Button>
+                        <Button asChild className="min-h-11">
+                            <a href="/transactions/create">Tambah transaksi</a>
+                        </Button>
+                    </div>
                 </div>
 
                 <FilterPanel
@@ -351,7 +363,7 @@ export default function TransactionsIndex({
                         )}
                         <div>
                             <Label htmlFor="transaction-date-from">
-                                Lead dibuat mulai
+                                Progress mulai
                             </Label>
                             <Input
                                 id="transaction-date-from"
@@ -375,7 +387,7 @@ export default function TransactionsIndex({
                         </div>
                         <div>
                             <Label htmlFor="transaction-date-to">
-                                Lead dibuat sampai
+                                Progress sampai
                             </Label>
                             <Input
                                 id="transaction-date-to"
