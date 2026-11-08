@@ -465,7 +465,7 @@ export default function CustomersIndex({
         <>
             <Head title="Buku Pelanggan Saya" />
 
-            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pt-6 pb-24 sm:px-6 sm:pt-8 md:pb-10 lg:px-8">
+            <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col px-4 pt-6 pb-24 sm:px-6 sm:pt-8 md:pb-10 lg:px-8">
                 {/* Header Section */}
                 <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>

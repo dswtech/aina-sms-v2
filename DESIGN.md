@@ -9,6 +9,7 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 ## Struktur
 
 - Desktop: sidebar berlabel sekitar 228px dan lembar kerja putih di dalam frame biru-abu sangat muda.
+- Halaman data (Dashboard, Target, Transaksi, Pelanggan, Analisis, Admin pengguna dan tim) memakai batas konten 1536px (`max-w-screen-2xl`); form dan pengaturan tetap sempit (5xl/6xl).
 - Tablet: sidebar dilipat; navigasi dan konten tetap mempertahankan urutan desktop.
 - Mobile: empat tujuan utama termasuk “Lainnya”; detail transaksi menjadi full-screen sheet.
 - Sales memulai dari antrean waktu. Role lain memulai dari dashboard operasional.
@@ -30,7 +31,7 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 - Navigasi aktif memakai perubahan surface dan warna teks, tanpa sidebar gelap.
 - KPI berada dalam satu strip terbagi, tanpa ikon atau sparkline.
 - Tabel desktop berubah menjadi kartu/list mobile dengan field penting tetap tersedia.
-- Input, dropdown, combobox, selector tanggal/bulan dan tombol standar memakai tinggi 36px pada viewport minimal 768px dengan mouse presisi tanpa perangkat sentuh. Mobile/perangkat sentuh tetap minimal 44px. Input memakai surface background, border token input tanpa shadow normal; ring fokus dan error tetap terlihat. Tombol ikon/header dan footer detail pelanggan yang membungkus label mempertahankan ukuran nyaman.
+- Input, dropdown, combobox, selector tanggal/bulan dan tombol standar memakai tinggi 36px pada viewport minimal 1280px dengan pointer utama mouse (`hover: hover` dan `pointer: fine`). Mobile, tablet, dan perangkat dengan pointer utama jari tetap minimal 44px. Input memakai surface background, border token input tanpa shadow normal; ring fokus dan error tetap terlihat. Tombol ikon/header dan footer detail pelanggan yang membungkus label mempertahankan ukuran nyaman.
 - Combobox memakai fokus pada header pencarian, tanpa ring kotak bersarang; opsi aktif combobox/select memakai muted dengan teks foreground. Opsi desktop minimum 36px dan label/hint bertingkat; opsi sentuh tetap mengikuti target 44px.
 - Tombol/link di sel aksi tabel memakai `table-actions`: bentuk terlihat 32px, teks 12px, border halus tanpa shadow, dengan area klik/fokus minimal 44px. Hover tetap memakai accent.
 - Area filter Pelanggan, Transaksi, Admin pengguna dan Analisis memakai panel bersama yang awalnya terbuka, dengan tombol Sembunyikan/Tampilkan filter dan ringkasan konteks. Melipat panel mempertahankan nilai/draft dan URL, menutup popup di dalamnya, serta mengeluarkan field tersembunyi dari urutan Tab. Keadaan lipat tidak disimpan antar reload.
