@@ -40,7 +40,7 @@ export default function Dashboard({
     return (
         <>
             <Head title={title} />
-            <div className="mx-auto grid w-full max-w-7xl min-w-0 flex-1 content-start gap-6 px-5 pt-8 pb-28 sm:px-8 md:pb-12 lg:px-10">
+            <div className="mx-auto grid w-full max-w-screen-2xl min-w-0 flex-1 content-start gap-6 px-5 pt-8 pb-28 sm:px-8 md:pb-12 lg:px-10">
                 <ReportingHeader title={title} period={d.period} />
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <h2 className="sr-only">Metrik utama</h2>
