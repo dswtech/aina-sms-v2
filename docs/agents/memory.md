@@ -189,6 +189,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
+- Mapping Area frontend pada branch `codex/financing-ui-preview`, lanjutan PR #66: [ledger preview](../superpowers/plans/2026-11-08-mapping-area-preview.md). Master resmi 106 kecamatan, konfigurasi FOA Admin, snapshot DO, form contoh KTP/STNK dan ekspor PNG/CSV tetap memakai transaksi sintetis tanpa backend. Verifikasi 37 frontend, 404 backend/lima skip, TypeScript, lint, build dan PHPStan lulus; browser memverifikasi rekonsiliasi 46 DO, snapshot FOA, Kota Lain, rentang bulan, keyboard dan unduhan nyata. Review independen tanpa temuan penting. Menunggu tinjauan pengguna dan integrasi server terpisah; tidak dirilis ke production.
+
 1. Revalidasi realisasi DO dan konfirmasi Delivery pada [matriks UAT](uat-matrix.md#g09). Konfirmasi target sebelum reset database development. Lanjutkan verifikasi G11 dan ukur performa G13 pada hosting dan beban pilot setelah lingkungan ditetapkan. Audit timestamp historis memerlukan provenance. Worker dan scheduler bisnis belum diaktifkan.
 2. Tutup keputusan terbuka melalui pemutus pada PRD bagian 14; matriks hanya menunjuk keputusan tersebut, tidak menetapkan bobot forecast, bukti SPK, provider, hosting, nama atau retensi.
 3. Setelah blocker ditutup, tetapkan peserta/lingkungan UAT terisolasi dan otorisasi pelaksanaannya. Jalankan skenario empat role, QA lanjutan, serta gerbang email/PostgreSQL/performa/backup/restore/monitoring; lanjutkan pilot/go-live sesuai roadmap. Semua hasil aktual UAT masih belum dijalankan.

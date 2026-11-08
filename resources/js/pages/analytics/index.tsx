@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import FinancingPreview from '@/components/financing-preview';
+import MappingAreaPreview from '@/components/mapping-area';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -111,7 +112,9 @@ type AnalyticsQuery = Pick<
 export default function AnalyticsIndex(props: Props) {
     const { url } = usePage();
     const preview = new URLSearchParams(url.split('?')[1] ?? '').get('preview');
-    return preview === 'financing' ? (
+    return preview === 'mapping-area' ? (
+        <MappingAreaPreview />
+    ) : preview === 'financing' ? (
         <FinancingPreview />
     ) : (
         <AnalyticsLiveIndex {...props} />
