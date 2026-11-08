@@ -304,7 +304,7 @@ export function FinancingReport({
                                         className="size-3"
                                         aria-hidden="true"
                                     />
-                                    Jumlah terbanyak
+                                    Leasing utama: terbanyak
                                 </span>
                             </div>
                             {data.credit === 0 ? (

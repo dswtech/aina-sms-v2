@@ -156,13 +156,18 @@ export function summarizeFinancing(
     ]) {
         if (!groups.has(id)) groups.set(id, { id, name, count: 0 });
     }
+    const trailingOrder = (id: string) =>
+        id === 'other' ? 1 : id === 'unselected' ? 2 : 0;
     return {
         total: cohort.length,
         cash,
         credit,
         unknown,
         leasing: [...groups.values()].sort(
-            (a, b) => b.count - a.count || a.name.localeCompare(b.name, 'id'),
+            (a, b) =>
+                trailingOrder(a.id) - trailingOrder(b.id) ||
+                b.count - a.count ||
+                a.name.localeCompare(b.name, 'id'),
         ),
     };
 }

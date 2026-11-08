@@ -7,6 +7,28 @@ import {
     updateFinancing,
 } from '../../resources/js/lib/financing-preview.ts';
 
+test('other credit is always penultimate and unselected last, including zero-count categories', () => {
+    for (const mode of ['prospect', 'do']) {
+        for (const period of ['2026-10', '2026-11', '2026-12']) {
+            const rows = summarizeFinancing(
+                syntheticDeals,
+                initialLeasing,
+                period,
+                mode,
+            ).leasing;
+            assert.deepEqual(
+                rows.slice(-2).map((row) => row.id),
+                ['other', 'unselected'],
+            );
+            const main = rows.slice(0, -2);
+            assert.deepEqual(
+                main.map((row) => row.count),
+                main.map((row) => row.count).sort((a, b) => b - a),
+            );
+        }
+    }
+});
+
 test('prospect and DO cohorts reconcile cash, credit, unknown and lender totals', () => {
     for (const mode of ['prospect', 'do']) {
         for (const period of ['2026-10', '2026-11', '2026-12']) {
