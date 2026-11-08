@@ -137,10 +137,10 @@ class TransactionController extends Controller
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
                 $builder->whereHas('customer', function ($customerQuery) use ($search): void {
-                    $customerQuery->where('name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                })->orWhere('vehicle_model', 'like', "%{$search}%")
-                    ->orWhere('source', 'like', "%{$search}%");
+                    $customerQuery->whereLike('name', "%{$search}%")
+                        ->orWhereLike('phone', "%{$search}%");
+                })->orWhereLike('vehicle_model', "%{$search}%")
+                    ->orWhereLike('source', "%{$search}%");
             });
         }
 

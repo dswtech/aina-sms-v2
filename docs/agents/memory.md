@@ -3,13 +3,48 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.42 |
-| Diperbarui | 7 November 2026 |
+| Versi | v1.43 |
+| Diperbarui | 8 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Handover agen penerus — 8 November 2026
+
+### Titik lanjut
+
+Integrasi Transaksi, Pembiayaan dan Mapping Area mengikuti [rencana end-to-end](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md). Tahap 1–3 sudah dikerjakan dan merged; progres, bukti dan batas tiap tahap ada di ledger rencana itu (sumber utama, bukan ringkasan ini). Sisa pekerjaan ada di bagian "Masih terbuka".
+
+### Git dan PR (revalidasi dengan `git fetch` sebelum bekerja)
+
+- `main` = `0da8fd5`. Sudah merged: [PR #70](https://github.com/dswtech/aina-sms-v2/pull/70) (fondasi backend), [#71](https://github.com/dswtech/aina-sms-v2/pull/71) dan [#72](https://github.com/dswtech/aina-sms-v2/pull/72) (Tahap 2: daftar, form, detail, master Admin, laporan nyata, rentang bulan), serta [#73](https://github.com/dswtech/aina-sms-v2/pull/73) (Tahap 3: cutover Pelanggan ke form bersama dan impor dengan field baru).
+- Preview Vercel PR #73 gagal dengan `Resource provisioning failed` sebelum build berjalan (masalah sisi Vercel, bukan kode); penyebabnya belum dipastikan, cek dashboard Vercel bila terulang pada PR berikutnya.
+- [PR #74](https://github.com/dswtech/aina-sms-v2/pull/74) `codex/search-case-insensitive`: pencarian nama/model/sumber di daftar Pelanggan dan Transaksi memakai `whereLike` karena `like` PostgreSQL peka huruf besar-kecil. Dua tes regresi gagal di PostgreSQL sebelum perbaikan dan lulus sesudahnya. Terbuka, belum di-merge.
+- Branch lama (`codex/transactions-core`, `codex/transactions-ui`, `codex/transactions-list-ui`, `codex/transactions-cutover`) sudah merged dan remote-nya dihapus; jangan dijadikan basis. Mulai pekerjaan baru dari `origin/main` pada branch non-default.
+- Stash lokal (termasuk `Paused worker scheduler and backup notes - 2026-11-08`) dan worktree Fase 1/Fase 2 lama jangan di-apply/drop tanpa memeriksa kepemilikannya.
+
+### Masih terbuka
+
+1. Merge PR #74 setelah check lulus.
+2. Review independen oleh agent yang tidak menulis kodenya, lalu alur penerimaan end-to-end (Pelanggan Baru → Prospect → area/pembiayaan → SPK → DO → laporan, ubah master, batal DO, DO ulang, Delivery tidak menambah hitungan) termasuk unduhan PNG/CSV nyata.
+3. Inventaris data target secara read-only sebelum rollout; bila ada DO lama tanpa snapshot/area, jangan aktifkan laporan (laporan Mapping Area sudah menampilkan jumlah DO tanpa snapshot sebagai peringatan). Keputusan FOA operasional tetap milik pemilik (awal kosong).
+4. Temuan audit yang belum dikerjakan: rentang laporan (`period..to`, `/analytics/financing`, `/analytics/mapping-area`) belum dibatasi — usulan maksimal 24 bulan di `AnalyticsRequest` dan `ReportController::range`; kanal pada sumber non-digital ditolak di impor tetapi dibuang diam-diam di form manual; pengecekan policy per baris di daftar Transaksi menambah query; `SendCoachingEmail` dapat mengirim dua kali bila commit gagal setelah email terkirim (worker sedang ditunda); `AreaMasterSeeder` belum punya guard environment; ekspor CSV memakai paging offset.
+5. File CSV impor masih disimpan di `storage/imports` dan tidak pernah dibaca atau dihapus (berisi nama dan telepon). Pemilik mempertimbangkan menghapus fitur impor, jadi dibiarkan dulu; bila impor tetap dipakai, berhenti menyimpan file (`ImportController`, `file_path`).
+
+### Bukti terakhir dan batasnya
+
+Terakhir dijalankan 8 November 2026: `composer ci:check` lulus (455 backend: 450 lulus, lima skip; 38 frontend; lint, TypeScript, Pint, PHPStan bersih); PostgreSQL terisolasi 452 tes (449 lulus, tiga skip) dan 34 assertions concurrency; seluruh skrip `tests/Browser/run-isolated.ps1` lulus (PowerShell 7, `%LOCALAPPDATA%\Microsoft\WindowsApps\pwsh.exe`). `tests/Browser/accessibility.js` dan `lead-contact-filters.js` (berbasis mock, dijalankan manual) sudah disesuaikan tetapi belum dijalankan. Ini belum membuktikan UAT manusia atau kesiapan production. Migration lokal `aina.test` sudah terpasang; migration dan seeder di database non-test lain belum pernah dijalankan.
+
+### Batas otorisasi dan operasional
+
+- Tidak membaca/mengubah `.env`, memasang package, menjalankan migration/seeder/write database non-test, merge, atau deploy tanpa perintah eksplisit. Commit wajib Conventional Commits setelah tes relevan lulus; delivery melalui branch non-default dan PR.
+- Worker/scheduler coaching dan backup otomatis tetap ditunda pemilik. Jangan mengaktifkannya hanya karena melanjutkan integrasi; ketika migrasi server dibahas, gunakan pengingat pada bagian berikut.
+- Status production, monitoring dan email pada catatan berikut adalah bukti sesi sebelumnya dan tidak diperiksa ulang. Gerbang UAT/operasional yang belum selesai tetap terbuka.
+
 ## Keadaan terverifikasi
+
+- Pengingat yang diminta pemilik pada 8 November 2026: ketika pembahasan pindah server production dimulai, angkat kembali dua pekerjaan yang sengaja ditunda: worker/scheduler email coaching ([runbook](../operations/coaching-notifications.md)) dan backup otomatis mingguan dengan satu versi terbaru ([runbook](../operations/backup-restore.md)). Bahas kapasitas hosting, penyimpanan privat/enkripsi, dan verifikasi pemulihan sebelum aktivasi. Jangan mengaktifkan kembali hanya karena catatan pengingat ini; pemilik menundanya. Penyimpanan CSV permanen bukan pekerjaan tertunda: dikeluarkan dari scope karena input manual, dan hanya dibahas kembali bila kebutuhan impor berubah. Saat migrasi, bawa serta konfigurasi undangan email, monitoring dan aturan rilis bernomor yang sudah ada. Ini pengingat berbasis konteks migrasi, bukan jadwal notifikasi kalender.
+- Monitoring sudah aktif: PR #65 merged menjadi d9cac42; workflow production-monitor berstatus active dan pemeriksaan GitHub pertama 42399173800 sukses dengan /up serta /login HTTP 200. Domain tetap menunjuk deployment production sebelumnya. Notifikasi kegagalan Actions via email sudah aktif menurut UI; delivery alert nyata belum diuji. PR #64/rilis bernomor juga sudah merged dan main auto-deploy nonaktif. Tidak menerbitkan versi aplikasi atau mengaktifkan worker/backup untuk pemasangan monitoring. Catatan persiapan di bawah merupakan riwayat.
 
 - 8 November 2026: pemilik menunda worker/scheduler dan backup, lalu menyetujui monitoring dasar. Draft tiga file worker beserta catatan backup disimpan dalam Git stash bernama Paused worker scheduler and backup notes - 2026-11-08 dan patch lokal di direktori artefak, tidak dibawa ke branch codex/basic-production-monitoring dari fe493bf. Branch ini tidak memiliki deklarasi daemon atau jadwal backup.
 - Persiapan monitoring: empat kelompok tes Node RED/GREEN lulus; probe production /up dan /login masing-masing HTTP 200 dengan penanda benar. UI pengelola GitHub menunjukkan Email (Failed workflows only) aktif tanpa perubahan preferensi. Query runtime-errors Vercel satu jam terakhir tidak menemukan cluster; bukan bukti seluruh route bebas error. CI lokal lengkap lulus (404 backend, lima skip, 17 frontend), review independen tanpa temuan penting; workflow masih perlu merge dan eksekusi GitHub sebelum dinyatakan aktif. Lihat [rencana](../superpowers/plans/2026-11-08-production-monitoring.md) dan [runbook](../operations/vercel-deployment.md#pemantauan-dan-penanganan-gangguan).
