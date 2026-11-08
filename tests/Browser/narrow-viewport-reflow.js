@@ -21,6 +21,13 @@ async function narrowViewportReflow(page) {
                 `${state}: content ${content}px exceeds viewport ${viewport}px`,
             );
     };
+    // Inertia may rewrite the address bar with Laravel's sorted query order.
+    const sameUrl = (a, b) => {
+        const [x, y] = [new URL(a), new URL(b)];
+        x.searchParams.sort();
+        y.searchParams.sort();
+        return x.pathname === y.pathname && x.search === y.search;
+    };
     const checkPages = async () => {
         for (const path of [
             '/dashboard',
@@ -30,8 +37,8 @@ async function narrowViewportReflow(page) {
         ]) {
             const url = `${origin}${path}`;
             const response = await page.goto(url);
-            if (!response?.ok() || page.url() !== url)
-                throw new Error(`Could not load ${path}`);
+            if (!response?.ok() || !sameUrl(page.url(), url))
+                throw new Error(`Could not load ${path} (status ${response?.status()}, url ${page.url()})`);
             await page.getByRole('main').waitFor();
             await assertReflow(path);
         }

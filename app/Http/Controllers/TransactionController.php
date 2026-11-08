@@ -403,6 +403,12 @@ class TransactionController extends Controller
             'sourceOptions' => DealTransaction::query()->visibleTo($actor)->select('source')->distinct()->orderBy('source')->pluck('source')->all(),
             'filters' => $filters,
             'assignableSales' => $assignableSales,
+            'supervisorOptions' => $actor->role === UserRole::Admin
+                ? User::query()->where('dealer_id', $actor->dealer_id)->where('is_active', true)->where('role', UserRole::Supervisor)
+                    ->orderBy('name')->get(['id', 'name'])->map(fn (User $u): array => ['id' => $u->id, 'name' => $u->name])->all()
+                : [],
+            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
+            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
             'stages' => array_map(fn (PipelineStage $stage): array => [
                 'value' => $stage->value,
                 'label' => $stage->label(),

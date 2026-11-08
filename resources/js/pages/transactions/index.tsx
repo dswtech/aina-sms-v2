@@ -2,7 +2,7 @@ import { ClosingMonthForm } from '@/components/team-performance';
 import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Eye, Pencil, RefreshCw, Search, Truck, Undo2 } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
 import { useRef, useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
@@ -26,6 +26,12 @@ type Transaction = {
     sales: { name: string; username: string } | null;
     vehicle_model: string;
     source: string;
+    source_channel: string | null;
+    notes: string | null;
+    progress_at: string | null;
+    supervisors: { id: number; name: string }[];
+    area: Area;
+    financing: { type: string | null; other_name: string | null };
     current_stage: string;
     stage_label: string;
     estimated_value: number | null;
@@ -43,6 +49,9 @@ type Transaction = {
 
 type Paginated<T> = {
     data: T[];
+    from: number | null;
+    to: number | null;
+    total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 };
 
@@ -54,7 +63,12 @@ type FilterQuery = Record<
     | 'sales_id'
     | 'date_from'
     | 'date_to'
-    | 'source',
+    | 'source'
+    | 'customer_name'
+    | 'supervisor_id'
+    | 'region_code'
+    | 'district_code'
+    | 'source_channel',
     string | null
 >;
 
@@ -68,11 +82,89 @@ type Props = {
         date_from?: string | null;
         date_to?: string | null;
         source?: string | null;
+        customer_name?: string | null;
+        supervisor_id?: number | null;
+        region_code?: string | null;
+        district_code?: string | null;
+        source_channel?: string | null;
     };
     sourceOptions?: string[];
+    supervisorOptions?: { id: number; name: string }[];
+    regions?: { code: string; name: string }[];
+    districts?: { code: string; region_code: string; name: string }[];
     assignableSales: SalesUser[];
     stages: Array<{ value: string; label: string }>;
     lostReasons: Array<{ value: string; label: string }>;
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    tiktok: 'TikTok',
+    website: 'Website',
+    other: 'Lainnya',
+};
+
+type Area = {
+    region_name: string | null;
+    district_name: string | null;
+    other_city: string | null;
+};
+type RowDetail = Pick<
+    Transaction,
+    'source' | 'source_channel' | 'area' | 'financing' | 'supervisors'
+>;
+
+const formatDate = (value: string | null) =>
+    value
+        ? new Date(value).toLocaleDateString('id-ID', {
+              timeZone: 'Asia/Jakarta',
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+          })
+        : '-';
+const sourceLabel = (t: RowDetail) =>
+    t.source_channel
+        ? `${t.source} · ${CHANNEL_LABELS[t.source_channel] ?? t.source_channel}`
+        : t.source;
+const areaLabel = (t: { area: Area }, full = false) => {
+    const {
+        district_name: district,
+        region_name: region,
+        other_city: city,
+    } = t.area;
+    if (city) return city;
+    if (!district) return '-';
+    // Names repeat across regions (e.g. Cisarua), so the parent is always shown in full mode.
+    return full && region ? `${district}, ${region}` : district;
+};
+const supervisorLabel = (t: RowDetail) =>
+    t.supervisors.map((user) => user.name).join(', ') || '-';
+const financingLabel = (t: RowDetail) =>
+    t.financing.type === 'cash'
+        ? 'Cash'
+        : t.financing.type === 'credit'
+          ? `Kredit${t.financing.other_name ? ` · ${t.financing.other_name}` : ''}`
+          : 'Belum ditentukan';
+
+type Detail = Transaction & {
+    can_edit_metadata: boolean;
+    customer: {
+        name: string;
+        phone: string;
+        social_media_account: string | null;
+    };
+    history: {
+        data: {
+            key: string;
+            occurred_at: string;
+            label: string;
+            body: string | null;
+        }[];
+        last_page: number;
+        total: number;
+    } | null;
 };
 
 const tabs = [
@@ -89,6 +181,9 @@ export default function TransactionsIndex({
     stages,
     lostReasons,
     sourceOptions = [],
+    supervisorOptions = [],
+    regions = [],
+    districts = [],
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
@@ -96,6 +191,24 @@ export default function TransactionsIndex({
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
     const [source, setSource] = useState(filters.source ?? '');
+    const [customerName, setCustomerName] = useState(
+        filters.customer_name ?? '',
+    );
+    const [supervisorId, setSupervisorId] = useState(
+        filters.supervisor_id ? String(filters.supervisor_id) : '',
+    );
+    const [regionCode, setRegionCode] = useState(filters.region_code ?? '');
+    const [districtCode, setDistrictCode] = useState(
+        filters.district_code ?? '',
+    );
+    const [sourceChannel, setSourceChannel] = useState(
+        filters.source_channel ?? '',
+    );
+    const [detailTarget, setDetailTarget] = useState<Transaction | null>(null);
+    const [detail, setDetail] = useState<Detail | null>(null);
+    const [detailState, setDetailState] = useState<
+        'idle' | 'loading' | 'error'
+    >('idle');
     const [salesId, setSalesId] = useState(
         filters.sales_id ? String(filters.sales_id) : '',
     );
@@ -122,16 +235,22 @@ export default function TransactionsIndex({
         search,
         stage,
         sales_id: salesId || null,
-        date_from: dateFrom || null,
-        date_to: dateTo || null,
+        // Empty strings (not null) keep "no date limit" distinct from the server's month default.
+        date_from: dateFrom,
+        date_to: dateTo,
         source: source || null,
+        customer_name: customerName || null,
+        supervisor_id: supervisorId || null,
+        region_code: regionCode || null,
+        district_code: regionCode ? districtCode || null : null,
+        source_channel: source === 'digital_ad' ? sourceChannel || null : null,
     };
     const failedQuery =
         typeof failedVisit?.target === 'string' ? null : failedVisit?.target;
     const draftChanged =
         failedQuery &&
         (Object.keys(draft) as (keyof typeof draft)[]).some(
-            (key) => draft[key] !== failedQuery[key],
+            (key) => (draft[key] ?? '') !== (failedQuery[key] ?? ''),
         );
 
     const visitTransactions = (target: FilterQuery | string, retry = false) => {
@@ -229,34 +348,125 @@ export default function TransactionsIndex({
         );
     };
 
-    const renderStageAction = (transaction: Transaction, mobile = false) => {
-        const action = transaction.can_confirm_delivery
-            ? 'delivery'
-            : transaction.can_cancel_do
-              ? 'cancel'
-              : null;
-        if (!action && !transaction.can_update) return null;
+    const iconButton = (
+        label: string,
+        tone: string,
+        icon: React.ReactNode,
+        onClick: (button: HTMLButtonElement) => void,
+    ) => (
+        <Button
+            key={label}
+            type="button"
+            variant="outline"
+            size="icon"
+            title={label}
+            aria-label={label}
+            className={`size-11 ${tone}`}
+            onClick={(event) => onClick(event.currentTarget)}
+        >
+            {icon}
+        </Button>
+    );
+
+    const renderActions = (transaction: Transaction) => {
+        const open =
+            (action: typeof fulfillmentAction) =>
+            (button: HTMLButtonElement) => {
+                actionTriggerRef.current = button;
+                openUpdate(transaction, action);
+            };
 
         return (
-            <Button
-                variant="outline"
-                size="sm"
-                className={mobile ? 'mt-3 min-h-11 w-full' : 'min-h-9'}
-                onClick={(event) => {
-                    actionTriggerRef.current = event.currentTarget;
-                    openUpdate(transaction, action);
-                }}
-            >
-                {action === 'delivery'
-                    ? 'Konfirmasi Delivery'
-                    : action === 'cancel'
-                      ? 'Batalkan DO'
-                      : mobile
-                        ? 'Ubah tahap'
-                        : 'Ubah'}
-            </Button>
+            <>
+                {iconButton(
+                    'Detail',
+                    'text-blue-600',
+                    <Eye className="size-4" />,
+                    (button) => {
+                        actionTriggerRef.current = button;
+                        void openDetail(transaction);
+                    },
+                )}
+                {transaction.can_update &&
+                    iconButton(
+                        'Ubah tahap',
+                        'text-amber-600',
+                        <Pencil className="size-4" />,
+                        open(null),
+                    )}
+                {transaction.can_confirm_delivery &&
+                    iconButton(
+                        'Konfirmasi Delivery',
+                        'text-green-600',
+                        <Truck className="size-4" />,
+                        open('delivery'),
+                    )}
+                {transaction.can_cancel_do &&
+                    iconButton(
+                        'Batalkan DO',
+                        'text-red-600',
+                        <Undo2 className="size-4" />,
+                        open('cancel'),
+                    )}
+            </>
         );
     };
+
+    const openDetail = async (transaction: Transaction) => {
+        setDetailTarget(transaction);
+        setDetail(null);
+        setDetailState('loading');
+        try {
+            const response = await fetch(
+                `/transactions/${transaction.public_id}`,
+                {
+                    headers: { Accept: 'application/json' },
+                },
+            );
+            if (!response.ok) throw new Error('detail');
+            setDetail(await response.json());
+            setDetailState('idle');
+        } catch {
+            setDetailState('error');
+        }
+    };
+
+    const resetFilters = () => {
+        const today = new Date().toLocaleDateString('en-CA', {
+            timeZone: 'Asia/Jakarta',
+        });
+        const next = { date_from: `${today.slice(0, 8)}01`, date_to: today };
+        setSearch('');
+        setStage('');
+        setSalesId('');
+        setSource('');
+        setCustomerName('');
+        setSupervisorId('');
+        setRegionCode('');
+        setDistrictCode('');
+        setSourceChannel('');
+        setDateFrom(next.date_from);
+        setDateTo(next.date_to);
+        visitTransactions({
+            search: '',
+            stage: '',
+            tab: 'all',
+            sales_id: null,
+            source: null,
+            customer_name: null,
+            supervisor_id: null,
+            region_code: null,
+            district_code: null,
+            source_channel: null,
+            ...next,
+        });
+    };
+
+    const refresh = () =>
+        router.reload({
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
 
     const fulfillmentTitle =
         fulfillmentAction === 'delivery'
@@ -282,6 +492,15 @@ export default function TransactionsIndex({
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11"
+                            disabled={isLoading}
+                            onClick={refresh}
+                        >
+                            <RefreshCw className="size-4" /> Refresh
+                        </Button>
                         <Button asChild variant="outline" className="min-h-11">
                             <a
                                 href={`/transactions/export.csv${typeof window === 'undefined' ? '' : window.location.search}`}
@@ -298,11 +517,9 @@ export default function TransactionsIndex({
                 <FilterPanel
                     className="mt-6"
                     title="Filter transaksi"
-                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
-                    <div
-                        className={`grid gap-3 sm:grid-cols-2 ${assignableSales.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
-                    >
+                    <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4`}>
                         <div>
                             <Label htmlFor="search">Pencarian</Label>
                             <div className="relative mt-1.5">
@@ -435,7 +652,120 @@ export default function TransactionsIndex({
                             </select>
                             <InputError message={errors?.source} />
                         </div>
-                        <div className="flex items-end">
+                        <div>
+                            <Label htmlFor="customer-name">
+                                Nama pelanggan
+                            </Label>
+                            <Input
+                                id="customer-name"
+                                value={customerName}
+                                onChange={(event) =>
+                                    setCustomerName(event.target.value)
+                                }
+                                className="mt-1.5 min-h-11"
+                            />
+                            <InputError message={errors?.customer_name} />
+                        </div>
+                        {supervisorOptions.length > 0 && (
+                            <div>
+                                <Label htmlFor="supervisor">Supervisor</Label>
+                                <select
+                                    id="supervisor"
+                                    value={supervisorId}
+                                    onChange={(event) =>
+                                        setSupervisorId(event.target.value)
+                                    }
+                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                >
+                                    <option value="">Semua supervisor</option>
+                                    {supervisorOptions.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        <div>
+                            <Label htmlFor="region">Kabupaten/Kota</Label>
+                            <select
+                                id="region"
+                                value={regionCode}
+                                onChange={(event) => {
+                                    setRegionCode(event.target.value);
+                                    setDistrictCode('');
+                                }}
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                            >
+                                <option value="">Semua kabupaten/kota</option>
+                                {regions.map((item) => (
+                                    <option key={item.code} value={item.code}>
+                                        {item.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <Label htmlFor="district">Kecamatan</Label>
+                            <select
+                                id="district"
+                                value={districtCode}
+                                disabled={regionCode === ''}
+                                onChange={(event) =>
+                                    setDistrictCode(event.target.value)
+                                }
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                            >
+                                <option value="">Semua kecamatan</option>
+                                {districts
+                                    .filter(
+                                        (item) =>
+                                            item.region_code === regionCode,
+                                    )
+                                    .map((item) => (
+                                        <option
+                                            key={item.code}
+                                            value={item.code}
+                                        >
+                                            {item.name}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
+                        {source === 'digital_ad' && (
+                            <div>
+                                <Label htmlFor="source-channel">
+                                    Kanal digital
+                                </Label>
+                                <select
+                                    id="source-channel"
+                                    value={sourceChannel}
+                                    onChange={(event) =>
+                                        setSourceChannel(event.target.value)
+                                    }
+                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                >
+                                    <option value="">Semua kanal</option>
+                                    {Object.entries(CHANNEL_LABELS).map(
+                                        ([value, label]) => (
+                                            <option key={value} value={value}>
+                                                {label}
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
+                            </div>
+                        )}
+                        <div className="flex items-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isLoading}
+                                onClick={resetFilters}
+                                className="min-h-11"
+                            >
+                                Reset
+                            </Button>
                             <Button
                                 onClick={() => applyFilters()}
                                 disabled={isLoading}
@@ -541,45 +871,76 @@ export default function TransactionsIndex({
                                             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                                                 <div>
                                                     <p className="text-muted-foreground">
-                                                        Sumber
+                                                        Progress
                                                     </p>
-                                                    <p>{transaction.source}</p>
+                                                    <p>
+                                                        {formatDate(
+                                                            transaction.progress_at,
+                                                        )}
+                                                    </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-muted-foreground">
-                                                        Estimasi
+                                                        Sumber
                                                     </p>
                                                     <p>
-                                                        {transaction.estimated_value?.toLocaleString(
-                                                            'id-ID',
-                                                        ) ?? '-'}
+                                                        {sourceLabel(
+                                                            transaction,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Kecamatan
+                                                    </p>
+                                                    <p>
+                                                        {areaLabel(transaction)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Supervisor
+                                                    </p>
+                                                    <p>
+                                                        {supervisorLabel(
+                                                            transaction,
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>
-                                            {renderStageAction(
-                                                transaction,
-                                                true,
-                                            )}
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {renderActions(transaction)}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
 
                                 <div className="hidden overflow-x-auto md:block">
-                                    <table className="w-full min-w-[900px] text-sm">
+                                    <table className="w-full min-w-[1100px] text-sm">
                                         <thead>
                                             <tr className="border-b text-left">
                                                 <th className="p-2">
+                                                    Tanggal Progress
+                                                </th>
+                                                <th className="p-2">
                                                     Pelanggan
                                                 </th>
-                                                <th className="p-2">Model</th>
-                                                <th className="p-2">Sales</th>
+                                                <th className="p-2">
+                                                    Unit yang diminati
+                                                </th>
                                                 <th className="p-2">Tahap</th>
                                                 <th className="p-2">Sumber</th>
                                                 <th className="p-2">
-                                                    Estimasi
+                                                    Kecamatan
+                                                </th>
+                                                <th className="p-2">
+                                                    Sales / Supervisor
                                                 </th>
                                                 <th className="p-2">
                                                     Aktivitas terakhir
+                                                </th>
+                                                <th className="p-2">
+                                                    Keterangan
                                                 </th>
                                                 <th className="p-2">Aksi</th>
                                             </tr>
@@ -589,8 +950,19 @@ export default function TransactionsIndex({
                                                 (transaction) => (
                                                     <tr
                                                         key={transaction.id}
-                                                        className="striped-row border-b"
+                                                        className="striped-row border-b align-top"
                                                     >
+                                                        <td className="p-2 whitespace-nowrap">
+                                                            <span
+                                                                tabIndex={0}
+                                                                title={`Dibuat ${formatDate(transaction.created_at)}`}
+                                                                aria-label={`Progress ${formatDate(transaction.progress_at)}, dibuat ${formatDate(transaction.created_at)}`}
+                                                            >
+                                                                {formatDate(
+                                                                    transaction.progress_at,
+                                                                )}
+                                                            </span>
+                                                        </td>
                                                         <td className="p-2">
                                                             <p className="font-medium">
                                                                 {transaction
@@ -612,10 +984,6 @@ export default function TransactionsIndex({
                                                             }
                                                         </td>
                                                         <td className="p-2">
-                                                            {transaction.sales
-                                                                ?.name ?? '-'}
-                                                        </td>
-                                                        <td className="p-2">
                                                             <StageBadge
                                                                 stage={
                                                                     transaction.current_stage
@@ -627,12 +995,27 @@ export default function TransactionsIndex({
                                                             </StageBadge>
                                                         </td>
                                                         <td className="p-2">
-                                                            {transaction.source}
+                                                            {sourceLabel(
+                                                                transaction,
+                                                            )}
                                                         </td>
                                                         <td className="p-2">
-                                                            {transaction.estimated_value?.toLocaleString(
-                                                                'id-ID',
-                                                            ) ?? '-'}
+                                                            {areaLabel(
+                                                                transaction,
+                                                            )}
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <p>
+                                                                {transaction
+                                                                    .sales
+                                                                    ?.name ??
+                                                                    '-'}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {supervisorLabel(
+                                                                    transaction,
+                                                                )}
+                                                            </p>
                                                         </td>
                                                         <td className="p-2">
                                                             {transaction.last_activity_at
@@ -643,10 +1026,16 @@ export default function TransactionsIndex({
                                                                   )
                                                                 : '-'}
                                                         </td>
+                                                        <td className="max-w-48 p-2 break-words">
+                                                            {transaction.notes ??
+                                                                '-'}
+                                                        </td>
                                                         <td className="table-actions p-2">
-                                                            {renderStageAction(
-                                                                transaction,
-                                                            )}
+                                                            <div className="flex gap-1">
+                                                                {renderActions(
+                                                                    transaction,
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ),
@@ -657,7 +1046,12 @@ export default function TransactionsIndex({
                             </>
                         )}
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <p className="mt-4 text-sm text-muted-foreground">
+                            {transactions.total > 0
+                                ? `Menampilkan ${transactions.from}–${transactions.to} dari ${transactions.total} transaksi`
+                                : 'Tidak ada hasil'}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
                             {transactions.links.map((link, index) => (
                                 <Button
                                     key={index}
@@ -944,6 +1338,113 @@ export default function TransactionsIndex({
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog
+                    open={detailTarget !== null}
+                    onOpenChange={(open) => {
+                        if (!open) setDetailTarget(null);
+                    }}
+                >
+                    <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+                        <DialogHeader>
+                            <DialogTitle>Detail transaksi</DialogTitle>
+                            <DialogDescription>
+                                {detailTarget?.customer?.name} ·{' '}
+                                {detailTarget?.vehicle_model}
+                            </DialogDescription>
+                        </DialogHeader>
+                        {detailState === 'loading' && (
+                            <p role="status" className="text-sm">
+                                Memuat detail…
+                            </p>
+                        )}
+                        {detailState === 'error' && (
+                            <p role="alert" className="text-sm">
+                                Detail belum dapat dimuat.{' '}
+                                <button
+                                    type="button"
+                                    className="underline"
+                                    onClick={() =>
+                                        detailTarget && openDetail(detailTarget)
+                                    }
+                                >
+                                    Coba lagi
+                                </button>
+                            </p>
+                        )}
+                        {detail && detailState === 'idle' && (
+                            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                                {[
+                                    ['Tahap', detail.stage_label],
+                                    ['Dibuat', formatDate(detail.created_at)],
+                                    [
+                                        'Progress',
+                                        formatDate(detail.progress_at),
+                                    ],
+                                    ['Telepon', detail.customer?.phone ?? '-'],
+                                    [
+                                        'Media sosial',
+                                        detail.customer?.social_media_account ??
+                                            '-',
+                                    ],
+                                    ['Sumber', sourceLabel(detail)],
+                                    ['Area', areaLabel(detail, true)],
+                                    ['Pembiayaan', financingLabel(detail)],
+                                    [
+                                        'Estimasi nilai',
+                                        detail.estimated_value?.toLocaleString(
+                                            'id-ID',
+                                        ) ?? '-',
+                                    ],
+                                    [
+                                        'Estimasi closing',
+                                        detail.expected_closing_month ?? '-',
+                                    ],
+                                    ['Keterangan', detail.notes ?? '-'],
+                                    [
+                                        'Area & pembiayaan',
+                                        detail.can_edit_metadata
+                                            ? 'Dapat diubah'
+                                            : 'Terkunci',
+                                    ],
+                                ].map(([term, value]) => (
+                                    <div key={term} className="contents">
+                                        <dt className="text-muted-foreground">
+                                            {term}
+                                        </dt>
+                                        <dd>{value}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        )}
+                        {detail?.history && detailState === 'idle' && (
+                            <div>
+                                <h3 className="mt-2 text-sm font-medium">
+                                    Riwayat
+                                </h3>
+                                <ul className="mt-1 space-y-1 text-sm">
+                                    {detail.history.data.map((entry) => (
+                                        <li key={entry.key}>
+                                            <span className="text-muted-foreground">
+                                                {formatDate(entry.occurred_at)}
+                                            </span>{' '}
+                                            {entry.label}
+                                            {entry.body
+                                                ? ` — ${entry.body}`
+                                                : ''}
+                                        </li>
+                                    ))}
+                                </ul>
+                                {detail.history.last_page > 1 && (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Menampilkan halaman pertama dari{' '}
+                                        {detail.history.total} entri.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>
