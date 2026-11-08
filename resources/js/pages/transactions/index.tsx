@@ -4,7 +4,7 @@ import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, RefreshCw, Search, Truck, Undo2 } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -221,6 +221,24 @@ export default function TransactionsIndex({
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
     const [source, setSource] = useState(filters.source ?? '');
+    // Back/Forward changes the applied filters while the page state is preserved; follow them.
+    useEffect(() => {
+        setSearch(filters.search);
+        setStage(filters.stage);
+        setDateFrom(filters.date_from ?? '');
+        setDateTo(filters.date_to ?? '');
+        setSource(filters.source ?? '');
+        setSalesId(filters.sales_id ? String(filters.sales_id) : '');
+        setCustomerName(filters.customer_name ?? '');
+        setSupervisorId(
+            filters.supervisor_id ? String(filters.supervisor_id) : '',
+        );
+        setRegionCode(filters.region_code ?? '');
+        setDistrictCode(filters.district_code ?? '');
+        setSourceChannel(filters.source_channel ?? '');
+        // Keyed on the content, so paging or Refresh with the same filters keeps an unapplied draft.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(filters)]);
     const [customerName, setCustomerName] = useState(
         filters.customer_name ?? '',
     );

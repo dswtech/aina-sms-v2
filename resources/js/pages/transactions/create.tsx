@@ -73,6 +73,26 @@ export default function TransactionCreate({
     const [saving, setSaving] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [dirty, setDirty] = useState(false);
+    // Refs, not state: the guard below must see "saving" the instant submit starts.
+    const guard = useRef({ dirty: false, saving: false });
+    guard.current.dirty = dirty;
+    useEffect(() => {
+        // Menu links and other in-app visits; our own submit and Kembali are exempt.
+        const off = router.on('before', (event) => {
+            if (
+                guard.current.dirty &&
+                !guard.current.saving &&
+                !window.confirm(
+                    'Perubahan belum disimpan. Tinggalkan halaman ini?',
+                )
+            )
+                event.preventDefault();
+        });
+
+        return () => {
+            off();
+        };
+    }, []);
     const touch =
         <T,>(set: (v: T) => void) =>
         (v: T) => {
@@ -115,6 +135,7 @@ export default function TransactionCreate({
             !window.confirm('Perubahan belum disimpan. Tinggalkan halaman ini?')
         )
             return;
+        guard.current.saving = true; // already confirmed
         if (window.history.length > 1) window.history.back();
         else router.visit('/transactions');
     }
@@ -124,6 +145,7 @@ export default function TransactionCreate({
         if (saving) return;
         const existing = mode === 'existing' ? picked : null;
         setSaving(true);
+        guard.current.saving = true;
         router.post(
             '/transactions',
             {
@@ -144,7 +166,10 @@ export default function TransactionCreate({
             {
                 preserveScroll: true,
                 onStart: () => setSubmitError(''),
-                onFinish: () => setSaving(false),
+                onFinish: () => {
+                    setSaving(false);
+                    guard.current.saving = false;
+                },
                 // The draft lives in component state, so a failed request never loses it.
                 onNetworkError: () => {
                     setSubmitError(

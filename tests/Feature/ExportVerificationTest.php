@@ -29,10 +29,10 @@ function g10ExportDeal(Dealer $dealer, Team $team, User $sales, string $source, 
 function g10ParseCsv(string $csv): array
 {
     $handle = fopen('php://temp', 'w+');
-    fwrite($handle, $csv);
+    fwrite($handle, str_starts_with($csv, "\xEF\xBB\xBF") ? substr($csv, 3) : $csv);
     rewind($handle);
     $rows = [];
-    while (($row = fgetcsv($handle)) !== false) {
+    while (($row = fgetcsv($handle, separator: ';')) !== false) {
         $rows[] = $row;
     }
     fclose($handle);

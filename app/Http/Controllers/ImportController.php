@@ -262,10 +262,6 @@ class ImportController extends Controller
             $errors = [...$errors, ...$exception->validator->errors()->all()];
         }
 
-        if (($record['source'] ?? null) !== 'digital_ad' && ($record['source_channel'] ?? null) !== null) {
-            $errors[] = 'Kanal hanya boleh diisi untuk sumber digital_ad.';
-        }
-
         $phone = (string) ($record['phone'] ?? '');
         if (! PhoneNormalizer::isValid($phone)) {
             $errors[] = 'Nomor telepon tidak valid.';

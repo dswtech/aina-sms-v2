@@ -213,7 +213,7 @@ async function exportsReal(page) {
     const analytics = (await open(`/analytics?period=${monthNow}`)).analytics;
     const analyticsFile = await grab(() => page.getByRole('link', { name: 'Unduh CSV' }).click());
     assert(analyticsFile.name === `analisis-${monthNow}-acquisition.csv`, `analytics CSV file name ${analyticsFile.name}`);
-    const analyticsRows = parseCsv(decode(analyticsFile.buf), ',');
+    const analyticsRows = parseCsv(decode(analyticsFile.buf), ';');
     const at = (title) => analyticsRows.findIndex((r) => r[0] === title);
     const sourceRows = analyticsRows.slice(at('Analisis Sumber') + 2, at('Analisis Model') - 1);
     const modelRows = analyticsRows.slice(at('Analisis Model') + 2).filter((r) => !(r.length === 1 && r[0] === ''));
@@ -224,6 +224,7 @@ async function exportsReal(page) {
     assert(!analyticsRows.flat().some((cell) => forbidden.test(cell)) , 'analytics CSV exposes a forbidden column');
     assert(!leaksContact(analyticsRows), 'analytics CSV leaks contact data');
     const analyticsBom = hasBom(analyticsFile.buf);
+    assert(analyticsBom, 'analytics CSV must start with a UTF-8 BOM');
     checks.push(`analytics CSV ${sourceRows.length}+${modelRows.length} rows, BOM ${analyticsBom}`);
 
     await open('/analytics?period=2000-01');

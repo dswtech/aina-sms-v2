@@ -195,7 +195,7 @@ it('reconciles filtered CSV to screen totals and never accepts caller supplied d
     $query = http_build_query(['period' => '2026-11', 'mode' => 'acquisition', 'dealer_id' => $ledger['foreign']['dealer']->id, 'team_id' => $ledger['other']['team']->id]);
     $response = $this->actingAs($f['supervisor'])->get('/analytics/export.csv?'.$query)->assertOk();
     $csv = $response->streamedContent();
-    $rows = array_map(fn (string $row): array => str_getcsv($row, escape: ''), explode("\n", trim($csv)));
+    $rows = array_map(fn (string $row): array => str_getcsv($row, ';', escape: ''), explode("\n", trim(ltrim($csv, "\xEF\xBB\xBF"))));
     $source = collect($rows)->first(fn (array $row): bool => $row[0] === 'walk_in');
     expect($source)->toBe(['walk_in', '2', '100', '1', '2', '1', '100'])
         ->and($csv)->not->toContain('foreign_dealer', 'other_team', 'JANGAN_KIRIM_CATATAN', $f['customer']->phone);
