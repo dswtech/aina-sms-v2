@@ -47,6 +47,13 @@ return new class extends Migration
                 DB::table('leasing_companies')->insert(['dealer_id' => $dealerId, 'code' => $code, 'name' => $name]);
             }
         }
+        // Temporary owner default: Kabupaten Bandung Barat is FOA until Admin edits it.
+        foreach (DB::table('dealers')->pluck('id') as $dealerId) {
+            DB::statement(
+                'INSERT INTO dealer_foa_districts (dealer_id, district_code) SELECT ?, code FROM area_districts WHERE region_code = ?',
+                [$dealerId, '32.17'],
+            );
+        }
         Schema::table('customers', fn (Blueprint $table) => $table->string('social_media_account')->nullable());
         Schema::table('deal_transactions', function (Blueprint $table): void {
             $table->text('notes')->nullable();

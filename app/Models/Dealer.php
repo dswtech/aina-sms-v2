@@ -17,7 +17,10 @@ class Dealer extends Model
 
     protected static function booted(): void
     {
-        static::created(fn (Dealer $dealer) => TransactionMasters::initialize((int) $dealer->getKey()));
+        static::created(function (Dealer $dealer): void {
+            TransactionMasters::initialize((int) $dealer->getKey());
+            TransactionMasters::initializeFoa((int) $dealer->getKey());
+        });
     }
 
     /**

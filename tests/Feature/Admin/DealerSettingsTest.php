@@ -17,7 +17,9 @@ beforeEach(function () {
 it('renders area and leasing masters for Admin only', function () {
     $this->actingAs($this->admin)->get('/dealer-settings')->assertOk()->assertInertia(fn (Assert $p) => $p
         ->component('dealer-settings/index')
-        ->has('regions', 5)->has('districts', 106)->where('foa', [])->has('leasings', 8));
+        ->has('regions', 5)->has('districts', 106)->has('foa', 16)->has('leasings', 8));
+    // The temporary default is every Kabupaten Bandung Barat district; Admin edits it afterwards.
+    expect(DB::table('dealer_foa_districts')->where('dealer_id', $this->dealer->id)->where('district_code', 'not like', '32.17.%')->count())->toBe(0);
     foreach (['sales', 'supervisor', 'branchManager'] as $role) {
         $this->actingAs(User::factory()->{$role}()->create(['dealer_id' => $this->dealer->id]))->get('/dealer-settings')->assertForbidden();
     }
