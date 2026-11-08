@@ -14,16 +14,22 @@ import {
     getMobileNavigation,
     profileNavItem,
     roleLabels,
+    isNavigationItemActive,
 } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 
 export function MobileBottomNav() {
-    const { auth } = usePage().props;
+    const page = usePage();
+    const { auth } = page.props;
     const { isCurrentUrl } = useCurrentUrl();
     const { primary, more } = getMobileNavigation(auth.user.role);
     const moreItems = [...more, profileNavItem];
-    const moreIsActive = moreItems.some((item) => isCurrentUrl(item.href));
+    const moreIsActive = moreItems.some(
+        (item) =>
+            isCurrentUrl(item.href) &&
+            !primary.some((shortcut) => shortcut.href === item.href),
+    );
 
     return (
         <nav
@@ -75,7 +81,7 @@ export function MobileBottomNav() {
                     </SheetTrigger>
                     <SheetContent
                         side="bottom"
-                        className="rounded-t-[14px] px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+                        className="max-h-[85dvh] overflow-y-auto rounded-t-[14px] px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
                     >
                         <SheetHeader className="px-0 pt-5 text-left">
                             <SheetTitle>Menu lainnya</SheetTitle>
@@ -85,31 +91,78 @@ export function MobileBottomNav() {
                             </SheetDescription>
                         </SheetHeader>
                         <div className="grid gap-1 pt-2">
-                            {moreItems.map((item) => (
-                                <SheetClose key={item.title} asChild>
-                                    <Link
-                                        href={item.href}
-                                        aria-current={
-                                            isCurrentUrl(item.href)
-                                                ? 'page'
-                                                : undefined
-                                        }
-                                        className={cn(
-                                            'flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
-                                            isCurrentUrl(item.href) &&
-                                                'bg-accent text-accent-foreground',
-                                        )}
-                                    >
-                                        {item.icon && (
-                                            <item.icon
-                                                aria-hidden="true"
-                                                className="size-5"
-                                            />
-                                        )}
-                                        {item.title}
-                                    </Link>
-                                </SheetClose>
-                            ))}
+                            {moreItems.flatMap((item) =>
+                                item.children?.length
+                                    ? [
+                                          <div
+                                              key={item.title}
+                                              className="pt-2"
+                                          >
+                                              <p className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                                  {item.icon && (
+                                                      <item.icon
+                                                          aria-hidden="true"
+                                                          className="size-4"
+                                                      />
+                                                  )}
+                                                  {item.title}
+                                              </p>
+                                              {item.children.map((child) => (
+                                                  <SheetClose
+                                                      key={child.title}
+                                                      asChild
+                                                  >
+                                                      <Link
+                                                          href={child.href}
+                                                          aria-current={
+                                                              isNavigationItemActive(
+                                                                  child,
+                                                                  page.url,
+                                                              )
+                                                                  ? 'page'
+                                                                  : undefined
+                                                          }
+                                                          className={cn(
+                                                              'ml-4 flex min-h-12 items-center rounded-lg px-6 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+                                                              isNavigationItemActive(
+                                                                  child,
+                                                                  page.url,
+                                                              ) &&
+                                                                  'bg-accent text-accent-foreground',
+                                                          )}
+                                                      >
+                                                          {child.title}
+                                                      </Link>
+                                                  </SheetClose>
+                                              ))}
+                                          </div>,
+                                      ]
+                                    : [
+                                          <SheetClose key={item.title} asChild>
+                                              <Link
+                                                  href={item.href}
+                                                  aria-current={
+                                                      isCurrentUrl(item.href)
+                                                          ? 'page'
+                                                          : undefined
+                                                  }
+                                                  className={cn(
+                                                      'flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+                                                      isCurrentUrl(item.href) &&
+                                                          'bg-accent text-accent-foreground',
+                                                  )}
+                                              >
+                                                  {item.icon && (
+                                                      <item.icon
+                                                          aria-hidden="true"
+                                                          className="size-5"
+                                                      />
+                                                  )}
+                                                  {item.title}
+                                              </Link>
+                                          </SheetClose>,
+                                      ],
+                            )}
                             <SheetClose asChild>
                                 <Link
                                     href={logout()}

@@ -24,8 +24,8 @@ async function analyticsRecovery(page) {
     const checked = [];
     for (const failure of ['network', 'http']) {
         await page.goto(`${origin}/analytics?period=2001-01`);
-        const period = page.getByLabel('Periode', { exact: true });
-        const original = await period.inputValue();
+        const period = page.getByLabel('Dari bulan', { exact: true });
+        const endPeriod = page.getByLabel('Sampai bulan', { exact: true });
         await period.fill('');
         const source = page.locator('#analisis-sumber tbody tr').first();
         const originalRow = await source.innerText();
@@ -56,6 +56,10 @@ async function analyticsRecovery(page) {
         );
         try {
             await period.fill(next);
+            await endPeriod.fill(next);
+            await page
+                .getByRole('button', { name: 'Tampilkan', exact: true })
+                .click();
             await page
                 .getByRole('status')
                 .filter({ hasText: 'Memuat analisis' })
@@ -70,7 +74,8 @@ async function analyticsRecovery(page) {
             .filter({ hasText: 'data terakhir' })
             .waitFor();
         if (
-            (await period.inputValue()) !== original ||
+            (await period.inputValue()) !== next ||
+            (await endPeriod.inputValue()) !== next ||
             (await source.innerText()) !== originalRow
         )
             throw new Error('Failed request replaced the report');
