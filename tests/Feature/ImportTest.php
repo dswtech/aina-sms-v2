@@ -183,11 +183,14 @@ it('gives clear per row errors without blocking valid rows', function () {
         .'E,081234567894,Avanza,walk_in,csv.core,,,,,,'.str_repeat('x', 256)."\n"
         ."F,081234567895,Avanza,digital_ad,csv.core,tiktok,,,cash,,@f\n";
     importPreview($this, $admin, $csv)->assertInertia(fn (Assert $p) => $p
-        ->where('preview.accepted_count', 1)->where('preview.rejected_count', 5)
-        ->where('preview.rows.0.errors.0', fn ($e) => str_contains($e, 'Kanal'))
+        ->where('preview.accepted_count', 2)->where('preview.rejected_count', 4)
+        ->where('preview.rows.0.valid', true)
+        ->where('preview.rows.3.errors.0', fn ($e) => str_contains(strtolower($e), 'kanal'))
         ->where('preview.rows.5.valid', true));
     $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
-    $this->assertDatabaseCount('deal_transactions', 1);
+    $this->assertDatabaseCount('deal_transactions', 2);
+    // A channel on a non-digital source is cleared, exactly like the manual form.
+    expect(DealTransaction::query()->whereRelation('customer', 'name', 'A')->sole()->source_channel)->toBeNull();
 });
 
 it('keeps a Kredit Lain name when the CSV leaves the leasing id empty', function () {

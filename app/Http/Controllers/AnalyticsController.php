@@ -38,10 +38,13 @@ class AnalyticsController extends Controller
                 return;
             }
 
-            fputcsv($handle, ['Analisis Sumber']);
-            fputcsv($handle, ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)']);
+            // BOM keeps non-ASCII labels intact in Excel; ';' matches the other CSV exports.
+            fwrite($handle, "\xEF\xBB\xBF");
+            $put = fn (array $row) => fputcsv($handle, $row, ';');
+            $put(['Analisis Sumber']);
+            $put(['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)']);
             foreach ($data['sources'] as $row) {
-                fputcsv($handle, [
+                $put([
                     $this->csvLabel($row['source']),
                     $row['total'],
                     $row['share'],
@@ -52,11 +55,11 @@ class AnalyticsController extends Controller
                 ]);
             }
 
-            fputcsv($handle, []);
-            fputcsv($handle, ['Analisis Model']);
-            fputcsv($handle, ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery']);
+            $put([]);
+            $put(['Analisis Model']);
+            $put(['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery']);
             foreach ($data['models'] as $row) {
-                fputcsv($handle, [
+                $put([
                     $this->csvLabel($row['model']),
                     $row['total'],
                     $row['share'],
