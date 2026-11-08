@@ -287,6 +287,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ANL-07 | **Cakupan Analisis mengikuti role dan atribusi tim transaksi yang sama dengan dashboard.** Perpindahan Sales tidak memindahkan angka histori transaksi ke tim barunya. Supervisor melihat tim aktif yang ditugaskan kepadanya, Admin melihat dealer, dan Branch Manager melihat drilldown tersanitasi tanpa nomor telepon, alamat, catatan hubungan, atau coaching. Izin laporan tidak memperluas izin operasional atau coaching. | M |
 | ANL-08 | **Analisis dapat diekspor sebagai CSV dan PDF agregat.** Ekspor tidak memuat kontak pelanggan atau isi coaching. | S |
 | ANL-09 | **Analisis Area dan MSCP ditunda sampai prasyarat datanya tersedia.** Area memerlukan lokasi terstruktur; MSCP memerlukan modul leasing dan definisi Market Share Credit Portion yang disetujui. | W |
+| ANL-10 | **Mapping Area mengharuskan area transaksi lengkap sebelum DO.** Kecamatan harus sesuai kabupaten/kotanya; pilihan khusus Kota Lain mewajibkan nama kota dan tidak meminta kecamatan. Laporan DO hanya memuat kecamatan FOA dan Area lain, tanpa kategori kecamatan belum diisi. Implementasi saat ini terbatas pada preview frontend sintetis; penegakan server pada alur DO belum diimplementasikan. | M |
 
 ## 8. Gambaran Model Data
 

@@ -73,7 +73,7 @@ function AreaReport({
             </FilterPanel>
             <section
                 aria-label="Ringkasan Mapping Area"
-                className="grid grid-cols-2 gap-x-6 gap-y-5 border-y py-5 sm:gap-x-10 lg:grid-cols-4"
+                className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-3 sm:gap-x-10 lg:grid-cols-3"
             >
                 {[
                     {
@@ -92,11 +92,6 @@ function AreaReport({
                         label: 'Area lain',
                         value: result.other,
                         hint: 'Kecamatan non-FOA dan Kota Lain',
-                    },
-                    {
-                        label: 'Belum diisi',
-                        value: result.unknown,
-                        hint: 'Kecamatan belum tercatat',
                     },
                 ].map((metric) => (
                     <div key={metric.label} className="min-w-0">
@@ -193,9 +188,7 @@ function AreaReport({
                                         const label =
                                             row.category === 'foa'
                                                 ? row.districtName
-                                                : row.category === 'other'
-                                                  ? 'Area lain'
-                                                  : 'Belum diisi';
+                                                : 'Area lain';
                                         return (
                                             <g key={row.id}>
                                                 {row.count === result.total ? (
@@ -293,8 +286,8 @@ function AreaReport({
                         </div>
                         <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
                             Area lain mencakup seluruh kecamatan non-FOA dan
-                            Kota Lain. Kecamatan yang belum tercatat ditampilkan
-                            terpisah. Persentase dihitung dari seluruh DO sah.
+                            Kota Lain. Area wajib lengkap sebelum DO. Persentase
+                            dihitung dari seluruh DO sah.
                         </p>
                     </section>
                     <section
@@ -330,9 +323,7 @@ function AreaReport({
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         {row.category === 'foa'
                                             ? 'FOA'
-                                            : row.category === 'other'
-                                              ? 'Non-FOA'
-                                              : 'Belum diisi'}{' '}
+                                            : 'Non-FOA'}{' '}
                                         · {percentage(row.count, result.total)}
                                     </p>
                                 </div>
@@ -395,9 +386,7 @@ function AreaReport({
                                         <td className="px-3 py-3">
                                             {row.category === 'foa'
                                                 ? 'FOA'
-                                                : row.category === 'other'
-                                                  ? 'Non-FOA'
-                                                  : 'Belum diisi'}
+                                                : 'Non-FOA'}
                                         </td>
                                         <td className="px-3 py-3 text-right tabular-nums">
                                             {row.count}

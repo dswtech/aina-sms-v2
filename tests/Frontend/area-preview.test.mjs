@@ -140,26 +140,26 @@ test('FOA snapshots preserve DO classification after master changes and distingu
         };
     });
     const labels = summarizeArea(rows, '2026-11', '2026-11')
-        .rows.slice(0, -2)
+        .rows.slice(0, -1)
         .map((row) => row.name);
     assert.equal(new Set(labels).size, 2);
 });
 
-test('DO area totals reconcile with financing fixtures; non-FOA and Kota Lain group together, unknown remains separate', () => {
+test('DO area totals reconcile with financing fixtures; non-FOA and Kota Lain group together, all DO areas are complete', () => {
     const deals = buildAreaDeals(syntheticDeals, areaDistricts, areaRegions);
     const result = summarizeArea(deals, '2026-10', '2026-11');
     assert.equal(
         result.total,
         syntheticDeals.filter((row) => row.doMonth).length,
     );
-    assert.equal(result.foa + result.other + result.unknown, result.total);
+    assert.equal(result.foa + result.other, result.total);
     assert.equal(
         result.rows.reduce((sum, row) => sum + row.count, 0),
         result.total,
     );
     assert.deepEqual(
-        result.rows.slice(-2).map((row) => row.id),
-        ['other', 'unknown'],
+        result.rows.slice(-1).map((row) => row.id),
+        ['other'],
     );
     const cancelled = {
         ...deals.find((row) => row.doMonth),
@@ -171,5 +171,52 @@ test('DO area totals reconcile with financing fixtures; non-FOA and Kota Lain gr
         result.total,
     );
     assert.equal(summarizeArea(deals, '2026-12', '2026-12').total, 0);
-    assert.ok(result.other > 0 && result.unknown > 0 && result.foa > 0);
+    assert.ok(result.other > 0 && result.foa > 0);
+});
+
+test('DO snapshot requires a completed area while Prospect may remain empty', () => {
+    const empty = { regionCode: null, districtCode: null, otherCity: '' };
+    const codes = new Set(initialFoaCodes(areaDistricts));
+    assert.deepEqual(
+        updateAreaDeal(
+            { id: 1, area: empty, snapshot: null },
+            empty,
+            areaDistricts,
+            areaRegions,
+        ).area,
+        empty,
+    );
+    assert.throws(
+        () => snapshotArea(empty, codes, areaDistricts, areaRegions),
+        /wajib.*DO/i,
+    );
+    const other = snapshotArea(
+        { regionCode: 'other', districtCode: null, otherCity: 'Cianjur' },
+        codes,
+        areaDistricts,
+        areaRegions,
+    );
+    assert.equal(other.otherCity, 'Cianjur');
+    const deals = buildAreaDeals(syntheticDeals, areaDistricts, areaRegions);
+    assert.ok(
+        deals
+            .filter((row) => row.doMonth)
+            .every(
+                (row) =>
+                    row.snapshot &&
+                    (row.snapshot.districtCode || row.snapshot.otherCity),
+            ),
+    );
+    const report = summarizeArea(deals, '2026-11', '2026-11');
+    assert.equal(report.foa + report.other, report.total);
+    assert.ok(!report.rows.some((row) => row.id === 'unknown'));
+    assert.throws(
+        () =>
+            summarizeArea(
+                [{ id: 999, area: empty, doMonth: '2026-11', snapshot: null }],
+                '2026-11',
+                '2026-11',
+            ),
+        /area.*DO/i,
+    );
 });

@@ -425,8 +425,9 @@ export function AreaTransactionPreview({
                     <DialogTitle>Area pelanggan pada transaksi</DialogTitle>
                     <DialogDescription>
                         Data contoh. Field ini direncanakan berada di detail
-                        transaksi, dengan acuan alamat KTP/STNK. Tidak menyimpan
-                        ke server.
+                        transaksi, dengan acuan alamat KTP/STNK. Kecamatan wajib
+                        lengkap sebelum DO; Kota Lain wajib nama kota. Tidak
+                        menyimpan ke server.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2">

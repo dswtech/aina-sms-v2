@@ -71,6 +71,7 @@ export function snapshotArea(
     regions: AreaRegion[],
 ): AreaSnapshot {
     const area = normalizeArea(choice, districts, regions);
+    if (!area.regionCode) throw new Error('Area wajib dilengkapi sebelum DO.');
     const district = districts.find((row) => row.code === area.districtCode);
     return {
         ...area,
@@ -128,7 +129,7 @@ export function buildAreaDeals(
                       districtCode: null,
                       otherCity: 'Cianjur',
                   }
-                : slot === 11
+                : slot === 11 && !deal.doMonth
                   ? { ...emptyArea }
                   : {
                         regionCode: district.regionCode,
@@ -161,24 +162,30 @@ export function summarizeArea(deals: AreaDeal[], from: string, to: string) {
             name: string;
             districtName: string;
             regionName: string;
-            category: 'foa' | 'other' | 'unknown';
+            category: 'foa' | 'other';
             count: number;
         }
     >();
     let foa = 0,
-        other = 0,
-        unknown = 0;
+        other = 0;
     for (const deal of valid) {
         const area = deal.snapshot;
-        const missing = !area || (!area.districtCode && !area.otherCity);
-        const category = missing ? 'unknown' : area.isFoa ? 'foa' : 'other';
+        if (
+            !area ||
+            (area.regionCode === 'other'
+                ? !area.otherCity.trim()
+                : !area.regionCode ||
+                  !area.districtCode ||
+                  !area.districtName ||
+                  !area.regionName)
+        )
+            throw new Error('Area transaksi DO wajib lengkap.');
+        const category = area.isFoa ? 'foa' : 'other';
         const id = category === 'foa' ? area!.districtCode! : category;
         const name =
             category === 'foa'
                 ? `${area!.districtName} · ${area!.regionName.replace('Kabupaten', 'Kab.')}`
-                : category === 'other'
-                  ? 'Area lain'
-                  : 'Kecamatan belum diisi';
+                : 'Area lain';
         const group = groups.get(id) ?? {
             id,
             name,
@@ -190,8 +197,7 @@ export function summarizeArea(deals: AreaDeal[], from: string, to: string) {
         group.count++;
         groups.set(id, group);
         if (category === 'foa') foa++;
-        else if (category === 'other') other++;
-        else unknown++;
+        else other++;
     }
     if (!groups.has('other'))
         groups.set('other', {
@@ -202,22 +208,12 @@ export function summarizeArea(deals: AreaDeal[], from: string, to: string) {
             category: 'other',
             count: 0,
         });
-    if (!groups.has('unknown'))
-        groups.set('unknown', {
-            id: 'unknown',
-            name: 'Kecamatan belum diisi',
-            districtName: '',
-            regionName: '',
-            category: 'unknown',
-            count: 0,
-        });
-    const rank = (id: string) =>
-        id === 'other' ? 1 : id === 'unknown' ? 2 : 0;
+    const rank = (id: string) => (id === 'other' ? 1 : 0);
     const rows = [...groups.values()].sort(
         (a, b) =>
             rank(a.id) - rank(b.id) ||
             b.count - a.count ||
             a.name.localeCompare(b.name, 'id'),
     );
-    return { total: valid.length, foa, other, unknown, rows };
+    return { total: valid.length, foa, other, rows };
 }
