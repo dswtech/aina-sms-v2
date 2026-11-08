@@ -6,6 +6,9 @@ async function transactionsFinancingRoles(page) {
     if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin))
         throw new Error('Expected the isolated G11 server');
     page.setDefaultTimeout(10000);
+    // Earlier scripts share this browser page: drop their interceptors and offline mode.
+    if (page.unrouteAll) await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await page.context().setOffline(false);
 
     const viewports = [
         { width: 1440, height: 900 },
@@ -38,8 +41,15 @@ async function transactionsFinancingRoles(page) {
 
     const login = async (username) => {
         await page.context().clearCookies();
-        await page.goto(`${origin}/login`);
-        await page.getByLabel('Username').fill(username);
+        const field = page.getByLabel('Username');
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await page.goto(`${origin}/login`, { waitUntil: 'load' });
+            if (await field.waitFor({ timeout: 15000 }).then(() => true, () => false))
+                break;
+        }
+        if (!(await field.count()))
+            throw new Error(`Login form missing at ${page.url()} (${await page.title()})`);
+        await field.fill(username);
         await page.locator('input[name="password"]').fill('password');
         await page.locator('[data-test="login-button"]').click();
         await page.waitForURL('**/dashboard');
