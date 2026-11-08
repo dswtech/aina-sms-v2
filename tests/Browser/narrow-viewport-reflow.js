@@ -26,7 +26,7 @@ async function narrowViewportReflow(page) {
             '/dashboard',
             '/customers',
             '/analytics?period=2001-01',
-            '/transactions?search=G11%20Report%20Model',
+            '/transactions?search=G11%20Report%20Model&date_from=&date_to=',
         ]) {
             const url = `${origin}${path}`;
             const response = await page.goto(url);
