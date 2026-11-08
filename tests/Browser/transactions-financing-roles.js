@@ -40,9 +40,11 @@ async function transactionsFinancingRoles(page) {
     page.on('pageerror', onPageError);
 
     const login = async (username) => {
-        await page.context().clearCookies();
         const field = page.getByLabel('Username');
         for (let attempt = 0; attempt < 2; attempt++) {
+            // Leave the app first: an in-flight request from the old page could re-set the session cookie.
+            await page.goto('about:blank');
+            await page.context().clearCookies();
             await page.goto(`${origin}/login`, { waitUntil: 'load' });
             if (await field.waitFor({ timeout: 15000 }).then(() => true, () => false))
                 break;
