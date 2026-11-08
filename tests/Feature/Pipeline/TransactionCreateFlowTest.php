@@ -98,3 +98,19 @@ it('shows a detail payload only for visible transactions, with locking flag afte
     $stranger = User::factory()->sales()->create(['dealer_id' => $this->dealer->id]);
     $this->actingAs($stranger)->getJson("/transactions/{$deal->public_id}")->assertForbidden();
 });
+
+it('preselects an accessible customer with an active assignment from the customer query', function () {
+    $mine = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'name' => 'Sari Dewi', 'social_media_account' => '@sari']);
+    $mine->assignTo($this->sales);
+    $other = User::factory()->sales()->create(['dealer_id' => $this->dealer->id]);
+    $theirs = Customer::factory()->create(['dealer_id' => $this->dealer->id]);
+    $theirs->assignTo($other);
+    $unassigned = Customer::factory()->create(['dealer_id' => $this->dealer->id]);
+
+    $this->actingAs($this->sales)->get('/transactions/create?customer='.$mine->public_id)->assertInertia(fn (Assert $p) => $p
+        ->where('preselected.public_id', $mine->public_id)->where('preselected.social_media_account', '@sari')
+        ->where('preselected.assigned_sales.name', $this->sales->name));
+    foreach ([$theirs->public_id, $unassigned->public_id, 'not-a-uuid'] as $id) {
+        $this->get('/transactions/create?customer='.$id)->assertInertia(fn (Assert $p) => $p->where('preselected', null));
+    }
+});

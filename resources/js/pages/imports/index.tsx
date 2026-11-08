@@ -26,6 +26,17 @@ type PreviewRow = {
     valid: boolean;
 };
 
+const sourceText = (d: PreviewRow['data']) =>
+    [d.source, d.source_channel].filter(Boolean).join(' / ') || '—';
+const areaText = (d: PreviewRow['data']) =>
+    [d.region_code, d.district_code, d.other_city]
+        .filter(Boolean)
+        .join(' / ') || '—';
+const financingText = (d: PreviewRow['data']) =>
+    [d.financing_type, d.leasing_id, d.financing_other_name]
+        .filter(Boolean)
+        .join(' / ') || '—';
+
 type Preview = {
     batch_id: number;
     filename: string;
@@ -264,6 +275,18 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                                 {row.data.sales_username || '—'}
                                             </dd>
                                             <dt className="text-muted-foreground">
+                                                Sumber
+                                            </dt>
+                                            <dd>{sourceText(row.data)}</dd>
+                                            <dt className="text-muted-foreground">
+                                                Area
+                                            </dt>
+                                            <dd>{areaText(row.data)}</dd>
+                                            <dt className="text-muted-foreground">
+                                                Biaya
+                                            </dt>
+                                            <dd>{financingText(row.data)}</dd>
+                                            <dt className="text-muted-foreground">
                                                 Status
                                             </dt>
                                             <dd className="min-w-0">
@@ -274,7 +297,7 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                 ))}
                             </ul>
                             <div className="hidden overflow-x-auto md:block">
-                                <table className="w-full min-w-[720px] text-sm">
+                                <table className="w-full min-w-[960px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
                                             <th className="p-2">Baris</th>
@@ -282,6 +305,9 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                             <th className="p-2">Telepon</th>
                                             <th className="p-2">Model</th>
                                             <th className="p-2">Sales</th>
+                                            <th className="p-2">Sumber</th>
+                                            <th className="p-2">Area</th>
+                                            <th className="p-2">Pembiayaan</th>
                                             <th className="p-2">Status</th>
                                         </tr>
                                     </thead>
@@ -305,6 +331,15 @@ export default function ImportsIndex({ batches, preview }: Props) {
                                                 </td>
                                                 <td className="p-2">
                                                     {row.data.sales_username}
+                                                </td>
+                                                <td className="p-2">
+                                                    {sourceText(row.data)}
+                                                </td>
+                                                <td className="p-2">
+                                                    {areaText(row.data)}
+                                                </td>
+                                                <td className="p-2">
+                                                    {financingText(row.data)}
                                                 </td>
                                                 <td className="p-2">
                                                     <PreviewStatus row={row} />

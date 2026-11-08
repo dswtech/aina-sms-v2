@@ -8,6 +8,7 @@ use App\Models\TeamMembership;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 // The launcher must supply a new, empty SQLite file in the system temp directory.
 $database = realpath(getenv('DB_DATABASE') ?: '');
@@ -59,4 +60,20 @@ foreach (['Ship', 'Cancel'] as $scenario) {
         'current_stage' => PipelineStage::Spk,
         'region_code' => '32.17', 'district_code' => '32.17.08',
     ]);
+}
+
+// Transactions/financing/area fixtures. Names avoid the "G11 DO ..." prefix mutated by do-workflow.js.
+User::factory()->branchManager()->create(['dealer_id' => $sales->dealer_id, 'username' => 'g11.bm']);
+$db = fn (string $table) => DB::table($table);
+$db('dealer_foa_districts')->insertOrIgnore(['dealer_id' => $sales->dealer_id, 'district_code' => '32.17.08']);
+$leasingId = $db('leasing_companies')->where('dealer_id', $sales->dealer_id)->orderBy('id')->value('id');
+$fixtureAdmin = User::query()->where('username', 'g11.admin')->firstOrFail();
+foreach (['Fin Do' => 'credit', 'Fin Cash' => 'cash'] as $label => $type) {
+    $deal = DealTransaction::create([
+        'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
+        'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 {$label}", 'source' => 'walk_in',
+        'current_stage' => PipelineStage::Spk, 'region_code' => '32.17', 'district_code' => '32.17.08',
+        'financing_type' => $type, 'leasing_id' => $type === 'credit' ? $leasingId : null,
+    ]);
+    $deal->transitionTo(PipelineStage::Do, $fixtureAdmin, null, ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
 }

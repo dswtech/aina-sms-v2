@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -315,6 +316,14 @@ class TransactionController extends Controller
         $actor = $request->user();
         abort_unless($actor->can('create', Customer::class), 403);
         $teamId = $actor->role === UserRole::Sales ? $actor->activeTeamMemberships()->value('team_id') : null;
+        // Entry from the Customers page: same visibility and assignment rules as the search.
+        $preselected = null;
+        $requested = $request->query('customer');
+        if (is_string($requested) && Str::isUuid($requested)) {
+            $found = Customer::query()->visibleTo($actor)->whereHas('activeAssignment')
+                ->with('activeAssignment.sales:id,name')->where('public_id', $requested)->first();
+            $preselected = $found !== null ? $this->customerCard($found) : null;
+        }
 
         return Inertia::render('transactions/create', [
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
@@ -322,6 +331,7 @@ class TransactionController extends Controller
             'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'sources' => array_map(fn (string $value, string $label): array => compact('value', 'label'), array_keys(self::SOURCES), self::SOURCES),
             'assignableSales' => $this->assignableSales($actor),
+            'preselected' => $preselected,
             'supervisors' => $teamId === null ? [] : $this->supervisorsByTeam([(int) $teamId])[$teamId] ?? [],
         ]);
     }
@@ -335,6 +345,16 @@ class TransactionController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Transaksi untuk {$customer->name} berhasil disimpan."]);
 
         return redirect()->route('transactions.index');
+    }
+
+    /** @return array<string, mixed> */
+    private function customerCard(Customer $c): array
+    {
+        return [
+            'public_id' => $c->public_id, 'name' => $c->name, 'phone' => $c->phone,
+            'social_media_account' => $c->social_media_account,
+            'assigned_sales' => ['name' => $c->activeAssignment?->sales?->name],
+        ];
     }
 
     public function customerSearch(Request $request): JsonResponse
@@ -354,11 +374,7 @@ class TransactionController extends Controller
         $page = $query->paginate(10, ['id', 'public_id', 'name', 'phone', 'social_media_account']);
 
         return response()->json([
-            'data' => $page->getCollection()->map(fn (Customer $c): array => [
-                'public_id' => $c->public_id, 'name' => $c->name, 'phone' => $c->phone,
-                'social_media_account' => $c->social_media_account,
-                'assigned_sales' => ['name' => $c->activeAssignment?->sales?->name],
-            ])->all(),
+            'data' => $page->getCollection()->map(fn (Customer $c): array => $this->customerCard($c))->all(),
             'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(),
         ]);
     }

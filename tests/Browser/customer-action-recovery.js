@@ -12,16 +12,14 @@ async function customerActionRecovery(page) {
     await page.locator('input[name="password"]').fill('password');
     await page.locator('[data-test="login-button"]').click();
     await page.waitForURL('**/dashboard');
-    await page.goto(origin + '/customers');
-    await page.getByRole('button', { name: 'Tambah Lead Baru' }).click();
-    const lead = page.getByRole('dialog', { name: 'Tambah Lead Baru' });
-    await lead.locator('#lead-name').fill('G11 Customer Recovery');
-    await lead.locator('#lead-phone').fill('081234567866');
-    await lead.locator('#lead-model').fill('G11 Recovery Model');
-    await lead
-        .getByRole('button', { name: 'Simpan Lead', exact: true })
+    await page.goto(origin + '/transactions/create');
+    await page.locator('#name').fill('G11 Customer Recovery');
+    await page.locator('#phone').fill('081234567866');
+    await page.locator('#model').fill('G11 Recovery Model');
+    await page
+        .getByRole('button', { name: 'Simpan transaksi', exact: true })
         .click();
-    await lead.waitFor({ state: 'hidden' });
+    await page.waitForURL(/\/transactions(\?|$)/);
     await page.goto(origin + '/customers?search=G11%20Customer%20Recovery');
     const checked = [];
     for (const action of ['activity', 'followup']) {

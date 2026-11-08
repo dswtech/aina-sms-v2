@@ -21,22 +21,25 @@ async function leadServerSave(page) {
         .getByText('G11 Synthetic Sales', { exact: true })
         .first()
         .waitFor();
-    const addLead = page.getByRole('button', { name: 'Tambah Lead Baru' });
-    await addLead.click();
-    const dialog = page.getByRole('dialog', { name: 'Tambah Lead Baru' });
-    await dialog.locator('#lead-name').fill('G11 Lead Persisted');
-    await dialog.locator('#lead-phone').fill('081234567899');
-    await dialog.locator('#lead-model').fill('G11 Test Model');
-    const save = dialog.getByRole('button', {
-        name: 'Simpan Lead',
+    // Pelanggan -> the shared create form (no second storage path).
+    await page.getByRole('link', { name: 'Tambah Lead Baru' }).click();
+    await page.waitForURL('**/transactions/create');
+    await page.locator('#name').fill('G11 Lead Persisted');
+    await page.locator('#phone').fill('081234567899');
+    await page.locator('#model').fill('G11 Test Model');
+    const save = page.getByRole('button', {
+        name: 'Simpan transaksi',
         exact: true,
     });
     await page.context().setOffline(true);
     try {
         await save.click();
-        await dialog.getByText('Koneksi terputus.', { exact: false }).waitFor();
+        await page
+            .getByRole('alert')
+            .filter({ hasText: 'Koneksi terputus.' })
+            .waitFor();
         assert(
-            (await dialog.locator('#lead-name').inputValue()) ===
+            (await page.locator('#name').inputValue()) ===
                 'G11 Lead Persisted',
             'Offline attempt lost the draft',
         );
@@ -46,7 +49,7 @@ async function leadServerSave(page) {
     const [saved] = await Promise.all([
         page.waitForResponse(
             (response) =>
-                new URL(response.url()).pathname === '/customers' &&
+                new URL(response.url()).pathname === '/transactions' &&
                 response.request().method() === 'POST',
         ),
         save.click(),
@@ -55,7 +58,31 @@ async function leadServerSave(page) {
         [302, 303].includes(saved.status()),
         `Lead write returned ${saved.status()}`,
     );
-    await dialog.waitFor({ state: 'hidden' });
+    await page.waitForURL(/\/transactions(\?|$)/);
+
+    // Same number again: the form keeps the draft, explains, and offers the existing-customer path.
+    await page.goto(`${origin}/transactions/create`);
+    await page.locator('#name').fill('G11 Duplicate Name');
+    await page.locator('#phone').fill('081234567899');
+    await page.locator('#model').fill('G11 Test Model');
+    await save.click();
+    await page.getByText('Nomor telepon sudah terdaftar', { exact: false }).waitFor();
+    assert(
+        (await page.locator('#name').inputValue()) === 'G11 Duplicate Name',
+        'Duplicate error lost the draft',
+    );
+    await page
+        .getByRole('button', { name: 'Cari sebagai Pelanggan Lama' })
+        .click();
+    await page
+        .getByRole('button', { name: /G11 Lead Persisted/ })
+        .first()
+        .click();
+    await Promise.all([
+        page.waitForURL(/\/transactions(\?|$)/),
+        save.click(),
+    ]);
+    await page.goto(`${origin}/customers`);
     await page.reload();
     await page
         .getByText('G11 Lead Persisted', { exact: true })
