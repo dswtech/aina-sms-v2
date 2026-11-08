@@ -57,5 +57,6 @@ foreach (['Ship', 'Cancel'] as $scenario) {
         'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
         'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 DO {$scenario}", 'source' => 'walk_in',
         'current_stage' => PipelineStage::Spk,
+        'region_code' => '32.17', 'district_code' => '32.17.08',
     ]);
 }

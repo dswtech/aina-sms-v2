@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use App\Services\TransactionSnapshots;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -35,6 +36,8 @@ use InvalidArgumentException;
  * @property-read bool $is_stagnant
  */
 #[Fillable([
+    'notes', 'source_channel', 'region_code', 'district_code', 'other_city',
+    'financing_type', 'leasing_id', 'financing_other_name', 'progress_at',
     'public_id',
     'dealer_id',
     'customer_id',
@@ -63,6 +66,7 @@ class DealTransaction extends Model
             if (empty($deal->public_id)) {
                 $deal->public_id = (string) Str::uuid();
             }
+            $deal->progress_at ??= $deal->created_at ?? now();
             if ($deal->last_activity_at === null) {
                 $deal->last_activity_at = now();
             }
@@ -216,6 +220,11 @@ class DealTransaction extends Model
             if ($fromStage->isClosed() && $toStage !== PipelineStage::Delivery) {
                 throw new InvalidArgumentException('Tahap transaksi yang selesai terkunci.');
             }
+            if ($fromStage === $toStage) {
+                throw new InvalidArgumentException('Tahap tujuan harus berbeda dari tahap saat ini.');
+            }
+            $snapshots = $toStage === PipelineStage::Do ? TransactionSnapshots::capture($this) : [];
+            $this->progress_at = now();
             $this->current_stage = $toStage;
             $this->last_activity_at = now();
 
@@ -242,6 +251,7 @@ class DealTransaction extends Model
                 'notes' => $notes,
                 'created_at' => now(),
                 ...$checklist,
+                ...$snapshots,
             ]);
         });
     }
@@ -315,6 +325,7 @@ class DealTransaction extends Model
             'lost_reason' => LostReason::class,
             'booking_fee_confirmed_at' => 'datetime',
             'last_activity_at' => 'datetime',
+            'progress_at' => 'datetime',
         ];
     }
 }

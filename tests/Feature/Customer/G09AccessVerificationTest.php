@@ -27,6 +27,7 @@ beforeEach(function () {
     $this->customer = Customer::factory()->create(['dealer_id' => $this->dealer->id]);
     $this->customer->assignTo($this->sales, $this->supervisor);
     $this->deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $this->dealer->id, 'customer_id' => $this->customer->id,
         'sales_id' => $this->sales->id, 'team_id' => $this->team->id,
         'vehicle_model' => 'G09', 'current_stage' => PipelineStage::Prospect,

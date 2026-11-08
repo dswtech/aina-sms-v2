@@ -15,12 +15,12 @@ use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
 use App\Models\DealComment;
-use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Services\CreateLeadTransaction;
 use App\Services\CustomerDuplicateDetector;
 use App\Support\AuditRecorder;
 use App\Support\PhoneNormalizer;
@@ -242,42 +242,14 @@ class CustomerController extends Controller
         $dealerId = (int) $actor->dealer_id;
 
         $validated = $request->validated();
-        $customer = DB::transaction(function () use ($actor, $dealerId, $validated, $detector, $request): Customer {
-            // The same dealer lock serializes manual creation and CSV imports.
-            Dealer::query()->whereKey($dealerId)->lockForUpdate()->firstOrFail();
-            if (isset($validated['existing_customer_id'])) {
-                $customer = Customer::query()->where('dealer_id', $dealerId)
-                    ->where('phone', PhoneNormalizer::normalize($validated['phone']))
-                    ->where('public_id', $validated['existing_customer_id'])->lockForUpdate()->first();
-                if ($customer === null) {
-                    throw ValidationException::withMessages(['existing_customer_id' => 'Pelanggan tidak cocok dengan nomor ini. Periksa kembali.']);
-                }
-                $this->authorize('update', $customer);
-                $this->createLeadTransaction($actor, $customer, $validated);
-
-                return $customer;
-            }
-            if ($detector->check($dealerId, $validated['phone'])->hasDuplicate) {
+        try {
+            $customer = app(CreateLeadTransaction::class)->createCustomerLead($actor, $validated);
+        } catch (ValidationException $exception) {
+            if (isset($exception->errors()['duplicate_customer'])) {
                 $request->session()->flash('duplicate_lead_phone', $validated['phone']);
-                throw ValidationException::withMessages(['duplicate_customer' => 'Nomor telepon sudah terdaftar. Periksa pelanggan sebelum menyimpan.']);
             }
-            $sales = $this->resolveLeadSales($actor, $validated);
-            $customer = Customer::create([
-                'dealer_id' => $dealerId,
-                'created_by_id' => $actor->id,
-                'name' => $validated['name'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'contact_channel_preference' => $validated['contact_channel_preference'] ?? null,
-                'opt_out' => $validated['opt_out'] ?? false,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-            $customer->assignTo($sales, $actor, 'Penugasan saat pembuatan lead');
-            $this->createLeadTransaction($actor, $customer, $validated);
-
-            return $customer;
-        });
+            throw $exception;
+        }
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -363,7 +335,7 @@ class CustomerController extends Controller
 
         $validated = $request->validated();
 
-        $this->createLeadTransaction($actor, $customer, $validated);
+        app(CreateLeadTransaction::class)->createLeadTransaction($actor, $customer, $validated);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -371,67 +343,6 @@ class CustomerController extends Controller
         ]);
 
         return back();
-    }
-
-    /** @param array<string, mixed> $validated */
-    private function resolveLeadSales(User $actor, array $validated): User
-    {
-        $role = $actor->role;
-        $dealerId = $actor->dealer_id;
-        $salesId = $role === UserRole::Sales ? $actor->id : (int) $validated['sales_id'];
-        // Membership administration also locks users before changing placement.
-        User::query()->where('dealer_id', $dealerId)->whereIn('id', [$actor->id, $salesId])->orderBy('id')->lockForUpdate()->get();
-        $actor->refresh();
-        abort_unless($actor->is_active && $actor->role === $role && $actor->dealer_id === $dealerId, 403);
-        $sales = User::query()->whereKey($salesId)->where('dealer_id', $dealerId)->where('role', UserRole::Sales)->where('is_active', true)->first();
-        $allowed = $sales !== null;
-        if ($allowed && $role === UserRole::Supervisor) {
-            $teamIds = $actor->activeTeamMemberships()->where('role', UserRole::Supervisor)->select('team_id');
-            $allowed = $sales->activeTeamMemberships()->where('role', UserRole::Sales)->whereIn('team_id', $teamIds)
-                ->whereHas('team', fn ($query) => $query->where('is_active', true))->exists();
-        }
-        if (! $allowed) {
-            throw ValidationException::withMessages(['sales_id' => 'Pilih Sales aktif dalam cakupan Anda.']);
-        }
-
-        return $sales;
-    }
-
-    /** @param array<string, mixed> $validated */
-    private function createLeadTransaction(User $actor, Customer $customer, array $validated): DealTransaction
-    {
-        $sales = $customer->assignedSales ?? $actor;
-        if ($sales->role !== UserRole::Sales || ! $sales->is_active) {
-            throw ValidationException::withMessages(['sales_id' => 'Pelanggan harus memiliki penugasan Sales aktif sebelum transaksi dibuat.']);
-        }
-        $membership = $sales->activeTeamMemberships()->where('role', UserRole::Sales)->with('team')->first();
-        if ($membership !== null && ! $membership->team->is_active) {
-            throw ValidationException::withMessages(['sales_id' => 'Tim Sales tidak aktif. Perbarui penempatan sebelum membuat transaksi.']);
-        }
-
-        return DB::transaction(function () use ($actor, $customer, $sales, $membership, $validated): DealTransaction {
-            $deal = $customer->transactions()->create([
-                'dealer_id' => $customer->dealer_id,
-                'sales_id' => $sales->id,
-                'team_id' => $membership?->team_id,
-                'vehicle_model' => $validated['vehicle_model'],
-                'estimated_value' => $validated['estimated_value'] ?? null,
-                'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
-                'source' => $validated['source'],
-                'current_stage' => PipelineStage::Lead,
-                'last_activity_at' => now(),
-            ]);
-
-            $deal->stageHistories()->create([
-                'from_stage' => null,
-                'to_stage' => PipelineStage::Lead,
-                'actor_id' => $actor->id,
-                'notes' => $validated['notes'] ?? 'Transaksi baru dibuat',
-                'created_at' => now(),
-            ]);
-
-            return $deal;
-        });
     }
 
     public function reassign(ReassignCustomerRequest $request, Customer $customer): RedirectResponse
@@ -554,7 +465,7 @@ class CustomerController extends Controller
             ]);
             $original = $this->assertCurrentDoEvent($locked, (int) $validated['do_event_id']);
 
-            $locked->forceFill(['current_stage' => PipelineStage::Spk, 'last_activity_at' => now()])->save();
+            $locked->forceFill(['current_stage' => PipelineStage::Spk, 'last_activity_at' => now(), 'progress_at' => now()])->save();
             $locked->stageHistories()->create([
                 'from_stage' => PipelineStage::Do,
                 'to_stage' => PipelineStage::Spk,

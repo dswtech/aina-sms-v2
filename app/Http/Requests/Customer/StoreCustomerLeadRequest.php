@@ -4,6 +4,7 @@ namespace App\Http\Requests\Customer;
 
 use App\Enums\UserRole;
 use App\Models\Customer;
+use App\Services\TransactionMetadata;
 use App\Support\PhoneNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -21,6 +22,7 @@ class StoreCustomerLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...TransactionMetadata::rules(),
             'existing_customer_id' => ['nullable', 'uuid'],
             'sales_id' => $this->user()?->role === UserRole::Sales
                 ? ['prohibited']

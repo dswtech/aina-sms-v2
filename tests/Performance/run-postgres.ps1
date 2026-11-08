@@ -3,7 +3,8 @@ param(
     [string] $Profile = 'pilot',
     [ValidateSet('128M', '512M')]
     [string] $MemoryLimit = '512M',
-    [switch] $BenchmarkOnly
+    [switch] $BenchmarkOnly,
+    [switch] $SkipBenchmark
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,6 +17,14 @@ $listener.Stop()
 $started = $false
 
 function Invoke-Checked([string] $Command, [string[]] $Arguments) {
+    if ($Command -eq 'pg_ctl') {
+        # Wait for pg_ctl itself; -Wait also waits for its long-lived server process on Windows.
+        $quoted = $Arguments | ForEach-Object { '"' + $_.Replace('"', '\"') + '"' }
+        $pgProcess = Start-Process -FilePath (Get-Command pg_ctl).Source -ArgumentList $quoted -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $cluster 'pg-ctl.out') -RedirectStandardError (Join-Path $cluster 'pg-ctl.err')
+        if (!$pgProcess.WaitForExit(30000)) { throw "pg_ctl timed out" }
+        if ($pgProcess.ExitCode -ne 0) { throw "pg_ctl failed: $(Get-Content (Join-Path $cluster 'pg-ctl.err') -Raw)" }
+        return
+    }
     & $Command @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Command failed with exit code $LASTEXITCODE" }
 }
@@ -54,9 +63,11 @@ try {
         Invoke-Checked php @('vendor/bin/pest', 'tests/Performance/PostgresImportConcurrencyTest.php', '--compact')
     }
 
-    $env:DB_DATABASE = 'aina_g13_benchmark'
-    Invoke-Checked createdb ($client + $env:DB_DATABASE)
-    Invoke-Checked php @('-d', "memory_limit=$MemoryLimit", 'vendor/bin/pest', 'tests/Performance/PostgresVolumeTest.php', '--compact')
+    if (!$SkipBenchmark) {
+        $env:DB_DATABASE = 'aina_g13_benchmark'
+        Invoke-Checked createdb ($client + $env:DB_DATABASE)
+        Invoke-Checked php @('-d', "memory_limit=$MemoryLimit", 'vendor/bin/pest', 'tests/Performance/PostgresVolumeTest.php', '--compact')
+    }
 } finally {
     try {
         if ($started) {

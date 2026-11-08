@@ -13,7 +13,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
-| [../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md) | Rencana end-to-end | Kontrak backend, form/list Transaksi, pembiayaan, Mapping Area, urutan dependensi dan ownership sub-agent; belum diimplementasikan. |
+| [../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md) | Rencana end-to-end | Kontrak backend, form/list Transaksi, pembiayaan, Mapping Area, urutan dependensi dan ownership sub-agent; Tahap 1 backend terverifikasi, UI/cutover Tahap 2–4 belum diimplementasikan. |
 | [../superpowers/plans/2026-11-08-mapping-area-preview.md](../superpowers/plans/2026-11-08-mapping-area-preview.md) | Preview frontend | Mapping Area, master 106 kecamatan, FOA snapshot DO dan ekspor sintetis tanpa backend. |
 | [../superpowers/plans/2026-11-08-financing-ui-preview.md](../superpowers/plans/2026-11-08-financing-ui-preview.md) | Preview frontend | Laporan pembiayaan, master leasing dan form transaksi dengan data sintetis serta batas tanpa backend. |
 | [../superpowers/plans/2026-11-08-production-monitoring.md](../superpowers/plans/2026-11-08-production-monitoring.md) | Rencana | Monitor HTTPS production, retry terbatas, notifikasi Actions dan batas cakupan. |

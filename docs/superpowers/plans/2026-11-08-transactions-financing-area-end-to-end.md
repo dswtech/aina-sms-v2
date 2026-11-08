@@ -95,11 +95,11 @@ Schema additive: nullable akun medsos di Customer; catatan umum, kanal sumber, m
 
 ### Tahap 1 — Backend inti: schema, master dan invariants (serial, satu owner)
 
-- [ ] Tulis regresi gagal untuk area DO kosong, mismatch parent, Kota Lain, kanal digital, pemisahan catatan dan akun medsos opsional.
-- [ ] Tambahkan migration additive/master resmi, enum/validasi dan seed development guarded/idempotent. FOA produksi kosong; jangan mengaktifkan contoh sebagai keputusan dealer.
-- [ ] Ekstrak service pembuatan transaksi bersama dari `CustomerController`, mempertahankan lock duplikat, assignment, otorisasi, audit dan rollback. Update import serta endpoint lama sebagai adapter ke service yang sama.
-- [ ] Implementasikan progress_at dan snapshot di `DealTransaction::transitionTo`, endpoint edit metadata dengan lock yang sama, serta cancellation/redo/Delivery semantics. Perubahan master dan snapshot perlu konsistensi transaksi agar tidak menghasilkan snapshot campuran.
-- [ ] Jalankan test domain/customer/import/DO sampai hijau, termasuk PostgreSQL race edit-vs-DO, dua DO dan duplicate customer. Commit fondasi yang dapat diuji sebelum paralel.
+- [x] Tulis regresi gagal untuk area DO kosong, mismatch parent, Kota Lain, kanal digital, pemisahan catatan dan akun medsos opsional.
+- [x] Tambahkan migration additive/master resmi, enum/validasi dan seed development guarded/idempotent. FOA produksi kosong; jangan mengaktifkan contoh sebagai keputusan dealer.
+- [x] Ekstrak service pembuatan transaksi bersama dari `CustomerController`, mempertahankan lock duplikat, assignment, otorisasi, audit dan rollback. Update import serta endpoint lama sebagai adapter ke service yang sama.
+- [x] Implementasikan progress_at dan snapshot di `DealTransaction::transitionTo`, endpoint edit metadata dengan lock yang sama, serta cancellation/redo/Delivery semantics. Perubahan master dan snapshot perlu konsistensi transaksi agar tidak menghasilkan snapshot campuran.
+- [x] Jalankan test domain/customer/import/DO sampai hijau, termasuk PostgreSQL race edit-vs-DO, dua DO dan duplicate customer. Commit fondasi yang dapat diuji sebelum paralel.
 
 ### Tahap 2 — Paralel setelah kontrak stabil (root + tiga sub-agent maksimal)
 
@@ -144,3 +144,17 @@ Schema additive: nullable akun medsos di Customer; catatan umum, kanal sumber, m
 Mulai dengan membaca dokumen ini, workflow proyek, PRD dan status Git/remote aktual. Ini **rencana saja**, tidak ada migration atau fitur backend baru yang dijalankan saat penyusunan. Tahap pertama yang harus dikerjakan adalah Tahap 0 lalu Tahap 1; jangan mulai tiga agent UI dengan schema/DTO yang belum disepakati. Perubahan pengguna di memory tetap harus dilindungi.
 
 Default implementasi yang belum diminta lebih jauh: export transaksi hanya CSV aman; medsos satu field teks opsional; FOA awal kosong; tidak menambah kewajiban pembiayaan lengkap saat DO, akun medsos multi-platform, backfill historis, MSCP, map geografis atau package baru.
+
+
+## Ledger implementasi Tahap 1 — 8 November 2026
+
+- Baseline: origin/main `040f082` (PR #69), tree identik branch perencanaan `4bcc849`; implementasi di `codex/transactions-core`. Catatan lokal pengguna di memory dipertahankan.
+- Ruling: lanjut serial hanya Tahap 1. UI, query/report, form baru dan cutover tetap Tahap 2–4; inventaris data target dilakukan sebelum rollout, tanpa membaca `.env` atau membuka koneksi target pada pekerjaan ini.
+- Ruling: API memakai `region_code=other` untuk Kota Lain, `financing.type=null|cash|credit`, `leasing_id=other` dengan nama bebas atau ID integer master. PATCH mengganti objek area/pembiayaan yang dikirim secara utuh; objek yang tidak dikirim dipertahankan.
+- Preflight antarmuka: manual/impor harus menghasilkan Lead dan histori awal yang sama. DO/PATCH berbagi lock transaksi; konfigurasi master/snapshot berbagi lock dealer. Laporan berikutnya membaca snapshot histori DO, bukan metadata terkini.
+- RED/GREEN awal: 11 kasus fondasi gagal lalu lulus; dua regresi impor gagal sebelum adapter disatukan kemudian lulus. Verifikasi akhir: `composer ci:check` lulus (420 backend, lima skip, 3.839 assertions, 38 frontend; lint, TypeScript, Pint dan PHPStan). PostgreSQL 16.4 terisolasi lulus 422 backend/tiga skip/3.850 assertions, serta 34 assertions concurrency (duplikat/replay impor, dua DO, metadata-dulu dan DO-dulu). `pnpm run build` lulus. Reviewer independen tidak menemukan cacat penting tambahan setelah regresi leasing nonaktif dan guard dealer diperbaiki.
+
+- Ruling: launcher PostgreSQL Windows memakai Start-Process tersembunyi dan WaitForExit pada pg_ctl, bukan menunggu seluruh pohon server. Opsi `-SkipBenchmark` menjalankan suite/concurrency tanpa benchmark volume yang tidak relevan pada perubahan ini.
+- Seeder development hanya menambahkan metadata/snapshot pada demo yang baru dibuat; tidak mengarang snapshot atau mengubah demo existing yang sudah diedit. FOA tetap kosong. Schema/migration belum dijalankan pada database non-test.
+- Batas delivery: PR ini fondasi backend; jangan rilis ke pengguna sebelum form/master operasional dan cutover Tahap 2–4. Form lama belum menyediakan kanal digital/area; API sudah menegakkan kontrak baru. Template CSV dan serializer/list/report masih mengikuti tahapan integrasi berikutnya.
+- Regresi browser CI `tests/Browser/run-isolated.ps1` lulus seluruh sepuluh script pada Laravel + SQLite sintetis, termasuk DO/Delivery/pembatalan, simpan lead dan pemulihan form/filter/pagination/impor. Fixture DO sekarang memuat area valid; ini bukan verifikasi UI Tahap 2 yang belum dibuat.

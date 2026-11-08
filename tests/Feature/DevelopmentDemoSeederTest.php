@@ -37,6 +37,8 @@ it('seeds complete and idempotent local demo data', function () {
         ->and(DB::table('notifications')->count())->toBeGreaterThan(0);
 
     expect(StageHistory::query()->where('to_stage', PipelineStage::Do)->count())->toBe(44)
+        ->and(StageHistory::query()->where('to_stage', PipelineStage::Do)->whereNotNull('area_snapshot')->count())->toBe(44)
+        ->and(DealTransaction::query()->whereNotNull('district_code')->count())->toBe(168)
         ->and(StageHistory::query()->where('from_stage', PipelineStage::Spk)->where('to_stage', PipelineStage::Do)
             ->where('po_confirmed', true)->where('dp_confirmed', true)->where('unit_confirmed', true)->count())->toBe(44)
         ->and(StageHistory::query()->where('from_stage', PipelineStage::Do)->where('to_stage', PipelineStage::Delivery)->count())->toBe(30);

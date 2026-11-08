@@ -6,9 +6,10 @@ use App\Enums\UserRole;
 use App\Models\CsvImportBatch;
 use App\Models\Customer;
 use App\Models\Dealer;
-use App\Models\DealTransaction;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Services\CreateLeadTransaction;
+use App\Services\TransactionMetadata;
 use App\Support\PhoneNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +36,8 @@ class ImportController extends Controller
         'contact_channel_preference',
         'sales_username',
     ];
+
+    private const OPTIONAL_HEADERS = ['source_channel', 'social_media_account', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name'];
 
     public function index(Request $request): Response
     {
@@ -126,7 +129,7 @@ class ImportController extends Controller
             }
 
             $record = [];
-            foreach (self::HEADERS as $index => $field) {
+            foreach ([...self::HEADERS, ...self::OPTIONAL_HEADERS] as $field) {
                 $position = array_search($field, $header, true);
                 $record[$field] = $position === false ? null : ($line[$position] ?? null);
             }
@@ -135,7 +138,7 @@ class ImportController extends Controller
             if (count($line) !== count($header)) {
                 $errors[] = 'Jumlah kolom tidak sesuai header CSV.';
             }
-            $normalizedPhone = PhoneNormalizer::normalize($record['phone']);
+            $normalizedPhone = PhoneNormalizer::normalize($record['phone'] ?? null);
             if ($normalizedPhone !== null && isset($seenPhones[$normalizedPhone])) {
                 $errors[] = 'Nomor telepon berulang dalam CSV. Gunakan satu identitas pelanggan.';
             }
@@ -203,28 +206,15 @@ class ImportController extends Controller
                     throw ValidationException::withMessages(['import' => 'Baris '.$row['row_number'].': '.implode(' ', $errors).' Tidak ada baris yang disimpan; unggah ulang CSV untuk memeriksa data terbaru.']);
                 }
                 $sales = $this->resolveSales($actor, trim((string) $record['sales_username']));
-                $customer = Customer::create([
-                    'dealer_id' => $actor->dealer_id,
-                    'created_by_id' => $actor->id,
-                    'name' => trim((string) $record['name']),
-                    'phone' => (string) $record['phone'],
-                    'email' => $this->nullableString($record['email']),
-                    'address' => $this->nullableString($record['address']),
+                app(CreateLeadTransaction::class)->createCustomerLead($actor, [
+                    ...$this->metadataRecord($record),
+                    'sales_id' => $sales->id,
+                    'name' => trim((string) $record['name']), 'phone' => (string) $record['phone'],
+                    'email' => $this->nullableString($record['email']), 'address' => $this->nullableString($record['address']),
                     'contact_channel_preference' => $this->nullableString($record['contact_channel_preference']),
                     'notes' => $this->nullableString($record['notes']),
-                ]);
-
-                $customer->assignTo($sales, $actor, 'Import CSV');
-
-                DealTransaction::create([
-                    'dealer_id' => $actor->dealer_id,
-                    'customer_id' => $customer->id,
-                    'sales_id' => $sales->id,
-                    'team_id' => $this->salesMemberships($actor, $sales)->value('team_id'),
                     'vehicle_model' => trim((string) $record['vehicle_model']),
                     'estimated_value' => $this->nullableInteger($record['estimated_value']),
-                    'source' => trim((string) $record['source']),
-                    'current_stage' => 'lead',
                 ]);
             }
 
@@ -265,6 +255,12 @@ class ImportController extends Controller
             'contact_channel_preference' => 'Preferensi kontak', 'sales_username' => 'Username Sales',
         ])->errors()->all();
 
+        try {
+            TransactionMetadata::normalize($this->metadataRecord($record), (int) $actor->dealer_id);
+        } catch (ValidationException $exception) {
+            $errors = [...$errors, ...$exception->validator->errors()->all()];
+        }
+
         $phone = (string) ($record['phone'] ?? '');
         if (! PhoneNormalizer::isValid($phone)) {
             $errors[] = 'Nomor telepon tidak valid.';
@@ -290,6 +286,28 @@ class ImportController extends Controller
         }
 
         return $errors;
+    }
+
+    /** @param array<string, mixed> $record
+     * @return array<string, mixed>
+     */
+    private function metadataRecord(array $record): array
+    {
+        return [
+            'source' => trim((string) ($record['source'] ?? '')),
+            'source_channel' => $this->nullableString($record['source_channel'] ?? null),
+            'social_media_account' => $this->nullableString($record['social_media_account'] ?? null),
+            'area' => [
+                'region_code' => $this->nullableString($record['region_code'] ?? null),
+                'district_code' => $this->nullableString($record['district_code'] ?? null),
+                'other_city' => $this->nullableString($record['other_city'] ?? null),
+            ],
+            'financing' => [
+                'type' => $this->nullableString($record['financing_type'] ?? null),
+                'leasing_id' => $this->nullableString($record['leasing_id'] ?? null),
+                'other_name' => $this->nullableString($record['financing_other_name'] ?? null),
+            ],
+        ];
     }
 
     private function resolveSales(User $actor, string $username): User

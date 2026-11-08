@@ -17,6 +17,7 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
     $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
     $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
     $deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
         'customer_id' => $customer->id, 'vehicle_model' => 'DO test',
         'current_stage' => PipelineStage::Spk,
@@ -74,6 +75,7 @@ it('limits DO and Delivery to authorized Sales and Supervisors', function () {
         TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => $user->role, 'ended_at' => null]);
     }
     $deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $dealer->id, 'team_id' => $team->id, 'sales_id' => $sales->id,
         'customer_id' => Customer::factory()->create(['dealer_id' => $dealer->id])->id,
         'vehicle_model' => 'DO scope test',

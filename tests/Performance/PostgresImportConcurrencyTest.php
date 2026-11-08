@@ -77,6 +77,7 @@ it('serializes simultaneous PostgreSQL import commits and rejects replay or dupl
 
     $sales = User::query()->where('username', 'g13.sales')->sole();
     $deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
         'customer_id' => Customer::query()->firstOrFail()->id,
         'vehicle_model' => 'Concurrent DO', 'current_stage' => 'spk',
@@ -118,4 +119,53 @@ it('serializes simultaneous PostgreSQL import commits and rejects replay or dupl
             }
         }
     }
+
+    foreach ([true, false] as $editFirst) {
+        $race = DealTransaction::create([
+            'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
+            'customer_id' => Customer::query()->firstOrFail()->id,
+            'vehicle_model' => 'Edit versus DO', 'current_stage' => 'spk',
+            'region_code' => '32.17', 'district_code' => '32.17.08',
+        ]);
+        $workers = [];
+        $db->beginTransaction();
+        try {
+            DealTransaction::query()->whereKey($race->id)->lockForUpdate()->firstOrFail();
+            foreach ([$editFirst, ! $editFirst] as $slot => $isEdit) {
+                $worker = new Process([PHP_BINARY, __DIR__.'/do-worker.php', 'g13-race-'.$slot, (string) $sales->id, $race->public_id, $isEdit ? 'metadata' : 'do']);
+                $worker->setTimeout(20);
+                $worker->start();
+                $workers[] = $worker;
+                $waiting = 0;
+                $deadline = microtime(true) + 8;
+                do {
+                    $db->statement('select pg_stat_clear_snapshot()');
+                    $waiting = (int) $db->scalar("select count(*) from pg_stat_activity where application_name like 'g13-race-%' and wait_event_type = 'Lock'");
+                    usleep(20000);
+                } while ($waiting < $slot + 1 && microtime(true) < $deadline);
+                expect($waiting)->toBe($slot + 1);
+            }
+            $db->commit();
+            $outcomes = [];
+            foreach ($workers as $worker) {
+                expect($worker->wait())->toBe(0, $worker->getErrorOutput());
+                $outcomes[] = trim($worker->getOutput());
+            }
+            expect($outcomes)->toBe($editFirst ? ['302', '302'] : ['302', '403']);
+            $event = $race->currentDoEvent();
+            expect($event->area_snapshot['region_code'])->toBe($editFirst ? 'other' : '32.17')
+                ->and($event->financing_snapshot['type'])->toBe($editFirst ? 'cash' : null)
+                ->and($race->stageHistories()->realizedDo()->count())->toBe(1);
+        } finally {
+            if ($db->transactionLevel() > 0) {
+                $db->rollBack();
+            }
+            foreach ($workers as $worker) {
+                if ($worker->isRunning()) {
+                    $worker->stop();
+                }
+            }
+        }
+    }
+
 });

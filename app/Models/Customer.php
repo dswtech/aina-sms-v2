@@ -35,6 +35,7 @@ use Illuminate\Support\Str;
  * @property-read FollowUp|null $nextFollowUp
  */
 #[Fillable([
+    'social_media_account',
     'public_id',
     'dealer_id',
     'created_by_id',
