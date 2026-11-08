@@ -107,7 +107,7 @@ export function FinancingReport({
 
             <section
                 aria-label="Ringkasan pembiayaan"
-                className="grid grid-cols-2 gap-y-5 border-y py-5 lg:grid-cols-4"
+                className="grid grid-cols-2 gap-x-6 gap-y-5 border-y py-5 sm:gap-x-10 lg:grid-cols-4"
             >
                 {[
                     {
@@ -131,10 +131,7 @@ export function FinancingReport({
                         hint: 'Pilihan pembiayaan belum diisi',
                     },
                 ].map((metric) => (
-                    <div
-                        key={metric.label}
-                        className="min-w-0 px-3 first:pl-0 sm:px-5"
-                    >
+                    <div key={metric.label} className="min-w-0">
                         <p className="text-sm text-muted-foreground">
                             {metric.label}
                         </p>
