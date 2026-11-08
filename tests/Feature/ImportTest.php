@@ -123,3 +123,69 @@ it('rejects digital imports without channel in preview', function () {
     $this->actingAs($admin)->post('/imports/preview', ['file' => UploadedFile::fake()->createWithContent('digital.csv', $csv)])
         ->assertInertia(fn (Assert $p) => $p->where('preview.rejected_count', 1));
 });
+
+function importPreview($test, User $admin, string $csv)
+{
+    return $test->actingAs($admin)->post('/imports/preview', ['file' => UploadedFile::fake()->createWithContent('x.csv', $csv)]);
+}
+
+function importAdmin(): User
+{
+    $dealer = Dealer::factory()->create();
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.core']);
+
+    return User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+}
+
+it('keeps old templates working and exposes new columns in the template', function () {
+    $admin = importAdmin();
+    $body = $this->actingAs($admin)->get(route('imports.template'))->streamedContent();
+    foreach (['social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name'] as $column) {
+        expect($body)->toContain($column);
+    }
+    importPreview($this, $admin, "name,phone,vehicle_model,source,sales_username\nBudi,081234567890,Avanza,walk_in,csv.core\n")
+        ->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1));
+});
+
+it('resolves area and leasing by exact name and imports them', function () {
+    $admin = importAdmin();
+    $leasing = DB::table('leasing_companies')->where('dealer_id', $admin->dealer_id)->where('code', 'acc')->first();
+    $region = DB::table('area_regions')->where('code', '32.17')->value('name');
+    $district = DB::table('area_districts')->where('code', '32.17.08')->value('name');
+    $csv = "name,phone,vehicle_model,source,sales_username,region_code,district_code,financing_type,leasing_id\n"
+        ."Budi,081234567890,Avanza,walk_in,csv.core,{$region},{$district},credit,{$leasing->name}\n"
+        ."Sari,081234567891,Avanza,walk_in,csv.core,32.17,32.17.08,credit,{$leasing->id}\n";
+    importPreview($this, $admin, $csv)->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 2));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+    foreach (DealTransaction::query()->get() as $deal) {
+        expect($deal->district_code)->toBe('32.17.08')->and($deal->region_code)->toBe('32.17')
+            ->and($deal->leasing_id)->toBe($leasing->id)->and($deal->financing_type)->toBe('credit');
+    }
+});
+
+it('imports Kota Lain and other leasing', function () {
+    $admin = importAdmin();
+    $csv = "name,phone,vehicle_model,source,sales_username,region_code,other_city,financing_type,leasing_id,financing_other_name\n"
+        ."Budi,081234567890,Avanza,walk_in,csv.core,other,Garut,credit,other,Leasing X\n";
+    importPreview($this, $admin, $csv)->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+    $deal = DealTransaction::query()->sole();
+    expect($deal->other_city)->toBe('Garut')->and($deal->district_code)->toBeNull()->and($deal->financing_other_name)->toBe('Leasing X');
+});
+
+it('gives clear per row errors without blocking valid rows', function () {
+    $admin = importAdmin();
+    $csv = "name,phone,vehicle_model,source,sales_username,source_channel,region_code,district_code,financing_type,leasing_id,social_media_account\n"
+        ."A,081234567890,Avanza,walk_in,csv.core,instagram,,,,,\n"          // channel on non-digital
+        ."B,081234567891,Avanza,walk_in,csv.core,,32.17,,,,\n"               // partial area
+        ."C,081234567892,Avanza,walk_in,csv.core,,,,credit,Tidak Ada,\n"     // unknown leasing
+        ."D,081234567893,Avanza,digital_ad,csv.core,youtube,,,,,\n"          // bad channel
+        .'E,081234567894,Avanza,walk_in,csv.core,,,,,,'.str_repeat('x', 256)."\n"
+        ."F,081234567895,Avanza,digital_ad,csv.core,tiktok,,,cash,,@f\n";
+    importPreview($this, $admin, $csv)->assertInertia(fn (Assert $p) => $p
+        ->where('preview.accepted_count', 1)->where('preview.rejected_count', 5)
+        ->where('preview.rows.0.errors.0', fn ($e) => str_contains($e, 'Kanal'))
+        ->where('preview.rows.5.valid', true));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('deal_transactions', 1);
+});

@@ -37,7 +37,7 @@ class ImportController extends Controller
         'sales_username',
     ];
 
-    private const OPTIONAL_HEADERS = ['source_channel', 'social_media_account', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name'];
+    private const OPTIONAL_HEADERS = ['social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name'];
 
     public function index(Request $request): Response
     {
@@ -69,7 +69,7 @@ class ImportController extends Controller
                 return;
             }
 
-            fputcsv($handle, self::HEADERS);
+            fputcsv($handle, [...self::HEADERS, ...self::OPTIONAL_HEADERS]);
             fputcsv($handle, [
                 'Budi Santoso',
                 '081234567890',
@@ -81,6 +81,7 @@ class ImportController extends Controller
                 'Lead dari showroom',
                 'whatsapp',
                 'sales_username',
+                '@budi', '', '32.17', '32.17.08', '', 'cash', '', '',
             ]);
             fclose($handle);
         }, 'template-import-lead.csv', [
@@ -207,7 +208,7 @@ class ImportController extends Controller
                 }
                 $sales = $this->resolveSales($actor, trim((string) $record['sales_username']));
                 app(CreateLeadTransaction::class)->createCustomerLead($actor, [
-                    ...$this->metadataRecord($record),
+                    ...$this->metadataRecord($record, (int) $actor->dealer_id),
                     'sales_id' => $sales->id,
                     'name' => trim((string) $record['name']), 'phone' => (string) $record['phone'],
                     'email' => $this->nullableString($record['email']), 'address' => $this->nullableString($record['address']),
@@ -256,9 +257,13 @@ class ImportController extends Controller
         ])->errors()->all();
 
         try {
-            TransactionMetadata::normalize($this->metadataRecord($record), (int) $actor->dealer_id);
+            TransactionMetadata::normalize($this->metadataRecord($record, (int) $actor->dealer_id), (int) $actor->dealer_id);
         } catch (ValidationException $exception) {
             $errors = [...$errors, ...$exception->validator->errors()->all()];
+        }
+
+        if (($record['source'] ?? null) !== 'digital_ad' && ($record['source_channel'] ?? null) !== null) {
+            $errors[] = 'Kanal hanya boleh diisi untuk sumber digital_ad.';
         }
 
         $phone = (string) ($record['phone'] ?? '');
@@ -291,23 +296,56 @@ class ImportController extends Controller
     /** @param array<string, mixed> $record
      * @return array<string, mixed>
      */
-    private function metadataRecord(array $record): array
+    private function metadataRecord(array $record, int $dealerId): array
     {
+        [$region, $district] = $this->resolveArea(
+            $this->nullableString($record['region_code'] ?? null),
+            $this->nullableString($record['district_code'] ?? null),
+        );
+
         return [
             'source' => trim((string) ($record['source'] ?? '')),
             'source_channel' => $this->nullableString($record['source_channel'] ?? null),
             'social_media_account' => $this->nullableString($record['social_media_account'] ?? null),
             'area' => [
-                'region_code' => $this->nullableString($record['region_code'] ?? null),
-                'district_code' => $this->nullableString($record['district_code'] ?? null),
+                'region_code' => $region,
+                'district_code' => $district,
                 'other_city' => $this->nullableString($record['other_city'] ?? null),
             ],
             'financing' => [
                 'type' => $this->nullableString($record['financing_type'] ?? null),
-                'leasing_id' => $this->nullableString($record['leasing_id'] ?? null),
+                'leasing_id' => $this->resolveLeasing($this->nullableString($record['leasing_id'] ?? null), $dealerId),
                 'other_name' => $this->nullableString($record['financing_other_name'] ?? null),
             ],
         ];
+    }
+
+    /** Official code or exact (case-insensitive) master name; unresolved values pass through so TransactionMetadata rejects them.
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function resolveArea(?string $region, ?string $district): array
+    {
+        if ($region !== null && $region !== 'other' && ! DB::table('area_regions')->where('code', $region)->exists()) {
+            $region = DB::table('area_regions')->whereRaw('lower(name) = ?', [Str::lower($region)])->value('code') ?? $region;
+        }
+        if ($district !== null && $region !== null) {
+            $district = DB::table('area_districts')->where('region_code', $region)
+                ->where(fn ($query) => $query->where('code', $district)->orWhereRaw('lower(name) = ?', [Str::lower($district)]))
+                ->value('code') ?? $district;
+        }
+
+        return [$region, $district];
+    }
+
+    private function resolveLeasing(?string $leasing, int $dealerId): ?string
+    {
+        if ($leasing === null || $leasing === 'other' || ctype_digit($leasing)) {
+            return $leasing;
+        }
+        $id = DB::table('leasing_companies')->where('dealer_id', $dealerId)->where('is_active', true)
+            ->whereRaw('lower(name) = ?', [Str::lower($leasing)])->value('id');
+
+        return $id === null ? $leasing : (string) $id;
     }
 
     private function resolveSales(User $actor, string $username): User

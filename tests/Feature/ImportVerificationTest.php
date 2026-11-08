@@ -166,9 +166,9 @@ it('blocks import routes for unauthorized roles', function (string $role) {
 it('validates the complete template and imports its example after choosing a real Sales', function () {
     $response = $this->actingAs($this->actor)->get(route('imports.template'))->assertOk()->assertDownload('template-import-lead.csv');
     $rows = array_map('str_getcsv', explode("\n", trim($response->streamedContent())));
-    expect($rows[0])->toBe(['name', 'phone', 'email', 'address', 'vehicle_model', 'estimated_value', 'source', 'notes', 'contact_channel_preference', 'sales_username']);
-    expect($rows[1])->toHaveCount(10)->and($rows[1][6])->toBe('walk_in')->and($rows[1][8])->toBe('whatsapp');
-    $csv = preg_replace('/sales_username\r?\n$/', 'csv.sales'."\n", $response->streamedContent());
+    expect($rows[0])->toBe(['name', 'phone', 'email', 'address', 'vehicle_model', 'estimated_value', 'source', 'notes', 'contact_channel_preference', 'sales_username', 'social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name']);
+    expect($rows[1])->toHaveCount(18)->and($rows[1][6])->toBe('walk_in')->and($rows[1][8])->toBe('whatsapp');
+    $csv = str_replace(',sales_username,@budi', ',csv.sales,@budi', $response->streamedContent());
     $this->post(route('imports.preview'), ['file' => UploadedFile::fake()->createWithContent('template.csv', $csv)])
         ->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1)->where('preview.rejected_count', 0));
     g10NoImportWrites();
