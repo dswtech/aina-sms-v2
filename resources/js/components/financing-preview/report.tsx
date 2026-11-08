@@ -59,7 +59,7 @@ export function FinancingReport({
                 title="Filter pembiayaan"
                 summary={`${periodLabel} · ${modeLabel}`}
             >
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
+                <div className="grid items-end gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:gap-6">
                     <MonthRangeFields
                         id="financing-period"
                         from={period}
@@ -75,7 +75,7 @@ export function FinancingReport({
                         <legend className="mb-2 text-sm font-medium">
                             Dasar laporan
                         </legend>
-                        <div className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
+                        <div className="grid grid-cols-2 gap-1 rounded-md bg-muted">
                             {(['prospect', 'do'] as const).map((value) => (
                                 <Button
                                     key={value}
@@ -84,9 +84,7 @@ export function FinancingReport({
                                     variant={
                                         mode === value ? 'secondary' : 'ghost'
                                     }
-                                    className={
-                                        mode === value ? 'bg-background' : ''
-                                    }
+                                    className={`w-full border shadow-none ${mode === value ? 'border-input bg-background' : 'border-transparent'}`}
                                     aria-pressed={mode === value}
                                     onClick={() => setMode(value)}
                                 >
@@ -97,12 +95,12 @@ export function FinancingReport({
                             ))}
                         </div>
                     </fieldset>
-                    <p className="max-w-xs text-xs leading-5 text-muted-foreground xl:pb-1">
-                        {mode === 'prospect'
-                            ? 'Bulan pertama masuk Prospect, dengan pilihan pembiayaan terbaru.'
-                            : 'Bulan DO yang sah, dengan pilihan pembiayaan yang dikunci saat DO.'}
-                    </p>
                 </div>
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                    {mode === 'prospect'
+                        ? 'Bulan pertama masuk Prospect, dengan pilihan pembiayaan terbaru.'
+                        : 'Bulan DO yang sah, dengan pilihan pembiayaan yang dikunci saat DO.'}
+                </p>
             </FilterPanel>
 
             <section
