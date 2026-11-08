@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\TransactionReports;
+use App\Support\ReportingPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -21,7 +22,7 @@ class ReportController extends Controller
         $request->merge(['from' => $request->input('from', $month), 'to' => $request->input('to', $request->input('from', $month))]);
         $validated = $request->validate([
             'from' => ['required', 'date_format:Y-m'],
-            'to' => ['required', 'date_format:Y-m', 'after_or_equal:from'],
+            'to' => ['required', 'date_format:Y-m', 'after_or_equal:from', ReportingPeriod::maxRangeRule('from')],
         ]);
 
         return [$actor, $validated['from'], $validated['to']];

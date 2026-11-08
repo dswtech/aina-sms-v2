@@ -124,3 +124,12 @@ it('rejects invalid analytics ranges', function () {
     $this->get('/analytics?to=2026-11')->assertSessionHasErrors('period');
     $this->get('/analytics?period=2026-11&to=bad')->assertSessionHasErrors('to');
 });
+
+it('limits analytics and report ranges to 24 months', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    foreach (['/analytics?period=%s&to=%s', '/analytics/financing?from=%s&to=%s', '/analytics/mapping-area?from=%s&to=%s'] as $pattern) {
+        $this->get(sprintf($pattern, '2025-01', '2026-12'))->assertSessionDoesntHaveErrors('to');
+        $this->get(sprintf($pattern, '2025-01', '2027-01'))->assertSessionHasErrors('to');
+    }
+});

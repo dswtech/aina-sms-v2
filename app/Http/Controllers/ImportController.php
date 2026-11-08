@@ -314,7 +314,8 @@ class ImportController extends Controller
             ],
             'financing' => [
                 'type' => $this->nullableString($record['financing_type'] ?? null),
-                'leasing_id' => $this->resolveLeasing($this->nullableString($record['leasing_id'] ?? null), $dealerId),
+                'leasing_id' => $this->resolveLeasing($this->nullableString($record['leasing_id'] ?? null), $dealerId)
+                    ?? ($this->nullableString($record['financing_other_name'] ?? null) !== null ? 'other' : null),
                 'other_name' => $this->nullableString($record['financing_other_name'] ?? null),
             ],
         ];

@@ -128,3 +128,22 @@ it('limits reports to the attribution scope and validates the range', function (
     $this->actingAs($this->admin)->get('/analytics/financing?from=2026-12&to=2026-11')->assertSessionHasErrors('to');
     $this->get('/analytics/mapping-area?from=bad&to=2026-11')->assertSessionHasErrors('from');
 });
+
+it('scopes the financing report to the supervisor team in both modes', function () {
+    $team = Team::factory()->create(['dealer_id' => $this->dealer->id]);
+    $spv = User::factory()->supervisor()->create(['dealer_id' => $this->dealer->id]);
+    $team->memberships()->create(['user_id' => $spv->id, 'role' => 'supervisor', 'started_at' => now()]);
+    $mine = rDeal($this, [...BANDUNG_ANDIR, 'team_id' => $team->id, 'financing_type' => 'cash']);
+    $theirs = rDeal($this, [...BANDUNG_ANDIR, 'financing_type' => 'cash']);
+    foreach ([$mine, $theirs] as $deal) {
+        rMove($this, $deal, PipelineStage::Prospect, '2026-11-09 03:00:00');
+        rMove($this, $deal, PipelineStage::Spk, '2026-11-10 03:00:00', ['booking_fee_confirmed' => true]);
+        rMove($this, $deal, PipelineStage::Do, '2026-11-11 03:00:00', DO_OK);
+    }
+    $bm = User::factory()->branchManager()->create(['dealer_id' => $this->dealer->id]);
+
+    foreach (['prospect', 'do'] as $mode) {
+        $this->actingAs($spv)->get("/analytics/financing?from=2026-11&to=2026-11&mode=$mode")->assertInertia(fn (Assert $p) => $p->where('report.total', 1));
+        $this->actingAs($bm)->get("/analytics/financing?from=2026-11&to=2026-11&mode=$mode")->assertInertia(fn (Assert $p) => $p->where('report.total', 2));
+    }
+});

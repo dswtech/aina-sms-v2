@@ -21,6 +21,15 @@ final class TransactionMasters
         }
     }
 
+    /** Temporary dealer default (owner decision): all Kabupaten Bandung Barat districts. Admin edits it later. */
+    public static function initializeFoa(int $dealerId): void
+    {
+        DB::statement(
+            'INSERT INTO dealer_foa_districts (dealer_id, district_code) SELECT ?, code FROM area_districts WHERE region_code = ? ON CONFLICT DO NOTHING',
+            [$dealerId, '32.17'],
+        );
+    }
+
     /** @param list<string> $districts */
     public function setFoa(User $actor, array $districts): void
     {

@@ -120,8 +120,9 @@ export default function DealerSettings({
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            Tandai kecamatan yang menjadi FOA dealer. Awalnya
-                            kosong; {selected.size} kecamatan dipilih.
+                            Tandai kecamatan yang menjadi FOA dealer. Bawaan
+                            sementara: seluruh Kabupaten Bandung Barat;
+                            {selected.size} kecamatan dipilih.
                         </p>
                         {regions.map((region) => (
                             <fieldset key={region.code} className="space-y-2">

@@ -16,7 +16,6 @@ use App\Services\CreateLeadTransaction;
 use App\Services\TransactionMetadata;
 use App\Services\TransactionTimeline;
 use App\Support\AuditRecorder;
-use App\Support\PhoneNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -201,6 +200,19 @@ class TransactionController extends Controller
             ->map(fn ($group) => $group->map(fn (TeamMembership $m) => ['id' => $m->user->id, 'name' => $m->user->name])->values()->all())->all();
     }
 
+    /**
+     * Master name by id, including inactive leasing (history must stay readable).
+     *
+     * @param  iterable<DealTransaction>  $rows
+     * @return array<int, string>
+     */
+    private function leasingNames(iterable $rows): array
+    {
+        $ids = collect($rows)->pluck('leasing_id')->filter()->unique()->values();
+
+        return $ids->isEmpty() ? [] : DB::table('leasing_companies')->whereIn('id', $ids)->pluck('name', 'id')->all();
+    }
+
     public function export(Request $request): StreamedResponse
     {
         /** @var User $actor */
@@ -241,9 +253,10 @@ class TransactionController extends Controller
      * @param  array<string, string>  $regions
      * @param  array<string, string>  $districts
      * @param  array<array<int, array{id: int, name: string}>>  $supervisors
+     * @param  array<int, string>  $leasingNames
      * @return array<string, mixed>
      */
-    private function row(DealTransaction $transaction, User $actor, array $regions, array $districts, array $supervisors): array
+    private function row(DealTransaction $transaction, User $actor, array $regions, array $districts, array $supervisors, array $leasingNames = []): array
     {
         $confirmDelivery = $actor->can('confirmDelivery', $transaction);
         $cancelDo = $actor->can('cancelDo', $transaction);
@@ -271,7 +284,7 @@ class TransactionController extends Controller
                 'other_city' => $transaction->other_city,
             ],
             'financing' => [
-                'type' => $transaction->financing_type, 'leasing_id' => $transaction->leasing_id, 'other_name' => $transaction->financing_other_name,
+                'type' => $transaction->financing_type, 'leasing_id' => $transaction->leasing_id, 'leasing_name' => $leasingNames[$transaction->leasing_id] ?? null, 'other_name' => $transaction->financing_other_name,
             ],
             'current_stage' => $transaction->current_stage->value,
             'stage_label' => $transaction->current_stage->label(),
@@ -299,7 +312,7 @@ class TransactionController extends Controller
         [$regions, $districts, $supervisors] = $this->lookups([$transaction]);
 
         return response()->json([
-            ...$this->row($transaction, $actor, $regions, $districts, $supervisors),
+            ...$this->row($transaction, $actor, $regions, $districts, $supervisors, $this->leasingNames([$transaction])),
             'customer' => [
                 'name' => $transaction->customer?->name, 'phone' => $transaction->customer?->phone,
                 'social_media_account' => $transaction->customer?->social_media_account,
@@ -367,9 +380,11 @@ class TransactionController extends Controller
             ->with('activeAssignment.sales:id,name')->orderBy('name')->orderBy('id');
         if ($term !== '') {
             $like = '%'.addcslashes(mb_strtolower($term), '%_\\').'%';
-            $digits = PhoneNormalizer::normalize($term);
+            // Phones are stored as +62...; a typed 0812... becomes 62812... A partial number needs 4+ digits.
+            $digits = preg_replace('/\D/', '', $term) ?? '';
+            $digits = str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits;
             $query->where(fn ($q) => $q->whereRaw("lower(name) like ? escape '\\'", [$like])
-                ->when($digits !== '', fn ($q) => $q->orWhere('phone', 'like', '%'.addcslashes($digits, '%_\\').'%')));
+                ->when(strlen($digits) >= 4, fn ($q) => $q->orWhere('phone', 'like', '%'.$digits.'%')));
         }
         $page = $query->paginate(10, ['id', 'public_id', 'name', 'phone', 'social_media_account']);
 
@@ -410,7 +425,8 @@ class TransactionController extends Controller
 
         $paginated = $query->paginate(15)->withQueryString();
         [$regions, $districts, $supervisors] = $this->lookups($paginated->items());
-        $transactions = $paginated->through(fn (DealTransaction $transaction): array => $this->row($transaction, $actor, $regions, $districts, $supervisors));
+        $leasingNames = $this->leasingNames($paginated->items());
+        $transactions = $paginated->through(fn (DealTransaction $transaction): array => $this->row($transaction, $actor, $regions, $districts, $supervisors, $leasingNames));
 
         $assignableSales = $this->assignableSales($actor);
 

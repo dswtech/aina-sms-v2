@@ -114,3 +114,17 @@ it('preselects an accessible customer with an active assignment from the custome
         $this->get('/transactions/create?customer='.$id)->assertInertia(fn (Assert $p) => $p->where('preselected', null));
     }
 });
+
+it('narrows customer search by name or partial phone instead of returning everyone', function () {
+    $sari = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'name' => 'Sari Dewi', 'phone' => '081234567890']);
+    $budi = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'name' => 'Budi Santoso', 'phone' => '081998877665']);
+    foreach ([$sari, $budi] as $customer) {
+        $customer->assignTo($this->sales);
+    }
+    $found = fn (string $q) => collect($this->actingAs($this->sales)->getJson('/transactions/customer-search?q='.urlencode($q))->json('data'))->pluck('name')->all();
+
+    expect($found('sari'))->toBe(['Sari Dewi'])
+        ->and($found('08123'))->toBe(['Sari Dewi'])
+        ->and($found('998877'))->toBe(['Budi Santoso'])
+        ->and($found('zzz'))->toBe([]);
+});
