@@ -264,9 +264,9 @@ async function leadContactFilters(page) {
                     },
                 };
                 await page.goto(`${origin}/transactions`);
-                await page.getByLabel('Lead dibuat mulai').waitFor();
-                await page.getByLabel('Lead dibuat mulai').fill('2026-11-01');
-                await page.getByLabel('Lead dibuat sampai').fill('2026-11-05');
+                await page.getByLabel('Progress mulai').waitFor();
+                await page.getByLabel('Progress mulai').fill('2026-11-01');
+                await page.getByLabel('Progress sampai').fill('2026-11-05');
                 await page
                     .getByLabel('Sumber lead', { exact: true })
                     .selectOption('referral');

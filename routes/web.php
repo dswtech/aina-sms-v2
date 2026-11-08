@@ -51,6 +51,11 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('transactions/{transaction}/closing-month', [ClosingMonthController::class, 'update'])->name('transactions.closing-month');
         Route::patch('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('transactions/export.csv', [TransactionController::class, 'export'])->name('transactions.export');
+        Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
+        Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
+        Route::get('transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
+        Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
 
