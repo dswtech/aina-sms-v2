@@ -122,6 +122,6 @@ it('offers filter masters: supervisors to Admin only, plus regions and districts
     $spv = User::factory()->supervisor()->create(['dealer_id' => $dealer->id]);
 
     $this->actingAs($admin)->get('/transactions')->assertInertia(fn (Assert $p) => $p
-        ->has('supervisorOptions', 2)->has('regions', 5)->has('districts', 106));
+        ->has('supervisorOptions', 2)->has('regions', 5)->has('districts', 106)->has('leasings', 8));
     $this->actingAs($spv)->get('/transactions')->assertInertia(fn (Assert $p) => $p->where('supervisorOptions', []));
 });

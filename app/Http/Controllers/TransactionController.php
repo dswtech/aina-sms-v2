@@ -409,6 +409,7 @@ class TransactionController extends Controller
                 : [],
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
+            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'stages' => array_map(fn (PipelineStage $stage): array => [
                 'value' => $stage->value,
                 'label' => $stage->label(),

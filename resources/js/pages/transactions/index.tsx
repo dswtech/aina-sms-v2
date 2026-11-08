@@ -18,6 +18,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    AreaFields,
+    AreaFinancing,
+    Field,
+    FinancingFields,
+    areaPayload,
+    financingPayload,
+} from '@/components/transaction-fields';
 
 type Transaction = {
     id: number;
@@ -31,7 +39,11 @@ type Transaction = {
     progress_at: string | null;
     supervisors: { id: number; name: string }[];
     area: Area;
-    financing: { type: string | null; other_name: string | null };
+    financing: {
+        type: string | null;
+        leasing_id: number | null;
+        other_name: string | null;
+    };
     current_stage: string;
     stage_label: string;
     estimated_value: number | null;
@@ -92,6 +104,7 @@ type Props = {
     supervisorOptions?: { id: number; name: string }[];
     regions?: { code: string; name: string }[];
     districts?: { code: string; region_code: string; name: string }[];
+    leasings?: { id: number; name: string }[];
     assignableSales: SalesUser[];
     stages: Array<{ value: string; label: string }>;
     lostReasons: Array<{ value: string; label: string }>;
@@ -106,6 +119,8 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 type Area = {
+    region_code: string | null;
+    district_code: string | null;
     region_name: string | null;
     district_name: string | null;
     other_city: string | null;
@@ -167,6 +182,19 @@ type Detail = Transaction & {
     } | null;
 };
 
+const initialAreaFinancing = (d: Detail): AreaFinancing => ({
+    region: d.area.other_city ? 'other' : (d.area.region_code ?? ''),
+    district: d.area.district_code ?? '',
+    city: d.area.other_city ?? '',
+    financing: d.financing.type ?? '',
+    leasing: d.financing.other_name
+        ? 'other'
+        : d.financing.leasing_id
+          ? String(d.financing.leasing_id)
+          : '',
+    otherLeasing: d.financing.other_name ?? '',
+});
+
 const tabs = [
     { value: 'all', label: 'Semua' },
     { value: 'active', label: 'Aktif' },
@@ -184,6 +212,7 @@ export default function TransactionsIndex({
     supervisorOptions = [],
     regions = [],
     districts = [],
+    leasings = [],
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
@@ -204,6 +233,11 @@ export default function TransactionsIndex({
     const [sourceChannel, setSourceChannel] = useState(
         filters.source_channel ?? '',
     );
+    const [edit, setEdit] = useState<{
+        value: AreaFinancing;
+        notes: string;
+        saving: boolean;
+    } | null>(null);
     const [detailTarget, setDetailTarget] = useState<Transaction | null>(null);
     const [detail, setDetail] = useState<Detail | null>(null);
     const [detailState, setDetailState] = useState<
@@ -414,6 +448,7 @@ export default function TransactionsIndex({
 
     const openDetail = async (transaction: Transaction) => {
         setDetailTarget(transaction);
+        setEdit(null);
         setDetail(null);
         setDetailState('loading');
         try {
@@ -429,6 +464,40 @@ export default function TransactionsIndex({
         } catch {
             setDetailState('error');
         }
+    };
+
+    const startEdit = (d: Detail) =>
+        setEdit({
+            value: initialAreaFinancing(d),
+            notes: d.notes ?? '',
+            saving: false,
+        });
+
+    const saveEdit = () => {
+        if (!edit || !detail || edit.saving) return;
+        const initial = initialAreaFinancing(detail);
+        const same = (a: unknown, b: unknown) =>
+            JSON.stringify(a) === JSON.stringify(b);
+        // Only changed parts are sent, so an untouched legacy (inactive) leasing is never revalidated.
+        const payload: NonNullable<Parameters<typeof router.patch>[1]> = {
+            notes: edit.notes || null,
+        };
+        if (!same(areaPayload(edit.value), areaPayload(initial)))
+            payload.area = areaPayload(edit.value);
+        if (!same(financingPayload(edit.value), financingPayload(initial)))
+            payload.financing = financingPayload(edit.value);
+        router.patch(`/transactions/${detail.public_id}`, payload, {
+            preserveScroll: true,
+            preserveState: true,
+            onStart: () =>
+                setEdit((current) => current && { ...current, saving: true }),
+            onSuccess: () => {
+                setEdit(null);
+                if (detailTarget) void openDetail(detailTarget);
+            },
+            onFinish: () =>
+                setEdit((current) => current && { ...current, saving: false }),
+        });
     };
 
     const resetFilters = () => {
@@ -1419,6 +1488,92 @@ export default function TransactionsIndex({
                                 ))}
                             </dl>
                         )}
+                        {detail &&
+                            detailState === 'idle' &&
+                            detail.can_edit_metadata && (
+                                <div className="space-y-3 border-t pt-3">
+                                    {edit === null ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="min-h-11"
+                                            onClick={() => startEdit(detail)}
+                                        >
+                                            Ubah area, pembiayaan dan keterangan
+                                        </Button>
+                                    ) : (
+                                        <form
+                                            className="space-y-3"
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+                                                saveEdit();
+                                            }}
+                                        >
+                                            <AreaFields
+                                                idPrefix="edit-"
+                                                value={edit.value}
+                                                onChange={(value) =>
+                                                    setEdit({ ...edit, value })
+                                                }
+                                                regions={regions}
+                                                districts={districts}
+                                                errors={errors ?? {}}
+                                            />
+                                            <FinancingFields
+                                                idPrefix="edit-"
+                                                value={edit.value}
+                                                onChange={(value) =>
+                                                    setEdit({ ...edit, value })
+                                                }
+                                                leasings={leasings}
+                                                errors={errors ?? {}}
+                                            />
+                                            <Field
+                                                id="edit-notes"
+                                                label="Keterangan"
+                                                error={errors?.notes}
+                                            >
+                                                <textarea
+                                                    id="edit-notes"
+                                                    rows={3}
+                                                    maxLength={2000}
+                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={edit.notes}
+                                                    onChange={(event) =>
+                                                        setEdit({
+                                                            ...edit,
+                                                            notes: event.target
+                                                                .value,
+                                                        })
+                                                    }
+                                                />
+                                            </Field>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="submit"
+                                                    className="min-h-11"
+                                                    disabled={edit.saving}
+                                                >
+                                                    {edit.saving
+                                                        ? 'Menyimpan…'
+                                                        : 'Simpan'}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="min-h-11"
+                                                    disabled={edit.saving}
+                                                    onClick={() =>
+                                                        setEdit(null)
+                                                    }
+                                                >
+                                                    Batal
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
+                            )}
                         {detail?.history && detailState === 'idle' && (
                             <div>
                                 <h3 className="mt-2 text-sm font-medium">
