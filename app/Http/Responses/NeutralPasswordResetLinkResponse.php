@@ -3,6 +3,7 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
@@ -15,7 +16,7 @@ class NeutralPasswordResetLinkResponse implements FailedPasswordResetLinkRequest
     public const MESSAGE = 'Jika email terdaftar, tautan atur ulang password sudah dikirim. Periksa kotak masuk Anda.';
 
     /**
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      */
     public function toResponse($request): RedirectResponse
     {

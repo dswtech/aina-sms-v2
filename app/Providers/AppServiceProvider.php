@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        ResetPassword::toMailUsing(fn (object $notifiable, string $token) => (new MailMessage)
+        ResetPassword::toMailUsing(fn (CanResetPassword $notifiable, string $token) => (new MailMessage)
             ->subject('Atur ulang password')
             ->line('Kami menerima permintaan untuk mengatur ulang password akun Anda.')
             ->action('Atur ulang password', url(route('password.reset', [
