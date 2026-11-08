@@ -124,6 +124,21 @@ export default function ModuleStatus({ module }: { module: ModuleKey }) {
                     </section>
                 )}
 
+                {module === 'dealer-settings' && auth.user.role === 'admin' && (
+                    <section className="mt-6 max-w-2xl rounded-xl border bg-card p-5">
+                        <h2 className="font-semibold">Area & FOA</h2>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            Master 106 kecamatan dari lima kabupaten/kota dan
+                            penanda FOA dealer. Pilihan pada preview tidak
+                            disimpan ke server.
+                        </p>
+                        <Button className="mt-4" variant="outline" asChild>
+                            <Link href="/analytics?preview=mapping-area&screen=master">
+                                Buka preview Area & FOA
+                            </Link>
+                        </Button>
+                    </section>
+                )}
                 <section className="mt-10 max-w-2xl rounded-xl border bg-card p-5 sm:p-6">
                     <div className="flex items-start gap-3">
                         <CheckCircle2

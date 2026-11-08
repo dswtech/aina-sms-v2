@@ -57,6 +57,7 @@ const shared = {
         children: [
             { title: 'Sumber & Model', href: '/analytics' },
             { title: 'Pembiayaan', href: '/analytics?preview=financing' },
+            { title: 'Mapping Area', href: '/analytics?preview=mapping-area' },
         ],
     },
     imports: {
@@ -186,10 +187,13 @@ export function isNavigationItemActive(
     );
     if (current.pathname !== target.pathname) return false;
     if (item.children?.length || target.pathname !== '/analytics') return true;
-    return (
-        (current.searchParams.get('preview') === 'financing') ===
-        (target.searchParams.get('preview') === 'financing')
-    );
+    const preview = (url: URL) =>
+        ['financing', 'mapping-area'].includes(
+            url.searchParams.get('preview') ?? '',
+        )
+            ? url.searchParams.get('preview')
+            : null;
+    return preview(current) === preview(target);
 }
 
 export const profileNavItem: NavItem = {

@@ -5,7 +5,7 @@ const percentageFormatter = new Intl.NumberFormat('en-US', {
     useGrouping: false,
 });
 
-export type ChartExportKind = 'financing' | 'leasing';
+export type ChartExportKind = 'financing' | 'leasing' | 'area';
 export type ChartExportMeta = {
     from: string;
     to: string;
@@ -21,7 +21,7 @@ export type ChartExportData = ChartExportMeta & {
 };
 
 export function makeChartExport(
-    kind: ChartExportKind,
+    kind: Exclude<ChartExportKind, 'area'>,
     meta: ChartExportMeta,
     summary: ReturnType<typeof summarizeFinancing>,
 ): ChartExportData {
@@ -62,11 +62,84 @@ export function chartModeLabel(mode: FinancingMode): string {
     return mode === 'prospect' ? 'Prospek' : 'Realisasi DO';
 }
 
+export function makeAreaChartExport(
+    meta: ChartExportMeta,
+    summary: {
+        total: number;
+        rows: { id: string; name: string; count: number }[];
+    },
+): ChartExportData {
+    return {
+        ...meta,
+        kind: 'area',
+        mode: 'do',
+        title: 'Penjualan berdasarkan area',
+        total: summary.total,
+        rows: summary.rows.map((row) => ({
+            id: row.id,
+            label: row.name,
+            count: row.count,
+            percentage: Number(
+                percentageFormatter.format(
+                    summary.total ? (row.count / summary.total) * 100 : 0,
+                ),
+            ),
+        })),
+    };
+}
+
+export function chartRowColor(kind: ChartExportKind, id: string): string {
+    if (kind === 'financing')
+        return (
+            (
+                {
+                    cash: '#1769e0',
+                    credit: '#0f172a',
+                    unknown: '#526175',
+                } as Record<string, string>
+            )[id] ?? '#1769e0'
+        );
+    if (kind === 'leasing') return id === 'unselected' ? '#526175' : '#1769e0';
+    if (id === 'other') return '#526175';
+    if (id === 'unknown') return '#94a3b8';
+    const palette = [
+        '#1769e0',
+        '#0f766e',
+        '#7c3aed',
+        '#b45309',
+        '#be185d',
+        '#0369a1',
+        '#4338ca',
+        '#047857',
+        '#a21caf',
+        '#9a3412',
+    ];
+    const hash = Array.from(id).reduce(
+        (value, char) => (value * 31 + char.charCodeAt(0)) >>> 0,
+        0,
+    );
+    return palette[hash % palette.length];
+}
+
+export function layoutDonutLegend(
+    rows: { label: string }[],
+    measure: (value: string) => number,
+) {
+    let y = 330;
+    return rows.map((row) => {
+        const lines = wrapChartLabel(row.label, measure, 300);
+        const height = Math.max(78, lines.length * 30 + 24);
+        const entry = { lines, y, height };
+        y += height;
+        return entry;
+    });
+}
+
 export function chartFilename(
     chart: ChartExportData,
     format: 'png' | 'csv',
 ): string {
-    return `${chart.kind === 'financing' ? 'cara-pembiayaan' : 'leasing-tujuan'}-${chart.mode === 'prospect' ? 'prospek' : 'realisasi-do'}-${chart.from}_${chart.to}.${format}`;
+    return `${chart.kind === 'financing' ? 'cara-pembiayaan' : chart.kind === 'area' ? 'mapping-area' : 'leasing-tujuan'}-${chart.mode === 'prospect' ? 'prospek' : 'realisasi-do'}-${chart.from}_${chart.to}.${format}`;
 }
 
 export function chartCsv(chart: ChartExportData): string {
