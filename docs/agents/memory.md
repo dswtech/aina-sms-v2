@@ -189,6 +189,8 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Langkah berikutnya
 
+- Perencanaan end-to-end Transaksi/pembiayaan/Mapping Area disimpan di [rencana 8 November 2026](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md). Pemilik meminta rencana dan paralelisasi untuk handoff; dua audit sub-agent selesai baca-saja. Belum ada implementasi baru/migration berjalan. Pemilik menyatakan belum ada transaksi aktif sehingga backfill historis di luar scope; tetap inventaris read-only sebelum rollout. Lanjutkan Tahap 0 (baseline/spec/kontrak) lalu Tahap 1 (backend inti), baru tiga jalur UI paralel.
+
 - Mapping Area frontend pada branch `codex/mapping-area-preview`, PR #67 setelah #66 merged: [ledger preview](../superpowers/plans/2026-11-08-mapping-area-preview.md). Master 106 kecamatan, FOA snapshot DO dan pie penuh dengan PNG/CSV tetap sintetis tanpa backend. Koreksi wajib area sebelum DO mengikuti ANL-10; kategori kosong dihapus, seluruh contoh DO lengkap. Tes regresi RED/GREEN, 38 frontend, TypeScript, lint dan build lulus; browser merekonsiliasi 46 DO = 33 FOA + 13 Area lain. Validasi server dan integrasi transaksi sebenarnya belum dikerjakan; tidak dirilis ke production.
 
 1. Revalidasi realisasi DO dan konfirmasi Delivery pada [matriks UAT](uat-matrix.md#g09). Konfirmasi target sebelum reset database development. Lanjutkan verifikasi G11 dan ukur performa G13 pada hosting dan beban pilot setelah lingkungan ditetapkan. Audit timestamp historis memerlukan provenance. Worker dan scheduler bisnis belum diaktifkan.
