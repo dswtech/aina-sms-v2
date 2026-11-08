@@ -225,12 +225,14 @@ class DealTransaction extends Model
                 throw new InvalidArgumentException('Tahap tujuan harus berbeda dari tahap saat ini.');
             }
             $snapshots = $toStage === PipelineStage::Do ? TransactionSnapshots::capture($this) : [];
-            $this->progress_at = now();
+            // One instant for the deal and its history row, so progress_at equals the event time.
+            $at = now();
+            $this->progress_at = $at;
             $this->current_stage = $toStage;
-            $this->last_activity_at = now();
+            $this->last_activity_at = $at;
 
             if ($toStage === PipelineStage::Spk && ! empty($options['booking_fee_confirmed'])) {
-                $this->booking_fee_confirmed_at = now();
+                $this->booking_fee_confirmed_at = $at;
             }
 
             if ($toStage === PipelineStage::Lost && ! empty($options['lost_reason'])) {
@@ -250,7 +252,7 @@ class DealTransaction extends Model
                 'to_stage' => $toStage,
                 'actor_id' => $actor->id,
                 'notes' => $notes,
-                'created_at' => now(),
+                'created_at' => $at,
                 ...$checklist,
                 ...$snapshots,
             ]);

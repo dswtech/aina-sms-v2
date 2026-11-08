@@ -126,5 +126,8 @@ it('narrows customer search by name or partial phone instead of returning everyo
     expect($found('sari'))->toBe(['Sari Dewi'])
         ->and($found('08123'))->toBe(['Sari Dewi'])
         ->and($found('998877'))->toBe(['Budi Santoso'])
-        ->and($found('zzz'))->toBe([]);
+        ->and($found('zzz'))->toBe([])
+        // Digits inside a word search must not pull in phones that merely contain them.
+        ->and($found('Sari 7890'))->toBe([])
+        ->and($found('+62 812-3456'))->toBe(['Sari Dewi']);
 });
