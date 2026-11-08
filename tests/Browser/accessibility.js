@@ -1290,6 +1290,22 @@ async function accessibility(page) {
                             sales: null,
                             vehicle_model: 'Model QA',
                             source: 'walk_in',
+                            source_channel: null,
+                            notes: null,
+                            progress_at: null,
+                            supervisors: [],
+                            area: {
+                                region_code: null,
+                                district_code: null,
+                                region_name: null,
+                                district_name: null,
+                                other_city: null,
+                            },
+                            financing: {
+                                type: null,
+                                leasing_id: null,
+                                other_name: null,
+                            },
                             current_stage: 'lead',
                             stage_label: 'Lead',
                             estimated_value: null,
@@ -1473,7 +1489,7 @@ async function accessibility(page) {
                         .filter({ visible: true });
                     if (width >= 768) {
                         const actionCounts = {
-                            'transactions/index': 3,
+                            'transactions/index': 6,
                             'analytics/index': width >= 1024 ? 6 : 0,
                             'admin/users/index': 4,
                         };
