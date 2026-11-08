@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Support\AuditRecorder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 final class TransactionMasters
 {
@@ -35,6 +37,31 @@ final class TransactionMasters
     }
 
     /** @param array<string, mixed> $data */
+    public function createLeasing(User $actor, array $data): void
+    {
+        DB::transaction(function () use ($actor, $data): void {
+            $this->lockDealer($actor);
+            $name = trim((string) Validator::make($data, ['name' => ['required', 'string', 'max:255']])->validate()['name']);
+            $this->assertUniqueName($actor->dealer_id, $name);
+            $code = Str::slug($name) ?: 'leasing';
+            for ($i = 2; DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('code', $code)->exists(); $i++) {
+                $code = Str::slug($name).'-'.$i;
+            }
+            $id = DB::table('leasing_companies')->insertGetId(['dealer_id' => $actor->dealer_id, 'code' => $code, 'name' => $name]);
+            AuditRecorder::record($actor, 'dealer.leasing_created', $actor, [], ['name' => $name], ['leasing_id' => $id]);
+        });
+    }
+
+    private function assertUniqueName(int $dealerId, string $name, ?int $exceptId = null): void
+    {
+        $exists = DB::table('leasing_companies')->where('dealer_id', $dealerId)->whereRaw('lower(name) = ?', [mb_strtolower($name)])
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))->exists();
+        if ($exists) {
+            throw ValidationException::withMessages(['name' => 'Nama leasing sudah ada.']);
+        }
+    }
+
+    /** @param array<string, mixed> $data */
     public function updateLeasing(User $actor, int $id, array $data): void
     {
         DB::transaction(function () use ($actor, $id, $data): void {
@@ -45,6 +72,9 @@ final class TransactionMasters
             ])->validate();
             $before = DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('id', $id)->first();
             abort_if($before === null, 404);
+            if (isset($validated['name'])) {
+                $this->assertUniqueName($actor->dealer_id, trim($validated['name']), $id);
+            }
             DB::table('leasing_companies')->where('id', $id)->update($validated);
             AuditRecorder::record($actor, 'dealer.leasing_updated', $actor, (array) $before, $validated, ['leasing_id' => $id]);
         });

@@ -10,6 +10,7 @@ use App\Models\FollowUp;
 use App\Models\Invitation;
 use App\Models\SalesTarget;
 use App\Models\StageHistory;
+use Database\Seeders\AreaMasterSeeder;
 use Database\Seeders\DevelopmentDemoSeeder;
 use Illuminate\Support\Facades\DB;
 
@@ -49,4 +50,14 @@ it('does not seed demo records outside local environment', function () {
 
     expect(Customer::query()->count())->toBe(0)
         ->and(DealTransaction::query()->count())->toBe(0);
+});
+
+it('seeds the official area master idempotently and repairs edited names', function () {
+    DB::table('area_districts')->where('code', '32.73.05')->update(['name' => 'Rusak']);
+    $this->seed(AreaMasterSeeder::class);
+    $this->seed(AreaMasterSeeder::class);
+
+    expect(DB::table('area_regions')->count())->toBe(5)
+        ->and(DB::table('area_districts')->count())->toBe(106)
+        ->and(DB::table('area_districts')->where('code', '32.73.05')->value('name'))->toBe('Andir');
 });

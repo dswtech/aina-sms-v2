@@ -1,6 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import FinancingPreview from '@/components/financing-preview';
-import MappingAreaPreview from '@/components/mapping-area';
+import { Head, router } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -52,6 +50,7 @@ type DrilldownRow = {
 
 type Analytics = {
     period: string;
+    to: string;
     mode: AnalyticsMode;
     dimension: AnalyticsDimension | null;
     value: string | null;
@@ -73,12 +72,6 @@ const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     timeZone: 'Asia/Jakarta',
 });
 
-const periodFormatter = new Intl.DateTimeFormat('id-ID', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Asia/Jakarta',
-});
-
 function formatPercentage(value: number): string {
     return `${percentageFormatter.format(value)}%`;
 }
@@ -87,10 +80,6 @@ function formatCategory(value: string): string {
     return value
         .replaceAll('_', ' ')
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function formatPeriod(value: string): string {
-    return periodFormatter.format(new Date(`${value}-01T00:00:00+07:00`));
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
@@ -106,27 +95,14 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 
 type AnalyticsQuery = Pick<
     Analytics,
-    'period' | 'mode' | 'dimension' | 'value'
+    'period' | 'to' | 'mode' | 'dimension' | 'value'
 >;
 
-export default function AnalyticsIndex(props: Props) {
-    const { url } = usePage();
-    const preview = new URLSearchParams(url.split('?')[1] ?? '').get('preview');
-    return preview === 'mapping-area' ? (
-        <MappingAreaPreview />
-    ) : preview === 'financing' ? (
-        <FinancingPreview />
-    ) : (
-        <AnalyticsLiveIndex {...props} />
-    );
-}
-
-function AnalyticsLiveIndex({ analytics }: Props) {
+export default function AnalyticsIndex({ analytics }: Props) {
     const [isLoading, setIsLoading] = useState(false);
     const [monthFrom, setMonthFrom] = useState(analytics.period);
-    const [monthTo, setMonthTo] = useState(analytics.period);
+    const [monthTo, setMonthTo] = useState(analytics.to);
     const rangeError = monthRangeError(monthFrom, monthTo);
-    const multipleMonths = monthFrom !== monthTo;
     const headingRef = useRef<HTMLHeadingElement>(null);
     const [failure, setFailure] = useState<{
         query: AnalyticsQuery | null;
@@ -140,6 +116,7 @@ function AnalyticsLiveIndex({ analytics }: Props) {
     ) {
         const next = {
             period: analytics.period,
+            to: analytics.to,
             mode: analytics.mode,
             dimension: analytics.dimension,
             value: analytics.value,
@@ -152,6 +129,7 @@ function AnalyticsLiveIndex({ analytics }: Props) {
             '/analytics',
             {
                 period: next.period,
+                to: next.to,
                 mode: next.mode,
                 dimension: next.dimension ?? undefined,
                 value: next.value ?? undefined,
@@ -191,6 +169,7 @@ function AnalyticsLiveIndex({ analytics }: Props) {
 
     const exportQuery = new URLSearchParams({
         period: analytics.period,
+        to: analytics.to,
         mode: analytics.mode,
     });
     const exportUrl = `/analytics/export.csv?${exportQuery.toString()}`;
@@ -216,7 +195,8 @@ function AnalyticsLiveIndex({ analytics }: Props) {
                             melalui drilldown.
                         </p>
                         <p className="mt-3 text-sm font-medium">
-                            {formatPeriod(analytics.period)} · Mode{' '}
+                            {formatMonthRange(analytics.period, analytics.to)} ·
+                            Mode{' '}
                             {analytics.mode === 'acquisition'
                                 ? 'Akuisisi'
                                 : 'Pencapaian'}
@@ -245,7 +225,7 @@ function AnalyticsLiveIndex({ analytics }: Props) {
                     title="Filter analisis"
                     iconOnly
                     className="mt-8 print:hidden"
-                    summary={`${formatPeriod(analytics.period)} · ${analytics.mode === 'acquisition' ? 'Akuisisi' : 'Pencapaian'}`}
+                    summary={`${formatMonthRange(analytics.period, analytics.to)} · ${analytics.mode === 'acquisition' ? 'Akuisisi' : 'Pencapaian'}`}
                 >
                     <div className="grid items-end gap-4 xl:grid-cols-[2fr_1fr_auto]">
                         <MonthRangeFields
@@ -286,27 +266,17 @@ function AnalyticsLiveIndex({ analytics }: Props) {
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={
-                                isLoading || !!rangeError || multipleMonths
-                            }
+                            disabled={isLoading || !!rangeError}
                             onClick={() =>
-                                visitAnalytics({ period: monthFrom })
+                                visitAnalytics({
+                                    period: monthFrom,
+                                    to: monthTo,
+                                })
                             }
                         >
                             Tampilkan
                         </Button>
                     </div>
-                    {!rangeError && multipleMonths && (
-                        <p
-                            role="status"
-                            className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm leading-6"
-                        >
-                            Pilihan {formatMonthRange(monthFrom, monthTo)} baru
-                            berupa preview UI. Perhitungan rentang belum
-                            terhubung; angka dan ekspor tetap untuk{' '}
-                            {formatPeriod(analytics.period)}.
-                        </p>
-                    )}
                     <p
                         className="mt-4 text-sm text-muted-foreground"
                         role="status"

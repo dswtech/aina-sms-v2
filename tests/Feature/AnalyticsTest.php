@@ -93,3 +93,34 @@ it('hides conversion in achievement mode and sanitizes drilldown', function () {
         );
     expect($loadedHistories)->toBe(0);
 });
+
+it('aggregates a month range for source and model, drilldown and CSV, excluding outside months', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
+    foreach (['2026-09-15' => 'Sept', '2026-10-15' => 'Okt', '2026-11-15' => 'Nov', '2026-12-15' => 'Des'] as $date => $model) {
+        $deal = DealTransaction::create(['dealer_id' => $dealer->id, 'customer_id' => $customer->id, 'sales_id' => $sales->id,
+            'vehicle_model' => $model, 'source' => 'walk_in', 'current_stage' => PipelineStage::Lead]);
+        $deal->forceFill(['created_at' => "$date 03:00:00"])->save();
+    }
+
+    $this->actingAs($admin)->get('/analytics?period=2026-10&to=2026-11&mode=acquisition')->assertInertia(fn (Assert $p) => $p
+        ->where('analytics.period', '2026-10')->where('analytics.to', '2026-11')
+        ->where('analytics.sources.0.total', 2)
+        ->where('analytics.models', fn ($rows) => collect($rows)->pluck('model')->sort()->values()->all() === ['Nov', 'Okt'])
+        ->has('analytics.drilldown', 2));
+    $this->get('/analytics?period=2026-10&mode=acquisition')->assertInertia(fn (Assert $p) => $p
+        ->where('analytics.to', '2026-10')->where('analytics.sources.0.total', 1));
+
+    $csv = $this->get('/analytics/export.csv?period=2026-10&to=2026-11&mode=acquisition');
+    $csv->assertOk()->assertDownload('analisis-2026-10_2026-11-acquisition.csv');
+    expect($csv->streamedContent())->toContain('Nov')->not->toContain('Sept');
+});
+
+it('rejects invalid analytics ranges', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)->get('/analytics?period=2026-11&to=2026-10')->assertSessionHasErrors('to');
+    $this->get('/analytics?to=2026-11')->assertSessionHasErrors('period');
+    $this->get('/analytics?period=2026-11&to=bad')->assertSessionHasErrors('to');
+});

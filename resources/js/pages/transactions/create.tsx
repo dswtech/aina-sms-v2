@@ -1,10 +1,17 @@
-import InputError from '@/components/input-error';
+import {
+    AreaFields,
+    Field,
+    FinancingFields,
+    areaPayload,
+    emptyAreaFinancing,
+    financingPayload,
+    selectClass,
+} from '@/components/transaction-fields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Option = { value: string; label: string };
 type Props = {
@@ -30,29 +37,6 @@ const CHANNELS: Option[] = [
     { value: 'website', label: 'Website' },
     { value: 'other', label: 'Lainnya' },
 ];
-const selectClass =
-    'border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm';
-
-function Field({
-    id,
-    label,
-    error,
-    children,
-}: {
-    id: string;
-    label: string;
-    error?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="space-y-1">
-            <Label htmlFor={id}>{label}</Label>
-            {children}
-            <InputError message={error} />
-        </div>
-    );
-}
-
 export default function TransactionCreate({
     regions,
     districts,
@@ -77,12 +61,7 @@ export default function TransactionCreate({
     const [source, setSource] = useState(sources[0]?.value ?? 'walk_in');
     const [channel, setChannel] = useState('');
     const [closing, setClosing] = useState('');
-    const [financing, setFinancing] = useState('');
-    const [leasing, setLeasing] = useState('');
-    const [otherLeasing, setOtherLeasing] = useState('');
-    const [region, setRegion] = useState('');
-    const [district, setDistrict] = useState('');
-    const [city, setCity] = useState('');
+    const [af, setAf] = useState(emptyAreaFinancing);
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
     const [dirty, setDirty] = useState(false);
@@ -92,11 +71,6 @@ export default function TransactionCreate({
             setDirty(true);
             set(v);
         };
-
-    const regionDistricts = useMemo(
-        () => districts.filter((d) => d.region_code === region),
-        [districts, region],
-    );
 
     // Debounced, server-scoped customer search; stale responses are aborted.
     const controller = useRef<AbortController | null>(null);
@@ -154,22 +128,8 @@ export default function TransactionCreate({
                     source === 'digital_ad' ? channel || null : null,
                 expected_closing_month: closing || null,
                 notes: notes || null,
-                area: region
-                    ? {
-                          region_code: region,
-                          district_code:
-                              region === 'other' ? null : district || null,
-                          other_city: region === 'other' ? city : null,
-                      }
-                    : null,
-                financing: financing
-                    ? {
-                          type: financing,
-                          leasing_id:
-                              financing === 'credit' ? leasing || null : null,
-                          other_name: leasing === 'other' ? otherLeasing : null,
-                      }
-                    : null,
+                area: areaPayload(af),
+                financing: financingPayload(af),
             },
             { onFinish: () => setSaving(false), preserveScroll: true },
         );
@@ -315,70 +275,12 @@ export default function TransactionCreate({
                                     }
                                 />
                             </Field>
-                            <Field
-                                id="financing"
-                                label="Pembiayaan"
-                                error={err('financing.type')}
-                            >
-                                <select
-                                    id="financing"
-                                    className={selectClass}
-                                    value={financing}
-                                    onChange={(e) =>
-                                        touch(setFinancing)(e.target.value)
-                                    }
-                                >
-                                    <option value="">Belum ditentukan</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="credit">Kredit</option>
-                                </select>
-                            </Field>
-                            {financing === 'credit' && (
-                                <Field
-                                    id="leasing"
-                                    label="Leasing"
-                                    error={err('financing.leasing_id')}
-                                >
-                                    <select
-                                        id="leasing"
-                                        className={selectClass}
-                                        value={leasing}
-                                        onChange={(e) =>
-                                            touch(setLeasing)(e.target.value)
-                                        }
-                                    >
-                                        <option value="">
-                                            Leasing belum dipilih
-                                        </option>
-                                        {leasings.map((l) => (
-                                            <option key={l.id} value={l.id}>
-                                                {l.name}
-                                            </option>
-                                        ))}
-                                        <option value="other">
-                                            Kredit Lain
-                                        </option>
-                                    </select>
-                                </Field>
-                            )}
-                            {financing === 'credit' && leasing === 'other' && (
-                                <Field
-                                    id="other-leasing"
-                                    label="Nama leasing"
-                                    error={err('financing.other_name')}
-                                >
-                                    <Input
-                                        id="other-leasing"
-                                        className="min-h-11"
-                                        value={otherLeasing}
-                                        onChange={(e) =>
-                                            touch(setOtherLeasing)(
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </Field>
-                            )}
+                            <FinancingFields
+                                value={af}
+                                onChange={touch(setAf)}
+                                leasings={leasings}
+                                errors={errors}
+                            />
                             <Field
                                 id="notes"
                                 label="Keterangan"
@@ -592,75 +494,13 @@ export default function TransactionCreate({
                                 <CardTitle>Area Transaksi (KTP/STNK)</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <Field
-                                    id="region"
-                                    label="Kabupaten/Kota"
-                                    error={err('area.region_code')}
-                                >
-                                    <select
-                                        id="region"
-                                        className={selectClass}
-                                        value={region}
-                                        onChange={(e) => {
-                                            touch(setRegion)(e.target.value);
-                                            setDistrict('');
-                                        }}
-                                    >
-                                        <option value="">Belum diisi</option>
-                                        {regions.map((r) => (
-                                            <option key={r.code} value={r.code}>
-                                                {r.name}
-                                            </option>
-                                        ))}
-                                        <option value="other">Kota Lain</option>
-                                    </select>
-                                </Field>
-                                {region !== '' && region !== 'other' && (
-                                    <Field
-                                        id="district"
-                                        label="Kecamatan"
-                                        error={err('area.district_code')}
-                                    >
-                                        <select
-                                            id="district"
-                                            className={selectClass}
-                                            value={district}
-                                            onChange={(e) =>
-                                                touch(setDistrict)(
-                                                    e.target.value,
-                                                )
-                                            }
-                                        >
-                                            <option value="">
-                                                Pilih kecamatan
-                                            </option>
-                                            {regionDistricts.map((d) => (
-                                                <option
-                                                    key={d.code}
-                                                    value={d.code}
-                                                >
-                                                    {d.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </Field>
-                                )}
-                                {region === 'other' && (
-                                    <Field
-                                        id="city"
-                                        label="Nama kota"
-                                        error={err('area.other_city')}
-                                    >
-                                        <Input
-                                            id="city"
-                                            className="min-h-11"
-                                            value={city}
-                                            onChange={(e) =>
-                                                touch(setCity)(e.target.value)
-                                            }
-                                        />
-                                    </Field>
-                                )}
+                                <AreaFields
+                                    value={af}
+                                    onChange={touch(setAf)}
+                                    regions={regions}
+                                    districts={districts}
+                                    errors={errors}
+                                />
                             </CardContent>
                         </Card>
                     </div>

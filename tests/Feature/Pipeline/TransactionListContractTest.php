@@ -114,3 +114,14 @@ it('keeps CSV export inside the same scope as the list', function () {
     expect($this->get('/transactions/export.csv')->streamedContent())->not->toContain('Secret');
     $this->actingAs(User::factory()->branchManager()->create(['dealer_id' => $dealer->id]))->get('/transactions/export.csv')->assertForbidden();
 });
+
+it('offers filter masters: supervisors to Admin only, plus regions and districts', function () {
+    $dealer = Dealer::factory()->create();
+    User::factory()->supervisor()->create(['dealer_id' => $dealer->id, 'name' => 'Spv Satu']);
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    $spv = User::factory()->supervisor()->create(['dealer_id' => $dealer->id]);
+
+    $this->actingAs($admin)->get('/transactions')->assertInertia(fn (Assert $p) => $p
+        ->has('supervisorOptions', 2)->has('regions', 5)->has('districts', 106)->has('leasings', 8));
+    $this->actingAs($spv)->get('/transactions')->assertInertia(fn (Assert $p) => $p->where('supervisorOptions', []));
+});

@@ -83,6 +83,7 @@ class DevelopmentDemoSeeder extends Seeder
             $dealer = Dealer::query()->where('name', 'AINA Development Dealer')->firstOrFail();
         }
 
+        $this->call(AreaMasterSeeder::class);
         TransactionMasters::initialize($dealer->id);
 
         if (Customer::query()->where('dealer_id', $dealer->id)->where('notes', 'like', '[demo]%')->exists()) {

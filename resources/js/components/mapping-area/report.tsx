@@ -1,51 +1,44 @@
-import { Head, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import { FlaskConical, RotateCcw, ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { ChartExportMenu } from '@/components/chart-export-menu';
 import { FilterPanel } from '@/components/filter-panel';
 import { MonthRangeFields } from '@/components/month-range-fields';
-import { areaDistricts, areaRegions } from '@/lib/bandung-raya-districts';
-import {
-    buildAreaDeals,
-    initialFoaCodes,
-    summarizeArea,
-} from '@/lib/area-preview';
-import { syntheticDeals } from '@/lib/financing-preview';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
 import { chartRowColor, makeAreaChartExport } from '@/lib/chart-export';
-import type { AreaDeal } from '@/lib/area-preview';
-import { AreaMaster, AreaTransactionPreview } from './editors';
 
-const initialDeals = buildAreaDeals(syntheticDeals, areaDistricts, areaRegions);
-const sampleIds = [
-    initialDeals.find((row) => !row.doMonth)!.id,
-    initialDeals.find((row) => !row.doMonth && row.area.regionCode === 'other')!
-        .id,
-    initialDeals.find((row) => row.doMonth)!.id,
-];
 const percentage = (count: number, total: number) =>
     `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(total ? (count / total) * 100 : 0)}%`;
 
-function AreaReport({
-    deals,
-    foaCodes,
-    onUpdate,
-    canTryForm,
-}: {
-    deals: AreaDeal[];
-    foaCodes: ReadonlySet<string>;
-    onUpdate: (deal: AreaDeal) => void;
-    canTryForm: boolean;
-}) {
-    const [from, setFrom] = useState('2026-11');
-    const [to, setTo] = useState('2026-11');
-    const [applied, setApplied] = useState({ from: '2026-11', to: '2026-11' });
-    const result = summarizeArea(deals, applied.from, applied.to);
+export type AreaReportData = {
+    from: string;
+    to: string;
+    total: number;
+    foa: number;
+    other: number;
+    unverified: number;
+    rows: {
+        id: string;
+        name: string;
+        districtName: string;
+        regionName: string;
+        category: 'foa' | 'other';
+        count: number;
+    }[];
+};
+
+export function AreaReport({ result }: { result: AreaReportData }) {
+    const [from, setFrom] = useState(result.from);
+    const [to, setTo] = useState(result.to);
+    const applied = { from: result.from, to: result.to };
+    const visit = (range: { from: string; to: string }) =>
+        router.get('/analytics/mapping-area', range, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     const periodLabel = formatMonthRange(applied.from, applied.to);
     const chart = makeAreaChartExport(
-        { ...applied, periodLabel, mode: 'do', synthetic: true },
+        { ...applied, periodLabel, mode: 'do', synthetic: false },
         result,
     );
     return (
@@ -63,7 +56,7 @@ function AreaReport({
                         setFrom(start);
                         setTo(end);
                         if (!monthRangeError(start, end))
-                            setApplied({ from: start, to: end });
+                            visit({ from: start, to: end });
                     }}
                 />
                 <p className="mt-3 text-xs leading-5 text-muted-foreground">
@@ -113,19 +106,9 @@ function AreaReport({
                         Belum ada DO pada rentang ini
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Data contoh penjualan tersedia pada November 2026.
+                        Pilih rentang bulan lain untuk melihat DO yang sudah
+                        tercatat.
                     </p>
-                    <Button
-                        variant="outline"
-                        className="mt-5"
-                        onClick={() => {
-                            setFrom('2026-11');
-                            setTo('2026-11');
-                            setApplied({ from: '2026-11', to: '2026-11' });
-                        }}
-                    >
-                        Lihat November 2026
-                    </Button>
                 </section>
             ) : (
                 <>
@@ -410,139 +393,16 @@ function AreaReport({
                     </section>
                 </>
             )}
-            {canTryForm && (
-                <div className="flex flex-col justify-between gap-4 rounded-xl border border-dashed px-5 py-4 sm:flex-row sm:items-center">
-                    <p className="max-w-xl text-xs leading-5 text-muted-foreground">
-                        Preview pengisian area pada detail transaksi. Perubahan
-                        sebelum DO tidak mengubah laporan penjualan yang sudah
-                        tercatat.
-                    </p>
-                    <AreaTransactionPreview
-                        deals={deals}
-                        sampleIds={sampleIds}
-                        foaCodes={foaCodes}
-                        onSave={onUpdate}
-                    />
-                </div>
+            {result.unverified > 0 && (
+                <p
+                    role="alert"
+                    className="rounded-xl border px-5 py-4 text-sm leading-6"
+                >
+                    {result.unverified} DO pada rentang ini belum memiliki area
+                    terverifikasi dan tidak dihitung. Tinjau sebelum laporan
+                    dipakai.
+                </p>
             )}
         </div>
-    );
-}
-
-export default function MappingAreaPreview() {
-    const page = usePage();
-    const role = page.props.auth.user.role;
-    const isAdmin = role === 'admin';
-    const [screen, setScreen] = useState(() =>
-        isAdmin &&
-        new URLSearchParams(page.url.split('?')[1] ?? '').get('screen') ===
-            'master'
-            ? 'master'
-            : 'report',
-    );
-    const [foaCodes, setFoaCodes] = useState(
-        () => new Set(initialFoaCodes(areaDistricts)),
-    );
-    const [deals, setDeals] = useState<AreaDeal[]>(initialDeals);
-    const [revision, setRevision] = useState(0);
-    return (
-        <>
-            <Head title={screen === 'master' ? 'Area & FOA' : 'Mapping Area'} />
-            <div className="mx-auto w-full max-w-7xl flex-1 px-5 pt-8 pb-28 sm:px-8 sm:pt-10 md:pb-12 lg:px-10">
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed px-4 py-3 text-xs leading-5 text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                        <FlaskConical
-                            className="size-4 shrink-0"
-                            aria-hidden="true"
-                        />
-                        <span>
-                            <strong className="text-foreground">
-                                Data contoh.
-                            </strong>{' '}
-                            Transaksi dan FOA adalah ilustrasi, bukan ketetapan
-                            operasional dealer. Master wilayah memakai data
-                            resmi.
-                        </span>
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                            setFoaCodes(
-                                new Set(initialFoaCodes(areaDistricts)),
-                            );
-                            setDeals(initialDeals);
-                            setRevision((value) => value + 1);
-                        }}
-                    >
-                        <RotateCcw className="size-3.5" aria-hidden="true" />
-                        Reset preview
-                    </Button>
-                </div>
-                <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {screen === 'master'
-                                    ? 'Area & FOA'
-                                    : 'Mapping Area'}
-                            </h1>
-                            <Badge variant="secondary">Preview</Badge>
-                        </div>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                            {screen === 'master'
-                                ? 'Tentukan kecamatan yang menjadi sorotan dealer.'
-                                : 'Sebaran penjualan berdasarkan kecamatan FOA dealer.'}
-                        </p>
-                    </div>
-                    {isAdmin && (
-                        <Button
-                            variant="outline"
-                            onClick={() =>
-                                setScreen((value) =>
-                                    value === 'report' ? 'master' : 'report',
-                                )
-                            }
-                        >
-                            {screen === 'master' && (
-                                <ArrowLeft
-                                    className="size-4"
-                                    aria-hidden="true"
-                                />
-                            )}
-                            {screen === 'master'
-                                ? 'Kembali ke Mapping Area'
-                                : 'Kelola Area & FOA'}
-                        </Button>
-                    )}
-                </header>
-                <div key={revision}>
-                    <div hidden={screen !== 'report'}>
-                        <AreaReport
-                            deals={deals}
-                            foaCodes={foaCodes}
-                            onUpdate={(deal) =>
-                                setDeals((rows) =>
-                                    rows.map((row) =>
-                                        row.id === deal.id ? deal : row,
-                                    ),
-                                )
-                            }
-                            canTryForm={
-                                role === 'admin' || role === 'supervisor'
-                            }
-                        />
-                    </div>
-                    {screen === 'master' && isAdmin && (
-                        <AreaMaster foaCodes={foaCodes} onSave={setFoaCodes} />
-                    )}
-                </div>
-                <p className="mt-8 border-t pt-4 text-xs leading-5 text-muted-foreground">
-                    Perubahan hanya di browser dan hilang saat reload. PNG/CSV
-                    diberi penanda Data contoh. Backend belum dihubungkan.
-                </p>
-            </div>
-        </>
     );
 }

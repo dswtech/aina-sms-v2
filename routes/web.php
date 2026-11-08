@@ -11,8 +11,10 @@ use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\CustomerHistoryController;
 use App\Http\Controllers\Customer\DealCommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DealerSettingsController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\TargetPlanController;
 use App\Http\Controllers\TransactionController;
@@ -79,6 +81,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::middleware('role:supervisor,branch_manager,admin')->group(function () {
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('analytics/export.csv', [AnalyticsController::class, 'csv'])->name('analytics.csv');
+        Route::get('analytics/financing', [ReportController::class, 'financing'])->name('analytics.financing');
+        Route::get('analytics/mapping-area', [ReportController::class, 'mappingArea'])->name('analytics.mapping-area');
     });
 
     Route::middleware('role:supervisor,admin')->group(function () {
@@ -99,7 +103,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('teams/{team}', [TeamController::class, 'update'])->name('teams.update');
         Route::post('team-memberships', [TeamMembershipController::class, 'store'])->name('team-memberships.store');
         Route::delete('team-memberships/{user}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
-        Route::inertia('dealer-settings', 'module-status', ['module' => 'dealer-settings'])->name('dealer-settings.edit');
+        Route::get('dealer-settings', [DealerSettingsController::class, 'edit'])->name('dealer-settings.edit');
+        Route::patch('dealer-settings/area-foa', [DealerSettingsController::class, 'updateFoa'])->name('dealer-settings.area-foa');
+        Route::post('dealer-settings/leasing', [DealerSettingsController::class, 'storeLeasing'])->name('dealer-settings.leasing.store');
+        Route::patch('dealer-settings/leasing/{leasing}', [DealerSettingsController::class, 'updateLeasing'])->whereNumber('leasing')->name('dealer-settings.leasing.update');
     });
 
     Route::inertia('notifications', 'module-status', [

@@ -56,8 +56,8 @@ const shared = {
         icon: BarChart3,
         children: [
             { title: 'Sumber & Model', href: '/analytics' },
-            { title: 'Pembiayaan', href: '/analytics?preview=financing' },
-            { title: 'Mapping Area', href: '/analytics?preview=mapping-area' },
+            { title: 'Pembiayaan', href: '/analytics/financing' },
+            { title: 'Mapping Area', href: '/analytics/mapping-area' },
         ],
     },
     imports: {
@@ -185,15 +185,12 @@ export function isNavigationItemActive(
         typeof item.href === 'string' ? item.href : item.href.url,
         'http://localhost',
     );
-    if (current.pathname !== target.pathname) return false;
-    if (item.children?.length || target.pathname !== '/analytics') return true;
-    const preview = (url: URL) =>
-        ['financing', 'mapping-area'].includes(
-            url.searchParams.get('preview') ?? '',
-        )
-            ? url.searchParams.get('preview')
-            : null;
-    return preview(current) === preview(target);
+    if (item.children?.length)
+        return (
+            current.pathname === target.pathname ||
+            current.pathname.startsWith(`${target.pathname}/`)
+        );
+    return current.pathname === target.pathname;
 }
 
 export const profileNavItem: NavItem = {
