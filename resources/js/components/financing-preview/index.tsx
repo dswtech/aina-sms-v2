@@ -1,5 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, FlaskConical, RotateCcw } from 'lucide-react';
+import { Head, usePage } from '@inertiajs/react';
+import { FlaskConical, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,21 +78,6 @@ export default function FinancingPreview() {
                         dari prospek hingga realisasi penjualan.
                     </p>
                 </header>
-                <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-b">
-                    <Link
-                        href="/analytics"
-                        className="inline-flex min-h-11 items-center gap-2 border-b-2 border-transparent text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-3.5" aria-hidden="true" />
-                        Sumber & Model
-                    </Link>
-                    <span
-                        className="inline-flex min-h-11 items-center border-b-2 border-primary text-sm font-medium text-primary"
-                        aria-current="page"
-                    >
-                        Pembiayaan
-                    </span>
-                </div>
                 {tabs.length > 1 && (
                     <nav
                         aria-label="Layar preview pembiayaan"

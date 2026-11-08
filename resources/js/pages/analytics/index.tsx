@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import FinancingPreview from '@/components/financing-preview';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
@@ -6,7 +6,8 @@ import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { MonthRangeFields } from '@/components/month-range-fields';
+import { formatMonthRange, monthRangeError } from '@/lib/month-range';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -119,6 +120,10 @@ export default function AnalyticsIndex(props: Props) {
 
 function AnalyticsLiveIndex({ analytics }: Props) {
     const [isLoading, setIsLoading] = useState(false);
+    const [monthFrom, setMonthFrom] = useState(analytics.period);
+    const [monthTo, setMonthTo] = useState(analytics.period);
+    const rangeError = monthRangeError(monthFrom, monthTo);
+    const multipleMonths = monthFrom !== monthTo;
     const headingRef = useRef<HTMLHeadingElement>(null);
     const [failure, setFailure] = useState<{
         query: AnalyticsQuery | null;
@@ -216,11 +221,6 @@ function AnalyticsLiveIndex({ analytics }: Props) {
                     </div>
                     <div className="flex flex-wrap gap-2 print:hidden">
                         <Button variant="outline" asChild>
-                            <Link href="/analytics?preview=financing">
-                                Pembiayaan · preview
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild>
                             <a href={exportUrl} download>
                                 <Download aria-hidden="true" />
                                 Unduh CSV
@@ -240,24 +240,21 @@ function AnalyticsLiveIndex({ analytics }: Props) {
 
                 <FilterPanel
                     title="Filter analisis"
+                    iconOnly
                     className="mt-8 print:hidden"
                     summary={`${formatPeriod(analytics.period)} · ${analytics.mode === 'acquisition' ? 'Akuisisi' : 'Pencapaian'}`}
                 >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="analytics-period">Periode</Label>
-                            <Input
-                                id="analytics-period"
-                                type="month"
-                                value={analytics.period}
-                                disabled={isLoading}
-                                onChange={(event) => {
-                                    const period = event.currentTarget.value;
-                                    if (period) visitAnalytics({ period });
-                                }}
-                                className="min-h-11 w-full"
-                            />
-                        </div>
+                    <div className="grid items-end gap-4 xl:grid-cols-[2fr_1fr_auto]">
+                        <MonthRangeFields
+                            id="analytics-period"
+                            from={monthFrom}
+                            to={monthTo}
+                            disabled={isLoading}
+                            onChange={(from, to) => {
+                                setMonthFrom(from);
+                                setMonthTo(to);
+                            }}
+                        />
                         <div className="space-y-2">
                             <Label htmlFor="analytics-mode">Mode tanggal</Label>
                             <Select
@@ -283,7 +280,30 @@ function AnalyticsLiveIndex({ analytics }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={
+                                isLoading || !!rangeError || multipleMonths
+                            }
+                            onClick={() =>
+                                visitAnalytics({ period: monthFrom })
+                            }
+                        >
+                            Tampilkan
+                        </Button>
                     </div>
+                    {!rangeError && multipleMonths && (
+                        <p
+                            role="status"
+                            className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm leading-6"
+                        >
+                            Pilihan {formatMonthRange(monthFrom, monthTo)} baru
+                            berupa preview UI. Perhitungan rentang belum
+                            terhubung; angka dan ekspor tetap untuk{' '}
+                            {formatPeriod(analytics.period)}.
+                        </p>
+                    )}
                     <p
                         className="mt-4 text-sm text-muted-foreground"
                         role="status"

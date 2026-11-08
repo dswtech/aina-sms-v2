@@ -9,6 +9,11 @@ import {
 } from '@/components/ui/collapsible';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function FilterPanel({
     title,
@@ -16,12 +21,14 @@ export function FilterPanel({
     children,
     className,
     collapseOnMobile = false,
+    iconOnly = false,
 }: {
     title: string;
     summary: string;
     children: ReactNode;
     className?: string;
     collapseOnMobile?: boolean;
+    iconOnly?: boolean;
 }) {
     const isMobile = useIsMobile();
     const [expanded, setExpanded] = useState<boolean>();
@@ -46,26 +53,49 @@ export function FilterPanel({
                             {summary}
                         </p>
                     </div>
-                    <CollapsibleTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1.5 px-2"
-                        >
-                            {open ? (
-                                <ChevronUp
-                                    aria-hidden="true"
-                                    className="size-3.5"
-                                />
-                            ) : (
-                                <ChevronDown
-                                    aria-hidden="true"
-                                    className="size-3.5"
-                                />
-                            )}
-                            {open ? 'Sembunyikan filter' : 'Tampilkan filter'}
-                        </Button>
-                    </CollapsibleTrigger>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <CollapsibleTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={
+                                        iconOnly
+                                            ? 'size-11 shrink-0 p-0'
+                                            : 'gap-1.5 px-2'
+                                    }
+                                    aria-label={
+                                        open
+                                            ? 'Sembunyikan filter'
+                                            : 'Tampilkan filter'
+                                    }
+                                >
+                                    {open ? (
+                                        <ChevronUp
+                                            aria-hidden="true"
+                                            className="size-3.5"
+                                        />
+                                    ) : (
+                                        <ChevronDown
+                                            aria-hidden="true"
+                                            className="size-3.5"
+                                        />
+                                    )}
+                                    {!iconOnly &&
+                                        (open
+                                            ? 'Sembunyikan filter'
+                                            : 'Tampilkan filter')}
+                                </Button>
+                            </CollapsibleTrigger>
+                        </TooltipTrigger>
+                        {iconOnly && (
+                            <TooltipContent>
+                                {open
+                                    ? 'Sembunyikan filter'
+                                    : 'Tampilkan filter'}
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
                 </div>
                 <CollapsibleContent className="pt-3">
                     {children}

@@ -54,6 +54,10 @@ const shared = {
         title: 'Analisis',
         href: '/analytics',
         icon: BarChart3,
+        children: [
+            { title: 'Sumber & Model', href: '/analytics' },
+            { title: 'Pembiayaan', href: '/analytics?preview=financing' },
+        ],
     },
     imports: {
         key: 'imports',
@@ -164,8 +168,28 @@ export function getMobileNavigation(role: UserRole): {
         primary: primaryKeys.map((key) =>
             items.find((item) => item.key === key)!,
         ),
-        more: items.filter((item) => !primaryKeys.includes(item.key)),
+        more: items.filter(
+            (item) =>
+                !primaryKeys.includes(item.key) || !!item.children?.length,
+        ),
     };
+}
+
+export function isNavigationItemActive(
+    item: NavItem,
+    currentUrl: string,
+): boolean {
+    const current = new URL(currentUrl, 'http://localhost');
+    const target = new URL(
+        typeof item.href === 'string' ? item.href : item.href.url,
+        'http://localhost',
+    );
+    if (current.pathname !== target.pathname) return false;
+    if (item.children?.length || target.pathname !== '/analytics') return true;
+    return (
+        (current.searchParams.get('preview') === 'financing') ===
+        (target.searchParams.get('preview') === 'financing')
+    );
 }
 
 export const profileNavItem: NavItem = {

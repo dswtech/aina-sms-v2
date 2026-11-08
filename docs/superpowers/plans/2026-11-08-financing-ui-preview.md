@@ -23,4 +23,12 @@ Prototipe React interaktif yang diminta pengguna, hanya dengan data sintetis. Ti
 
 ## Handoff
 
+### Revisi UI berdasarkan komentar pengguna
+
+- Analisis menjadi grup sidebar yang bisa dibuka/ditutup, dengan submenu Sumber & Model dan Pembiayaan. Pemilihan submenu mempertimbangkan query preview tanpa mengganggu filter laporan. Menu Lainnya pada mobile juga menampilkan kedua anak menu; tinggi sheet dibatasi dan dapat digulir.
+- Tombol Pembiayaan di header serta navigasi ganda dalam konten preview dihapus. Tombol lipat filter pada kedua laporan memakai ikon, tooltip, dan accessible label; pemakai FilterPanel lain tetap memakai label teks lama.
+- Kedua layar memakai pilihan bulan awal–akhir. Pembiayaan sintetis langsung mengagregasi rentang inklusif; input invalid mempertahankan hasil terakhir yang valid. Contoh Oktober–November 2026 berjumlah 160 transaksi.
+- Pengguna menegaskan backend ditunda. Rentang Sumber & Model hanya draft UI; rentang beberapa bulan menampilkan penjelasan dan menonaktifkan penerapan, sementara angka/cetak/CSV tetap menyebut bulan backend yang sebenarnya. Rentang satu bulan dapat diterapkan melalui endpoint lama dengan tombol Tampilkan. Tidak mengirim parameter rentang baru ke backend.
+- Lima tes baru untuk menu/active state/rentang melewati RED/GREEN; total frontend menjadi 25 tes lulus. TypeScript, lint/format dan build lulus. Backend tetap 404 lulus/lima skip. Browser memverifikasi submenu aktif, ikon lipat filter, batas laporan asli, rentang sintetis dan menu ponsel pendek. Skenario recovery browser diselaraskan dengan dua input dan tombol penerapan; fault injection skenario tersebut belum dijalankan ulang.
+
 Branch `codex/financing-ui-preview` awalnya berangkat dari checkout `27f8fa2`. Fetch menemukan `origin/main` pada `d9cac42` dengan tree identik (monitoring sudah squash-merged); baseline branch diselaraskan memakai soft reset, tanpa mengganti file kerja. Perubahan lokal pengguna dipertahankan dan tidak disertakan dalam commit preview. Belum ada implementasi backend pembiayaan, migration, atau rilis production.

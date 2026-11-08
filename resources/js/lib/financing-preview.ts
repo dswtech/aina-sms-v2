@@ -99,10 +99,12 @@ export function summarizeFinancing(
     lenders: Leasing[],
     period: string,
     mode: FinancingMode,
+    endPeriod = period,
 ) {
-    const cohort = deals.filter(
-        (row) => (mode === 'do' ? row.doMonth : row.prospectMonth) === period,
-    );
+    const cohort = deals.filter((row) => {
+        const month = mode === 'do' ? row.doMonth : row.prospectMonth;
+        return !!month && month >= period && month <= endPeriod;
+    });
     const groups = new Map<
         string,
         { id: string; name: string; count: number }

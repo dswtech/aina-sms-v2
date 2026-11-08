@@ -177,6 +177,7 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 ## Keputusan terbuka
 
 - Preview frontend pembiayaan berada pada branch `codex/financing-ui-preview`, berbasis `main` `d9cac42`. [Rencana dan bukti preview](../superpowers/plans/2026-11-08-financing-ui-preview.md) mencatat tiga layar sintetis, akses masuk melalui Analisis/Pengaturan Dealer, agregasi teruji, review dan verifikasi browser terisolasi. Tidak menambah backend, dependency atau migration. Perubahan lokal monitoring yang sudah ada pada memory dipertahankan; preview belum merupakan modul pembiayaan production.
+- Revisi UI pembiayaan: [catatan implementasi](../superpowers/plans/2026-11-08-financing-ui-preview.md#revisi-ui-berdasarkan-komentar-pengguna) mencatat submenu Analisis, ikon filter dengan tooltip dan rentang bulan frontend. Backend tetap ditunda sesuai instruksi pengguna; angka Sumber & Model belum dihitung lintas bulan. Pembiayaan sintetis sudah mendukung rentang. Verifikasi: 25 tes frontend, 404 backend/lima skip, TypeScript, lint, build dan browser lokal; perubahan berada pada PR #66.
 
 | Keputusan | Pemutus | Dampak bila belum diputuskan |
 |---|---|---|

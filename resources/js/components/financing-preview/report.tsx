@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { ArrowDown, ArrowUpRight, Info } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { MonthRangeFields } from '@/components/month-range-fields';
+import { formatMonthRange, monthRangeError } from '@/lib/month-range';
 import { summarizeFinancing } from '@/lib/financing-preview';
 import type {
     FinancingDeal,
@@ -25,8 +25,19 @@ export function FinancingReport({
     onTryForm?: () => void;
 }) {
     const [period, setPeriod] = useState('2026-11');
+    const [endPeriod, setEndPeriod] = useState('2026-11');
+    const [appliedRange, setAppliedRange] = useState({
+        from: '2026-11',
+        to: '2026-11',
+    });
     const [mode, setMode] = useState<FinancingMode>('prospect');
-    const data = summarizeFinancing(deals, lenders, period, mode);
+    const data = summarizeFinancing(
+        deals,
+        lenders,
+        appliedRange.from,
+        mode,
+        appliedRange.to,
+    );
     const distribution = [
         { name: 'Cash', value: data.cash, color: 'var(--primary)' },
         { name: 'Kredit', value: data.credit, color: 'var(--foreground)' },
@@ -38,33 +49,28 @@ export function FinancingReport({
     ];
     const largest = Math.max(1, ...data.leasing.map((row) => row.count));
     const circumference = 2 * Math.PI * 80;
-    const periodLabel = /^\d{4}-(0[1-9]|1[0-2])$/.test(period)
-        ? new Intl.DateTimeFormat('id-ID', {
-              month: 'long',
-              year: 'numeric',
-              timeZone: 'Asia/Jakarta',
-          }).format(new Date(`${period}-01T00:00:00+07:00`))
-        : 'Pilih periode';
+    const periodLabel = formatMonthRange(appliedRange.from, appliedRange.to);
     const modeLabel = mode === 'prospect' ? 'Prospek' : 'Realisasi DO';
 
     return (
         <div className="space-y-6">
             <FilterPanel
+                iconOnly
                 title="Filter pembiayaan"
                 summary={`${periodLabel} · ${modeLabel}`}
             >
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
-                    <div className="space-y-2 xl:w-48">
-                        <Label htmlFor="financing-period">Periode</Label>
-                        <Input
-                            id="financing-period"
-                            type="month"
-                            min="2020-01"
-                            max="2099-12"
-                            value={period}
-                            onChange={(event) => setPeriod(event.target.value)}
-                        />
-                    </div>
+                    <MonthRangeFields
+                        id="financing-period"
+                        from={period}
+                        to={endPeriod}
+                        onChange={(from, to) => {
+                            setPeriod(from);
+                            setEndPeriod(to);
+                            if (!monthRangeError(from, to))
+                                setAppliedRange({ from, to });
+                        }}
+                    />
                     <fieldset className="min-w-0 space-y-2">
                         <legend className="mb-2 text-sm font-medium">
                             Dasar laporan
@@ -154,7 +160,11 @@ export function FinancingReport({
                     <Button
                         variant="outline"
                         className="mt-5"
-                        onClick={() => setPeriod('2026-11')}
+                        onClick={() => {
+                            setPeriod('2026-11');
+                            setEndPeriod('2026-11');
+                            setAppliedRange({ from: '2026-11', to: '2026-11' });
+                        }}
                     >
                         Lihat November 2026
                     </Button>
