@@ -39,6 +39,12 @@ Terakhir dijalankan 8 November 2026 pada PR #75: `composer ci:check` lulus (465 
 - Worker/scheduler coaching dan backup otomatis tetap ditunda pemilik. Jangan mengaktifkannya hanya karena melanjutkan integrasi; ketika migrasi server dibahas, gunakan pengingat pada bagian berikut.
 - Status production, monitoring dan email pada catatan berikut adalah bukti sesi sebelumnya dan tidak diperiksa ulang. Gerbang UAT/operasional yang belum selesai tetap terbuka.
 
+## Pembaruan 9 November 2026 — lebar konten dan kontrol desktop
+
+Branch `codex/wide-content-compact-controls` dari `origin/main` `758d55e` (PR #77 sudah merged). Sesuai [desain](../superpowers/specs/2026-11-09-wide-content-compact-controls-design.md) dan [rencana](../superpowers/plans/2026-11-09-wide-content-compact-controls.md): sembilan halaman data memakai batas konten 1536px dan kontrol 36px aktif untuk pointer utama mouse pada lebar 1280px ke atas (klausa `any-pointer: coarse` dibuang karena Windows dapat melaporkannya tanpa layar sentuh). Form dan pengaturan tetap sempit.
+
+Bukti: `composer ci:check` lulus (465 backend: 460 lulus, lima skip; 38 frontend; lint, TypeScript, Pint, PHPStan bersih). `tests/Browser/accessibility.js` 21 dari 22 lulus, termasuk tes baru 1024/1280/1920px; `dashboard-layout.js` lulus. Satu tes lama di `accessibility.js` (`all data tables and their mobile lists share alternating surfaces`, timeout menunggu `h1`) gagal sama persis sebelum dan sesudah perubahan; belum diselidiki. Belum diverifikasi: perangkat sentuh dengan lebar 1280px ke atas, iPad dengan keyboard/trackpad, dan pemeriksaan visual manual.
+
 ## Keadaan terverifikasi
 
 - Pengingat yang diminta pemilik pada 8 November 2026: ketika pembahasan pindah server production dimulai, angkat kembali dua pekerjaan yang sengaja ditunda: worker/scheduler email coaching ([runbook](../operations/coaching-notifications.md)) dan backup otomatis mingguan dengan satu versi terbaru ([runbook](../operations/backup-restore.md)). Bahas kapasitas hosting, penyimpanan privat/enkripsi, dan verifikasi pemulihan sebelum aktivasi. Jangan mengaktifkan kembali hanya karena catatan pengingat ini; pemilik menundanya. Penyimpanan CSV permanen bukan pekerjaan tertunda: dikeluarkan dari scope karena input manual, dan hanya dibahas kembali bila kebutuhan impor berubah. Saat migrasi, bawa serta konfigurasi undangan email, monitoring dan aturan rilis bernomor yang sudah ada. Ini pengingat berbasis konteks migrasi, bukan jadwal notifikasi kalender.

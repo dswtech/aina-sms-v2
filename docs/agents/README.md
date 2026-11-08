@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../superpowers/specs/2026-11-09-wide-content-compact-controls-design.md](../superpowers/specs/2026-11-09-wide-content-compact-controls-design.md) | Desain singkat | Batas lebar konten halaman data 1536px dan kontrol 36px untuk mouse di lebar 1280px ke atas tanpa klausa `any-pointer`; disetujui. |
+| [../superpowers/plans/2026-11-09-wide-content-compact-controls.md](../superpowers/plans/2026-11-09-wide-content-compact-controls.md) | Rencana | Tiga task: tes browser gagal dulu, ubah batas lebar sembilan halaman data dan media query kontrol, lalu dokumen dan verifikasi; dijalankan 9 November 2026, PR belum dibuka. |
 | [../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md) | Rencana end-to-end | Kontrak backend, form/list Transaksi, pembiayaan, Mapping Area, urutan dependensi dan ownership sub-agent; Tahap 1 backend terverifikasi, UI/cutover Tahap 2–4 belum diimplementasikan. |
 | [../superpowers/plans/2026-11-08-mapping-area-preview.md](../superpowers/plans/2026-11-08-mapping-area-preview.md) | Preview frontend | Mapping Area, master 106 kecamatan, FOA snapshot DO dan ekspor sintetis tanpa backend. |
 | [../superpowers/plans/2026-11-08-financing-ui-preview.md](../superpowers/plans/2026-11-08-financing-ui-preview.md) | Preview frontend | Laporan pembiayaan, master leasing dan form transaksi dengan data sintetis serta batas tanpa backend. |
