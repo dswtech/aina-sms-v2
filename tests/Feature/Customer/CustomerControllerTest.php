@@ -238,3 +238,12 @@ it('exposes stage history and recent activities for the transaction detail view'
         ->assertJsonPath('activities.data.0.type', 'whatsapp')
         ->assertJsonPath('activities.data.0.notes', 'Kirim brosur digital');
 });
+
+it('finds customers by name regardless of letter case (PostgreSQL LIKE is case-sensitive)', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => 'Budi Santoso'])->assignTo($sales);
+
+    $this->actingAs($sales)->get(route('customers.index', ['search' => 'budi']))
+        ->assertInertia(fn (Assert $page) => $page->has('customers.data', 1)->where('customers.data.0.name', 'Budi Santoso'));
+});

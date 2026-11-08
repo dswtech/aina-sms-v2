@@ -125,3 +125,13 @@ it('offers filter masters: supervisors to Admin only, plus regions and districts
         ->has('supervisorOptions', 2)->has('regions', 5)->has('districts', 106)->has('leasings', 8));
     $this->actingAs($spv)->get('/transactions')->assertInertia(fn (Assert $p) => $p->where('supervisorOptions', []));
 });
+
+it('searches name, model and source regardless of letter case', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    listDeal($dealer, $sales, 'Avanza Veloz', '2026-11-03 03:00:00', ['customer' => 'Budi Santoso']);
+    $names = fn (string $q) => collect($this->actingAs($sales)->get('/transactions?date_from=&date_to=&search='.$q)
+        ->viewData('page')['props']['transactions']['data'])->pluck('vehicle_model')->all();
+
+    expect($names('budi'))->toBe(['Avanza Veloz'])->and($names('AVANZA'))->toBe(['Avanza Veloz'])->and($names('WALK'))->toBe(['Avanza Veloz']);
+});

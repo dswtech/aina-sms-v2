@@ -93,8 +93,8 @@ class CustomerController extends Controller
         if (! empty($search)) {
             $normalizedSearch = PhoneNormalizer::normalize($search) ?? $search;
             $query->where(function (Builder $q) use ($search, $normalizedSearch): void {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$normalizedSearch}%");
+                $q->whereLike('name', "%{$search}%")
+                    ->orWhereLike('phone', "%{$normalizedSearch}%");
             });
         }
 
