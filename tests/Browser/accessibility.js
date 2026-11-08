@@ -1706,33 +1706,30 @@ async function accessibility(page) {
             }
         }
     });
+    const transactionsProps = {
+        auth: { user: { ...user, role: 'supervisor' } },
+        transactions: { data: [], links: [] },
+        filters: {
+            search: '',
+            stage: '',
+            tab: 'all',
+            sales_id: null,
+        },
+        assignableSales: [
+            { id: 1, name: 'Sales Alpha', username: 'sales.alpha' },
+            { id: 2, name: 'Sales Beta', username: 'sales.beta' },
+        ],
+        sourceOptions: ['walk_in', 'referral'],
+        stages: [],
+        lostReasons: [],
+    };
     await test('compact controls align on desktop and retain touch sizes with filter drafts intact', async () => {
         for (const width of [390, 768, 1440]) {
             await page.setViewportSize({ width, height: 1100 });
             await load();
             await checkFilterDisclosure('Filter pelanggan');
-            await load(
-                'transactions/index',
-                {
-                    auth: { user: { ...user, role: 'supervisor' } },
-                    transactions: { data: [], links: [] },
-                    filters: {
-                        search: '',
-                        stage: '',
-                        tab: 'all',
-                        sales_id: null,
-                    },
-                    assignableSales: [
-                        { id: 1, name: 'Sales Alpha', username: 'sales.alpha' },
-                        { id: 2, name: 'Sales Beta', username: 'sales.beta' },
-                    ],
-                    sourceOptions: ['walk_in', 'referral'],
-                    stages: [],
-                    lostReasons: [],
-                },
-                '/transactions',
-            );
-            const expected = width >= 768 ? 36 : 44;
+            await load('transactions/index', transactionsProps, '/transactions');
+            const expected = width >= 1280 ? 36 : 44;
             for (const id of [
                 'search',
                 'stage',
@@ -1805,6 +1802,38 @@ async function accessibility(page) {
                 Math.abs(passwordSize.height - toggleSize.height) <= 0.5,
                 'Password toggle must align with the resized input',
             );
+        }
+    });
+    await test('data pages use the 1536px cap and 36px controls from 1280px', async () => {
+        for (const width of [1024, 1280, 1920]) {
+            await page.setViewportSize({ width, height: 1100 });
+            await load('transactions/index', transactionsProps, '/transactions');
+            const expected = width >= 1280 ? 36 : 44;
+            const size = await page.locator('#search').boundingBox();
+            assert(
+                Math.abs(size.height - expected) <= 0.5,
+                `#search should be ${expected}px at ${width}, got ${size.height}`,
+            );
+            assert(
+                await page.evaluate(
+                    () => document.documentElement.scrollWidth === innerWidth,
+                ),
+                `Data page overflow at ${width}`,
+            );
+            const wrapper = await page
+                .locator('main .max-w-screen-2xl')
+                .first()
+                .boundingBox();
+            assert(wrapper, `Content wrapper missing at ${width}`);
+            assert(
+                wrapper.width <= 1536.5,
+                `Content wider than 1536px at ${width}: ${wrapper.width}`,
+            );
+            if (width === 1920)
+                assert(
+                    wrapper.width >= 1500,
+                    `Content should use the wide cap at 1920, got ${wrapper.width}`,
+                );
         }
     });
 
