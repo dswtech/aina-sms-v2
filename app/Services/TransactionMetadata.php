@@ -66,7 +66,7 @@ final class TransactionMetadata
             }
             $leasingId = null;
         } elseif ($leasingId !== null) {
-            if (filter_var($leasingId, FILTER_VALIDATE_INT) === false || ! DB::table('leasing_companies')->where('id', $leasingId)->where('dealer_id', $dealerId)->when($requireActiveLeasing, fn ($query) => $query->where('is_active', true))->exists()) {
+            if (! (is_int($leasingId) || (is_string($leasingId) && ctype_digit($leasingId))) || ! DB::table('leasing_companies')->where('id', $leasingId)->where('dealer_id', $dealerId)->when($requireActiveLeasing, fn ($query) => $query->where('is_active', true))->exists()) {
                 throw ValidationException::withMessages(['financing.leasing_id' => 'Pilih leasing aktif milik dealer.']);
             }
             $leasingId = (int) $leasingId;

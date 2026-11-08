@@ -189,3 +189,15 @@ it('gives clear per row errors without blocking valid rows', function () {
     $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
     $this->assertDatabaseCount('deal_transactions', 1);
 });
+
+it('keeps a Kredit Lain name when the CSV leaves the leasing id empty', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.sales']);
+    $csv = "name,phone,vehicle_model,source,sales_username,financing_type,financing_other_name\nZeta,081234567890,Model,walk_in,csv.sales,credit,Zeta Finance\n";
+    $this->actingAs($admin)->post('/imports/preview', ['file' => UploadedFile::fake()->createWithContent('other.csv', $csv)])
+        ->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+
+    expect(DealTransaction::query()->sole()->financing_other_name)->toBe('Zeta Finance');
+});

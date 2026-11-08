@@ -43,6 +43,7 @@ type Transaction = {
         type: string | null;
         leasing_id: number | null;
         other_name: string | null;
+        leasing_name?: string | null;
     };
     current_stage: string;
     stage_label: string;
@@ -160,7 +161,7 @@ const financingLabel = (t: RowDetail) =>
     t.financing.type === 'cash'
         ? 'Cash'
         : t.financing.type === 'credit'
-          ? `Kredit${t.financing.other_name ? ` · ${t.financing.other_name}` : ''}`
+          ? `Kredit${t.financing.leasing_name || t.financing.other_name ? ` · ${t.financing.leasing_name ?? t.financing.other_name}` : ''}`
           : 'Belum ditentukan';
 
 type Detail = Transaction & {
@@ -446,7 +447,10 @@ export default function TransactionsIndex({
         );
     };
 
+    const detailRequest = useRef(0);
     const openDetail = async (transaction: Transaction) => {
+        // A slow answer for an earlier row must not overwrite the one now shown.
+        const request = ++detailRequest.current;
         setDetailTarget(transaction);
         setEdit(null);
         setDetail(null);
@@ -459,10 +463,12 @@ export default function TransactionsIndex({
                 },
             );
             if (!response.ok) throw new Error('detail');
-            setDetail(await response.json());
+            const body = await response.json();
+            if (request !== detailRequest.current) return;
+            setDetail(body);
             setDetailState('idle');
         } catch {
-            setDetailState('error');
+            if (request === detailRequest.current) setDetailState('error');
         }
     };
 
@@ -1092,6 +1098,10 @@ export default function TransactionsIndex({
                                                                       transaction.last_activity_at,
                                                                   ).toLocaleString(
                                                                       'id-ID',
+                                                                      {
+                                                                          timeZone:
+                                                                              'Asia/Jakarta',
+                                                                      },
                                                                   )
                                                                 : '-'}
                                                         </td>

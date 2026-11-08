@@ -59,6 +59,7 @@ export default function TransactionCreate({
     const [results, setResults] = useState<FoundCustomer[]>(
         preselected ? [preselected] : [],
     );
+    const [searchTotal, setSearchTotal] = useState(0);
     const [searchState, setSearchState] = useState<
         'idle' | 'loading' | 'error'
     >('idle');
@@ -96,7 +97,9 @@ export default function TransactionCreate({
                     },
                 );
                 if (!response.ok) throw new Error('search');
-                setResults((await response.json()).data);
+                const body = await response.json();
+                setResults(body.data);
+                setSearchTotal(body.total);
                 setSearchState('idle');
             } catch (error) {
                 if ((error as Error).name !== 'AbortError')
@@ -471,6 +474,9 @@ export default function TransactionCreate({
                                             {searchState === 'idle' &&
                                                 results.length === 0 &&
                                                 'Tidak ada pelanggan yang cocok.'}
+                                            {searchState === 'idle' &&
+                                                searchTotal > results.length &&
+                                                `Menampilkan ${results.length} dari ${searchTotal}; persempit pencarian.`}
                                         </div>
                                         <ul className="space-y-1">
                                             {results.map((c) => (

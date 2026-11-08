@@ -135,3 +135,54 @@ it('searches name, model and source regardless of letter case', function () {
 
     expect($names('budi'))->toBe(['Avanza Veloz'])->and($names('AVANZA'))->toBe(['Avanza Veloz'])->and($names('WALK'))->toBe(['Avanza Veloz']);
 });
+
+it('ignores sales and supervisor filters the actor may not use', function () {
+    $dealer = Dealer::factory()->create();
+    $mine = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $other = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $team = Team::factory()->create(['dealer_id' => $dealer->id]);
+    $spv = User::factory()->supervisor()->create(['dealer_id' => $dealer->id]);
+    $team->memberships()->create(['user_id' => $spv->id, 'role' => 'supervisor', 'started_at' => now()]);
+    $team->memberships()->create(['user_id' => $mine->id, 'role' => 'sales', 'started_at' => now()]);
+    listDeal($dealer, $mine, 'Mine', '2026-11-03 03:00:00', ['team_id' => $team->id]);
+    listDeal($dealer, $other, 'Other', '2026-11-03 03:00:00');
+    $names = fn ($actor, string $q) => collect($this->actingAs($actor)->get("/transactions?date_from=&date_to=&$q")->viewData('page')['props']['transactions']['data'])->pluck('vehicle_model')->sort()->values()->all();
+
+    // Sales cannot widen to other Sales deals or filter by supervisor; a supervisor stays inside the team.
+    expect($names($mine, "sales_id={$other->id}"))->toBe(['Mine'])
+        ->and($names($mine, "supervisor_id={$spv->id}"))->toBe(['Mine'])
+        ->and($names($spv, "sales_id={$other->id}"))->toBe(['Mine'])
+        ->and($names($spv, 'supervisor_id=999999'))->toBe(['Mine']);
+});
+
+it('exports no customer phone, address, social account or coaching text', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id, 'phone' => '081377788899', 'address' => 'Jl. Rahasia 99', 'social_media_account' => '@rahasia', 'notes' => 'catatan-rahasia']);
+    $customer->assignTo($sales);
+    $deal = DealTransaction::create(['dealer_id' => $dealer->id, 'customer_id' => $customer->id, 'sales_id' => $sales->id, 'vehicle_model' => 'Avanza', 'notes' => 'Keterangan aman']);
+    $deal->forceFill(['progress_at' => now()])->save();
+
+    $csv = $this->actingAs($sales)->get('/transactions/export.csv?date_from=&date_to=')->streamedContent();
+
+    expect($csv)->toContain('Keterangan aman')
+        ->not->toContain('081377788899')->not->toContain('+6281377788899')->not->toContain('Rahasia')->not->toContain('@rahasia')->not->toContain('catatan-rahasia');
+});
+
+it('rejects a boolean leasing id instead of failing in the database', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $this->actingAs($sales)->postJson('/transactions', ['name' => 'Rina', 'phone' => '081234567890', 'vehicle_model' => 'Avanza', 'source' => 'walk_in',
+        'financing' => ['type' => 'credit', 'leasing_id' => true]])->assertUnprocessable()->assertJsonValidationErrors('financing.leasing_id');
+});
+
+it('sends the master leasing name, even for an inactive leasing', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $acc = DB::table('leasing_companies')->where('dealer_id', $dealer->id)->where('code', 'acc')->value('id');
+    listDeal($dealer, $sales, 'Creta', '2026-11-03 03:00:00', ['financing_type' => 'credit', 'leasing_id' => $acc]);
+    DB::table('leasing_companies')->where('id', $acc)->update(['is_active' => false]);
+
+    $this->actingAs($sales)->get('/transactions?date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
+        ->where('transactions.data.0.financing.leasing_name', 'ACC'));
+});
