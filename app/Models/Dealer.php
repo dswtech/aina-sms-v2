@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\TransactionMasters;
 use Database\Factories\DealerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,11 @@ class Dealer extends Model
 {
     /** @use HasFactory<DealerFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::created(fn (Dealer $dealer) => TransactionMasters::initialize((int) $dealer->getKey()));
+    }
 
     /**
      * @return HasMany<Team, $this>

@@ -286,10 +286,25 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ANL-06 | **Pengguna dapat membuka drilldown berupa daftar transaksi yang sudah membawa filter analisis.** Menutup detail mempertahankan periode, mode tanggal, dan dimensi yang dipilih. | S |
 | ANL-07 | **Cakupan Analisis mengikuti role dan atribusi tim transaksi yang sama dengan dashboard.** Perpindahan Sales tidak memindahkan angka histori transaksi ke tim barunya. Supervisor melihat tim aktif yang ditugaskan kepadanya, Admin melihat dealer, dan Branch Manager melihat drilldown tersanitasi tanpa nomor telepon, alamat, catatan hubungan, atau coaching. Izin laporan tidak memperluas izin operasional atau coaching. | M |
 | ANL-08 | **Analisis dapat diekspor sebagai CSV dan PDF agregat.** Ekspor tidak memuat kontak pelanggan atau isi coaching. | S |
-| ANL-09 | **Analisis Area dan MSCP ditunda sampai prasyarat datanya tersedia.** Area memerlukan lokasi terstruktur; MSCP memerlukan modul leasing dan definisi Market Share Credit Portion yang disetujui. | W |
-| ANL-10 | **Mapping Area mengharuskan area transaksi lengkap sebelum DO.** Kecamatan harus sesuai kabupaten/kotanya; pilihan khusus Kota Lain mewajibkan nama kota dan tidak meminta kecamatan. Laporan DO hanya memuat kecamatan FOA dan Area lain, tanpa kategori kecamatan belum diisi. Implementasi saat ini terbatas pada preview frontend sintetis; penegakan server pada alur DO belum diimplementasikan. | M |
+| ANL-09 | **Analisis Area dan pembiayaan memakai data terstruktur sesuai kontrak tambahan bagian 8.** Cutover laporan mengikuti gerbang integrasi backend dan UI; MSCP tetap ditunda sampai definisi Market Share Credit Portion disetujui. | W |
+| ANL-10 | **Mapping Area mengharuskan area transaksi lengkap sebelum DO.** Kecamatan harus sesuai kabupaten/kotanya; pilihan khusus Kota Lain mewajibkan nama kota dan tidak meminta kecamatan. Laporan DO hanya memuat kecamatan FOA dan Area lain, tanpa kategori kecamatan belum diisi. Rincian master, validasi dan snapshot mengikuti kontrak tambahan bagian 8; preview sintetis tidak menjadi sumber data laporan nyata. | M |
 
 ## 8. Gambaran Model Data
+
+### Kontrak tambahan Transaksi, pembiayaan dan area (disetujui 8 November 2026)
+
+Ketentuan berikut memperinci CRM-01/02/06/08, PIP-01/07 dan ANL-09/10 untuk implementasi end-to-end yang disetujui:
+
+- Pelanggan baru boleh mempunyai satu `social_media_account` teks opsional maksimal 255 karakter. Identitas, akun medsos dan assignment pelanggan lama dipertahankan. Catatan umum transaksi terpisah dari catatan hubungan pelanggan dan coaching; tidak ada penyalinan otomatis.
+- Sumber Digital Ad wajib kanal `facebook,instagram,tiktok,website,other`; sumber lain mengosongkan kanal. Input manual dan impor memakai aturan bersama, atomik dengan identitas, assignment, Lead, histori awal dan audit. Kolom CSV baru opsional; Digital Ad baru tetap wajib kanal.
+- Progress hanya mengikuti histori perubahan tahap, termasuk pembatalan DO. Lead baru memakai waktu dibuat. Data lama memakai histori tahap terbaru atau waktu dibuat bila tanpa histori; aktivitas, coaching dan edit metadata tidak mengubah progress.
+- Area transaksi KTP/STNK terpisah dari alamat profil, boleh kosong seluruhnya sebelum DO; wilayah parsial ditolak. Kecamatan harus cocok parent. `region_code=other` mewajibkan nama Kota Lain dan mengosongkan kecamatan, selalu non-FOA.
+- Master resmi 106 kecamatan dari lima kabupaten/kota mempunyai kode/nama immutable. FOA per dealer hanya dikelola Admin dengan audit, awal kosong. Master leasing per dealer diawali MayBank, Mandiri Utama Finance, ACC, TAF, Mandiri Tunas Finance, BCA Finance, Niaga Finance dan Adira Finance; Admin mengatur aktif/pantauan dengan audit tanpa hard-delete referensi.
+- Pembiayaan `null|cash|credit`; cash/belum ditentukan mengosongkan leasing. Kredit boleh belum memilih leasing. Pilihan `leasing_id=other` wajib nama bebas `other_name`; pilihan master memakai ID integer leasing aktif dealer. Pembiayaan lengkap tidak menjadi syarat tambahan DO.
+- DO wajib area lengkap dan membuat snapshot area/pembiayaan atomik setelah row lock. Snapshot menyimpan kode/nama wilayah, status FOA, jenis pembiayaan, identitas/nama leasing dan status pantauan saat DO. Perubahan master tidak menulis ulang histori. Area/pembiayaan terkunci pada DO/Delivery, dibuka kembali setelah pembatalan ke SPK; DO ulang membuat snapshot baru, Delivery tidak menambah realisasi.
+- Laporan pembiayaan Prospek memakai kejadian pertama masuk Prospect dalam rentang, sekali per transaksi, dengan pembiayaan terkini. DO memakai kejadian sah beserta snapshot. Leasing non-pantauan/nama bebas masuk Kredit Lain (kedua terakhir), Leasing belum dipilih terakhir. Mapping Area hanya DO sah dengan kecamatan FOA dan Area lain; tidak ada kategori area kosong. Scope dan sanitasi Branch Manager mengikuti laporan existing. MSCP tetap ditunda.
+
+Laporan/master/form operasional dan cutover preview mengikuti gerbang rencana end-to-end. Data preview tidak dianggap data dealer atau aktivasi laporan nyata.
 
 | Entitas | Peran | Catatan |
 |---|---|---|

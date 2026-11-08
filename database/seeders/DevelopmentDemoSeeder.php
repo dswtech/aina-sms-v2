@@ -23,6 +23,8 @@ use App\Models\StageHistory;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Services\TransactionMasters;
+use App\Services\TransactionSnapshots;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -80,6 +82,8 @@ class DevelopmentDemoSeeder extends Seeder
             $this->call(DevelopmentUserSeeder::class);
             $dealer = Dealer::query()->where('name', 'AINA Development Dealer')->firstOrFail();
         }
+
+        TransactionMasters::initialize($dealer->id);
 
         if (Customer::query()->where('dealer_id', $dealer->id)->where('notes', 'like', '[demo]%')->exists()) {
             $this->command?->info('Data demo sudah ada; melengkapi contoh laporan tanpa membuat ulang data.');
@@ -381,6 +385,11 @@ class DevelopmentDemoSeeder extends Seeder
                 'vehicle_model' => $vehicleModels[$index % count($vehicleModels)],
                 'estimated_value' => $estimatedValue,
                 'source' => $sources[$index % count($sources)],
+                'source_channel' => $sources[$index % count($sources)] === 'digital_ad' ? 'instagram' : null,
+                'notes' => '[demo] Catatan transaksi contoh.',
+                'region_code' => '32.17', 'district_code' => '32.17.08',
+                'financing_type' => $index % 2 === 0 ? 'cash' : 'credit',
+                'leasing_id' => $index % 2 === 0 ? null : DB::table('leasing_companies')->where('dealer_id', $dealer->id)->where('code', 'acc')->value('id'),
                 'current_stage' => $stage,
                 'booking_fee_confirmed_at' => $bookingFeeConfirmedAt,
                 'lost_reason' => $lostReason,
@@ -393,6 +402,7 @@ class DevelopmentDemoSeeder extends Seeder
             $deal->forceFill([
                 'created_at' => $createdAt,
                 'updated_at' => $finalAt,
+                'progress_at' => $finalAt,
             ])->saveQuietly();
 
             $this->seedStageHistories($deal, $stage, $createdAt, $finalAt, $sales, $context['supervisor']);
@@ -487,6 +497,7 @@ class DevelopmentDemoSeeder extends Seeder
                 'po_confirmed' => $toStage === PipelineStage::Do ? true : null,
                 'dp_confirmed' => $toStage === PipelineStage::Do ? true : null,
                 'unit_confirmed' => $toStage === PipelineStage::Do ? true : null,
+                ...($toStage === PipelineStage::Do ? DB::transaction(fn () => TransactionSnapshots::capture($deal)) : []),
             ]);
 
             $previousStage = $toStage;

@@ -50,7 +50,7 @@ it('creates a confirmed opportunity without duplicating or overwriting the custo
     expect($deal->customer_id)->toBe($f['customer']->id)->and($deal->sales_id)->toBe($f['sales']->id)
         ->and($deal->team_id)->toBe($f['team']->id)->and($deal->vehicle_model)->toBe('Model baru')
         ->and($deal->expected_closing_month->format('Y-m'))->toBe('2026-12')
-        ->and($deal->stageHistories()->sole()->notes)->toBe('Catatan peluang baru')
+        ->and($deal->notes)->toBe('Catatan peluang baru')
         ->and($deal->stageHistories()->sole()->actor_id)->toBe($actor->id);
     expect($f['customer']->fresh()->name)->toBe('Identitas lama')
         ->and($f['customer']->fresh()->notes)->toBe('Catatan hubungan lama')

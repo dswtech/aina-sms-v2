@@ -98,3 +98,28 @@ it('downloads csv template', function () {
         ->get(route('imports.template'))
         ->assertOk();
 });
+
+it('imports metadata through the shared lead service and creates initial history', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.core']);
+    $csv = "name,phone,vehicle_model,source,sales_username,source_channel,social_media_account,region_code,district_code,notes\n"
+        ."Budi,081234567890,Avanza,digital_ad,csv.core,instagram,@budi,32.17,32.17.08,Catatan transaksi\n";
+    $this->actingAs($admin)->post('/imports/preview', ['file' => UploadedFile::fake()->createWithContent('foundation.csv', $csv)])
+        ->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1));
+    $this->post(route('imports.commit', CsvImportBatch::query()->sole()))->assertSessionHasNoErrors();
+    $customer = Customer::query()->sole();
+    $deal = DealTransaction::query()->sole();
+    expect($customer->social_media_account)->toBe('@budi')->and($customer->notes)->toBeNull()
+        ->and($deal->notes)->toBe('Catatan transaksi')->and($deal->district_code)->toBe('32.17.08')
+        ->and($deal->stageHistories()->sole()->to_stage->value)->toBe('lead');
+});
+
+it('rejects digital imports without channel in preview', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    User::factory()->sales()->create(['dealer_id' => $dealer->id, 'username' => 'csv.core']);
+    $csv = "name,phone,vehicle_model,source,sales_username\nBudi,081234567890,Avanza,digital_ad,csv.core\n";
+    $this->actingAs($admin)->post('/imports/preview', ['file' => UploadedFile::fake()->createWithContent('digital.csv', $csv)])
+        ->assertInertia(fn (Assert $p) => $p->where('preview.rejected_count', 1));
+});

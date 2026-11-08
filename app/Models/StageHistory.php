@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property bool|null $unit_confirmed
  */
 #[Fillable([
+    'area_snapshot', 'financing_snapshot',
     'deal_transaction_id',
     'from_stage',
     'to_stage',
@@ -92,6 +93,8 @@ class StageHistory extends Model
     protected function casts(): array
     {
         return [
+            'area_snapshot' => 'array',
+            'financing_snapshot' => 'array',
             'from_stage' => PipelineStage::class,
             'to_stage' => PipelineStage::class,
             'created_at' => 'datetime',

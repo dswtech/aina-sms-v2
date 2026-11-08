@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Services\TransactionMetadata;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCustomerTransactionRequest extends FormRequest
@@ -17,6 +18,7 @@ class StoreCustomerTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...TransactionMetadata::rules(),
             'vehicle_model' => ['required', 'string', 'max:255'],
             'expected_closing_month' => ['nullable', 'date_format:Y-m'],
             'estimated_value' => ['nullable', 'integer', 'min:0'],

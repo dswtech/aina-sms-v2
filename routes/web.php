@@ -49,6 +49,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('comments/{comment}', [DealCommentController::class, 'update'])->name('comments.update');
 
         Route::patch('transactions/{transaction}/closing-month', [ClosingMonthController::class, 'update'])->name('transactions.closing-month');
+        Route::patch('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });

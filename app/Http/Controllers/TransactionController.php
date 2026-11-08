@@ -5,17 +5,56 @@ namespace App\Http\Controllers;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Services\TransactionMetadata;
+use App\Support\AuditRecorder;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TransactionController extends Controller
 {
+    public function update(Request $request, DealTransaction $transaction): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        DB::transaction(function () use ($request, $transaction, $actor): void {
+            $locked = DealTransaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+            $this->authorize('update', $locked);
+            Dealer::query()->whereKey($locked->dealer_id)->lockForUpdate()->firstOrFail();
+            $validated = $request->validate([
+                ...TransactionMetadata::rules(),
+                'source' => ['sometimes', 'required', 'string', 'max:64'],
+                'vehicle_model' => ['sometimes', 'required', 'string', 'max:255'],
+                'notes' => ['nullable', 'string', 'max:2000'],
+                'expected_closing_month' => ['nullable', 'date_format:Y-m'],
+                'estimated_value' => ['nullable', 'integer', 'min:0'],
+            ]);
+            $data = array_replace([
+                'source' => $locked->source, 'source_channel' => $locked->source_channel,
+                'area' => ['region_code' => $locked->region_code, 'district_code' => $locked->district_code, 'other_city' => $locked->other_city],
+                'financing' => ['type' => $locked->financing_type, 'leasing_id' => $locked->financing_other_name !== null ? 'other' : $locked->leasing_id, 'other_name' => $locked->financing_other_name],
+            ], $validated);
+            $metadata = TransactionMetadata::normalize($data, $locked->dealer_id, requireActiveLeasing: array_key_exists('financing', $validated));
+            $before = $locked->getAttributes();
+            $fields = array_intersect_key($validated, array_flip(['source', 'vehicle_model', 'notes', 'estimated_value', 'expected_closing_month']));
+            if (array_key_exists('expected_closing_month', $fields)) {
+                $fields['expected_closing_month'] = $fields['expected_closing_month'] !== null ? $fields['expected_closing_month'].'-01' : null;
+            }
+            $locked->fill([...$fields, ...$metadata])->save();
+            AuditRecorder::record($actor, 'transaction.metadata_updated', $locked->customer, $before, $locked->getAttributes());
+        });
+
+        return back();
+    }
+
     public function index(Request $request): Response
     {
         /** @var User $actor */
