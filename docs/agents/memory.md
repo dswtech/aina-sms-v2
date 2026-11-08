@@ -13,19 +13,19 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ### Titik lanjut
 
-Integrasi Transaksi, Pembiayaan dan Mapping Area mengikuti [rencana end-to-end](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md). Tahap 1–3 sudah dikerjakan; progres, bukti dan batas tiap tahap ada di ledger rencana itu (sumber utama, bukan ringkasan ini). Sisa pekerjaan ada di bagian "Masih terbuka".
+Integrasi Transaksi, Pembiayaan dan Mapping Area mengikuti [rencana end-to-end](../superpowers/plans/2026-11-08-transactions-financing-area-end-to-end.md). Tahap 1–3 sudah dikerjakan dan merged; progres, bukti dan batas tiap tahap ada di ledger rencana itu (sumber utama, bukan ringkasan ini). Sisa pekerjaan ada di bagian "Masih terbuka".
 
 ### Git dan PR (revalidasi dengan `git fetch` sebelum bekerja)
 
-- `main` = `5266539`. Sudah merged: [PR #70](https://github.com/dswtech/aina-sms-v2/pull/70) (fondasi backend), [#71](https://github.com/dswtech/aina-sms-v2/pull/71) dan [#72](https://github.com/dswtech/aina-sms-v2/pull/72) (Tahap 2: daftar, form, detail, master Admin, laporan nyata, rentang bulan).
-- [PR #73](https://github.com/dswtech/aina-sms-v2/pull/73) `codex/transactions-cutover` masih terbuka (Tahap 3: cutover Pelanggan ke form bersama dan impor dengan field baru). Check `ci` lulus; check Vercel preview gagal dengan `Resource provisioning failed` sebelum build berjalan (masalah sisi Vercel, bukan kode; cek dashboard). Belum di-merge.
-- Branch lokal `codex/search-case-insensitive` (dari `main`): pencarian nama/model/sumber di daftar Pelanggan dan Transaksi memakai `whereLike` karena `like` PostgreSQL peka huruf besar-kecil. Dua tes regresi gagal di PostgreSQL sebelum perbaikan dan lulus sesudahnya. Belum di-push.
-- Branch lama (`codex/transactions-core`, `codex/transactions-ui`, `codex/transactions-list-ui`) sudah merged dan remote-nya dihapus; jangan dijadikan basis. Mulai pekerjaan baru dari `origin/main` pada branch non-default.
+- `main` = `0da8fd5`. Sudah merged: [PR #70](https://github.com/dswtech/aina-sms-v2/pull/70) (fondasi backend), [#71](https://github.com/dswtech/aina-sms-v2/pull/71) dan [#72](https://github.com/dswtech/aina-sms-v2/pull/72) (Tahap 2: daftar, form, detail, master Admin, laporan nyata, rentang bulan), serta [#73](https://github.com/dswtech/aina-sms-v2/pull/73) (Tahap 3: cutover Pelanggan ke form bersama dan impor dengan field baru).
+- Preview Vercel PR #73 gagal dengan `Resource provisioning failed` sebelum build berjalan (masalah sisi Vercel, bukan kode); penyebabnya belum dipastikan, cek dashboard Vercel bila terulang pada PR berikutnya.
+- [PR #74](https://github.com/dswtech/aina-sms-v2/pull/74) `codex/search-case-insensitive`: pencarian nama/model/sumber di daftar Pelanggan dan Transaksi memakai `whereLike` karena `like` PostgreSQL peka huruf besar-kecil. Dua tes regresi gagal di PostgreSQL sebelum perbaikan dan lulus sesudahnya. Terbuka, belum di-merge.
+- Branch lama (`codex/transactions-core`, `codex/transactions-ui`, `codex/transactions-list-ui`, `codex/transactions-cutover`) sudah merged dan remote-nya dihapus; jangan dijadikan basis. Mulai pekerjaan baru dari `origin/main` pada branch non-default.
 - Stash lokal (termasuk `Paused worker scheduler and backup notes - 2026-11-08`) dan worktree Fase 1/Fase 2 lama jangan di-apply/drop tanpa memeriksa kepemilikannya.
 
 ### Masih terbuka
 
-1. Merge PR #73 setelah pemilik memutuskan soal check Vercel.
+1. Merge PR #74 setelah check lulus.
 2. Review independen oleh agent yang tidak menulis kodenya, lalu alur penerimaan end-to-end (Pelanggan Baru → Prospect → area/pembiayaan → SPK → DO → laporan, ubah master, batal DO, DO ulang, Delivery tidak menambah hitungan) termasuk unduhan PNG/CSV nyata.
 3. Inventaris data target secara read-only sebelum rollout; bila ada DO lama tanpa snapshot/area, jangan aktifkan laporan (laporan Mapping Area sudah menampilkan jumlah DO tanpa snapshot sebagai peringatan). Keputusan FOA operasional tetap milik pemilik (awal kosong).
 4. Temuan audit yang belum dikerjakan: rentang laporan (`period..to`, `/analytics/financing`, `/analytics/mapping-area`) belum dibatasi — usulan maksimal 24 bulan di `AnalyticsRequest` dan `ReportController::range`; kanal pada sumber non-digital ditolak di impor tetapi dibuang diam-diam di form manual; pengecekan policy per baris di daftar Transaksi menambah query; `SendCoachingEmail` dapat mengirim dua kali bila commit gagal setelah email terkirim (worker sedang ditunda); `AreaMasterSeeder` belum punya guard environment; ekspor CSV memakai paging offset.
