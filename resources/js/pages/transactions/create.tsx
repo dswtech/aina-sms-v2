@@ -21,6 +21,7 @@ type Props = {
     sources: Option[];
     assignableSales: { id: number; name: string }[];
     supervisors: { id: number; name: string }[];
+    preselected: FoundCustomer | null;
 };
 type FoundCustomer = {
     public_id: string;
@@ -44,15 +45,20 @@ export default function TransactionCreate({
     sources,
     assignableSales,
     supervisors,
+    preselected,
 }: Props) {
     const errors = usePage().props.errors as Record<string, string>;
-    const [mode, setMode] = useState<'new' | 'existing'>('new');
+    const [mode, setMode] = useState<'new' | 'existing'>(
+        preselected ? 'existing' : 'new',
+    );
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [social, setSocial] = useState('');
-    const [picked, setPicked] = useState<FoundCustomer | null>(null);
+    const [picked, setPicked] = useState<FoundCustomer | null>(preselected);
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<FoundCustomer[]>([]);
+    const [results, setResults] = useState<FoundCustomer[]>(
+        preselected ? [preselected] : [],
+    );
     const [searchState, setSearchState] = useState<
         'idle' | 'loading' | 'error'
     >('idle');
@@ -64,6 +70,7 @@ export default function TransactionCreate({
     const [af, setAf] = useState(emptyAreaFinancing);
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const [dirty, setDirty] = useState(false);
     const touch =
         <T,>(set: (v: T) => void) =>
@@ -131,7 +138,25 @@ export default function TransactionCreate({
                 area: areaPayload(af),
                 financing: financingPayload(af),
             },
-            { onFinish: () => setSaving(false), preserveScroll: true },
+            {
+                preserveScroll: true,
+                onStart: () => setSubmitError(''),
+                onFinish: () => setSaving(false),
+                // The draft lives in component state, so a failed request never loses it.
+                onNetworkError: () => {
+                    setSubmitError(
+                        'Koneksi terputus. Draft Anda masih tersimpan; coba simpan lagi.',
+                    );
+                    return false;
+                },
+                onHttpException: (response) => {
+                    if (response.status < 500) return;
+                    setSubmitError(
+                        'Transaksi belum dapat disimpan. Draft Anda masih tersimpan; coba lagi.',
+                    );
+                    return false;
+                },
+            },
         );
     }
 
@@ -505,6 +530,11 @@ export default function TransactionCreate({
                         </Card>
                     </div>
                 </div>
+                {submitError && (
+                    <p role="alert" className="text-sm text-destructive">
+                        {submitError}
+                    </p>
+                )}
                 <div className="flex justify-end">
                     <Button
                         type="submit"

@@ -588,7 +588,7 @@ async function accessibility(page) {
                     const dialog = page.getByRole('dialog');
                     await settle(dialog);
                     const metrics = await dialog.evaluate((d) => {
-                        const footer = [...d.querySelectorAll('button')].find(
+                        const footer = [...d.querySelectorAll('button,a')].find(
                             (b) =>
                                 b.textContent.trim() === 'Buat Transaksi Baru',
                         ).parentElement;
@@ -732,7 +732,6 @@ async function accessibility(page) {
             'Catat Aktivitas',
             'Follow-Up',
             'Ubah Tahap',
-            'Buat Transaksi Baru',
             'Penugasan Ulang',
         ]) {
             await load();
@@ -791,7 +790,7 @@ async function accessibility(page) {
                     .click();
                 await page.keyboard.press('Escape');
                 await page.getByRole('menu').waitFor({ state: 'hidden' });
-                const target = page.getByRole('button', {
+                const target = page.getByRole('link', {
                     name: 'Tambah Lead Baru',
                     exact: true,
                 });
@@ -939,10 +938,6 @@ async function accessibility(page) {
         await check();
         await page.keyboard.press('Escape');
         await page.getByRole('menu').waitFor({ state: 'hidden' });
-        await page
-            .getByRole('button', { name: 'Tambah Lead Baru', exact: true })
-            .click();
-        await settle(page.getByRole('dialog'));
         await check();
         await load(
             'auth/login',
