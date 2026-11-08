@@ -154,8 +154,8 @@ export default function FinancingPreview() {
                 </div>
                 <p className="mt-8 border-t pt-4 text-xs leading-5 text-muted-foreground">
                     Semua perubahan hanya berlaku selama halaman ini terbuka.
-                    Ekspor dan penyimpanan ke server belum tersedia pada
-                    preview.
+                    PNG dan CSV memakai data contoh. Penyimpanan ke server belum
+                    tersedia pada preview.
                 </p>
             </div>
         </>

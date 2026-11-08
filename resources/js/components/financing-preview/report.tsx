@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ArrowDown, ArrowUpRight, Info } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
+import { ChartExportMenu } from '@/components/chart-export-menu';
+import { makeChartExport } from '@/lib/chart-export';
 import { Button } from '@/components/ui/button';
 import { MonthRangeFields } from '@/components/month-range-fields';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
@@ -51,6 +53,7 @@ export function FinancingReport({
     const circumference = 2 * Math.PI * 80;
     const periodLabel = formatMonthRange(appliedRange.from, appliedRange.to);
     const modeLabel = mode === 'prospect' ? 'Prospek' : 'Realisasi DO';
+    const exportMeta = { ...appliedRange, periodLabel, mode, synthetic: true };
 
     return (
         <div className="space-y-6">
@@ -171,15 +174,26 @@ export function FinancingReport({
                             aria-labelledby="financing-distribution-title"
                             className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
                         >
-                            <h2
-                                id="financing-distribution-title"
-                                className="font-semibold"
-                            >
-                                Cara pembiayaan
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Komposisi dari {data.total} transaksi.
-                            </p>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h2
+                                        id="financing-distribution-title"
+                                        className="font-semibold"
+                                    >
+                                        Cara pembiayaan
+                                    </h2>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Komposisi dari {data.total} transaksi.
+                                    </p>
+                                </div>
+                                <ChartExportMenu
+                                    chart={makeChartExport(
+                                        'financing',
+                                        exportMeta,
+                                        data,
+                                    )}
+                                />
+                            </div>
                             <div className="flex justify-center py-6">
                                 <svg
                                     viewBox="0 0 200 200"
@@ -284,8 +298,8 @@ export function FinancingReport({
                             aria-labelledby="leasing-chart-title"
                             className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
                         >
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                <div>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
                                     <h2
                                         id="leasing-chart-title"
                                         className="font-semibold"
@@ -297,13 +311,22 @@ export function FinancingReport({
                                         pembiayaan Kredit.
                                     </p>
                                 </div>
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <ArrowDown
-                                        className="size-3"
-                                        aria-hidden="true"
+                                <div className="flex shrink-0 items-center gap-2">
+                                    <span className="hidden items-center gap-1 text-xs text-muted-foreground 2xl:flex">
+                                        <ArrowDown
+                                            className="size-3"
+                                            aria-hidden="true"
+                                        />
+                                        Leasing utama: terbanyak
+                                    </span>
+                                    <ChartExportMenu
+                                        chart={makeChartExport(
+                                            'leasing',
+                                            exportMeta,
+                                            data,
+                                        )}
                                     />
-                                    Leasing utama: terbanyak
-                                </span>
+                                </div>
                             </div>
                             {data.credit === 0 ? (
                                 <p className="py-16 text-center text-sm text-muted-foreground">
