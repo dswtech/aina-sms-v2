@@ -1,4 +1,5 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import FinancingPreview from '@/components/financing-preview';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -106,7 +107,17 @@ type AnalyticsQuery = Pick<
     'period' | 'mode' | 'dimension' | 'value'
 >;
 
-export default function AnalyticsIndex({ analytics }: Props) {
+export default function AnalyticsIndex(props: Props) {
+    const { url } = usePage();
+    const preview = new URLSearchParams(url.split('?')[1] ?? '').get('preview');
+    return preview === 'financing' ? (
+        <FinancingPreview />
+    ) : (
+        <AnalyticsLiveIndex {...props} />
+    );
+}
+
+function AnalyticsLiveIndex({ analytics }: Props) {
     const [isLoading, setIsLoading] = useState(false);
     const headingRef = useRef<HTMLHeadingElement>(null);
     const [failure, setFailure] = useState<{
@@ -204,6 +215,11 @@ export default function AnalyticsIndex({ analytics }: Props) {
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2 print:hidden">
+                        <Button variant="outline" asChild>
+                            <Link href="/analytics?preview=financing">
+                                Pembiayaan · preview
+                            </Link>
+                        </Button>
                         <Button variant="outline" asChild>
                             <a href={exportUrl} download>
                                 <Download aria-hidden="true" />

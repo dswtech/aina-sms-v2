@@ -1,6 +1,7 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/types';
 
 type ModuleKey =
@@ -106,6 +107,22 @@ export default function ModuleStatus({ module }: { module: ModuleKey }) {
                         {content.description}
                     </p>
                 </div>
+
+                {module === 'dealer-settings' && auth.user.role === 'admin' && (
+                    <section className="mt-6 max-w-2xl rounded-xl border bg-card p-5">
+                        <h2 className="font-semibold">Leasing kerja sama</h2>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            Coba pengelolaan daftar leasing dan pantauan utama
+                            dengan data contoh. Perubahan belum disimpan ke
+                            server.
+                        </p>
+                        <Button className="mt-4" variant="outline" asChild>
+                            <Link href="/analytics?preview=financing&screen=leasing">
+                                Buka preview leasing
+                            </Link>
+                        </Button>
+                    </section>
+                )}
 
                 <section className="mt-10 max-w-2xl rounded-xl border bg-card p-5 sm:p-6">
                     <div className="flex items-start gap-3">
