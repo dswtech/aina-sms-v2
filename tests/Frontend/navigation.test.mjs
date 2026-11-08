@@ -22,24 +22,24 @@ test('analytics contains source/model and financing children for authorized role
     );
 });
 
-test('exactly one analytics child is active despite report filters and preview sub-screens', () => {
+test('exactly one analytics child is active despite report filters', () => {
     const group = getNavigation('admin').find(
         (item) => item.key === 'analytics',
     );
     for (const url of [
         '/analytics',
         '/analytics?period=2026-10&mode=achievement',
-        '/analytics?preview=financing',
-        '/analytics?preview=financing&screen=leasing',
-        '/analytics?preview=mapping-area',
-        '/analytics?preview=mapping-area&screen=master',
+        '/analytics/financing',
+        '/analytics/financing?from=2026-10&to=2026-11&mode=do',
+        '/analytics/mapping-area',
+        '/analytics/mapping-area?from=2026-10&to=2026-11',
     ]) {
         assert.equal(isNavigationItemActive(group, url), true);
         assert.deepEqual(
             group.children.map((item) => isNavigationItemActive(item, url)),
-            url.includes('preview=financing')
+            url.includes('/analytics/financing')
                 ? [false, true, false]
-                : url.includes('preview=mapping-area')
+                : url.includes('/analytics/mapping-area')
                   ? [false, false, true]
                   : [true, false, false],
         );

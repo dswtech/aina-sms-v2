@@ -21,6 +21,8 @@ use Illuminate\Support\Carbon;
  * @property bool|null $po_confirmed
  * @property bool|null $dp_confirmed
  * @property bool|null $unit_confirmed
+ * @property array<string, mixed>|null $area_snapshot
+ * @property array<string, mixed>|null $financing_snapshot
  */
 #[Fillable([
     'area_snapshot', 'financing_snapshot',

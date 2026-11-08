@@ -1,45 +1,44 @@
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import { ArrowDown, ArrowUpRight, Info } from 'lucide-react';
+import { ArrowDown, Info } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
 import { ChartExportMenu } from '@/components/chart-export-menu';
 import { makeChartExport } from '@/lib/chart-export';
 import { Button } from '@/components/ui/button';
 import { MonthRangeFields } from '@/components/month-range-fields';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
-import { summarizeFinancing } from '@/lib/financing-preview';
-import type {
-    FinancingDeal,
-    FinancingMode,
-    Leasing,
-} from '@/lib/financing-preview';
+import type { FinancingMode } from '@/lib/financing-preview';
+
+export type FinancingReportData = {
+    from: string;
+    to: string;
+    mode: FinancingMode;
+    total: number;
+    cash: number;
+    credit: number;
+    unknown: number;
+    leasing: { id: string; name: string; count: number }[];
+};
 
 const number = new Intl.NumberFormat('id-ID');
 const percentage = (value: number, total: number) =>
     `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(total ? (value / total) * 100 : 0)}%`;
 
 export function FinancingReport({
-    deals,
-    lenders,
-    onTryForm,
+    report: data,
 }: {
-    deals: FinancingDeal[];
-    lenders: Leasing[];
-    onTryForm?: () => void;
+    report: FinancingReportData;
 }) {
-    const [period, setPeriod] = useState('2026-11');
-    const [endPeriod, setEndPeriod] = useState('2026-11');
-    const [appliedRange, setAppliedRange] = useState({
-        from: '2026-11',
-        to: '2026-11',
-    });
-    const [mode, setMode] = useState<FinancingMode>('prospect');
-    const data = summarizeFinancing(
-        deals,
-        lenders,
-        appliedRange.from,
-        mode,
-        appliedRange.to,
-    );
+    const [period, setPeriod] = useState(data.from);
+    const [endPeriod, setEndPeriod] = useState(data.to);
+    const appliedRange = { from: data.from, to: data.to };
+    const mode = data.mode;
+    const visit = (range: { from: string; to: string }, next: FinancingMode) =>
+        router.get(
+            '/analytics/financing',
+            { ...range, mode: next },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
     const distribution = [
         { name: 'Cash', value: data.cash, color: 'var(--primary)' },
         { name: 'Kredit', value: data.credit, color: 'var(--foreground)' },
@@ -53,7 +52,7 @@ export function FinancingReport({
     const circumference = 2 * Math.PI * 80;
     const periodLabel = formatMonthRange(appliedRange.from, appliedRange.to);
     const modeLabel = mode === 'prospect' ? 'Prospek' : 'Realisasi DO';
-    const exportMeta = { ...appliedRange, periodLabel, mode, synthetic: true };
+    const exportMeta = { ...appliedRange, periodLabel, mode, synthetic: false };
 
     return (
         <div className="space-y-6">
@@ -71,7 +70,7 @@ export function FinancingReport({
                             setPeriod(from);
                             setEndPeriod(to);
                             if (!monthRangeError(from, to))
-                                setAppliedRange({ from, to });
+                                visit({ from, to }, mode);
                         }}
                     />
                     <fieldset className="min-w-0 space-y-2">
@@ -89,7 +88,7 @@ export function FinancingReport({
                                     }
                                     className={`w-full border shadow-none ${mode === value ? 'border-input bg-background' : 'border-transparent'}`}
                                     aria-pressed={mode === value}
-                                    onClick={() => setMode(value)}
+                                    onClick={() => visit(appliedRange, value)}
                                 >
                                     {value === 'prospect'
                                         ? 'Prospek'
@@ -152,20 +151,8 @@ export function FinancingReport({
                         Belum ada transaksi pada periode ini
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Coba November 2026 untuk melihat kedua grafik dengan
-                        data contoh.
+                        Pilih rentang bulan lain atau ubah dasar laporan.
                     </p>
-                    <Button
-                        variant="outline"
-                        className="mt-5"
-                        onClick={() => {
-                            setPeriod('2026-11');
-                            setEndPeriod('2026-11');
-                            setAppliedRange({ from: '2026-11', to: '2026-11' });
-                        }}
-                    >
-                        Lihat November 2026
-                    </Button>
                 </section>
             ) : (
                 <>
@@ -392,20 +379,6 @@ export function FinancingReport({
                                         prospek.
                                     </span>
                                 </p>
-                                {onTryForm && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="shrink-0"
-                                        onClick={onTryForm}
-                                    >
-                                        Coba form pembiayaan
-                                        <ArrowUpRight
-                                            className="size-4"
-                                            aria-hidden="true"
-                                        />
-                                    </Button>
-                                )}
                             </div>
                         )}
                     <section

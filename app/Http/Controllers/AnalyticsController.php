@@ -67,7 +67,7 @@ class AnalyticsController extends Controller
             }
 
             fclose($handle);
-        }, "analisis-{$data['period']}-{$data['mode']}.csv", [
+        }, 'analisis-'.($data['period'] === $data['to'] ? $data['period'] : "{$data['period']}_{$data['to']}")."-{$data['mode']}.csv", [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -84,7 +84,8 @@ class AnalyticsController extends Controller
     {
         $period = $request->string('period')->toString() ?: now('Asia/Jakarta')->format('Y-m');
         $mode = $request->string('mode')->toString() === 'achievement' ? 'achievement' : 'acquisition';
-        $window = new ReportingPeriod($period);
+        $to = $request->string('to')->toString() ?: $period;
+        $window = new ReportingPeriod($period, $to);
         $start = $window->start;
         $end = $window->end;
         $achievement = $mode === 'achievement';
@@ -164,6 +165,7 @@ class AnalyticsController extends Controller
 
         return [
             'period' => $period,
+            'to' => $to,
             'mode' => $mode,
             'dimension' => in_array($dimension, ['source', 'model'], true) ? $dimension : null,
             'value' => $value ?: null,
