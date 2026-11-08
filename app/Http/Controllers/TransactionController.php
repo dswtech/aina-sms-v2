@@ -381,7 +381,8 @@ class TransactionController extends Controller
         if ($term !== '') {
             $like = '%'.addcslashes(mb_strtolower($term), '%_\\').'%';
             // Phones are stored as +62...; a typed 0812... becomes 62812... A partial number needs 4+ digits.
-            $digits = preg_replace('/\D/', '', $term) ?? '';
+            // Only phone-looking text searches phones: "Avanza 2024" must not match numbers containing 2024.
+            $digits = preg_match('/^[\d\s+\-()]+$/', $term) ? (preg_replace('/\D/', '', $term) ?? '') : '';
             $digits = str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits;
             $query->where(fn ($q) => $q->whereRaw("lower(name) like ? escape '\\'", [$like])
                 ->when(strlen($digits) >= 4, fn ($q) => $q->orWhere('phone', 'like', '%'.$digits.'%')));
