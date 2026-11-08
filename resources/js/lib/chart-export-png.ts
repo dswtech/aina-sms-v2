@@ -1,4 +1,9 @@
-import { chartModeLabel, wrapChartLabel } from '@/lib/chart-export';
+import {
+    chartModeLabel,
+    chartRowColor,
+    layoutDonutLegend,
+    wrapChartLabel,
+} from '@/lib/chart-export';
 import type { ChartExportData } from '@/lib/chart-export';
 
 const width = 1200;
@@ -30,12 +35,22 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         nextY = barY + 16 + 28;
         return { ...row, lines, y, barY };
     });
+    const legend = layoutDonutLegend(
+        chart.rows,
+        (text) => context.measureText(text).width,
+    );
     const bodyBottom =
-        chart.kind === 'financing' ? 650 : chart.total === 0 ? 340 : nextY;
+        chart.kind !== 'leasing'
+            ? Math.max(650, ...legend.map((row) => row.y + row.height))
+            : chart.total === 0
+              ? 340
+              : nextY;
     const note =
-        chart.kind === 'financing'
-            ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
-            : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';
+        chart.kind === 'area'
+            ? 'Persentase dihitung dari seluruh DO sah. Area lain mencakup kecamatan non-FOA dan Kota Lain. Status FOA mengikuti snapshot saat DO.'
+            : chart.kind === 'financing'
+              ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
+              : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';
     context.font = font(18);
     const footer = wrapChartLabel(
         note,
@@ -69,7 +84,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
     );
     context.font = font(20);
     context.fillText(
-        `${numbers.format(chart.total)} transaksi${chart.kind === 'leasing' ? ' Kredit' : ''} · jumlah acuan persentase`,
+        `${numbers.format(chart.total)} transaksi${chart.kind === 'leasing' ? ' Kredit' : chart.kind === 'area' ? ' DO' : ''} · jumlah acuan persentase`,
         padding,
         166,
     );
@@ -80,12 +95,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
     context.lineTo(width - padding, 196);
     context.stroke();
 
-    if (chart.kind === 'financing') {
-        const colors: Record<string, string> = {
-            cash: blue,
-            credit: ink,
-            unknown: secondary,
-        };
+    if (chart.kind !== 'leasing') {
         const centerX = 300;
         const centerY = 420;
         context.lineWidth = 56;
@@ -97,32 +107,68 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         for (const row of chart.rows) {
             if (!row.count || !chart.total) continue;
             const nextAngle = angle + (row.count / chart.total) * Math.PI * 2;
-            context.strokeStyle = colors[row.id] ?? blue;
             context.beginPath();
-            context.arc(centerX, centerY, 152, angle, nextAngle);
-            context.stroke();
+            if (chart.kind === 'area') {
+                context.moveTo(centerX, centerY);
+                context.arc(centerX, centerY, 180, angle, nextAngle);
+                context.closePath();
+                context.fillStyle = chartRowColor(chart.kind, row.id);
+                context.fill();
+                context.strokeStyle = '#ffffff';
+                context.lineWidth = 1;
+                context.stroke();
+            } else {
+                context.strokeStyle = chartRowColor(chart.kind, row.id);
+                context.arc(centerX, centerY, 152, angle, nextAngle);
+                context.stroke();
+            }
             angle = nextAngle;
         }
-        context.textAlign = 'center';
-        context.fillStyle = ink;
-        context.font = font(52, 600);
-        context.fillText(
-            numbers.format(chart.total),
-            centerX,
-            centerY + 10,
-            240,
-        );
-        context.fillStyle = secondary;
-        context.font = font(22);
-        context.fillText('transaksi', centerX, centerY + 46);
+        if (chart.kind !== 'area') {
+            context.textAlign = 'center';
+            context.fillStyle = ink;
+            context.font = font(52, 600);
+            context.fillText(
+                numbers.format(chart.total),
+                centerX,
+                centerY + 10,
+                240,
+            );
+            context.fillStyle = secondary;
+            context.font = font(22);
+            context.fillText('transaksi', centerX, centerY + 46);
+        } else {
+            let start = -Math.PI / 2;
+            for (const row of chart.rows) {
+                if (!row.count || !chart.total) continue;
+                const share = row.count / chart.total;
+                const middle = start + share * Math.PI;
+                start += share * Math.PI * 2;
+                if (share < 0.04) continue;
+                const x = centerX + Math.cos(middle) * 108;
+                const y = centerY + Math.sin(middle) * 108;
+                context.textAlign = 'center';
+                context.fillStyle = '#ffffff';
+                context.font = font(16, 600);
+                if (share >= 0.15)
+                    context.fillText(row.label.split(' · ')[0], x, y - 4, 130);
+                context.fillText(
+                    `${numbers.format(row.percentage)}%`,
+                    x,
+                    y + (share >= 0.15 ? 18 : 5),
+                );
+            }
+        }
         chart.rows.forEach((row, index) => {
-            const y = 330 + index * 78;
-            context.fillStyle = colors[row.id] ?? blue;
+            const { y, lines } = legend[index];
+            context.fillStyle = chartRowColor(chart.kind, row.id);
             context.fillRect(556, y - 16, 12, 12);
             context.textAlign = 'left';
             context.fillStyle = ink;
             context.font = font(24);
-            context.fillText(row.label, 584, y);
+            lines.forEach((line, lineIndex) =>
+                context.fillText(line, 584, y + lineIndex * 30),
+            );
             context.textAlign = 'right';
             context.font = font(24, 600);
             context.fillText(numbers.format(row.count), 1000, y);

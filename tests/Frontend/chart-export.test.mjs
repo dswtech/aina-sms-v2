@@ -5,7 +5,55 @@ import {
     chartCsv,
     chartFilename,
     wrapChartLabel,
+    makeAreaChartExport,
+    chartRowColor,
+    layoutDonutLegend,
 } from '../../resources/js/lib/chart-export.ts';
+
+test('area exports use all DO as denominator and dynamic donut legends preserve long categories', () => {
+    const rows = Array.from({ length: 10 }, (_, i) => ({
+        id: `32.17.${String(i + 1).padStart(2, '0')}`,
+        name: `Kecamatan Contoh ${i} · Kabupaten Bandung Barat dengan nama panjang`,
+        count: 1,
+    }));
+    const report = makeAreaChartExport(
+        {
+            from: '2026-10',
+            to: '2026-11',
+            periodLabel: 'Oktober 2026 – November 2026',
+            mode: 'prospect',
+            synthetic: true,
+        },
+        { total: 10, rows },
+    );
+    assert.equal(report.mode, 'do');
+    assert.equal(report.rows[0].percentage, 10);
+    assert.equal(
+        chartFilename(report, 'png'),
+        'mapping-area-realisasi-do-2026-10_2026-11.png',
+    );
+    assert.ok(chartCsv(report).includes('"Realisasi DO"'));
+    const layout = layoutDonutLegend(report.rows, (text) => text.length * 12);
+    assert.ok(layout.at(-1).y + layout.at(-1).height > 650);
+    assert.ok(
+        layout.every(
+            (row, i) => !i || row.y >= layout[i - 1].y + layout[i - 1].height,
+        ),
+    );
+    assert.ok(
+        layout.every((row) =>
+            row.lines.every((line) => line.length * 12 <= 300),
+        ),
+    );
+    assert.equal(
+        chartRowColor('area', '32.17.08'),
+        chartRowColor('area', '32.17.08'),
+    );
+    assert.notEqual(
+        chartRowColor('area', '32.17.08'),
+        chartRowColor('area', '32.17.06'),
+    );
+});
 import {
     summarizeFinancing,
     syntheticDeals,

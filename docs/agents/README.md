@@ -13,6 +13,7 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../superpowers/plans/2026-11-08-mapping-area-preview.md](../superpowers/plans/2026-11-08-mapping-area-preview.md) | Preview frontend | Mapping Area, master 106 kecamatan, FOA snapshot DO dan ekspor sintetis tanpa backend. |
 | [../superpowers/plans/2026-11-08-financing-ui-preview.md](../superpowers/plans/2026-11-08-financing-ui-preview.md) | Preview frontend | Laporan pembiayaan, master leasing dan form transaksi dengan data sintetis serta batas tanpa backend. |
 | [../superpowers/plans/2026-11-08-production-monitoring.md](../superpowers/plans/2026-11-08-production-monitoring.md) | Rencana | Monitor HTTPS production, retry terbatas, notifikasi Actions dan batas cakupan. |
 | [adr/ADR-006-versioned-production-releases.md](adr/ADR-006-versioned-production-releases.md) | ADR | Rilis production hanya dari GitHub Release stable bernomor dengan commit main dan CI terverifikasi. |
