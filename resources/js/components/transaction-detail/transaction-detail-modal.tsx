@@ -28,7 +28,7 @@ import { useTransactionFeed } from './use-transaction-feed';
 type Target = {
     public_id: string;
     customer: { name: string } | null;
-    vehicle_model: string;
+    vehicle_model: string | null;
 };
 
 type Props = {
@@ -42,6 +42,7 @@ type Props = {
 type Mode = 'comments' | 'activities';
 type View = 'detail' | Mode;
 
+const noVehicle = 'Kendaraan belum ditentukan';
 const RAIL_WIDTH = 44;
 const SEPARATOR_WIDTH = 6;
 const DEFAULT_PANEL_WIDTH = 300;
@@ -149,7 +150,7 @@ function DetailView({
         <div className="flex h-full min-h-0 flex-col">
             <div className="space-y-1 border-b px-4 py-3 pr-14">
                 <p className="text-lg leading-tight font-semibold">
-                    {detail.customer.name} · {detail.vehicle_model}
+                    {detail.customer.name} · {detail.vehicle_model ?? noVehicle}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <Badge variant="secondary">{detail.stage_label}</Badge>
@@ -415,7 +416,8 @@ export function TransactionDetailModal({
             >
                 <DialogTitle className="sr-only">Detail transaksi</DialogTitle>
                 <DialogDescription className="sr-only">
-                    {target?.customer?.name} · {target?.vehicle_model}
+                    {target?.customer?.name} ·{' '}
+                    {target?.vehicle_model ?? noVehicle}
                 </DialogDescription>
                 {ready ? (
                     <DetailView
@@ -429,7 +431,8 @@ export function TransactionDetailModal({
                 ) : (
                     <div className="space-y-2 p-4 pr-14">
                         <p className="text-lg font-semibold">
-                            {target?.customer?.name} · {target?.vehicle_model}
+                            {target?.customer?.name} ·{' '}
+                            {target?.vehicle_model ?? noVehicle}
                         </p>
                         {failed ? (
                             <p role="alert" className="text-sm">

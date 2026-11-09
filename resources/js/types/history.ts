@@ -67,7 +67,7 @@ export type CustomerHistoryData = {
 /** JSON of GET /transactions/{public_id} used by the detail modal. */
 export type TransactionDetailData = {
     public_id: string;
-    vehicle_model: string;
+    vehicle_model: string | null;
     source: string;
     source_channel: string | null;
     notes: string | null;
