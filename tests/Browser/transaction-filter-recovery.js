@@ -108,19 +108,17 @@ async function transactionFilterRecovery(page) {
         checked.push(failure);
     }
     await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
-    await page.getByLabel('Progress mulai').fill('2001-02-01');
-    const end = page.getByLabel('Progress sampai');
+    await page.locator('#transaction-date-from').fill('2001-02-01');
+    const end = page.locator('#transaction-date-to');
     await end.fill('2001-01-01');
-    await page.getByRole('button', { name: 'Terapkan', exact: true }).click();
-    await page.locator('#transaction-date-to[aria-invalid="true"]').waitFor();
     if (
-        (await end.inputValue()) !== '2001-01-01' ||
+        (await end.inputValue()) !== '2001-02-01' ||
         (await page
             .getByRole('button', { name: 'Coba lagi', exact: true })
             .count())
     ) {
         throw new Error(
-            'Validation failure lost its draft or offered a retry for invalid dates',
+            'An end date before the start date was not lifted to the start',
         );
     }
     await page
@@ -130,6 +128,6 @@ async function transactionFilterRecovery(page) {
     return {
         checked,
         transactionRetryReachedLaravel: true,
-        invalidDatesPreserved: true,
+        endDateLiftedToStart: true,
     };
 }
