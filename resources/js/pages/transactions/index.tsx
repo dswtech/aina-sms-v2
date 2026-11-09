@@ -769,49 +769,56 @@ export default function TransactionsIndex({
                         </div>
                         <div>
                             <Label htmlFor="region">Kabupaten/Kota</Label>
-                            <select
-                                id="region"
-                                value={regionCode}
-                                onChange={(event) => {
-                                    setRegionCode(event.target.value);
-                                    setDistrictCode('');
-                                }}
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
-                            >
-                                <option value="">Semua kabupaten/kota</option>
-                                {regions.map((item) => (
-                                    <option key={item.code} value={item.code}>
-                                        {item.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="mt-1.5">
+                                <Combobox
+                                    id="region"
+                                    value={regionCode}
+                                    onValueChange={(value) => {
+                                        setRegionCode(value);
+                                        setDistrictCode('');
+                                    }}
+                                    options={[
+                                        {
+                                            value: '',
+                                            label: 'Semua kabupaten/kota',
+                                        },
+                                        ...regions.map((item) => ({
+                                            value: item.code,
+                                            label: item.name,
+                                        })),
+                                    ]}
+                                    placeholder="Semua kabupaten/kota"
+                                    searchPlaceholder="Cari kabupaten/kota..."
+                                    aria-label="Kabupaten/Kota"
+                                />
+                            </div>
                         </div>
                         <div>
                             <Label htmlFor="district">Kecamatan</Label>
-                            <select
-                                id="district"
-                                value={districtCode}
-                                disabled={regionCode === ''}
-                                onChange={(event) =>
-                                    setDistrictCode(event.target.value)
-                                }
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <option value="">Semua kecamatan</option>
-                                {districts
-                                    .filter(
-                                        (item) =>
-                                            item.region_code === regionCode,
-                                    )
-                                    .map((item) => (
-                                        <option
-                                            key={item.code}
-                                            value={item.code}
-                                        >
-                                            {item.name}
-                                        </option>
-                                    ))}
-                            </select>
+                            <div className="mt-1.5">
+                                <Combobox
+                                    id="district"
+                                    value={districtCode}
+                                    onValueChange={setDistrictCode}
+                                    disabled={regionCode === ''}
+                                    options={[
+                                        { value: '', label: 'Semua kecamatan' },
+                                        ...districts
+                                            .filter(
+                                                (item) =>
+                                                    item.region_code ===
+                                                    regionCode,
+                                            )
+                                            .map((item) => ({
+                                                value: item.code,
+                                                label: item.name,
+                                            })),
+                                    ]}
+                                    placeholder="Semua kecamatan"
+                                    searchPlaceholder="Cari kecamatan..."
+                                    aria-label="Kecamatan"
+                                />
+                            </div>
                         </div>
                         <div>
                             <Label htmlFor="customer-name">
