@@ -82,9 +82,11 @@ function DetailView({
     districts,
     leasings,
     onSaved,
+    refreshFailed,
 }: Omit<Props, 'target' | 'onClose'> & {
     detail: TransactionDetailData;
     onSaved: () => void;
+    refreshFailed: boolean;
 }) {
     const isMobile = useIsMobile();
     const bodyRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,7 @@ function DetailView({
     const [mode, setMode] = useState<Mode>('comments');
     const [collapsed, setCollapsed] = useState(false);
     const [width, setWidth] = useState(DEFAULT_PANEL_WIDTH);
+    const [bodyWidth, setBodyWidth] = useState(0);
     const [replyTo, setReplyTo] = useState<TimelineComment | null>(null);
     const [editing, setEditing] = useState<TimelineComment | null>(null);
 
@@ -126,6 +129,21 @@ function DetailView({
         if (element) element.scrollTop = element.scrollHeight;
     }, [activeMode, newestKey, showRight]);
 
+    // A narrower window must not leave the right panel wider than the left panel allows.
+    useEffect(() => {
+        const body = bodyRef.current;
+        if (!body) return;
+        const observer = new ResizeObserver(([entry]) =>
+            setBodyWidth(entry.contentRect.width),
+        );
+        observer.observe(body);
+
+        return () => observer.disconnect();
+    }, []);
+    const panelWidth = bodyWidth
+        ? clampPanelWidth(width, bodyWidth - RAIL_WIDTH - SEPARATOR_WIDTH)
+        : width;
+
     const resize = (event: PointerEvent<HTMLDivElement>) => {
         const body = bodyRef.current;
         if (!body || !event.currentTarget.hasPointerCapture(event.pointerId))
@@ -151,7 +169,7 @@ function DetailView({
     const days = daysInStageLabel(detail.days_in_stage);
 
     return (
-        <div className="flex h-full min-h-0 flex-col">
+        <div className="flex h-full min-h-0 min-w-0 flex-col">
             <div className="space-y-1 border-b px-4 py-3 pr-14">
                 <p className="text-lg leading-tight font-semibold">
                     {detail.customer.name} · {detail.vehicle_model ?? noVehicle}
@@ -163,6 +181,18 @@ function DetailView({
                     {days && <span className="text-amber-600">{days}</span>}
                 </div>
             </div>
+            {refreshFailed && (
+                <p role="alert" className="border-b px-4 py-2 text-sm">
+                    Tampilan belum diperbarui setelah perubahan terakhir.{' '}
+                    <button
+                        type="button"
+                        className="underline"
+                        onClick={onSaved}
+                    >
+                        Coba lagi
+                    </button>
+                </p>
+            )}
             <div ref={bodyRef} className="flex min-h-0 flex-1">
                 {showLeft && (
                     <div className="min-w-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
@@ -182,7 +212,12 @@ function DetailView({
                         role="separator"
                         aria-orientation="vertical"
                         aria-label="Ubah lebar panel kanan"
-                        aria-valuenow={width}
+                        aria-valuenow={panelWidth}
+                        aria-valuemin={160}
+                        aria-valuemax={Math.max(
+                            160,
+                            bodyWidth - RAIL_WIDTH - SEPARATOR_WIDTH - 300,
+                        )}
                         tabIndex={0}
                         onPointerDown={(event) =>
                             event.currentTarget.setPointerCapture(
@@ -201,7 +236,7 @@ function DetailView({
                             event.preventDefault();
                             setWidth((current) =>
                                 clampPanelWidth(
-                                    current + step,
+                                    Math.min(current, panelWidth) + step,
                                     bodyRef.current!.clientWidth -
                                         RAIL_WIDTH -
                                         SEPARATOR_WIDTH,
@@ -216,15 +251,21 @@ function DetailView({
                 {showRight && (
                     <div
                         className={`flex min-w-0 flex-col border-l ${isMobile ? 'flex-1' : 'shrink-0'}`}
-                        style={isMobile ? undefined : { width }}
+                        style={isMobile ? undefined : { width: panelWidth }}
                     >
-                        <h2 className="px-3 py-2 text-sm font-medium">
+                        <h2
+                            id="detail-feed-title"
+                            className="px-3 py-2 text-sm font-medium"
+                        >
                             {activeMode === 'comments'
                                 ? 'Komentar coaching'
                                 : 'Aktivitas pelanggan'}
                         </h2>
                         <div
                             ref={feedRef}
+                            role="region"
+                            aria-labelledby="detail-feed-title"
+                            aria-busy={feed.state === 'loading'}
                             className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-3"
                         >
                             {feed.hasEarlier && (
@@ -250,7 +291,16 @@ function DetailView({
                                     </button>
                                 </p>
                             )}
+                            {feed.state === 'loading' && (
+                                <p
+                                    role="status"
+                                    className="text-sm text-muted-foreground"
+                                >
+                                    Memuat…
+                                </p>
+                            )}
                             {feed.events.length === 0 &&
+                                feed.fetched &&
                                 feed.state === 'idle' && (
                                     <p className="text-sm text-muted-foreground">
                                         {activeMode === 'comments'
@@ -310,6 +360,8 @@ function DetailView({
                     </div>
                 )}
                 <div
+                    role="group"
+                    aria-label="Mode panel kanan"
                     className="flex shrink-0 flex-col items-center gap-1 border-l bg-muted/30 pt-2"
                     style={{ width: RAIL_WIDTH }}
                 >
@@ -365,6 +417,11 @@ export function TransactionDetailModal({
     leasings,
 }: Props) {
     const publicId = target?.public_id ?? null;
+    // Keep showing the last transaction while the dialog animates closed.
+    const [lastTarget, setLastTarget] = useState(target);
+    if (target && target !== lastTarget) setLastTarget(target);
+    const shown = target ?? lastTarget;
+    const [refreshFailed, setRefreshFailed] = useState(false);
     const [detail, setDetail] = useState<TransactionDetailData | null>(null);
     const [failed, setFailed] = useState(false);
     const request = useRef(0);
@@ -378,6 +435,7 @@ export function TransactionDetailModal({
                 setDetail(null);
                 setFailed(false);
             }
+            setRefreshFailed(false);
             try {
                 const response = await fetch(`/transactions/${publicId}`, {
                     headers: { Accept: 'application/json' },
@@ -386,7 +444,10 @@ export function TransactionDetailModal({
                 const body: TransactionDetailData = await response.json();
                 if (current === request.current) setDetail(body);
             } catch {
-                if (current === request.current && !silent) setFailed(true);
+                if (current === request.current) {
+                    if (silent) setRefreshFailed(true);
+                    else setFailed(true);
+                }
             }
         },
         [publicId],
@@ -396,7 +457,7 @@ export function TransactionDetailModal({
         void load(false);
     }, [load]);
 
-    const ready = detail !== null && detail.public_id === publicId;
+    const ready = detail !== null && detail.public_id === shown?.public_id;
 
     return (
         <Dialog
@@ -420,8 +481,8 @@ export function TransactionDetailModal({
             >
                 <DialogTitle className="sr-only">Detail transaksi</DialogTitle>
                 <DialogDescription className="sr-only">
-                    {target?.customer?.name} ·{' '}
-                    {target?.vehicle_model ?? noVehicle}
+                    {shown?.customer?.name} ·{' '}
+                    {shown?.vehicle_model ?? noVehicle}
                 </DialogDescription>
                 {ready ? (
                     <DetailView
@@ -431,12 +492,13 @@ export function TransactionDetailModal({
                         districts={districts}
                         leasings={leasings}
                         onSaved={() => void load(true)}
+                        refreshFailed={refreshFailed}
                     />
                 ) : (
                     <div className="space-y-2 p-4 pr-14">
                         <p className="text-lg font-semibold">
-                            {target?.customer?.name} ·{' '}
-                            {target?.vehicle_model ?? noVehicle}
+                            {shown?.customer?.name} ·{' '}
+                            {shown?.vehicle_model ?? noVehicle}
                         </p>
                         {failed ? (
                             <p role="alert" className="text-sm">

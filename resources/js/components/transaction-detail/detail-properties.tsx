@@ -29,6 +29,9 @@ type Props = {
     onSaved: () => void;
 };
 
+// Keeps this panel's validation errors apart from the page's own forms.
+const ERROR_BAG = 'transactionDetail';
+
 function Row({
     icon: Icon,
     label,
@@ -39,7 +42,7 @@ function Row({
     children: ReactNode;
 }) {
     return (
-        <div className="grid min-h-11 grid-cols-[7rem_minmax(0,1fr)] items-center text-sm">
+        <div className="grid min-h-11 grid-cols-[8.5rem_minmax(0,1fr)] items-center text-sm">
             <span className="flex items-center gap-2 text-muted-foreground">
                 <Icon aria-hidden="true" className="size-4 shrink-0" />
                 {label}
@@ -89,7 +92,12 @@ export function DetailProperties({
                 router.patch(
                     pending.url,
                     { notes: pending.value || null },
-                    { preserveScroll: true, preserveState: true, async: true },
+                    {
+                        preserveScroll: true,
+                        preserveState: true,
+                        async: true,
+                        errorBag: ERROR_BAG,
+                    },
                 );
         },
         [],
@@ -103,6 +111,7 @@ export function DetailProperties({
             preserveScroll: true,
             preserveState: true,
             async: true, // a following edit must not cancel this request
+            errorBag: ERROR_BAG,
             onSuccess: () => {
                 setSaved(true);
                 window.setTimeout(() => setSaved(false), 1600);
@@ -211,7 +220,7 @@ export function DetailProperties({
                         {detail.estimated_value?.toLocaleString('id-ID') ?? '-'}
                     </Value>
                 </Row>
-                <Row icon={CalendarDays} label="Est. closing">
+                <Row icon={CalendarDays} label="Estimasi closing">
                     <Value>{detail.expected_closing_month ?? '-'}</Value>
                 </Row>
                 <Row icon={Phone} label="Telepon">
@@ -236,7 +245,9 @@ export function DetailProperties({
             <hr className="my-2" />
             <textarea
                 aria-label="Keterangan"
-                placeholder="Tambah keterangan…"
+                placeholder={
+                    canEdit ? 'Tambah keterangan…' : 'Tidak ada keterangan'
+                }
                 value={notes}
                 readOnly={!canEdit}
                 maxLength={2000}

@@ -1,4 +1,5 @@
 import { historyDate } from '@/components/transaction-timeline';
+import { stageCutoffLabel } from '@/lib/transaction-detail';
 import type { HistoryPage, TimelineEvent } from '@/types/history';
 
 export function StageTimeline({
@@ -7,6 +8,7 @@ export function StageTimeline({
     page: HistoryPage<TimelineEvent> | null;
 }) {
     if (!page) return null;
+    const cutoff = stageCutoffLabel(page.data.length, page.total);
 
     return (
         <section aria-label="Pergerakan tahap">
@@ -39,6 +41,9 @@ export function StageTimeline({
                         </li>
                     ))}
                 </ol>
+            )}
+            {cutoff && (
+                <p className="mt-2 text-xs text-muted-foreground">{cutoff}</p>
             )}
         </section>
     );

@@ -31,6 +31,7 @@ export function CommentComposer({
             preserveScroll: true,
             preserveState: true,
             onSuccess: onDone,
+            errorBag: 'transactionComment',
         };
         if (editing) form.patch(`/comments/${editing.id}`, options);
         else form.post(`/transactions/${publicId}/comments`, options);

@@ -7,6 +7,7 @@ use App\Models\DealTransaction;
 use App\Models\User;
 use App\Services\TransactionTimeline;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(RefreshDatabase::class);
 
@@ -58,4 +59,12 @@ it('keeps the oldest-first all-kinds default for existing callers', function () 
     expect($page['total'])->toBe(7)
         ->and(collect($page['data'])->pluck('occurred_at')->all())->toBe(collect($page['data'])->pluck('occurred_at')->sort()->values()->all())
         ->and($page['data'][0]['kind'])->toBe('stage');
+});
+
+// The Branch Manager has no route to the transactions page today; this guard keeps the history closed if that changes.
+it('never opens the history to a Branch Manager', function () {
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $this->deal->dealer_id]);
+
+    expect(fn () => app(TransactionTimeline::class)->paginate($this->deal, $manager))
+        ->toThrow(HttpException::class);
 });

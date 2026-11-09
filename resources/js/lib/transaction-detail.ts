@@ -73,6 +73,12 @@ export function financingPatch(chosen: string[]) {
     };
 }
 
+/** Tells the reader when the stage list holds fewer moves than the transaction has. */
+export const stageCutoffLabel = (shown: number, total: number) =>
+    total > shown
+        ? `Menampilkan ${shown} perpindahan terbaru dari ${total}.`
+        : null;
+
 /** Remount key for the comment form: edit and reply on the same comment must not share state. */
 export const composerKey = (
     editing: { id: number } | null,

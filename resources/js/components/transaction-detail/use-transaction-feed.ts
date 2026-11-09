@@ -23,6 +23,8 @@ export function useTransactionFeed(
     const [page, setPage] = useState(initial?.current_page ?? 0);
     const [lastPage, setLastPage] = useState(initial?.last_page ?? 1);
     const [state, setState] = useState<FeedState>('idle');
+    // False until a page has arrived, so "nothing yet" is not shown while the first page is on its way.
+    const [fetched, setFetched] = useState(initial !== null);
     const started = useRef(initial !== null);
     const request = useRef(0);
     const loaded = useRef(initial?.current_page ?? 0);
@@ -61,6 +63,7 @@ export function useTransactionFeed(
                     setPage(count);
                     setLastPage(bodies[0].last_page);
                 }
+                setFetched(true);
                 setState('idle');
             } catch {
                 if (current === request.current) setState('error');
@@ -78,6 +81,7 @@ export function useTransactionFeed(
     return {
         events,
         state,
+        fetched,
         hasEarlier: page > 0 && page < lastPage,
         loadEarlier: () => void run('earlier'),
         reload: () => void run('reload'),
