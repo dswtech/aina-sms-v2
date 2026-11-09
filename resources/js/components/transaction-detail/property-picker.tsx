@@ -95,9 +95,18 @@ export function PropertyPicker({
             )
                 close(false);
         };
+        // On the document, not the panel: a clicked option unmounts and focus falls back to the body.
+        // The modal's onEscapeKeyDown keeps Radix from closing the dialog while this panel is open.
+        const onEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') close();
+        };
         document.addEventListener('mousedown', onDown);
+        document.addEventListener('keydown', onEscape);
 
-        return () => document.removeEventListener('mousedown', onDown);
+        return () => {
+            document.removeEventListener('mousedown', onDown);
+            document.removeEventListener('keydown', onEscape);
+        };
     }, [open]);
 
     if (disabled)
@@ -126,12 +135,7 @@ export function PropertyPicker({
             : [];
 
     const onKeyDown = (event: React.KeyboardEvent) => {
-        if (event.key === 'Escape') {
-            // Radix would otherwise close the whole dialog.
-            event.preventDefault();
-            event.stopPropagation();
-            close();
-        } else if (event.key === 'ArrowDown') {
+        if (event.key === 'ArrowDown') {
             event.preventDefault();
             setActive((i) => Math.min(i + 1, options.length - 1));
         } else if (event.key === 'ArrowUp') {
@@ -153,8 +157,7 @@ export function PropertyPicker({
         open && step && position && container ? (
             <div
                 ref={panelRef}
-                role="dialog"
-                aria-label={step.title}
+                role="group"
                 data-slot="property-picker-panel"
                 onKeyDown={onKeyDown}
                 className="z-60 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
@@ -220,6 +223,9 @@ export function PropertyPicker({
                                     role="option"
                                     aria-selected={index === active}
                                     tabIndex={-1}
+                                    onMouseDown={(event) =>
+                                        event.preventDefault()
+                                    }
                                     onMouseEnter={() => setActive(index)}
                                     onClick={() => advance(option.value)}
                                     className={`${rowClass} ${index === active ? 'bg-muted' : ''}`}

@@ -402,6 +402,15 @@ export function TransactionDetailModal({
         >
             <DialogContent
                 aria-describedby={undefined}
+                // Radix hears Escape on the document first; an open picker must close alone.
+                onEscapeKeyDown={(event) => {
+                    if (
+                        document.querySelector(
+                            '[data-slot="property-picker-panel"]',
+                        )
+                    )
+                        event.preventDefault();
+                }}
                 className="h-[90dvh] max-h-[90dvh] grid-rows-[minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-5xl"
             >
                 <DialogTitle className="sr-only">Detail transaksi</DialogTitle>
