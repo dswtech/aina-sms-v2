@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
     areaPatch,
     clampPanelWidth,
+    combinePages,
     composerKey,
     daysInStageLabel,
     financingPatch,
@@ -70,4 +71,18 @@ test('the composer remounts when switching between edit, reply and new on the sa
     assert.equal(composerKey({ id: 5 }, null), 'edit-5');
     assert.equal(composerKey(null, { id: 5 }), 'reply-5');
     assert.notEqual(composerKey({ id: 5 }, null), composerKey(null, { id: 5 }));
+});
+
+test('reloading loaded pages rebuilds the list oldest to newest without duplicates', () => {
+    const keys = (list) => list.map((e) => e.key);
+    const page = (...k) => k.map((key) => ({ key }));
+    assert.deepEqual(
+        keys(combinePages([page('k25', 'k24', 'k23'), page('k22', 'k21')])),
+        ['k21', 'k22', 'k23', 'k24', 'k25'],
+    );
+    // A comment posted between the two page requests shifts the second page by one.
+    assert.deepEqual(
+        keys(combinePages([page('k26', 'k25', 'k24'), page('k24', 'k23', 'k22')])),
+        ['k22', 'k23', 'k24', 'k25', 'k26'],
+    );
 });

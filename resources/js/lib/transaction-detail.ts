@@ -78,3 +78,13 @@ export const composerKey = (
     editing: { id: number } | null,
     replyTo: { id: number } | null,
 ) => (editing ? `edit-${editing.id}` : replyTo ? `reply-${replyTo.id}` : 'new');
+
+/** Pages are newest first and may overlap when a comment arrived in between; result is oldest to newest. */
+export function combinePages<T extends { key: string }>(pages: T[][]): T[] {
+    const seen = new Set<string>();
+
+    return pages
+        .flat()
+        .filter((event) => !seen.has(event.key) && seen.add(event.key))
+        .reverse();
+}

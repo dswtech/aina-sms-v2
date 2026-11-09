@@ -244,7 +244,7 @@ function DetailView({
                                     <button
                                         type="button"
                                         className="underline"
-                                        onClick={feed.reload}
+                                        onClick={feed.retry}
                                     >
                                         Coba lagi
                                     </button>

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { mergeEarlier } from '@/lib/transaction-detail';
+import { combinePages, mergeEarlier } from '@/lib/transaction-detail';
 import type { HistoryPage, TimelineEvent } from '@/types/history';
 
 type FeedState = 'idle' | 'loading' | 'error';
+type Action = 'first' | 'reload' | 'earlier';
 
 /**
  * Comments or activities of one transaction. The server pages newest first;
  * `events` reads oldest to newest and "load earlier" prepends the next page.
  * With no `initial` page the first page is fetched once `enabled` turns true.
+ * `reload` refreshes every page already shown; `retry` repeats the action that failed.
  */
 export function useTransactionFeed(
     publicId: string,
@@ -23,24 +25,42 @@ export function useTransactionFeed(
     const [state, setState] = useState<FeedState>('idle');
     const started = useRef(initial !== null);
     const request = useRef(0);
+    const loaded = useRef(initial?.current_page ?? 0);
+    const lastAction = useRef<Action>('first');
 
-    const fetchPage = useCallback(
-        async (target: number, replace: boolean) => {
+    const run = useCallback(
+        async (action: Action) => {
             const current = ++request.current;
+            lastAction.current = action;
             setState('loading');
-            try {
+            const get = async (n: number) => {
                 const response = await fetch(
-                    `/transactions/${publicId}/feed?kind=${kind}&page=${target}`,
+                    `/transactions/${publicId}/feed?kind=${kind}&page=${n}`,
                     { headers: { Accept: 'application/json' } },
                 );
                 if (!response.ok) throw new Error('feed');
-                const body: HistoryPage<TimelineEvent> = await response.json();
-                if (current !== request.current) return;
-                setEvents((shown) =>
-                    mergeEarlier(replace ? [] : shown, body.data),
-                );
-                setPage(body.current_page);
-                setLastPage(body.last_page);
+
+                return (await response.json()) as HistoryPage<TimelineEvent>;
+            };
+            try {
+                if (action === 'earlier') {
+                    const body = await get(loaded.current + 1);
+                    if (current !== request.current) return;
+                    setEvents((shown) => mergeEarlier(shown, body.data));
+                    loaded.current = body.current_page;
+                    setPage(body.current_page);
+                    setLastPage(body.last_page);
+                } else {
+                    const count = Math.max(loaded.current, 1);
+                    const bodies = await Promise.all(
+                        Array.from({ length: count }, (_, i) => get(i + 1)),
+                    );
+                    if (current !== request.current) return;
+                    setEvents(combinePages(bodies.map((body) => body.data)));
+                    loaded.current = count;
+                    setPage(count);
+                    setLastPage(bodies[0].last_page);
+                }
                 setState('idle');
             } catch {
                 if (current === request.current) setState('error');
@@ -52,14 +72,15 @@ export function useTransactionFeed(
     useEffect(() => {
         if (!enabled || started.current) return;
         started.current = true;
-        void fetchPage(1, true);
-    }, [enabled, fetchPage]);
+        void run('first');
+    }, [enabled, run]);
 
     return {
         events,
         state,
         hasEarlier: page > 0 && page < lastPage,
-        loadEarlier: () => void fetchPage(page + 1, false),
-        reload: () => void fetchPage(1, true),
+        loadEarlier: () => void run('earlier'),
+        reload: () => void run('reload'),
+        retry: () => void run(lastAction.current),
     };
 }
