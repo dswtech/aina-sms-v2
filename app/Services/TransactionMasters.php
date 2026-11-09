@@ -105,7 +105,7 @@ final class TransactionMasters
     /**
      * Active models grouped by active type, for the selectable list in lead and stage forms.
      *
-     * @return list<array{type: string, models: list<array{name: string, price_min: int|null, price_max: int|null}>}>
+     * @return array<int, array<string, mixed>>
      */
     public static function vehicleOptions(int $dealerId): array
     {
@@ -167,7 +167,7 @@ final class TransactionMasters
             $this->lockDealer($actor);
             $before = DB::table('vehicle_models')->where('dealer_id', $actor->dealer_id)->where('id', $id)->first();
             abort_if($before === null, 404);
-            $validated = $this->validateVehicleModel($actor, $data, required: false, current: $before);
+            $validated = $this->validateVehicleModel($actor, $data, required: false, current: (array) $before);
             if (isset($validated['name'])) {
                 $validated['name'] = trim($validated['name']);
                 $this->assertUniqueVehicleName('vehicle_models', $actor->dealer_id, $validated['name'], 'Model kendaraan sudah ada.', $id);
@@ -177,8 +177,12 @@ final class TransactionMasters
         });
     }
 
-    /** @param array<string, mixed> $data @return array<string, mixed> */
-    private function validateVehicleModel(User $actor, array $data, bool $required, ?object $current = null): array
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>|null  $current
+     * @return array<string, mixed>
+     */
+    private function validateVehicleModel(User $actor, array $data, bool $required, ?array $current = null): array
     {
         $presence = $required ? ['required'] : ['sometimes', 'required'];
         $validated = Validator::make($data, [
@@ -189,8 +193,8 @@ final class TransactionMasters
             'is_active' => ['sometimes', 'boolean'],
         ])->validate();
         // The range is checked against the values that will be stored after this write.
-        $min = array_key_exists('price_min', $validated) ? $validated['price_min'] : $current?->price_min;
-        $max = array_key_exists('price_max', $validated) ? $validated['price_max'] : $current?->price_max;
+        $min = array_key_exists('price_min', $validated) ? $validated['price_min'] : $current['price_min'] ?? null;
+        $max = array_key_exists('price_max', $validated) ? $validated['price_max'] : $current['price_max'] ?? null;
         if ($min !== null && $max !== null && $max < $min) {
             throw ValidationException::withMessages(['price_max' => 'Harga maksimum tidak boleh lebih kecil dari harga minimum.']);
         }
