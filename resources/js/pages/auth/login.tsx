@@ -43,7 +43,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                             : undefined
                                     }
                                     autoComplete="username"
-                                    placeholder="contoh: ariina"
+                                    placeholder="Username Anda"
                                 />
                                 <InputError
                                     id="username-error"
