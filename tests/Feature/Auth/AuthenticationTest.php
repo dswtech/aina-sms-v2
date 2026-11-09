@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
@@ -79,5 +80,30 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertTooManyRequests();
+    }
+
+    public function test_one_ip_cannot_try_unlimited_usernames(): void
+    {
+        foreach (range(1, 60) as $attempt) {
+            $this->post(route('login.store'), [
+                'username' => 'nobody-'.$attempt,
+                'password' => 'wrong-password',
+            ])->assertSessionHasErrors('username');
+        }
+
+        $this->post(route('login.store'), [
+            'username' => 'nobody-61',
+            'password' => 'wrong-password',
+        ])->assertTooManyRequests();
+    }
+
+    public function test_unknown_username_still_spends_a_password_hash(): void
+    {
+        Hash::partialMock()->shouldReceive('make')->once()->andReturn('hash');
+
+        $this->post(route('login.store'), [
+            'username' => 'nobody',
+            'password' => 'whatever',
+        ])->assertSessionHasErrors('username');
     }
 }

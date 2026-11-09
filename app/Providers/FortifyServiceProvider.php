@@ -51,9 +51,14 @@ class FortifyServiceProvider extends ServiceProvider
                 ->where('is_active', true)
                 ->first();
 
-            return $user && Hash::check((string) $request->input('password'), $user->password)
-                ? $user
-                : null;
+            if (! $user) {
+                // Spend the same hashing time so response time does not reveal unknown usernames.
+                Hash::make((string) $request->input('password'));
+
+                return null;
+            }
+
+            return Hash::check((string) $request->input('password'), $user->password) ? $user : null;
         });
     }
 
@@ -93,7 +98,11 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            return Limit::perMinute(5)->by($throttleKey);
+            // The second limit stops one IP from trying many usernames; 60 keeps a shared office IP usable.
+            return [
+                Limit::perMinute(5)->by($throttleKey),
+                Limit::perMinute(60)->by($request->ip()),
+            ];
         });
 
     }

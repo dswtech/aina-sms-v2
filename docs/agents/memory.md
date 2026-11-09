@@ -49,7 +49,9 @@ Bukti: `composer ci:check` lulus (465 backend: 460 lulus, lima skip; 38 frontend
 
 Branch `codex/neutral-auth-placeholders`. Placeholder login dan lupa password dibuat netral (tidak lagi menampilkan contoh nama akun). Alur reset Fortify (email → token 60 menit, jeda 60 detik → `ResetUserPassword`) kini membalas sama untuk email terkirim, tidak dikenal, dan throttled (`NeutralPasswordResetLinkResponse`, di-bind di `FortifyServiceProvider`), sehingga formulir tidak membocorkan email yang punya akun. Email reset ditulis Indonesia lewat `ResetPassword::toMailUsing` di `AppServiceProvider`; halaman `forgot-password` dan `reset-password` diterjemahkan. `APP_LOCALE` global tidak diubah.
 
-Batas yang diketahui: email yang ada dikirim sinkron lewat SMTP sedangkan email tak dikenal langsung selesai, jadi selisih waktu respons masih bisa membedakan keduanya; menutupnya butuh antrean/worker yang ditunda pemilik. Akun nonaktif tetap menerima email reset (login tetap ditolak). Belum dilakukan: batas login per IP, penyamaan waktu `Hash::check`, cek visual halaman di browser.
+Tindak lanjut audit login di branch yang sama: akun nonaktif tidak lagi menerima email reset (`User::sendPasswordResetNotification` hanya mengirim bila `is_active`; balasan formulir tetap netral); batas login ditambah 60 percobaan per menit per IP di samping 5 per username+IP (60 agar IP kantor bersama tetap bisa dipakai bersamaan); username tak dikenal tetap menjalankan `Hash::make` agar waktu respons tidak membedakannya. Tiap perbaikan punya tes di `AuthenticationTest` dan `PasswordResetTest`. Cek visual (server lokal SQLite sintetis, 390px dan 1440px): halaman login, lupa password dan reset password tampil benar, pesan netral muncul, tanpa overflow.
+
+Batas yang diketahui: email yang ada dikirim sinkron lewat SMTP sedangkan email tak dikenal (dan akun nonaktif) langsung selesai, jadi selisih waktu respons masih bisa membedakannya; menutupnya butuh antrean/worker yang ditunda pemilik. Batas 60 per IP tidak menghentikan penyemprotan satu password umum ke sedikit akun; ia hanya membatasi laju.
 
 ## Keadaan terverifikasi
 

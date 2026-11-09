@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -44,6 +45,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRouteKeyName(): string
     {
         return 'public_id';
+    }
+
+    /** Inactive accounts get no reset email; the form reply stays the same. */
+    public function sendPasswordResetNotification($token): void
+    {
+        if ($this->is_active) {
+            $this->notify(new ResetPassword($token));
+        }
     }
 
     /**

@@ -55,6 +55,19 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
+    public function test_inactive_account_gets_the_neutral_reply_but_no_email()
+    {
+        Notification::fake();
+
+        $user = User::factory()->inactive()->create();
+
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', NeutralPasswordResetLinkResponse::MESSAGE);
+
+        Notification::assertNothingSent();
+    }
+
     public function test_throttled_request_for_a_known_email_is_not_distinguishable()
     {
         Notification::fake();
