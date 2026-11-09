@@ -270,10 +270,9 @@ async function acceptanceFlow(page) {
 
         // Metadata/note edit in Detail does not move progress either.
         let dialog = await openDetail();
-        await page.getByRole('button', { name: 'Ubah area, pembiayaan dan keterangan' }).click();
-        await dialog.locator('#edit-notes').fill(noteText);
-        await dialog.getByRole('button', { name: 'Simpan', exact: true }).click();
-        await page.getByText(noteText).first().waitFor();
+        await dialog.getByLabel('Keterangan').fill(noteText);
+        await dialog.getByLabel('Keterangan').blur();
+        await dialog.getByRole('status').filter({ hasText: 'Tersimpan' }).waitFor();
         detail = await json(`/transactions/${publicId}`);
         assert(detail.progress_at === P0, `Note edit changed progress_at: ${P0} -> ${detail.progress_at}`);
         assert(detail.notes === noteText, 'Note edit was not saved');
@@ -329,10 +328,12 @@ async function acceptanceFlow(page) {
 
         // ---- 8. edit area and financing in Detail (editable again), then redo DO ----
         dialog = await openDetail();
-        await page.getByRole('button', { name: 'Ubah area, pembiayaan dan keterangan' }).click();
-        await dialog.locator('#edit-district').selectOption(E);
-        await dialog.locator('#edit-financing').selectOption('cash');
-        await dialog.getByRole('button', { name: 'Simpan', exact: true }).click();
+        await dialog.getByRole('button', { name: /^Area:/ }).click();
+        await dialog.getByRole('option', { name: 'Kabupaten Bandung Barat', exact: true }).click();
+        await dialog.getByRole('option', { name: districtLabel(E), exact: true }).click();
+        await dialog.getByRole('status').filter({ hasText: 'Tersimpan' }).waitFor();
+        await dialog.getByRole('button', { name: /^Pembiayaan:/ }).click();
+        await dialog.getByRole('option', { name: 'Cash', exact: true }).click();
         await page.waitForFunction(
             async (id) => {
                 const r = await (await fetch(`/transactions/${id}`, { headers: { Accept: 'application/json' } })).json();

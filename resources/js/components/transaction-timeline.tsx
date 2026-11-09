@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type {
     HistoryPage,
     TimelineComment,
@@ -56,6 +57,105 @@ export function HistoryPagination({
         </nav>
     );
 }
+export function TimelineEntry({
+    event,
+    onReply,
+    onEdit,
+    className,
+}: {
+    event: TimelineEvent;
+    onReply?: (comment: TimelineComment) => void;
+    onEdit?: (comment: TimelineComment) => void;
+    className?: string;
+}) {
+    return (
+        <li
+            data-event-key={event.key}
+            className={cn(
+                'min-w-0 space-y-2 text-sm [overflow-wrap:anywhere]',
+                className,
+            )}
+        >
+            <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <span className="font-medium">{event.label}</span>
+                <span>{event.actor_name ?? 'Sistem'}</span>
+                <time
+                    dateTime={event.occurred_at}
+                    className="text-xs text-muted-foreground"
+                >
+                    {historyDate(event.occurred_at)}
+                </time>
+            </div>
+            {event.comment?.parent_id != null && (
+                <blockquote className="border-l-2 pl-3 text-xs text-muted-foreground">
+                    Membalas {event.comment.parent_author_name ?? 'Pengguna'}:{' '}
+                    {event.comment.parent_body}
+                </blockquote>
+            )}
+            {event.body && <p className="whitespace-pre-wrap">{event.body}</p>}
+            {event.comment && (
+                <>
+                    <p className="text-xs text-muted-foreground">
+                        {event.comment.stage_at_creation_label
+                            ? `Saat dikirim: ${event.comment.stage_at_creation_label}`
+                            : 'Tahap saat kirim belum tercatat'}
+                        {event.comment.edited_at
+                            ? ` · Diedit ${historyDate(event.comment.edited_at)}`
+                            : ''}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {onReply && event.comment.parent_id === null && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onReply(event.comment!)}
+                            >
+                                Balas
+                            </Button>
+                        )}
+                        {onEdit && event.comment.can_edit && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEdit(event.comment!)}
+                            >
+                                Edit
+                            </Button>
+                        )}
+                    </div>
+                    {event.comment.revisions &&
+                        event.comment.revisions.length > 0 && (
+                            <details className="rounded-md border p-3">
+                                <summary className="min-h-11 cursor-pointer py-3 font-medium focus-visible:outline-2 focus-visible:outline-ring">
+                                    Riwayat revisi (
+                                    {event.comment.revisions.length})
+                                </summary>
+                                <ol className="space-y-3">
+                                    {event.comment.revisions.map((revision) => (
+                                        <li key={revision.id}>
+                                            <p className="text-xs text-muted-foreground">
+                                                {revision.editor_name ??
+                                                    'Pengguna'}{' '}
+                                                ·{' '}
+                                                {historyDate(
+                                                    revision.edited_at,
+                                                )}
+                                            </p>
+                                            <p className="mt-1 whitespace-pre-wrap">
+                                                {revision.old_body}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </details>
+                        )}
+                </>
+            )}
+        </li>
+    );
+}
 export function TransactionTimeline({
     page,
     onPageChange,
@@ -77,115 +177,12 @@ export function TransactionTimeline({
             ) : (
                 <ol className="mt-3 space-y-4 border-l pl-4">
                     {page.data.map((event) => (
-                        <li
+                        <TimelineEntry
                             key={event.key}
-                            data-event-key={event.key}
-                            className="min-w-0 space-y-2 text-sm [overflow-wrap:anywhere]"
-                        >
-                            <div className="flex flex-wrap gap-x-2 gap-y-1">
-                                <span className="font-medium">
-                                    {event.label}
-                                </span>
-                                <span>{event.actor_name ?? 'Sistem'}</span>
-                                <time
-                                    dateTime={event.occurred_at}
-                                    className="text-xs text-muted-foreground"
-                                >
-                                    {historyDate(event.occurred_at)}
-                                </time>
-                            </div>
-                            {event.comment?.parent_id != null && (
-                                <blockquote className="border-l-2 pl-3 text-xs text-muted-foreground">
-                                    Membalas{' '}
-                                    {event.comment.parent_author_name ??
-                                        'Pengguna'}
-                                    : {event.comment.parent_body}
-                                </blockquote>
-                            )}
-                            {event.body && (
-                                <p className="whitespace-pre-wrap">
-                                    {event.body}
-                                </p>
-                            )}
-                            {event.comment && (
-                                <>
-                                    <p className="text-xs text-muted-foreground">
-                                        {event.comment.stage_at_creation_label
-                                            ? `Saat dikirim: ${event.comment.stage_at_creation_label}`
-                                            : 'Tahap saat kirim belum tercatat'}
-                                        {event.comment.edited_at
-                                            ? ` · Diedit ${historyDate(event.comment.edited_at)}`
-                                            : ''}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {onReply &&
-                                            event.comment.parent_id ===
-                                                null && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        onReply(event.comment!)
-                                                    }
-                                                >
-                                                    Balas
-                                                </Button>
-                                            )}
-                                        {onEdit && event.comment.can_edit && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    onEdit(event.comment!)
-                                                }
-                                            >
-                                                Edit
-                                            </Button>
-                                        )}
-                                    </div>
-                                    {event.comment.revisions &&
-                                        event.comment.revisions.length > 0 && (
-                                            <details className="rounded-md border p-3">
-                                                <summary className="min-h-11 cursor-pointer py-3 font-medium focus-visible:outline-2 focus-visible:outline-ring">
-                                                    Riwayat revisi (
-                                                    {
-                                                        event.comment.revisions
-                                                            .length
-                                                    }
-                                                    )
-                                                </summary>
-                                                <ol className="space-y-3">
-                                                    {event.comment.revisions.map(
-                                                        (revision) => (
-                                                            <li
-                                                                key={
-                                                                    revision.id
-                                                                }
-                                                            >
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {revision.editor_name ??
-                                                                        'Pengguna'}{' '}
-                                                                    ·{' '}
-                                                                    {historyDate(
-                                                                        revision.edited_at,
-                                                                    )}
-                                                                </p>
-                                                                <p className="mt-1 whitespace-pre-wrap">
-                                                                    {
-                                                                        revision.old_body
-                                                                    }
-                                                                </p>
-                                                            </li>
-                                                        ),
-                                                    )}
-                                                </ol>
-                                            </details>
-                                        )}
-                                </>
-                            )}
-                        </li>
+                            event={event}
+                            onReply={onReply}
+                            onEdit={onEdit}
+                        />
                     ))}
                 </ol>
             )}

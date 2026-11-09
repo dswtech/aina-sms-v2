@@ -7,6 +7,7 @@ use App\Enums\PipelineStage;
 use App\Enums\UserRole;
 use App\Http\Requests\Customer\StoreCustomerLeadRequest;
 use App\Models\Customer;
+use App\Models\DealComment;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\Team;
@@ -329,8 +330,49 @@ class TransactionController extends Controller
             ],
             // Area and financing are editable until DO; DO/Delivery lock them, a cancelled DO returns to SPK.
             'can_edit_metadata' => $actor->can('update', $transaction),
-            'history' => $actor->role === UserRole::BranchManager ? null : app(TransactionTimeline::class)->paginate($transaction, $actor),
+            'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
+            'days_in_stage' => $transaction->current_stage->isClosed() ? null : $this->daysInStage($transaction),
+            ...$this->detailFeeds($transaction, $actor),
         ]);
+    }
+
+    /** Calendar days (Asia/Jakarta) since the last stage move; never negative. */
+    private function daysInStage(DealTransaction $transaction): int
+    {
+        $since = ($transaction->progress_at ?? $transaction->created_at)->toImmutable()->setTimezone('Asia/Jakarta')->startOfDay();
+
+        return max(0, (int) $since->diffInDays(CarbonImmutable::now('Asia/Jakarta')->startOfDay()));
+    }
+
+    /** @return array{stages: ?array<string, mixed>, comments: ?array<string, mixed>} */
+    private function detailFeeds(DealTransaction $transaction, User $actor): array
+    {
+        if ($actor->role === UserRole::BranchManager) {
+            return ['stages' => null, 'comments' => null];
+        }
+        $timeline = app(TransactionTimeline::class);
+
+        // shortcut: stages are capped at 100 per transaction, far above a realistic count; page if that ever changes.
+        return [
+            'stages' => $timeline->paginate($transaction, $actor, kinds: ['stage'], newestFirst: true, perPage: 100),
+            'comments' => $timeline->paginate($transaction, $actor, kinds: ['comment'], newestFirst: true),
+        ];
+    }
+
+    /** Older comment or activity pages for the detail modal, newest first. */
+    public function feed(Request $request, DealTransaction $transaction, TransactionTimeline $timeline): JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $validated = $request->validate([
+            'kind' => ['required', 'in:comments,activities'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ]);
+
+        return response()->json($timeline->paginate(
+            $transaction, $actor, (int) ($validated['page'] ?? 1),
+            kinds: [$validated['kind'] === 'comments' ? 'comment' : 'activity'], newestFirst: true,
+        ));
     }
 
     public function create(Request $request): Response

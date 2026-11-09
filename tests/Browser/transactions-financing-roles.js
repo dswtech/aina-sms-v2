@@ -156,19 +156,28 @@ async function transactionsFinancingRoles(page) {
     await page.getByRole('button', { name: 'Detail', exact: true }).filter({ visible: true }).first().click();
     await page.getByRole('heading', { name: 'Detail transaksi' }).waitFor();
     const dialog = page.getByRole('dialog');
-    await page.getByRole('button', { name: 'Ubah area, pembiayaan dan keterangan' }).click();
-    await dialog.getByLabel('Kabupaten/Kota').selectOption('32.17');
-    await dialog.getByLabel('Kecamatan').selectOption('32.17.08');
-    await dialog.getByLabel('Pembiayaan').selectOption('cash');
+    const saved = dialog.getByRole('status').filter({ hasText: 'Tersimpan' });
+    await dialog.getByRole('button', { name: /^Area:/ }).click();
+    await dialog.getByRole('option', { name: 'Kabupaten Bandung Barat', exact: true }).click();
+    await dialog.getByRole('option', { name: 'Padalarang', exact: true }).click();
+    await saved.waitFor();
+    await dialog.getByRole('button', { name: /^Pembiayaan:/ }).click();
+    await dialog.getByRole('option', { name: 'Cash', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Pembiayaan: Cash', exact: true }).waitFor();
     await dialog.getByLabel('Keterangan').fill('Catatan QA browser');
-    await dialog.getByRole('button', { name: 'Simpan', exact: true }).click();
-    await page.getByText('Catatan QA browser').first().waitFor();
+    await dialog.getByLabel('Keterangan').blur();
+    await saved.waitFor();
     checked.push('detail edit saved');
 
     // Locked DO: edit button must not be offered for a delivered/DO deal with snapshot.
     await page.goto(`${origin}/transactions?search=${encodeURIComponent('G11 Fin Do')}`);
     await page.getByRole('button', { name: 'Detail', exact: true }).filter({ visible: true }).first().click();
     await page.getByRole('heading', { name: 'Detail transaksi' }).waitFor();
+    // A DO is locked: no property can be opened and the note is read-only.
+    const locked = page.getByRole('dialog');
+    await locked.getByRole('button', { name: /^Area:/ }).waitFor({ state: 'detached' });
+    if (await locked.getByLabel('Keterangan').isEditable())
+        throw new Error('Locked DO offered an editable note');
     checked.push('detail DO opened');
 
     // Create form: existing-customer search, then draft kept after a forced server error.

@@ -58,6 +58,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
         Route::get('transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
         Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+        Route::get('transactions/{transaction}/feed', [TransactionController::class, 'feed'])->name('transactions.feed');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
 

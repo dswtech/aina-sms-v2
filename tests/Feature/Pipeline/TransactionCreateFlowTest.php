@@ -96,7 +96,7 @@ it('shows a detail payload only for visible transactions, with locking flag afte
     $this->actingAs($this->sales)->getJson("/transactions/{$deal->public_id}")->assertOk()
         ->assertJsonPath('public_id', $deal->public_id)->assertJsonPath('notes', 'Catatan')
         ->assertJsonPath('estimated_value', 250000000)->assertJsonPath('can_edit_metadata', true)
-        ->assertJsonStructure(['created_at', 'progress_at', 'area', 'financing', 'customer' => ['name', 'phone', 'social_media_account'], 'supervisors', 'history']);
+        ->assertJsonStructure(['created_at', 'progress_at', 'area', 'financing', 'customer' => ['name', 'phone', 'social_media_account'], 'supervisors', 'stages', 'comments', 'days_in_stage', 'can_comment']);
     $stranger = User::factory()->sales()->create(['dealer_id' => $this->dealer->id]);
     $this->actingAs($stranger)->getJson("/transactions/{$deal->public_id}")->assertForbidden();
 });

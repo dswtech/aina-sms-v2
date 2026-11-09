@@ -15,20 +15,38 @@ use stdClass;
 
 class TransactionTimeline
 {
-    /** @return array<string, mixed> */
-    public function paginate(DealTransaction $deal, User $actor, int $page = 1): array
-    {
+    /**
+     * @param  list<'stage'|'activity'|'comment'>  $kinds  at least one
+     * @return array<string, mixed>
+     */
+    public function paginate(
+        DealTransaction $deal,
+        User $actor,
+        int $page = 1,
+        array $kinds = ['stage', 'activity', 'comment'],
+        bool $newestFirst = false,
+        int $perPage = 20,
+    ): array {
         Gate::forUser($actor)->authorize('view', $deal);
         abort_if($actor->role === UserRole::BranchManager, 403);
 
-        $events = DB::table('stage_histories')->where('deal_transaction_id', $deal->id)
-            ->selectRaw("id, 'stage' as kind, created_at as occurred_at")
-            ->unionAll(DB::table('customer_activities')->where('deal_transaction_id', $deal->id)
-                ->selectRaw("id, 'activity' as kind, occurred_at"))
-            ->unionAll(DB::table('deal_comments')->where('deal_transaction_id', $deal->id)
-                ->selectRaw("id, 'comment' as kind, created_at as occurred_at"));
+        $sources = [
+            'stage' => fn () => DB::table('stage_histories')->where('deal_transaction_id', $deal->id)
+                ->selectRaw("id, 'stage' as kind, created_at as occurred_at"),
+            'activity' => fn () => DB::table('customer_activities')->where('deal_transaction_id', $deal->id)
+                ->selectRaw("id, 'activity' as kind, occurred_at"),
+            'comment' => fn () => DB::table('deal_comments')->where('deal_transaction_id', $deal->id)
+                ->selectRaw("id, 'comment' as kind, created_at as occurred_at"),
+        ];
+        $queries = array_map(fn (string $kind) => $sources[$kind](), array_values(array_intersect(array_keys($sources), $kinds)));
+        $events = array_shift($queries);
+        foreach ($queries as $query) {
+            $events->unionAll($query);
+        }
+        $direction = $newestFirst ? 'desc' : 'asc';
         $paginator = DB::query()->fromSub($events, 'timeline_events')
-            ->orderBy('occurred_at')->orderBy('kind')->orderBy('id')->paginate(20, ['*'], 'timeline_page', $page);
+            ->orderBy('occurred_at', $direction)->orderBy('kind', $direction)->orderBy('id', $direction)
+            ->paginate($perPage, ['*'], 'timeline_page', $page);
         $rows = $paginator->getCollection();
         $stages = StageHistory::with('actor')->whereIn('id', $rows->where('kind', 'stage')->pluck('id'))->get()->keyBy('id');
         $activities = CustomerActivity::with('user')->whereIn('id', $rows->where('kind', 'activity')->pluck('id'))->get()->keyBy('id');
