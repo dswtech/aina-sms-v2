@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 beforeEach(function () {
     $this->dealer = Dealer::factory()->create();
     $this->sales = User::factory()->sales()->create(['dealer_id' => $this->dealer->id]);

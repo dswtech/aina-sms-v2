@@ -9,6 +9,8 @@ use App\Models\TeamMembership;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 function duplicateLeadFixture(): array
 {
     $dealer = Dealer::factory()->create();

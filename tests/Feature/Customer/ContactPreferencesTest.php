@@ -5,6 +5,8 @@ use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\User;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 it('updates the assigned customers contact preference and refusal with an audit', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);

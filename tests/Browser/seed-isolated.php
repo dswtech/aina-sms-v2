@@ -34,6 +34,11 @@ if (Artisan::call('migrate', ['--force' => true]) !== 0) {
 
 $sales = User::factory()->sales()->create(['name' => 'G11 Synthetic Sales', 'username' => 'g11.sales']);
 $team = Team::factory()->create(['dealer_id' => $sales->dealer_id]);
+// The lead form only offers models from the Admin master.
+$vehicleType = DB::table('vehicle_types')->insertGetId(['dealer_id' => $sales->dealer_id, 'name' => 'G11 Type']);
+foreach (['G11 Recovery Model', 'G11 Test Model', 'ACC Flow Unit', 'ACC Flow Repeat', '+SUM EXPT'] as $vehicleName) {
+    DB::table('vehicle_models')->insert(['dealer_id' => $sales->dealer_id, 'vehicle_type_id' => $vehicleType, 'name' => $vehicleName]);
+}
 TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $sales->id, 'role' => 'sales', 'ended_at' => null]);
 $supervisor = User::factory()->supervisor()->create(['dealer_id' => $sales->dealer_id, 'username' => 'g11.spv']);
 TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $supervisor->id, 'role' => 'supervisor', 'ended_at' => null]);

@@ -13,6 +13,7 @@ use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CreateLeadTransaction;
+use App\Services\TransactionMasters;
 use App\Services\TransactionMetadata;
 use App\Services\TransactionTimeline;
 use App\Support\AuditRecorder;
@@ -23,6 +24,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -40,11 +42,19 @@ class TransactionController extends Controller
             $validated = $request->validate([
                 ...TransactionMetadata::rules(),
                 'source' => ['sometimes', 'required', 'string', 'max:64'],
-                'vehicle_model' => ['sometimes', 'required', 'string', 'max:255'],
+                // Unchanged legacy free text stays valid; anything new must come from the master.
+                'vehicle_model' => ['sometimes', 'nullable', 'string', 'max:255', function (string $attribute, mixed $value, \Closure $fail) use ($locked): void {
+                    if ($value !== $locked->vehicle_model) {
+                        TransactionMasters::vehicleRule($locked->dealer_id)($attribute, $value, $fail);
+                    }
+                }],
                 'notes' => ['nullable', 'string', 'max:2000'],
                 'expected_closing_month' => ['nullable', 'date_format:Y-m'],
                 'estimated_value' => ['nullable', 'integer', 'min:0'],
             ]);
+            if (array_key_exists('vehicle_model', $validated) && blank($validated['vehicle_model']) && in_array($locked->current_stage, [PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery], true)) {
+                throw ValidationException::withMessages(['vehicle_model' => 'Kendaraan tidak boleh dikosongkan setelah tahap SPK.']);
+            }
             $data = array_replace([
                 'source' => $locked->source, 'source_channel' => $locked->source_channel,
                 'area' => ['region_code' => $locked->region_code, 'district_code' => $locked->district_code, 'other_city' => $locked->other_city],
@@ -339,6 +349,7 @@ class TransactionController extends Controller
         }
 
         return Inertia::render('transactions/create', [
+            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
             'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
@@ -433,6 +444,7 @@ class TransactionController extends Controller
 
         return Inertia::render('transactions/index', [
             'transactions' => $transactions,
+            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'sourceOptions' => DealTransaction::query()->visibleTo($actor)->select('source')->distinct()->orderBy('source')->pluck('source')->all(),
             'filters' => $filters,
             'assignableSales' => $assignableSales,

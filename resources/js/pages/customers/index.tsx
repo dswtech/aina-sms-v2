@@ -36,6 +36,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    VehicleSelect,
+    type VehicleOption,
+} from '@/components/transaction-fields';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -61,7 +65,7 @@ export type CustomerItem = {
     active_deal: {
         id: number;
         public_id: string;
-        vehicle_model: string;
+        vehicle_model: string | null;
         current_stage: string;
         stage_label: string;
         is_closed: boolean;
@@ -81,6 +85,7 @@ export type CustomerItem = {
 };
 
 type Props = {
+    vehicleOptions?: VehicleOption[];
     customers: {
         data: CustomerItem[];
         current_page: number;
@@ -133,6 +138,7 @@ export default function CustomersIndex({
     filters,
     counts,
     assignableSales = [],
+    vehicleOptions = [],
 }: Props) {
     const { auth, errors } = usePage().props;
     const role = auth.user.role;
@@ -184,6 +190,7 @@ export default function CustomersIndex({
     const stageEventId = useRef<number | null>(null);
     const [lostReason, setLostReason] = useState('price_budget');
     const [bookingFee, setBookingFee] = useState(false);
+    const [vehicle, setVehicle] = useState('');
     const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
 
     const [reassignSalesId, setReassignSalesId] = useState('');
@@ -219,6 +226,7 @@ export default function CustomersIndex({
             setStageOpen(false);
             setStageNotes('');
             setBookingFee(false);
+            setVehicle('');
             setActivityOpen(false);
             setActNotes('');
             setFollowUpOpen(false);
@@ -376,6 +384,7 @@ export default function CustomersIndex({
         stageEventId.current =
             selectedCustomer?.active_deal?.stage_event_id ?? null;
         setNextStage(stage);
+        setVehicle('');
         setDoChecklist(emptyDoChecklist);
         setStageOpen(true);
     }
@@ -390,6 +399,7 @@ export default function CustomersIndex({
                 stage_event_id: stageEventId.current,
                 notes: stageNotes,
                 booking_fee_confirmed: bookingFee,
+                vehicle_model: vehicle || undefined,
                 ...doChecklist,
                 lost_reason: nextStage === 'lost' ? lostReason : undefined,
                 lost_notes: nextStage === 'lost' ? stageNotes : undefined,
@@ -735,10 +745,9 @@ export default function CustomersIndex({
                                             {c.active_deal && (
                                                 <p className="text-sm font-medium text-primary">
                                                     Minat:{' '}
-                                                    {
-                                                        c.active_deal
-                                                            .vehicle_model
-                                                    }
+                                                    {c.active_deal
+                                                        .vehicle_model ??
+                                                        'Belum dipilih'}
                                                 </p>
                                             )}
 
@@ -1347,7 +1356,8 @@ export default function CustomersIndex({
                             <DialogTitle>Perbarui Tahap Penjualan</DialogTitle>
                             <DialogDescription>
                                 Transaksi:{' '}
-                                {selectedCustomer?.active_deal?.vehicle_model}
+                                {selectedCustomer?.active_deal?.vehicle_model ??
+                                    'Belum dipilih'}
                             </DialogDescription>
                         </DialogHeader>
                         <form
@@ -1393,6 +1403,22 @@ export default function CustomersIndex({
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {nextStage === 'spk' &&
+                                !selectedCustomer?.active_deal
+                                    ?.vehicle_model && (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="spk-vehicle">
+                                            Kendaraan (wajib untuk SPK)
+                                        </Label>
+                                        <VehicleSelect
+                                            id="spk-vehicle"
+                                            value={vehicle}
+                                            options={vehicleOptions}
+                                            onChange={setVehicle}
+                                        />
+                                    </div>
+                                )}
 
                             {nextStage === 'spk' && (
                                 <div className="flex items-center gap-2 rounded-lg border p-3">
@@ -1627,10 +1653,9 @@ export default function CustomersIndex({
                                 <div className="rounded-xl border p-4">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-sm font-semibold">
-                                            {
-                                                selectedCustomer.active_deal
-                                                    .vehicle_model
-                                            }
+                                            {selectedCustomer.active_deal
+                                                .vehicle_model ??
+                                                'Belum dipilih'}
                                         </span>
                                         <StageBadge
                                             stage={

@@ -96,7 +96,7 @@ async function exportsReal(page) {
     await page.locator('#name').fill(`=2+2 EXPT${tag}`);
     await page.locator('#phone').fill(`0814${tag}`);
     await page.locator('#social').fill('@qa.export');
-    await page.locator('#model').fill(`+SUM EXPT${tag}`);
+    await page.locator('#model').selectOption('+SUM EXPT');
     await page.locator('#notes').fill(`@notes EXPT${tag}`);
     await page.getByRole('button', { name: 'Simpan transaksi' }).click();
     await page.waitForURL(/\/transactions(\?|$)/);
@@ -195,7 +195,7 @@ async function exportsReal(page) {
     assert(result.body.length === 1, `Expected one hostile row, got ${result.body.length}`);
     const [hostile] = result.body;
     assert(hostile[1] === `'=2+2 EXPT${tag}`, `customer cell not neutralised: ${hostile[1]}`);
-    assert(hostile[2] === `'+SUM EXPT${tag}`, `model cell not neutralised: ${hostile[2]}`);
+    assert(hostile[2] === "'+SUM EXPT", `model cell not neutralised: ${hostile[2]}`);
     assert(hostile[11] === `'@notes EXPT${tag}`, `notes cell not neutralised: ${hostile[11]}`);
     checks.push('CSV formula safe');
 
@@ -219,7 +219,7 @@ async function exportsReal(page) {
     const modelRows = analyticsRows.slice(at('Analisis Model') + 2).filter((r) => !(r.length === 1 && r[0] === ''));
     assert(sourceRows.length === analytics.sources.length && sourceRows.length > 0, `analytics CSV sources ${sourceRows.length} != ${analytics.sources.length}`);
     assert(modelRows.length === analytics.models.length && modelRows.length > 15, `analytics CSV models ${modelRows.length} != ${analytics.models.length}`);
-    assert(modelRows.some((r) => r[0] === `'+SUM EXPT${tag}`), 'analytics CSV model label not neutralised');
+    assert(modelRows.some((r) => r[0] === "'+SUM EXPT"), 'analytics CSV model label not neutralised');
     for (const cell of analyticsRows.flat()) assert(!/^[=+\-@\t\r]/.test(cell), `analytics CSV unsafe cell "${cell}"`);
     assert(!analyticsRows.flat().some((cell) => forbidden.test(cell)) , 'analytics CSV exposes a forbidden column');
     assert(!leaksContact(analyticsRows), 'analytics CSV leaks contact data');

@@ -24,6 +24,8 @@ import {
     AreaFinancing,
     Field,
     FinancingFields,
+    VehicleSelect,
+    type VehicleOption,
     areaPayload,
     financingPayload,
 } from '@/components/transaction-fields';
@@ -33,7 +35,7 @@ type Transaction = {
     public_id: string;
     customer: { name: string; phone: string } | null;
     sales: { name: string; username: string } | null;
-    vehicle_model: string;
+    vehicle_model: string | null;
     source: string;
     source_channel: string | null;
     notes: string | null;
@@ -87,6 +89,7 @@ type FilterQuery = Record<
 >;
 
 type Props = {
+    vehicleOptions?: VehicleOption[];
     transactions: Paginated<Transaction>;
     filters: {
         search: string;
@@ -217,6 +220,7 @@ export default function TransactionsIndex({
     regions = [],
     districts = [],
     leasings = [],
+    vehicleOptions = [],
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
@@ -275,6 +279,7 @@ export default function TransactionsIndex({
     const [toStage, setToStage] = useState('');
     const [notes, setNotes] = useState('');
     const [bookingFee, setBookingFee] = useState(false);
+    const [vehicle, setVehicle] = useState('');
     const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
     const [lostReason, setLostReason] = useState('');
     const [lostNotes, setLostNotes] = useState('');
@@ -358,6 +363,7 @@ export default function TransactionsIndex({
         setToStage(transaction.current_stage);
         setNotes('');
         setBookingFee(false);
+        setVehicle('');
         setDoChecklist(emptyDoChecklist);
         setLostReason('');
         setLostNotes('');
@@ -396,6 +402,7 @@ export default function TransactionsIndex({
                 stage_event_id: selected.stage_event_id,
                 notes: notes || null,
                 booking_fee_confirmed: bookingFee,
+                vehicle_model: vehicle || undefined,
                 ...doChecklist,
                 lost_reason: lostReason || null,
                 lost_notes: lostNotes || null,
@@ -932,9 +939,8 @@ export default function TransactionsIndex({
                                                             ?.name ?? '-'}
                                                     </p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {
-                                                            transaction.vehicle_model
-                                                        }{' '}
+                                                        {transaction.vehicle_model ??
+                                                            'Belum dipilih'}{' '}
                                                         ·{' '}
                                                         {transaction.sales
                                                             ?.name ?? '-'}
@@ -1059,9 +1065,8 @@ export default function TransactionsIndex({
                                                             </p>
                                                         </td>
                                                         <td className="p-2">
-                                                            {
-                                                                transaction.vehicle_model
-                                                            }
+                                                            {transaction.vehicle_model ??
+                                                                'Belum dipilih'}
                                                         </td>
                                                         <td className="p-2">
                                                             <StageBadge
@@ -1165,7 +1170,7 @@ export default function TransactionsIndex({
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
                                 {selected.customer?.name} ·{' '}
-                                {selected.vehicle_model}
+                                {selected.vehicle_model ?? 'Belum dipilih'}
                             </p>
                             <div className="mt-4">
                                 <ClosingMonthForm
@@ -1218,6 +1223,22 @@ export default function TransactionsIndex({
                                         className="mt-2 min-h-11"
                                     />
                                 </div>
+                                {toStage === 'spk' &&
+                                    !selected.vehicle_model && (
+                                        <div>
+                                            <Label htmlFor="spk-vehicle">
+                                                Kendaraan (wajib untuk SPK)
+                                            </Label>
+                                            <div className="mt-2">
+                                                <VehicleSelect
+                                                    id="spk-vehicle"
+                                                    value={vehicle}
+                                                    options={vehicleOptions}
+                                                    onChange={setVehicle}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 {toStage === 'spk' && (
                                     <label className="flex items-center gap-2 text-sm">
                                         <input
@@ -1352,7 +1373,7 @@ export default function TransactionsIndex({
                         <DialogHeader>
                             <DialogTitle>{fulfillmentTitle}</DialogTitle>
                             <DialogDescription>
-                                {selected?.vehicle_model}.{' '}
+                                {selected?.vehicle_model ?? 'Belum dipilih'}.{' '}
                                 {fulfillmentAction === 'delivery'
                                     ? 'Konfirmasi bahwa kendaraan sudah terkirim.'
                                     : 'Transaksi akan kembali ke SPK dan DO ini dikeluarkan dari realisasi.'}

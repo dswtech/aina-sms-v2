@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Services\TransactionMasters;
 use App\Services\TransactionMetadata;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -19,7 +20,7 @@ class StoreCustomerTransactionRequest extends FormRequest
     {
         return [
             ...TransactionMetadata::rules(),
-            'vehicle_model' => ['required', 'string', 'max:255'],
+            'vehicle_model' => ['nullable', 'string', 'max:255', TransactionMasters::vehicleRule((int) $this->user()?->dealer_id)],
             'expected_closing_month' => ['nullable', 'date_format:Y-m'],
             'estimated_value' => ['nullable', 'integer', 'min:0'],
             'source' => ['required', 'string', 'max:64'],

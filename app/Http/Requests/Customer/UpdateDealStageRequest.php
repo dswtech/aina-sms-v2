@@ -4,6 +4,7 @@ namespace App\Http\Requests\Customer;
 
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
+use App\Services\TransactionMasters;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -23,6 +24,7 @@ class UpdateDealStageRequest extends FormRequest
             'to_stage' => ['required', new Enum(PipelineStage::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'booking_fee_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,spk'],
+            'vehicle_model' => ['nullable', 'string', 'max:255', TransactionMasters::vehicleRule((int) $this->user()?->dealer_id)],
             'po_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
             'dp_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
             'unit_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],

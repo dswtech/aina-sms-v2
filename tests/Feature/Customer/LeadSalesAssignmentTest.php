@@ -8,6 +8,8 @@ use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 function leadAssignmentFixture(string $role = 'supervisor'): array
 {
     $dealer = Dealer::factory()->create();

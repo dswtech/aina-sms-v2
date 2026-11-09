@@ -62,8 +62,8 @@ async function acceptanceFlow(page) {
     const custName = `ACC Flow Cust ${tag}`;
     const phone = `0813${tag}`;
     const social = `@acc.flow.${tag}`;
-    const model = `ACC Flow Unit ${tag}`;
-    const repeatModel = `ACC Flow Repeat ${tag}`;
+    const model = 'ACC Flow Unit';
+    const repeatModel = 'ACC Flow Repeat';
     const noteText = `Catatan progress ${tag}`;
 
     // ---- report helpers (always read as admin so deltas share one scope) ----
@@ -220,7 +220,7 @@ async function acceptanceFlow(page) {
         await page.locator('#name').fill(custName);
         await page.locator('#phone').fill(phone);
         await page.locator('#social').fill(social);
-        await page.locator('#model').fill(model);
+        await page.locator('#model').selectOption(model);
         await page.locator('#source').selectOption('digital_ad');
         await page.locator('#channel').selectOption('instagram');
         await page.locator('#region').selectOption('32.17');
@@ -382,7 +382,7 @@ async function acceptanceFlow(page) {
             '?customer= did not select Pelanggan Lama',
         );
         assert(await page.getByText(custName).first().isVisible(), '?customer= card does not show the customer');
-        await page.locator('#model').fill(repeatModel);
+        await page.locator('#model').selectOption(repeatModel);
         await page.getByRole('button', { name: 'Simpan transaksi' }).click();
         await page.waitForURL(/\/transactions(\?|$)/);
         const after = (await json(`/transactions/customer-search?q=${encodeURIComponent(phone)}`)).data;

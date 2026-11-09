@@ -107,6 +107,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('dealer-settings/area-foa', [DealerSettingsController::class, 'updateFoa'])->name('dealer-settings.area-foa');
         Route::post('dealer-settings/leasing', [DealerSettingsController::class, 'storeLeasing'])->name('dealer-settings.leasing.store');
         Route::patch('dealer-settings/leasing/{leasing}', [DealerSettingsController::class, 'updateLeasing'])->whereNumber('leasing')->name('dealer-settings.leasing.update');
+        Route::post('dealer-settings/vehicle-types', [DealerSettingsController::class, 'storeVehicleType'])->name('dealer-settings.vehicle-types.store');
+        Route::patch('dealer-settings/vehicle-types/{type}', [DealerSettingsController::class, 'updateVehicleType'])->whereNumber('type')->name('dealer-settings.vehicle-types.update');
+        Route::post('dealer-settings/vehicle-models', [DealerSettingsController::class, 'storeVehicleModel'])->name('dealer-settings.vehicle-models.store');
+        Route::patch('dealer-settings/vehicle-models/{model}', [DealerSettingsController::class, 'updateVehicleModel'])->whereNumber('model')->name('dealer-settings.vehicle-models.update');
     });
 
     Route::inertia('notifications', 'module-status', [

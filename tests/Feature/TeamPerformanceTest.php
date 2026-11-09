@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 function g02Fixture(): array
 {
     $dealer = Dealer::factory()->create();

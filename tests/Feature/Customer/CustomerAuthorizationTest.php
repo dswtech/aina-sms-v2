@@ -9,6 +9,8 @@ use App\Models\TeamMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 uses(RefreshDatabase::class);
 
 function makeDeal(Dealer $dealer, Customer $customer, User $sales, PipelineStage $stage = PipelineStage::Prospect): DealTransaction
