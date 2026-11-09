@@ -8,7 +8,7 @@ import {
     Phone,
     Store,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { areaPatch, financingPatch } from '@/lib/transaction-detail';
 import {
@@ -74,12 +74,31 @@ export function DetailProperties({
     }
     const notes = draft ?? detail.notes ?? '';
 
+    // Closing the modal (Escape) removes the textarea without a blur: send what is still unsaved.
+    const unsaved = useRef<{ url: string; value: string } | null>(null);
+    useEffect(() => {
+        unsaved.current =
+            canEdit && draft !== null && draft !== (detail.notes ?? '')
+                ? { url: `/transactions/${detail.public_id}`, value: draft }
+                : null;
+    }, [canEdit, draft, detail.notes, detail.public_id]);
+    useEffect(
+        () => () => {
+            const pending = unsaved.current;
+            if (pending)
+                router.patch(
+                    pending.url,
+                    { notes: pending.value || null },
+                    { preserveScroll: true, preserveState: true },
+                );
+        },
+        [],
+    );
+
     const save = (data: Record<string, unknown>) => {
         setError(null);
-        const fail = (message: string) => {
-            setError(message);
-            setDraft(null);
-        };
+        // Pickers show server values, so they revert on their own; a typed note stays for another try.
+        const fail = (message: string) => setError(message);
         router.patch(`/transactions/${detail.public_id}`, data as never, {
             preserveScroll: true,
             preserveState: true,

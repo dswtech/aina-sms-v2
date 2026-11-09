@@ -133,10 +133,32 @@ async function transactionDetailModal(page) {
         (await dialog.getByRole('button', { name: /^Pembiayaan:/ }).getAttribute('aria-label')) !== 'Pembiayaan: Cash',
         'failed save kept the unsaved value',
     );
+    // A failed note save must keep what the user typed, next to the error.
+    const note = dialog.getByLabel('Keterangan');
+    await note.fill('Catatan yang tidak boleh hilang');
+    await note.blur();
+    await page.waitForTimeout(800);
+    await dialog.getByRole('alert').first().waitFor();
+    assert(
+        (await note.inputValue()) === 'Catatan yang tidak boleh hilang',
+        'failed note save discarded the typed text',
+    );
     await page.unroute(/\/transactions\/[0-9a-f-]{36}$/);
     page.off('request', onRequest);
     consoleErrors.length = 0; // the forced 500 above logs one expected error
     checked.push('failed save restored');
+
+    // Closing with Escape while the note has unsaved text must still save it.
+    await note.fill('Catatan lewat Escape');
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+    await page.waitForTimeout(1000);
+    dialog = await openDetail('G11 Pagination Model 5');
+    assert(
+        (await dialog.getByLabel('Keterangan').inputValue()) === 'Catatan lewat Escape',
+        'Escape lost the unsaved note',
+    );
+    checked.push('note kept on failure and on Escape');
 
     // Supervisor can comment, and only in the Komentar mode.
     await login('g11.spv');
