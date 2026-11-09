@@ -1749,8 +1749,6 @@ async function accessibility(page) {
             for (const id of [
                 'search',
                 'stage',
-                'transaction-date-from',
-                'transaction-date-to',
                 'transaction-source',
             ]) {
                 const size = await page.locator(`#${id}`).boundingBox();
@@ -1759,6 +1757,13 @@ async function accessibility(page) {
                     `${id} should align at ${expected}px, got ${size.height}`,
                 );
             }
+            const range = await page
+                .getByRole('group', { name: 'Rentang progress', exact: true })
+                .boundingBox();
+            assert(
+                Math.abs(range.height - expected) <= 0.5,
+                `date range should align at ${expected}px, got ${range.height}`,
+            );
             const trigger = page.getByRole('combobox', {
                 name: 'Sales',
                 exact: true,
