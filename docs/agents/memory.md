@@ -3,11 +3,18 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.43 |
-| Diperbarui | 8 November 2026 |
+| Versi | v1.44 |
+| Diperbarui | 9 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 9 November 2026 — modal detail transaksi
+
+- Branch `feat/transaction-detail-modal` (dipotong dari `codex/neutral-auth-placeholders`, PR belum dibuka) menggantikan modal detail transaksi dengan modal dua panel: properti diedit di tempat, keterangan, dan timeline tahap di kiri; komentar coaching atau aktivitas di kanan lewat rail ikon. Desain: [spec](../superpowers/specs/2026-11-09-transaction-detail-modal-design.md), rencana: [plan](../superpowers/plans/2026-11-09-transaction-detail-modal.md). Backend: opsi `TransactionTimeline::paginate`, payload `show()` baru (tanpa `history`), endpoint `GET /transactions/{id}/feed`.
+- Bukti: Pest penuh 490 tes (485 lulus, lima skip), 44 tes frontend, `tsc` dan lint bersih untuk file modal. Skrip browser baru `tests/Browser/transaction-detail-modal.js` lulus (tujuh pemeriksaan) di fixture terisolasi, begitu juga `transaction-filter-recovery.js`, `transaction-pagination.js` dan bagian detail di `transactions-financing-roles.js`.
+- Belum terverifikasi: langkah catatan dan area/pembiayaan yang diubah di `acceptance-flow.js`, serta `lead-server-save.js` dan bagian form tambah transaksi di `transactions-financing-roles.js`. Semuanya berhenti di form tambah transaksi karena pekerjaan master kendaraan yang belum di-commit di working tree yang sama; `pnpm run check` dan PHPStan juga gagal pada file pekerjaan itu, bukan file modal.
+- `public/hot` menunjuk ke server Vite dev; jalankan skrip browser terisolasi setelah `pnpm run build` dan dengan file itu disingkirkan sementara.
 
 ## Handover agen penerus — 8 November 2026
 
