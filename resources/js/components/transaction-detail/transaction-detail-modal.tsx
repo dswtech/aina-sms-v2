@@ -17,7 +17,11 @@ import {
 } from '@/components/ui/dialog';
 import { TimelineEntry } from '@/components/transaction-timeline';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { clampPanelWidth, daysInStageLabel } from '@/lib/transaction-detail';
+import {
+    clampPanelWidth,
+    composerKey,
+    daysInStageLabel,
+} from '@/lib/transaction-detail';
 import { supervisorLabel } from '@/lib/transaction-labels';
 import type { TimelineComment, TransactionDetailData } from '@/types/history';
 import { CommentComposer } from './comment-composer';
@@ -288,7 +292,7 @@ function DetailView({
                         </div>
                         {activeMode === 'comments' && detail.can_comment && (
                             <CommentComposer
-                                key={editing?.id ?? replyTo?.id ?? 'new'}
+                                key={composerKey(editing, replyTo)}
                                 publicId={detail.public_id}
                                 replyTo={replyTo}
                                 editing={editing}

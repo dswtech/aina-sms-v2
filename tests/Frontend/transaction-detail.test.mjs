@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
     areaPatch,
     clampPanelWidth,
+    composerKey,
     daysInStageLabel,
     financingPatch,
     mergeEarlier,
@@ -62,4 +63,11 @@ test('financing is only complete once cash, a leasing, or the free name is chose
     assert.deepEqual(financingPatch(['credit', 'other', 'Leasing X']), {
         financing: { type: 'credit', leasing_id: 'other', other_name: 'Leasing X' },
     });
+});
+
+test('the composer remounts when switching between edit, reply and new on the same comment', () => {
+    assert.equal(composerKey(null, null), 'new');
+    assert.equal(composerKey({ id: 5 }, null), 'edit-5');
+    assert.equal(composerKey(null, { id: 5 }), 'reply-5');
+    assert.notEqual(composerKey({ id: 5 }, null), composerKey(null, { id: 5 }));
 });

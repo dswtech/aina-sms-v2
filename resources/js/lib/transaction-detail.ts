@@ -72,3 +72,9 @@ export function financingPatch(chosen: string[]) {
         financing: { type: 'credit', leasing_id: leasing, other_name: null },
     };
 }
+
+/** Remount key for the comment form: edit and reply on the same comment must not share state. */
+export const composerKey = (
+    editing: { id: number } | null,
+    replyTo: { id: number } | null,
+) => (editing ? `edit-${editing.id}` : replyTo ? `reply-${replyTo.id}` : 'new');
