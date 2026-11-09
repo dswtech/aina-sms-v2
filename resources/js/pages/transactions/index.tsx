@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateRangeField } from '@/components/date-range-field';
 import {
     AreaFields,
     AreaFinancing,
@@ -103,6 +104,7 @@ type Props = {
     };
     sourceOptions?: string[];
     supervisorOptions?: { id: number; name: string }[];
+    supervisorLocked?: boolean;
     regions?: { code: string; name: string }[];
     districts?: { code: string; region_code: string; name: string }[];
     leasings?: { id: number; name: string }[];
@@ -211,6 +213,7 @@ export default function TransactionsIndex({
     lostReasons,
     sourceOptions = [],
     supervisorOptions = [],
+    supervisorLocked = false,
     regions = [],
     districts = [],
     leasings = [],
@@ -293,7 +296,7 @@ export default function TransactionsIndex({
         date_to: dateTo,
         source: source || null,
         customer_name: customerName || null,
-        supervisor_id: supervisorId || null,
+        supervisor_id: supervisorLocked ? null : supervisorId || null,
         region_code: regionCode || null,
         district_code: regionCode ? districtCode || null : null,
         source_channel: source === 'digital_ad' ? sourceChannel || null : null,
@@ -628,6 +631,19 @@ export default function TransactionsIndex({
                                 />
                             </div>
                         </div>
+                        <DateRangeField
+                            id="transaction-date"
+                            label="Rentang progress"
+                            className="sm:col-span-2"
+                            from={dateFrom}
+                            to={dateTo}
+                            onChange={(from, to) => {
+                                setDateFrom(from);
+                                setDateTo(to);
+                            }}
+                            errorFrom={errors?.date_from}
+                            errorTo={errors?.date_to}
+                        />
                         <div>
                             <Label htmlFor="stage">Tahap</Label>
                             <select
@@ -646,6 +662,35 @@ export default function TransactionsIndex({
                                 ))}
                             </select>
                         </div>
+                        {supervisorOptions.length > 0 && (
+                            <div>
+                                <Label htmlFor="supervisor">Supervisor</Label>
+                                <select
+                                    id="supervisor"
+                                    value={
+                                        supervisorLocked
+                                            ? String(supervisorOptions[0].id)
+                                            : supervisorId
+                                    }
+                                    disabled={supervisorLocked}
+                                    onChange={(event) =>
+                                        setSupervisorId(event.target.value)
+                                    }
+                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {!supervisorLocked && (
+                                        <option value="">
+                                            Semua supervisor
+                                        </option>
+                                    )}
+                                    {supervisorOptions.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         {assignableSales.length > 0 && (
                             <div>
                                 <Label htmlFor="sales">Sales</Label>
@@ -671,54 +716,6 @@ export default function TransactionsIndex({
                                 </div>
                             </div>
                         )}
-                        <div>
-                            <Label htmlFor="transaction-date-from">
-                                Progress mulai
-                            </Label>
-                            <Input
-                                id="transaction-date-from"
-                                type="date"
-                                className="mt-1.5"
-                                value={dateFrom}
-                                onChange={(event) =>
-                                    setDateFrom(event.target.value)
-                                }
-                                aria-invalid={!!errors?.date_from}
-                                aria-describedby={
-                                    errors?.date_from
-                                        ? 'transaction-date-from-error'
-                                        : undefined
-                                }
-                            />
-                            <InputError
-                                id="transaction-date-from-error"
-                                message={errors?.date_from}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="transaction-date-to">
-                                Progress sampai
-                            </Label>
-                            <Input
-                                id="transaction-date-to"
-                                type="date"
-                                className="mt-1.5"
-                                value={dateTo}
-                                onChange={(event) =>
-                                    setDateTo(event.target.value)
-                                }
-                                aria-invalid={!!errors?.date_to}
-                                aria-describedby={
-                                    errors?.date_to
-                                        ? 'transaction-date-to-error'
-                                        : undefined
-                                }
-                            />
-                            <InputError
-                                id="transaction-date-to-error"
-                                message={errors?.date_to}
-                            />
-                        </div>
                         <div>
                             <Label htmlFor="transaction-source">
                                 Sumber lead
@@ -746,39 +743,30 @@ export default function TransactionsIndex({
                             <InputError message={errors?.source} />
                         </div>
                         <div>
-                            <Label htmlFor="customer-name">
-                                Nama pelanggan
+                            <Label htmlFor="source-channel">
+                                Kanal digital
                             </Label>
-                            <Input
-                                id="customer-name"
-                                value={customerName}
-                                onChange={(event) =>
-                                    setCustomerName(event.target.value)
+                            <select
+                                id="source-channel"
+                                value={
+                                    source === 'digital_ad' ? sourceChannel : ''
                                 }
-                                className="mt-1.5 min-h-11"
-                            />
-                            <InputError message={errors?.customer_name} />
-                        </div>
-                        {supervisorOptions.length > 0 && (
-                            <div>
-                                <Label htmlFor="supervisor">Supervisor</Label>
-                                <select
-                                    id="supervisor"
-                                    value={supervisorId}
-                                    onChange={(event) =>
-                                        setSupervisorId(event.target.value)
-                                    }
-                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
-                                >
-                                    <option value="">Semua supervisor</option>
-                                    {supervisorOptions.map((user) => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.name}
+                                disabled={source !== 'digital_ad'}
+                                onChange={(event) =>
+                                    setSourceChannel(event.target.value)
+                                }
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <option value="">Semua kanal</option>
+                                {Object.entries(CHANNEL_LABELS).map(
+                                    ([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
                                         </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                                    ),
+                                )}
+                            </select>
+                        </div>
                         <div>
                             <Label htmlFor="region">Kabupaten/Kota</Label>
                             <select
@@ -807,7 +795,7 @@ export default function TransactionsIndex({
                                 onChange={(event) =>
                                     setDistrictCode(event.target.value)
                                 }
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <option value="">Semua kecamatan</option>
                                 {districts
@@ -825,30 +813,40 @@ export default function TransactionsIndex({
                                     ))}
                             </select>
                         </div>
-                        {source === 'digital_ad' && (
-                            <div>
-                                <Label htmlFor="source-channel">
-                                    Kanal digital
-                                </Label>
-                                <select
-                                    id="source-channel"
-                                    value={sourceChannel}
-                                    onChange={(event) =>
-                                        setSourceChannel(event.target.value)
-                                    }
-                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
-                                >
-                                    <option value="">Semua kanal</option>
-                                    {Object.entries(CHANNEL_LABELS).map(
-                                        ([value, label]) => (
-                                            <option key={value} value={value}>
-                                                {label}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                            </div>
-                        )}
+                        <div>
+                            <Label htmlFor="customer-name">
+                                Nama pelanggan
+                            </Label>
+                            <Input
+                                id="customer-name"
+                                value={customerName}
+                                onChange={(event) =>
+                                    setCustomerName(event.target.value)
+                                }
+                                className="mt-1.5 min-h-11"
+                            />
+                            <InputError message={errors?.customer_name} />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap gap-2">
+                        {tabs.map((tab) => (
+                            <Button
+                                key={tab.value}
+                                variant={
+                                    filters.tab === tab.value
+                                        ? 'default'
+                                        : 'outline'
+                                }
+                                size="sm"
+                                className="min-h-10"
+                                disabled={isLoading}
+                                onClick={() => applyFilters(tab.value)}
+                            >
+                                {tab.label}
+                            </Button>
+                        ))}
+                        </div>
                         <div className="flex items-end gap-2">
                             <Button
                                 type="button"
@@ -867,24 +865,6 @@ export default function TransactionsIndex({
                                 Terapkan
                             </Button>
                         </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {tabs.map((tab) => (
-                            <Button
-                                key={tab.value}
-                                variant={
-                                    filters.tab === tab.value
-                                        ? 'default'
-                                        : 'outline'
-                                }
-                                size="sm"
-                                className="min-h-10"
-                                disabled={isLoading}
-                                onClick={() => applyFilters(tab.value)}
-                            >
-                                {tab.label}
-                            </Button>
-                        ))}
                     </div>
                 </FilterPanel>
 
