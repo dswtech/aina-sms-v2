@@ -89,7 +89,7 @@ export function DetailProperties({
                 router.patch(
                     pending.url,
                     { notes: pending.value || null },
-                    { preserveScroll: true, preserveState: true },
+                    { preserveScroll: true, preserveState: true, async: true },
                 );
         },
         [],
@@ -102,6 +102,7 @@ export function DetailProperties({
         router.patch(`/transactions/${detail.public_id}`, data as never, {
             preserveScroll: true,
             preserveState: true,
+            async: true, // a following edit must not cancel this request
             onSuccess: () => {
                 setSaved(true);
                 window.setTimeout(() => setSaved(false), 1600);
