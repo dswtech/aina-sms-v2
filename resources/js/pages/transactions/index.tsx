@@ -23,21 +23,15 @@ import {
     type Area,
     CHANNEL_LABELS,
     areaLabel,
-    financingLabel,
     formatDate,
     sourceLabel,
     supervisorLabel,
 } from '@/lib/transaction-labels';
 import {
-    AreaFields,
-    AreaFinancing,
-    Field,
-    FinancingFields,
     VehicleSelect,
     type VehicleOption,
-    areaPayload,
-    financingPayload,
 } from '@/components/transaction-fields';
+import { TransactionDetailModal } from '@/components/transaction-detail/transaction-detail-modal';
 
 type Transaction = {
     id: number;
@@ -125,38 +119,6 @@ type Props = {
     lostReasons: Array<{ value: string; label: string }>;
 };
 
-type Detail = Transaction & {
-    can_edit_metadata: boolean;
-    customer: {
-        name: string;
-        phone: string;
-        social_media_account: string | null;
-    };
-    history: {
-        data: {
-            key: string;
-            occurred_at: string;
-            label: string;
-            body: string | null;
-        }[];
-        last_page: number;
-        total: number;
-    } | null;
-};
-
-const initialAreaFinancing = (d: Detail): AreaFinancing => ({
-    region: d.area.other_city ? 'other' : (d.area.region_code ?? ''),
-    district: d.area.district_code ?? '',
-    city: d.area.other_city ?? '',
-    financing: d.financing.type ?? '',
-    leasing: d.financing.other_name
-        ? 'other'
-        : d.financing.leasing_id
-          ? String(d.financing.leasing_id)
-          : '',
-    otherLeasing: d.financing.other_name ?? '',
-});
-
 const tabs = [
     { value: 'all', label: 'Semua' },
     { value: 'active', label: 'Aktif' },
@@ -215,16 +177,7 @@ export default function TransactionsIndex({
     const [sourceChannel, setSourceChannel] = useState(
         filters.source_channel ?? '',
     );
-    const [edit, setEdit] = useState<{
-        value: AreaFinancing;
-        notes: string;
-        saving: boolean;
-    } | null>(null);
     const [detailTarget, setDetailTarget] = useState<Transaction | null>(null);
-    const [detail, setDetail] = useState<Detail | null>(null);
-    const [detailState, setDetailState] = useState<
-        'idle' | 'loading' | 'error'
-    >('idle');
     const [salesId, setSalesId] = useState(
         filters.sales_id ? String(filters.sales_id) : '',
     );
@@ -403,7 +356,7 @@ export default function TransactionsIndex({
                     <Eye className="size-4" />,
                     (button) => {
                         actionTriggerRef.current = button;
-                        void openDetail(transaction);
+                        openDetail(transaction);
                     },
                 )}
                 {transaction.can_update &&
@@ -431,64 +384,8 @@ export default function TransactionsIndex({
         );
     };
 
-    const detailRequest = useRef(0);
-    const openDetail = async (transaction: Transaction) => {
-        // A slow answer for an earlier row must not overwrite the one now shown.
-        const request = ++detailRequest.current;
+    const openDetail = (transaction: Transaction) =>
         setDetailTarget(transaction);
-        setEdit(null);
-        setDetail(null);
-        setDetailState('loading');
-        try {
-            const response = await fetch(
-                `/transactions/${transaction.public_id}`,
-                {
-                    headers: { Accept: 'application/json' },
-                },
-            );
-            if (!response.ok) throw new Error('detail');
-            const body = await response.json();
-            if (request !== detailRequest.current) return;
-            setDetail(body);
-            setDetailState('idle');
-        } catch {
-            if (request === detailRequest.current) setDetailState('error');
-        }
-    };
-
-    const startEdit = (d: Detail) =>
-        setEdit({
-            value: initialAreaFinancing(d),
-            notes: d.notes ?? '',
-            saving: false,
-        });
-
-    const saveEdit = () => {
-        if (!edit || !detail || edit.saving) return;
-        const initial = initialAreaFinancing(detail);
-        const same = (a: unknown, b: unknown) =>
-            JSON.stringify(a) === JSON.stringify(b);
-        // Only changed parts are sent, so an untouched legacy (inactive) leasing is never revalidated.
-        const payload: NonNullable<Parameters<typeof router.patch>[1]> = {
-            notes: edit.notes || null,
-        };
-        if (!same(areaPayload(edit.value), areaPayload(initial)))
-            payload.area = areaPayload(edit.value);
-        if (!same(financingPayload(edit.value), financingPayload(initial)))
-            payload.financing = financingPayload(edit.value);
-        router.patch(`/transactions/${detail.public_id}`, payload, {
-            preserveScroll: true,
-            preserveState: true,
-            onStart: () =>
-                setEdit((current) => current && { ...current, saving: true }),
-            onSuccess: () => {
-                setEdit(null);
-                if (detailTarget) void openDetail(detailTarget);
-            },
-            onFinish: () =>
-                setEdit((current) => current && { ...current, saving: false }),
-        });
-    };
 
     const resetFilters = () => {
         const today = new Date().toLocaleDateString('en-CA', {
@@ -1402,198 +1299,13 @@ export default function TransactionsIndex({
                     </DialogContent>
                 </Dialog>
 
-                <Dialog
-                    open={detailTarget !== null}
-                    onOpenChange={(open) => {
-                        if (!open) setDetailTarget(null);
-                    }}
-                >
-                    <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>Detail transaksi</DialogTitle>
-                            <DialogDescription>
-                                {detailTarget?.customer?.name} ·{' '}
-                                {detailTarget?.vehicle_model}
-                            </DialogDescription>
-                        </DialogHeader>
-                        {detailState === 'loading' && (
-                            <p role="status" className="text-sm">
-                                Memuat detail…
-                            </p>
-                        )}
-                        {detailState === 'error' && (
-                            <p role="alert" className="text-sm">
-                                Detail belum dapat dimuat.{' '}
-                                <button
-                                    type="button"
-                                    className="underline"
-                                    onClick={() =>
-                                        detailTarget && openDetail(detailTarget)
-                                    }
-                                >
-                                    Coba lagi
-                                </button>
-                            </p>
-                        )}
-                        {detail && detailState === 'idle' && (
-                            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                                {[
-                                    ['Tahap', detail.stage_label],
-                                    ['Dibuat', formatDate(detail.created_at)],
-                                    [
-                                        'Progress',
-                                        formatDate(detail.progress_at),
-                                    ],
-                                    ['Telepon', detail.customer?.phone ?? '-'],
-                                    [
-                                        'Media sosial',
-                                        detail.customer?.social_media_account ??
-                                            '-',
-                                    ],
-                                    ['Sumber', sourceLabel(detail)],
-                                    ['Area', areaLabel(detail, true)],
-                                    ['Pembiayaan', financingLabel(detail)],
-                                    [
-                                        'Estimasi nilai',
-                                        detail.estimated_value?.toLocaleString(
-                                            'id-ID',
-                                        ) ?? '-',
-                                    ],
-                                    [
-                                        'Estimasi closing',
-                                        detail.expected_closing_month ?? '-',
-                                    ],
-                                    ['Keterangan', detail.notes ?? '-'],
-                                    [
-                                        'Area & pembiayaan',
-                                        detail.can_edit_metadata
-                                            ? 'Dapat diubah'
-                                            : 'Terkunci',
-                                    ],
-                                ].map(([term, value]) => (
-                                    <div key={term} className="contents">
-                                        <dt className="text-muted-foreground">
-                                            {term}
-                                        </dt>
-                                        <dd>{value}</dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        )}
-                        {detail &&
-                            detailState === 'idle' &&
-                            detail.can_edit_metadata && (
-                                <div className="space-y-3 border-t pt-3">
-                                    {edit === null ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="min-h-11"
-                                            onClick={() => startEdit(detail)}
-                                        >
-                                            Ubah area, pembiayaan dan keterangan
-                                        </Button>
-                                    ) : (
-                                        <form
-                                            className="space-y-3"
-                                            onSubmit={(event) => {
-                                                event.preventDefault();
-                                                saveEdit();
-                                            }}
-                                        >
-                                            <AreaFields
-                                                idPrefix="edit-"
-                                                value={edit.value}
-                                                onChange={(value) =>
-                                                    setEdit({ ...edit, value })
-                                                }
-                                                regions={regions}
-                                                districts={districts}
-                                                errors={errors ?? {}}
-                                            />
-                                            <FinancingFields
-                                                idPrefix="edit-"
-                                                value={edit.value}
-                                                onChange={(value) =>
-                                                    setEdit({ ...edit, value })
-                                                }
-                                                leasings={leasings}
-                                                errors={errors ?? {}}
-                                            />
-                                            <Field
-                                                id="edit-notes"
-                                                label="Keterangan"
-                                                error={errors?.notes}
-                                            >
-                                                <textarea
-                                                    id="edit-notes"
-                                                    rows={3}
-                                                    maxLength={2000}
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    value={edit.notes}
-                                                    onChange={(event) =>
-                                                        setEdit({
-                                                            ...edit,
-                                                            notes: event.target
-                                                                .value,
-                                                        })
-                                                    }
-                                                />
-                                            </Field>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="submit"
-                                                    className="min-h-11"
-                                                    disabled={edit.saving}
-                                                >
-                                                    {edit.saving
-                                                        ? 'Menyimpan…'
-                                                        : 'Simpan'}
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="min-h-11"
-                                                    disabled={edit.saving}
-                                                    onClick={() =>
-                                                        setEdit(null)
-                                                    }
-                                                >
-                                                    Batal
-                                                </Button>
-                                            </div>
-                                        </form>
-                                    )}
-                                </div>
-                            )}
-                        {detail?.history && detailState === 'idle' && (
-                            <div>
-                                <h3 className="mt-2 text-sm font-medium">
-                                    Riwayat
-                                </h3>
-                                <ul className="mt-1 space-y-1 text-sm">
-                                    {detail.history.data.map((entry) => (
-                                        <li key={entry.key}>
-                                            <span className="text-muted-foreground">
-                                                {formatDate(entry.occurred_at)}
-                                            </span>{' '}
-                                            {entry.label}
-                                            {entry.body
-                                                ? ` — ${entry.body}`
-                                                : ''}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {detail.history.last_page > 1 && (
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Menampilkan halaman pertama dari{' '}
-                                        {detail.history.total} entri.
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                <TransactionDetailModal
+                    target={detailTarget}
+                    onClose={() => setDetailTarget(null)}
+                    regions={regions ?? []}
+                    districts={districts ?? []}
+                    leasings={leasings ?? []}
+                />
             </div>
         </>
     );
