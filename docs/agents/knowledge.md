@@ -94,7 +94,7 @@ Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan A
 | Porsi | Persentase kontribusi suatu kategori terhadap total pada filter yang sama. |
 | Drilldown | Daftar transaksi sumber yang membentuk satu angka analisis. |
 | Area | Dimensi lokasi Customer yang memerlukan data lokasi terstruktur sebelum dianalisis. |
-| MSCP | Market Share Credit Portion; analisis porsi pembiayaan yang baru tersedia setelah modul leasing mempunyai data yang sah. |
+| MSCP | Market Share Credit Portion; analisis porsi pembiayaan. Dipenuhi oleh porsi per leasing pada Analisis Pembiayaan; pemilik menutup kebutuhan ini pada 9 November 2026 dan tidak ada konsep MSCP terpisah. |
 
 ## Prinsip akses data
 

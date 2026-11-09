@@ -130,7 +130,7 @@ Customer dan transaksi dikerjakan lebih awal karena seluruh aktivitas, coaching,
 - CSV dan PDF agregat;
 - drilldown Branch Manager tersanitasi tanpa kontak, catatan hubungan, atau coaching.
 
-**Ditunda:** Analisis Area menunggu data lokasi terstruktur. MSCP menunggu modul leasing dan definisi operasional yang disetujui.
+**Ditunda:** Analisis Area menunggu data lokasi terstruktur. MSCP ditutup: modul leasing dan porsi pembiayaan per leasing sudah tersedia dan mencukupi kebutuhan (9 November 2026).
 
 **Test wajib:** rumus jumlah/porsi/conversion, batas periode dan mode tanggal, rekonsiliasi drilldown, sanitasi role, serta ekspor tanpa data sensitif.
 
@@ -157,7 +157,6 @@ Customer dan transaksi dikerjakan lebih awal karena seluruh aktivitas, coaching,
 Fase ini baru direncanakan setelah MVP dipakai dan data dasarnya terbukti sehat:
 
 - Analisis Area;
-- leasing dan MSCP;
 - document tracker;
 - delivery calendar;
 - distribusi laporan terjadwal;

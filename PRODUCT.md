@@ -42,7 +42,7 @@ Customer menjadi identitas hubungan jangka panjang yang terpisah dari transaksi,
 - Branch Manager hanya menerima agregat dan drilldown tersanitasi, serta tidak membaca coaching.
 - Conversation berada dalam konteks transaksi dan menggabungkan komentar dengan aktivitas sistem.
 - Forecast adalah perkiraan berbobot, bukan janji hasil.
-- Analisis MVP mencakup Sumber dan Model; Area serta MSCP ditunda.
+- Analisis MVP mencakup Sumber dan Model; Area ditunda. MSCP ditutup: porsi pembiayaan per leasing pada Analisis Pembiayaan sudah memenuhi kebutuhan.
 - Nama produk final, bobot forecast, penyedia email, lingkungan deployment, bukti SPK, dan retensi data masih terbuka di PRD.
 
 ## Brand Commitments

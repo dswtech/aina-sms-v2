@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 9 November 2026 — MSCP ditutup
+
+Pemilik memutuskan MSCP selesai: porsi pembiayaan per leasing pada Analisis Pembiayaan (`analytics/financing`) sudah mencukupi, tanpa definisi atau laporan MSCP terpisah. Catatan "MSCP ditunda" di PRD, roadmap, UAT matrix, knowledge, PRODUCT dan ringkasan supervisor diperbarui. Catatan lama di bagian bawah file ini yang masih menyebut MSCP ditunda adalah riwayat. Analisis Area tidak termasuk keputusan ini.
+
 ## Pembaruan 9 November 2026 — modal detail transaksi
 
 - [PR #82](https://github.com/dswtech/aina-sms-v2/pull/82) (merged 9 November 2026, sesudah #81) menggantikan modal detail transaksi dengan modal dua panel: properti diedit di tempat, keterangan, dan timeline tahap di kiri; komentar coaching atau aktivitas di kanan lewat rail ikon. Desain: [spec](../superpowers/specs/2026-11-09-transaction-detail-modal-design.md), rencana: [plan](../superpowers/plans/2026-11-09-transaction-detail-modal.md). Backend: opsi `TransactionTimeline::paginate`, payload `show()` baru (tanpa `history`), endpoint `GET /transactions/{id}/feed`.
