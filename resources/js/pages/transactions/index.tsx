@@ -837,22 +837,22 @@ export default function TransactionsIndex({
                     </div>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap gap-2">
-                        {tabs.map((tab) => (
-                            <Button
-                                key={tab.value}
-                                variant={
-                                    filters.tab === tab.value
-                                        ? 'default'
-                                        : 'outline'
-                                }
-                                size="sm"
-                                className="min-h-10"
-                                disabled={isLoading}
-                                onClick={() => applyFilters(tab.value)}
-                            >
-                                {tab.label}
-                            </Button>
-                        ))}
+                            {tabs.map((tab) => (
+                                <Button
+                                    key={tab.value}
+                                    variant={
+                                        filters.tab === tab.value
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    size="sm"
+                                    className="min-h-10"
+                                    disabled={isLoading}
+                                    onClick={() => applyFilters(tab.value)}
+                                >
+                                    {tab.label}
+                                </Button>
+                            ))}
                         </div>
                         <div className="flex items-end gap-2">
                             <Button
