@@ -8,6 +8,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 uses(RefreshDatabase::class);
 
 beforeEach(function () {

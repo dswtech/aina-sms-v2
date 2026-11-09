@@ -32,6 +32,10 @@ class DealerSettingsController extends Controller
             'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->orderBy('name')
                 ->get(['id', 'name', 'is_active', 'is_monitored'])
                 ->map(fn ($row) => ['id' => $row->id, 'name' => $row->name, 'is_active' => (bool) $row->is_active, 'is_monitored' => (bool) $row->is_monitored]),
+            'vehicleTypes' => DB::table('vehicle_types')->where('dealer_id', $actor->dealer_id)->orderBy('name')->get(['id', 'name', 'is_active'])
+                ->map(fn ($row) => ['id' => $row->id, 'name' => $row->name, 'is_active' => (bool) $row->is_active]),
+            'vehicleModels' => DB::table('vehicle_models')->where('dealer_id', $actor->dealer_id)->orderBy('name')->get(['id', 'vehicle_type_id', 'name', 'price_min', 'price_max', 'is_active'])
+                ->map(fn ($row) => ['id' => $row->id, 'vehicle_type_id' => $row->vehicle_type_id, 'name' => $row->name, 'price_min' => $row->price_min, 'price_max' => $row->price_max, 'is_active' => (bool) $row->is_active]),
         ]);
     }
 
@@ -45,6 +49,34 @@ class DealerSettingsController extends Controller
     public function storeLeasing(Request $request, TransactionMasters $masters): RedirectResponse
     {
         $masters->createLeasing($this->actor($request), $request->only('name'));
+
+        return back();
+    }
+
+    public function storeVehicleType(Request $request, TransactionMasters $masters): RedirectResponse
+    {
+        $masters->createVehicleType($this->actor($request), $request->only('name'));
+
+        return back();
+    }
+
+    public function updateVehicleType(Request $request, TransactionMasters $masters, int $type): RedirectResponse
+    {
+        $masters->updateVehicleType($this->actor($request), $type, $request->only(['name', 'is_active']));
+
+        return back();
+    }
+
+    public function storeVehicleModel(Request $request, TransactionMasters $masters): RedirectResponse
+    {
+        $masters->createVehicleModel($this->actor($request), $request->only(['vehicle_type_id', 'name', 'price_min', 'price_max']));
+
+        return back();
+    }
+
+    public function updateVehicleModel(Request $request, TransactionMasters $masters, int $model): RedirectResponse
+    {
+        $masters->updateVehicleModel($this->actor($request), $model, $request->only(['vehicle_type_id', 'name', 'price_min', 'price_max', 'is_active']));
 
         return back();
     }

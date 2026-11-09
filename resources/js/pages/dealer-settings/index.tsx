@@ -3,6 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    VehicleMaster,
+    type VehicleModel,
+    type VehicleType,
+} from '@/components/vehicle-master';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -17,6 +22,8 @@ type Props = {
     districts: { code: string; region_code: string; name: string }[];
     foa: string[];
     leasings: Leasing[];
+    vehicleTypes: VehicleType[];
+    vehicleModels: VehicleModel[];
 };
 
 function LeasingRow({ leasing }: { leasing: Leasing }) {
@@ -89,6 +96,8 @@ export default function DealerSettings({
     districts,
     foa,
     leasings,
+    vehicleTypes,
+    vehicleModels,
 }: Props) {
     const errors = usePage().props.errors as Record<string, string>;
     const [selected, setSelected] = useState(() => new Set(foa));
@@ -234,6 +243,8 @@ export default function DealerSettings({
                         </form>
                     </CardContent>
                 </Card>
+
+                <VehicleMaster types={vehicleTypes} models={vehicleModels} />
             </div>
         </>
     );

@@ -198,6 +198,10 @@ class DealTransaction extends Model
             throw new InvalidArgumentException('Konfirmasi booking fee diperlukan untuk tahap SPK.');
         }
 
+        if ($toStage === PipelineStage::Spk && blank($options['vehicle_model'] ?? $this->vehicle_model)) {
+            throw new InvalidArgumentException('Kendaraan wajib diisi untuk tahap SPK.');
+        }
+
         if ($toStage === PipelineStage::Lost && empty($options['lost_reason'])) {
             throw new InvalidArgumentException('Alasan lost wajib diisi.');
         }
@@ -233,6 +237,10 @@ class DealTransaction extends Model
 
             if ($toStage === PipelineStage::Spk && ! empty($options['booking_fee_confirmed'])) {
                 $this->booking_fee_confirmed_at = $at;
+            }
+
+            if ($toStage === PipelineStage::Spk && filled($options['vehicle_model'] ?? null)) {
+                $this->vehicle_model = $options['vehicle_model'];
             }
 
             if ($toStage === PipelineStage::Lost && ! empty($options['lost_reason'])) {

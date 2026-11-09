@@ -4,6 +4,7 @@ namespace App\Http\Requests\Customer;
 
 use App\Enums\UserRole;
 use App\Models\Customer;
+use App\Services\TransactionMasters;
 use App\Services\TransactionMetadata;
 use App\Support\PhoneNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +36,7 @@ class StoreCustomerLeadRequest extends FormRequest
             }],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
-            'vehicle_model' => ['required', 'string', 'max:255'],
+            'vehicle_model' => ['nullable', 'string', 'max:255', TransactionMasters::vehicleRule((int) $this->user()?->dealer_id)],
             'expected_closing_month' => ['nullable', 'date_format:Y-m'],
             'estimated_value' => ['nullable', 'integer', 'min:0'],
             'source' => ['required', 'string', 'max:64'],

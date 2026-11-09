@@ -113,7 +113,7 @@ final class CreateLeadTransaction
                 'dealer_id' => $customer->dealer_id,
                 'sales_id' => $sales->id,
                 'team_id' => $membership?->team_id,
-                'vehicle_model' => $validated['vehicle_model'],
+                'vehicle_model' => $validated['vehicle_model'] ?? null,
                 'estimated_value' => $validated['estimated_value'] ?? null,
                 'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
                 'source' => $validated['source'],

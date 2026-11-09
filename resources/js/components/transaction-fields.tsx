@@ -25,6 +25,79 @@ export function Field({
     );
 }
 
+export type VehicleOption = {
+    type: string;
+    models: {
+        name: string;
+        price_min: number | null;
+        price_max: number | null;
+    }[];
+};
+
+const rupiah = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+});
+
+/** Optional price range of a vehicle model; null when the master has no price. */
+export function vehiclePriceRange(
+    min: number | null,
+    max: number | null,
+): string | null {
+    if (min !== null && max !== null)
+        return `${rupiah.format(min)} – ${rupiah.format(max)}`;
+    if (min !== null) return `mulai ${rupiah.format(min)}`;
+    if (max !== null) return `hingga ${rupiah.format(max)}`;
+    return null;
+}
+
+/** Vehicle picker over the Admin master, grouped by type; the price range is only a hint. */
+export function VehicleSelect({
+    id,
+    value,
+    options,
+    onChange,
+}: {
+    id: string;
+    value: string;
+    options: VehicleOption[];
+    onChange: (value: string) => void;
+}) {
+    const hint = options
+        .flatMap((group) => group.models)
+        .find((model) => model.name === value);
+    const range = hint
+        ? vehiclePriceRange(hint.price_min, hint.price_max)
+        : null;
+    return (
+        <>
+            <select
+                id={id}
+                className={selectClass}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+            >
+                <option value="">Belum dipilih</option>
+                {options.map((group) => (
+                    <optgroup key={group.type} label={group.type}>
+                        {group.models.map((model) => (
+                            <option key={model.name} value={model.name}>
+                                {model.name}
+                            </option>
+                        ))}
+                    </optgroup>
+                ))}
+            </select>
+            {range && (
+                <p className="text-sm text-muted-foreground">
+                    Kisaran harga: {range}
+                </p>
+            )}
+        </>
+    );
+}
+
 export type AreaFinancing = {
     region: string; // '' = not filled, 'other' = Kota Lain
     district: string;

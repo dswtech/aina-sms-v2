@@ -7,6 +7,8 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 uses(RefreshDatabase::class);
 
 it('creates a new transaction for an existing customer', function () {

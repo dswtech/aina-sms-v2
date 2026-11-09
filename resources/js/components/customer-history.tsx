@@ -145,8 +145,9 @@ export function CustomerHistory({
                                     key={transaction.public_id}
                                     value={transaction.public_id}
                                 >
-                                    {transaction.vehicle_model} ·{' '}
-                                    {transaction.stage_label}
+                                    {transaction.vehicle_model ??
+                                        'Belum dipilih'}{' '}
+                                    · {transaction.stage_label}
                                 </option>
                             ))}
                         </select>

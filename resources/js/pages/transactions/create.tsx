@@ -2,6 +2,8 @@ import {
     AreaFields,
     Field,
     FinancingFields,
+    VehicleSelect,
+    type VehicleOption,
     areaPayload,
     emptyAreaFinancing,
     financingPayload,
@@ -18,6 +20,7 @@ type Props = {
     regions: { code: string; name: string }[];
     districts: { code: string; region_code: string; name: string }[];
     leasings: { id: number; name: string }[];
+    vehicleOptions: VehicleOption[];
     sources: Option[];
     assignableSales: { id: number; name: string }[];
     supervisors: { id: number; name: string }[];
@@ -42,6 +45,7 @@ export default function TransactionCreate({
     regions,
     districts,
     leasings,
+    vehicleOptions,
     sources,
     assignableSales,
     supervisors,
@@ -154,7 +158,7 @@ export default function TransactionCreate({
                 phone: existing?.phone ?? phone,
                 social_media_account: existing ? null : social || null,
                 sales_id: !existing && salesId ? Number(salesId) : null,
-                vehicle_model: model,
+                vehicle_model: model || null,
                 source,
                 source_channel:
                     source === 'digital_ad' ? channel || null : null,
@@ -255,16 +259,14 @@ export default function TransactionCreate({
                             )}
                             <Field
                                 id="model"
-                                label="Unit yang diminati"
+                                label="Unit yang diminati (opsional, wajib saat SPK)"
                                 error={err('vehicle_model')}
                             >
-                                <Input
+                                <VehicleSelect
                                     id="model"
-                                    className="min-h-11"
                                     value={model}
-                                    onChange={(e) =>
-                                        touch(setModel)(e.target.value)
-                                    }
+                                    options={vehicleOptions}
+                                    onChange={touch(setModel)}
                                 />
                             </Field>
                             <Field

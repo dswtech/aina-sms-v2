@@ -22,6 +22,7 @@ use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CreateLeadTransaction;
 use App\Services\CustomerDuplicateDetector;
+use App\Services\TransactionMasters;
 use App\Support\AuditRecorder;
 use App\Support\PhoneNormalizer;
 use Carbon\Carbon;
@@ -217,6 +218,7 @@ class CustomerController extends Controller
         }
 
         return Inertia::render('customers/index', [
+            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
                 'phone' => $request->session()->get('duplicate_lead_phone'),
                 'customers' => Customer::query()->visibleTo($actor)

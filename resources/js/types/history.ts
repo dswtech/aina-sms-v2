@@ -35,7 +35,7 @@ export type TimelineEvent = {
 export type HistoryTransaction = {
     id: number;
     public_id: string;
-    vehicle_model: string;
+    vehicle_model: string | null;
     current_stage: string;
     stage_label: string;
     is_closed: boolean;

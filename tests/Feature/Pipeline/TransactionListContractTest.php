@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 uses(RefreshDatabase::class);
 
 function listDeal(Dealer $dealer, User $sales, string $model, string $progress, array $extra = []): DealTransaction

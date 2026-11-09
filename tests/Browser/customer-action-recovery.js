@@ -15,7 +15,7 @@ async function customerActionRecovery(page) {
     await page.goto(origin + '/transactions/create');
     await page.locator('#name').fill('G11 Customer Recovery');
     await page.locator('#phone').fill('081234567866');
-    await page.locator('#model').fill('G11 Recovery Model');
+    await page.locator('#model').selectOption('G11 Recovery Model');
     await page
         .getByRole('button', { name: 'Simpan transaksi', exact: true })
         .click();

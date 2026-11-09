@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => legacyVehicleMaster());
+
 uses(RefreshDatabase::class);
 
 it('renders Buku Pelanggan Saya for sales with only their assigned customers', function () {

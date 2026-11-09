@@ -88,6 +88,7 @@ Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan A
 |---|---|
 | Analisis Sumber | Perbandingan jumlah, porsi, dan perjalanan transaksi berdasarkan asal lead. |
 | Analisis Model | Perbandingan hasil pipeline berdasarkan model kendaraan. |
+| Master kendaraan | Daftar jenis kendaraan (mis. MPV, SUV) dan model di bawahnya milik dealer, dengan kisaran harga opsional; diisi Admin di Pengaturan Dealer dan dipilih Sales, wajib terisi saat SPK. |
 | Mode Akuisisi | Filter berdasarkan tanggal lead dibuat; cocok untuk membaca conversion satu kelompok lead. |
 | Mode Pencapaian | Filter berdasarkan tanggal kejadian tahap; cocok untuk membaca jumlah event pada periode, bukan conversion antar-kohort. |
 | Porsi | Persentase kontribusi suatu kategori terhadap total pada filter yang sama. |
