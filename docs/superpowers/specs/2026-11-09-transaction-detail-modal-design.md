@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Tanggal | 9 November 2026 |
-| Status | Disetujui pemilik dan diimplementasikan di branch `feat/transaction-detail-modal`, 9 November 2026; PR belum dibuka |
+| Status | Disetujui pemilik dan diimplementasikan; merged lewat PR #82, 9 November 2026 |
 | Ukuran | Perubahan menengah: satu endpoint backend, satu modal frontend, tes |
 
 ## Tujuan dan alasan
