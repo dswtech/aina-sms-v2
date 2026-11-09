@@ -158,7 +158,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [ANL-06](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | ID drilldown dan himpunan transaksi sumber diuji E27; UAT konteks navigasi penuh masih terbuka. | Belum dijalankan |
 | [ANL-07](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B02](#b02), [V01](#v01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Scope tim transaksi, perpindahan/ended membership dan sanitasi mengikuti E27; UAT lintas role belum dijalankan. | Belum dijalankan |
 | [ANL-08](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | [E31](#e31) menambah rekonsiliasi CSV tiga role dan PDF browser. Penerimaan cetak operasional masih terbuka. | Belum dijalankan |
-| [ANL-09](PRD.md#710-analisis-penjualan-anl) | V, B | [X04](#x04) | Belum assertion Area/MSCP; PRD secara eksplisit menunda. | Ditunda | Menunggu lokasi terstruktur serta modul leasing/definisi MSCP; bukan penghambat MVP. | Belum dijalankan |
+| [ANL-09](PRD.md#710-analisis-penjualan-anl) | V, B | [X04](#x04) | Belum assertion Area; PRD secara eksplisit menunda. MSCP ditutup (porsi per leasing mencukupi). | Ditunda | Area menunggu lokasi terstruktur; bukan penghambat MVP. | Belum dijalankan |
 
 ## Katalog bukti otomatis
 

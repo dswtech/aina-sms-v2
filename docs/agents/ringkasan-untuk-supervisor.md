@@ -71,7 +71,7 @@ Menu Analisis membantu Supervisor membandingkan dari mana lead berasal dan model
 
 DO masuk realisasi setelah PO, DP, dan Unit dikonfirmasi. Delivery mencatat kendaraan sudah terkirim. Jika DO salah dicatat, Admin dealer dapat membatalkannya sebelum Delivery dengan alasan yang tersimpan pada riwayat.
 
-Analisis Sumber dan Model masuk tahap awal. Analisis Area dibuat setelah data wilayah sudah rapi, sedangkan analisis pembiayaan/MSCP dibuat bersama modul leasing.
+Analisis Sumber dan Model masuk tahap awal. Analisis Area dibuat setelah data wilayah sudah rapi, sedangkan analisis pembiayaan sudah tersedia bersama modul leasing; porsi per leasing mencukupi kebutuhan MSCP.
 
 ## Memasukkan data lama
 
