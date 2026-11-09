@@ -20,6 +20,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangeField } from '@/components/date-range-field';
 import {
+    type Area,
+    CHANNEL_LABELS,
+    areaLabel,
+    financingLabel,
+    formatDate,
+    sourceLabel,
+    supervisorLabel,
+} from '@/lib/transaction-labels';
+import {
     AreaFields,
     AreaFinancing,
     Field,
@@ -115,59 +124,6 @@ type Props = {
     stages: Array<{ value: string; label: string }>;
     lostReasons: Array<{ value: string; label: string }>;
 };
-
-const CHANNEL_LABELS: Record<string, string> = {
-    facebook: 'Facebook',
-    instagram: 'Instagram',
-    tiktok: 'TikTok',
-    website: 'Website',
-    other: 'Lainnya',
-};
-
-type Area = {
-    region_code: string | null;
-    district_code: string | null;
-    region_name: string | null;
-    district_name: string | null;
-    other_city: string | null;
-};
-type RowDetail = Pick<
-    Transaction,
-    'source' | 'source_channel' | 'area' | 'financing' | 'supervisors'
->;
-
-const formatDate = (value: string | null) =>
-    value
-        ? new Date(value).toLocaleDateString('id-ID', {
-              timeZone: 'Asia/Jakarta',
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-          })
-        : '-';
-const sourceLabel = (t: RowDetail) =>
-    t.source_channel
-        ? `${t.source} · ${CHANNEL_LABELS[t.source_channel] ?? t.source_channel}`
-        : t.source;
-const areaLabel = (t: { area: Area }, full = false) => {
-    const {
-        district_name: district,
-        region_name: region,
-        other_city: city,
-    } = t.area;
-    if (city) return city;
-    if (!district) return '-';
-    // Names repeat across regions (e.g. Cisarua), so the parent is always shown in full mode.
-    return full && region ? `${district}, ${region}` : district;
-};
-const supervisorLabel = (t: RowDetail) =>
-    t.supervisors.map((user) => user.name).join(', ') || '-';
-const financingLabel = (t: RowDetail) =>
-    t.financing.type === 'cash'
-        ? 'Cash'
-        : t.financing.type === 'credit'
-          ? `Kredit${t.financing.leasing_name || t.financing.other_name ? ` · ${t.financing.leasing_name ?? t.financing.other_name}` : ''}`
-          : 'Belum ditentukan';
 
 type Detail = Transaction & {
     can_edit_metadata: boolean;
