@@ -121,6 +121,29 @@ async function transactionDetailModal(page) {
     await dialog.getByRole('button', { name: 'Area: Kota QA', exact: true }).waitFor();
     checked.push('Kota Lain saved');
 
+    // Back-to-back edits must not cancel each other's request: the note save is slowed down
+    // so the Area save starts while it is still in flight.
+    const slowNote = async (route) => {
+        if (route.request().method() === 'PATCH' && /notes/.test(route.request().postData() ?? ''))
+            await new Promise((resolve) => setTimeout(resolve, 800));
+        await route.continue();
+    };
+    const patchUrl = /\/transactions\/[0-9a-f-]{36}$/;
+    const cancelled = [];
+    const onCancelled = (request) => request.method() === 'PATCH' && cancelled.push(request.url());
+    await page.route(patchUrl, slowNote);
+    page.on('requestfailed', onCancelled);
+    await dialog.getByLabel('Keterangan').fill('Catatan lalu area');
+    await dialog.getByRole('button', { name: /^Area:/ }).click();
+    await dialog.getByRole('option', { name: 'Kabupaten Bandung Barat', exact: true }).click();
+    await dialog.getByRole('option', { name: 'Padalarang', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Area: Padalarang, Kabupaten Bandung Barat', exact: true }).waitFor();
+    await page.waitForTimeout(1500);
+    page.off('requestfailed', onCancelled);
+    await page.unroute(patchUrl, slowNote);
+    assert(cancelled.length === 0, `a PATCH was cancelled by the next edit (${cancelled.length})`);
+    checked.push('edits do not cancel each other');
+
     await page.route(/\/transactions\/[0-9a-f-]{36}$/, (route) =>
         route.request().method() === 'PATCH'
             ? route.fulfill({ status: 500, contentType: 'text/plain', body: 'boom' })
