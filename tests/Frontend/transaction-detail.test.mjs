@@ -8,6 +8,7 @@ import {
     daysInStageLabel,
     financingPatch,
     mergeEarlier,
+    stageCutoffLabel,
 } from '../../resources/js/lib/transaction-detail.ts';
 
 test('panel width keeps 160px on the right and 300px on the left', () => {
@@ -23,7 +24,9 @@ test('days in stage reads as a sentence and hides for closed stages', () => {
 });
 
 test('older pages merge oldest-to-newest without duplicate keys', () => {
-    const events = Array.from({ length: 25 }, (_, i) => ({ key: `k${25 - i}` })); // newest first
+    const events = Array.from({ length: 25 }, (_, i) => ({
+        key: `k${25 - i}`,
+    })); // newest first
     const page1 = events.slice(0, 20);
     const page2 = events.slice(20);
     const shown = mergeEarlier([], page1);
@@ -42,12 +45,20 @@ test('area is only complete once the district (or the free city) is chosen', () 
     assert.deepEqual(areaPatch(['']), { area: null });
     assert.equal(areaPatch(['32.17']), null);
     assert.deepEqual(areaPatch(['32.17', '32.17.08']), {
-        area: { region_code: '32.17', district_code: '32.17.08', other_city: null },
+        area: {
+            region_code: '32.17',
+            district_code: '32.17.08',
+            other_city: null,
+        },
     });
     assert.equal(areaPatch(['other']), null);
     assert.equal(areaPatch(['other', '  ']), null);
     assert.deepEqual(areaPatch(['other', 'Bandung']), {
-        area: { region_code: 'other', district_code: null, other_city: 'Bandung' },
+        area: {
+            region_code: 'other',
+            district_code: null,
+            other_city: 'Bandung',
+        },
     });
 });
 
@@ -62,7 +73,11 @@ test('financing is only complete once cash, a leasing, or the free name is chose
     });
     assert.equal(financingPatch(['credit', 'other']), null);
     assert.deepEqual(financingPatch(['credit', 'other', 'Leasing X']), {
-        financing: { type: 'credit', leasing_id: 'other', other_name: 'Leasing X' },
+        financing: {
+            type: 'credit',
+            leasing_id: 'other',
+            other_name: 'Leasing X',
+        },
     });
 });
 
@@ -82,7 +97,21 @@ test('reloading loaded pages rebuilds the list oldest to newest without duplicat
     );
     // A comment posted between the two page requests shifts the second page by one.
     assert.deepEqual(
-        keys(combinePages([page('k26', 'k25', 'k24'), page('k24', 'k23', 'k22')])),
+        keys(
+            combinePages([
+                page('k26', 'k25', 'k24'),
+                page('k24', 'k23', 'k22'),
+            ]),
+        ),
         ['k22', 'k23', 'k24', 'k25', 'k26'],
+    );
+});
+
+test('a stage list shorter than the transaction history says how much is hidden', () => {
+    assert.equal(stageCutoffLabel(3, 3), null);
+    assert.equal(stageCutoffLabel(100, 100), null);
+    assert.equal(
+        stageCutoffLabel(100, 130),
+        'Menampilkan 100 perpindahan terbaru dari 130.',
     );
 });

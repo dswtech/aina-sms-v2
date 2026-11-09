@@ -88,6 +88,27 @@ async function transactionDetailModal(page) {
     assert((await rightWidth()) < before, 'ArrowRight should narrow the right panel');
     checked.push('resize');
 
+    // A narrower window must pull the (wide) right panel in so the left panel keeps its minimum.
+    await separator.focus();
+    for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowLeft');
+    assert((await rightWidth()) > 500, `could not widen the right panel (${await rightWidth()}px)`);
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.waitForTimeout(300);
+    const room = (await dialog.boundingBox()).width - 44 - 6 - 300;
+    assert((await rightWidth()) <= room + 1, `right panel is ${await rightWidth()}px in a dialog that leaves ${room}px`);
+    assert((await leftWidth()) >= 299, `window resize left the left panel at ${await leftWidth()}px`);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(300);
+    checked.push('panel width follows the window');
+
+    const noteField = dialog.getByLabel('Keterangan');
+    const readOnlyNote = (await noteField.getAttribute('readonly')) !== null;
+    assert(
+        readOnlyNote === ((await noteField.getAttribute('placeholder')) === 'Tidak ada keterangan'),
+        'a read-only note must not invite typing',
+    );
+    checked.push('read-only note placeholder');
+
     await dialog.getByRole('button', { name: 'Lipat panel kanan' }).click();
     await comments.waitFor({ state: 'hidden' });
     assert((await separator.count()) === 0, 'collapsed panel left a separator');
@@ -126,7 +147,7 @@ async function transactionDetailModal(page) {
     const slowNote = async (route) => {
         if (route.request().method() === 'PATCH' && /notes/.test(route.request().postData() ?? ''))
             await new Promise((resolve) => setTimeout(resolve, 800));
-        await route.continue();
+        await route.continue().catch(() => {}); // the test may unroute while this waits
     };
     const patchUrl = /\/transactions\/[0-9a-f-]{36}$/;
     const cancelled = [];
@@ -143,6 +164,23 @@ async function transactionDetailModal(page) {
     await page.unroute(patchUrl, slowNote);
     assert(cancelled.length === 0, `a PATCH was cancelled by the next edit (${cancelled.length})`);
     checked.push('edits do not cancel each other');
+
+    // A save that worked but whose refresh failed must say so, and offer a retry.
+    const refreshRoute = (route) =>
+        route.request().method() === 'GET' && route.request().headers()['accept'] === 'application/json'
+            ? route.abort()
+            : route.continue();
+    await page.route(patchUrl, refreshRoute);
+    await dialog.getByRole('button', { name: /^Area:/ }).click();
+    await dialog.getByRole('option', { name: 'Kota Lain', exact: true }).click();
+    await dialog.getByLabel('Nama kota').fill('Kota QA Dua');
+    await dialog.getByRole('button', { name: 'Simpan', exact: true }).click();
+    await dialog.getByText('Tampilan belum diperbarui').waitFor();
+    await page.unroute(patchUrl, refreshRoute);
+    await dialog.getByRole('button', { name: 'Coba lagi' }).click();
+    await dialog.getByText('Tampilan belum diperbarui').waitFor({ state: 'hidden' });
+    await dialog.getByRole('button', { name: 'Area: Kota QA Dua', exact: true }).waitFor();
+    checked.push('failed refresh offers a retry');
 
     await page.route(/\/transactions\/[0-9a-f-]{36}$/, (route) =>
         route.request().method() === 'PATCH'
@@ -173,8 +211,15 @@ async function transactionDetailModal(page) {
 
     // Closing with Escape while the note has unsaved text must still save it.
     await note.fill('Catatan lewat Escape');
+    await page.evaluate(() => {
+        window.__sawLoading = false;
+        new MutationObserver(() => {
+            if (document.body.innerText.includes('Memuat detail')) window.__sawLoading = true;
+        }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
     await page.keyboard.press('Escape');
     await dialog.waitFor({ state: 'hidden' });
+    assert(!(await page.evaluate(() => window.__sawLoading)), 'the dialog showed the loading state while closing');
     await page.waitForTimeout(1000);
     dialog = await openDetail('G11 Pagination Model 5');
     assert(
@@ -188,8 +233,19 @@ async function transactionDetailModal(page) {
     dialog = await openDetail('G11 Pagination Model 5');
     const body = dialog.locator('#detail-comment-body');
     await body.waitFor();
+    // While the first activities page is on its way, the feed must not claim it is empty.
+    const slowFeed = async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        await route.continue().catch(() => {}); // the test may unroute while this waits
+    };
+    await page.route(/\/feed\?kind=activities/, slowFeed);
     await dialog.getByRole('button', { name: 'Aktivitas', exact: true }).click();
     await body.waitFor({ state: 'hidden' });
+    await page.waitForTimeout(300);
+    assert((await dialog.getByText('Belum ada aktivitas.').count()) === 0, 'empty message shown while activities load');
+    await dialog.getByText('Memuat…').waitFor();
+    await page.unroute(/\/feed\?kind=activities/, slowFeed);
+    checked.push('no empty flash while loading');
     await dialog.getByRole('button', { name: 'Komentar', exact: true }).click();
     await body.fill('QA komentar detail');
     await dialog.getByRole('button', { name: 'Kirim komentar' }).click();
