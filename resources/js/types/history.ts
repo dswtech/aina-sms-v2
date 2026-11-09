@@ -1,3 +1,5 @@
+import type { Area } from '@/lib/transaction-labels';
+
 export type HistoryPage<T> = {
     data: T[];
     current_page: number;
@@ -60,4 +62,36 @@ export type CustomerHistoryData = {
     selected_transaction: HistoryTransaction | null;
     activities: HistoryPage<RelationshipActivity>;
     timeline: HistoryPage<TimelineEvent>;
+};
+
+/** JSON of GET /transactions/{public_id} used by the detail modal. */
+export type TransactionDetailData = {
+    public_id: string;
+    vehicle_model: string;
+    source: string;
+    source_channel: string | null;
+    notes: string | null;
+    current_stage: string;
+    stage_label: string;
+    estimated_value: number | null;
+    expected_closing_month: string | null;
+    customer: {
+        name: string;
+        phone: string;
+        social_media_account: string | null;
+    };
+    sales: { name: string; username: string } | null;
+    supervisors: { id: number; name: string }[];
+    area: Area;
+    financing: {
+        type: string | null;
+        leasing_id: number | null;
+        other_name: string | null;
+        leasing_name?: string | null;
+    };
+    can_edit_metadata: boolean;
+    can_comment: boolean;
+    days_in_stage: number | null;
+    stages: HistoryPage<TimelineEvent> | null;
+    comments: HistoryPage<TimelineEvent> | null;
 };
