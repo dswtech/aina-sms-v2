@@ -27,7 +27,7 @@ $request->setUserResolver(fn () => $actor);
 $request->setLaravelSession($app['session']->driver('array'));
 $request->session()->put('import_preview', ['batch_id' => (int) $batchId, 'rows' => [[
     'valid' => true, 'row_number' => 2,
-    'data' => ['name' => 'Concurrent import', 'phone' => $phone, 'sales_username' => 'g13.sales',
+    'data' => ['name' => 'Concurrent import', 'gender' => 'L', 'phone' => $phone, 'sales_username' => 'g13.sales',
         'vehicle_model' => 'Model', 'source' => 'walk_in', 'email' => null, 'address' => null,
         'notes' => null, 'contact_channel_preference' => null, 'estimated_value' => null],
 ]]]);

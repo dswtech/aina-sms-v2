@@ -1,6 +1,7 @@
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { INSURANCES, TENORS } from '@/lib/customer-profile';
 
 export const selectClass =
     'border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm';
@@ -105,6 +106,8 @@ export type AreaFinancing = {
     financing: string; // '' = undecided, 'cash' | 'credit'
     leasing: string; // master id, 'other' or ''
     otherLeasing: string;
+    tenor: string; // months, credit only
+    insurance: string; // 'tlo' | 'all_risk' | 'combination', credit only
 };
 export const emptyAreaFinancing: AreaFinancing = {
     region: '',
@@ -113,6 +116,8 @@ export const emptyAreaFinancing: AreaFinancing = {
     financing: '',
     leasing: '',
     otherLeasing: '',
+    tenor: '',
+    insurance: '',
 };
 
 type Regions = { code: string; name: string }[];
@@ -135,6 +140,10 @@ export const financingPayload = (v: AreaFinancing) =>
               type: v.financing,
               leasing_id: v.financing === 'credit' ? v.leasing || null : null,
               other_name: v.leasing === 'other' ? v.otherLeasing : null,
+              tenor_months:
+                  v.financing === 'credit' && v.tenor ? Number(v.tenor) : null,
+              insurance_type:
+                  v.financing === 'credit' ? v.insurance || null : null,
           }
         : null;
 
@@ -208,6 +217,48 @@ export function FinancingFields({
                     />
                 </Field>
             )}
+            {value.financing === 'credit' && (
+                <>
+                    <Field
+                        id={`${idPrefix}tenor`}
+                        label="Tenor *"
+                        error={errors['financing.tenor_months']}
+                    >
+                        <select
+                            id={`${idPrefix}tenor`}
+                            className={selectClass}
+                            value={value.tenor}
+                            onChange={(e) => set({ tenor: e.target.value })}
+                        >
+                            <option value="">Tenor belum dipilih</option>
+                            {TENORS.map((months) => (
+                                <option key={months} value={months}>
+                                    {months} bulan
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Field
+                        id={`${idPrefix}insurance`}
+                        label="Jenis asuransi *"
+                        error={errors['financing.insurance_type']}
+                    >
+                        <select
+                            id={`${idPrefix}insurance`}
+                            className={selectClass}
+                            value={value.insurance}
+                            onChange={(e) => set({ insurance: e.target.value })}
+                        >
+                            <option value="">Asuransi belum dipilih</option>
+                            {INSURANCES.map((i) => (
+                                <option key={i.value} value={i.value}>
+                                    {i.label}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                </>
+            )}
         </>
     );
 }
@@ -219,6 +270,7 @@ export function AreaFields({
     districts,
     errors,
     idPrefix = '',
+    districtLabel = 'Kecamatan',
 }: {
     value: AreaFinancing;
     onChange: (next: AreaFinancing) => void;
@@ -226,6 +278,7 @@ export function AreaFields({
     districts: Districts;
     errors: Errors;
     idPrefix?: string;
+    districtLabel?: string;
 }) {
     const set = (patch: Partial<AreaFinancing>) =>
         onChange({ ...value, ...patch });
@@ -257,7 +310,7 @@ export function AreaFields({
             {value.region !== '' && value.region !== 'other' && (
                 <Field
                     id={`${idPrefix}district`}
-                    label="Kecamatan"
+                    label={districtLabel}
                     error={errors['area.district_code']}
                 >
                     <select

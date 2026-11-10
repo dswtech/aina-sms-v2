@@ -219,6 +219,7 @@ async function acceptanceFlow(page) {
         await open('/transactions/create');
         await page.locator('#name').fill(custName);
         await page.locator('#phone').fill(phone);
+        await page.locator('#gender').selectOption('L');
         await page.locator('#social').fill(social);
         await page.locator('#model').selectOption(model);
         await page.locator('#source').selectOption('digital_ad');
@@ -227,6 +228,8 @@ async function acceptanceFlow(page) {
         await page.locator('#district').selectOption(D);
         await page.locator('#financing').selectOption('credit');
         await page.locator('#leasing').selectOption(String(leasing.id));
+        await page.locator('#tenor').selectOption('36');
+        await page.locator('#insurance').selectOption('all_risk');
         await page.locator('#notes').fill('Catatan awal acceptance');
         await page.getByRole('button', { name: 'Simpan transaksi' }).click();
         await page.waitForURL(/\/transactions(\?|$)/);
@@ -279,10 +282,15 @@ async function acceptanceFlow(page) {
 
         // ---- 3. sales: Prospect (stage change moves progress), then SPK ----
         await page.waitForTimeout(1500);
-        row = await changeStage('prospect');
+        row = await changeStage('prospect', () => page.locator('#stage-address').fill('Jl. Acceptance No. 1'));
         assert(Date.parse(row.progress_at) > Date.parse(P0), `Stage change did not move progress_at (${P0} -> ${row.progress_at})`);
         checks.push('progress moved by stage');
-        row = await changeStage('spk', () => page.getByLabel('Konfirmasi booking fee').check());
+        row = await changeStage('spk', async () => {
+            await page.locator('#stage-occupation').selectOption('employee');
+            await page.locator('#stage-customer-region').selectOption('32.17');
+            await page.locator('#stage-customer-district').selectOption(D);
+            await page.getByLabel('Konfirmasi booking fee').check();
+        });
 
         // ---- 4. supervisor: DO with PO/DP/Unit ----
         await login('g11.spv');

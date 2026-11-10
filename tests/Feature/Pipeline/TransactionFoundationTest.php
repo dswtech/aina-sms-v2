@@ -39,7 +39,7 @@ it('rejects DO without complete area at the domain boundary', function () {
 
 it('validates area parents and digital channels before any customer write', function (array $extra, string $error) {
     $this->actingAs($this->sales)->postJson(route('customers.store'), [
-        'name' => 'Pelanggan baru', 'phone' => '081234567890',
+        'name' => 'Pelanggan baru', 'gender' => 'L', 'phone' => '081234567890',
         'vehicle_model' => 'Avanza', 'source' => 'walk_in', ...$extra,
     ])->assertUnprocessable()->assertJsonValidationErrors($error);
     $this->assertDatabaseCount('customers', 1);
@@ -55,7 +55,7 @@ it('validates area parents and digital channels before any customer write', func
 
 it('keeps transaction notes separate and stores optional social account atomically', function () {
     $this->actingAs($this->sales)->post(route('customers.store'), [
-        'name' => 'Pelanggan baru', 'phone' => '081234567891', 'vehicle_model' => 'Avanza',
+        'name' => 'Pelanggan baru', 'gender' => 'L', 'phone' => '081234567891', 'vehicle_model' => 'Avanza',
         'source' => 'digital_ad', 'source_channel' => 'instagram',
         'social_media_account' => '@pelanggan', 'notes' => 'Catatan transaksi',
     ])->assertRedirect()->assertSessionHasNoErrors();
@@ -78,7 +78,7 @@ it('serializes metadata edits with DO and freezes snapshots until cancellation a
     $path = '/transactions/'.$deal->public_id;
     $this->actingAs($this->sales)->patch($path, [
         'area' => ['region_code' => '32.17', 'district_code' => '32.17.08'],
-        'financing' => ['type' => 'credit', 'leasing_id' => $leasing->id],
+        'financing' => ['type' => 'credit', 'leasing_id' => $leasing->id, 'tenor_months' => 36, 'insurance_type' => 'all_risk'],
     ])->assertRedirect()->assertSessionHasNoErrors();
     $checklist = ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
     $original = $deal->transitionTo(PipelineStage::Do, $this->sales, options: $checklist);

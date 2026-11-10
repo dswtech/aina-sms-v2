@@ -59,9 +59,9 @@ class TransactionController extends Controller
             $data = array_replace([
                 'source' => $locked->source, 'source_channel' => $locked->source_channel,
                 'area' => ['region_code' => $locked->region_code, 'district_code' => $locked->district_code, 'other_city' => $locked->other_city],
-                'financing' => ['type' => $locked->financing_type, 'leasing_id' => $locked->financing_other_name !== null ? 'other' : $locked->leasing_id, 'other_name' => $locked->financing_other_name],
+                'financing' => ['type' => $locked->financing_type, 'leasing_id' => $locked->financing_other_name !== null ? 'other' : $locked->leasing_id, 'other_name' => $locked->financing_other_name, 'tenor_months' => $locked->tenor_months, 'insurance_type' => $locked->insurance_type],
             ], $validated);
-            $metadata = TransactionMetadata::normalize($data, $locked->dealer_id, requireActiveLeasing: array_key_exists('financing', $validated));
+            $metadata = TransactionMetadata::normalize($data, $locked->dealer_id, requireActiveLeasing: array_key_exists('financing', $validated), requireCreditDetails: array_key_exists('financing', $validated));
             $before = $locked->getAttributes();
             $fields = array_intersect_key($validated, array_flip(['source', 'vehicle_model', 'notes', 'estimated_value', 'expected_closing_month']));
             if (array_key_exists('expected_closing_month', $fields)) {
@@ -280,6 +280,9 @@ class TransactionController extends Controller
                 'name' => $transaction->customer->name,
                 'phone' => $transaction->customer->phone,
             ] : null,
+            // What the stage dialog needs to ask for; the list is closed to Branch Managers.
+            'customer_profile' => $transaction->customer?->only(['gender', 'address', 'occupation', 'region_code', 'district_code', 'other_city'])
+                + ['birth_date' => $transaction->customer?->birth_date?->toDateString()],
             'sales' => $transaction->sales ? [
                 'name' => $transaction->sales->name,
                 'username' => $transaction->sales->username,
@@ -295,7 +298,7 @@ class TransactionController extends Controller
                 'other_city' => $transaction->other_city,
             ],
             'financing' => [
-                'type' => $transaction->financing_type, 'leasing_id' => $transaction->leasing_id, 'leasing_name' => $leasingNames[$transaction->leasing_id] ?? null, 'other_name' => $transaction->financing_other_name,
+                'type' => $transaction->financing_type, 'leasing_id' => $transaction->leasing_id, 'leasing_name' => $leasingNames[$transaction->leasing_id] ?? null, 'other_name' => $transaction->financing_other_name, 'tenor_months' => $transaction->tenor_months, 'insurance_type' => $transaction->insurance_type,
             ],
             'current_stage' => $transaction->current_stage->value,
             'stage_label' => $transaction->current_stage->label(),
@@ -319,7 +322,7 @@ class TransactionController extends Controller
         /** @var User $actor */
         $actor = $request->user();
         $this->authorize('view', $transaction);
-        $transaction->load(['customer:id,name,phone,social_media_account', 'sales:id,name,username']);
+        $transaction->load(['customer:id,name,phone,social_media_account,email,address,gender,birth_date,occupation,region_code,district_code,other_city', 'sales:id,name,username']);
         [$regions, $districts, $supervisors] = $this->lookups([$transaction]);
 
         return response()->json([
@@ -327,6 +330,14 @@ class TransactionController extends Controller
             'customer' => [
                 'name' => $transaction->customer?->name, 'phone' => $transaction->customer?->phone,
                 'social_media_account' => $transaction->customer?->social_media_account,
+                'email' => $transaction->customer?->email, 'address' => $transaction->customer?->address,
+                'gender' => $transaction->customer?->gender, 'birth_date' => $transaction->customer?->birth_date?->toDateString(),
+                'occupation' => $transaction->customer?->occupation,
+                'area' => [
+                    'region_code' => $transaction->customer?->region_code,
+                    'district_code' => $transaction->customer?->district_code,
+                    'other_city' => $transaction->customer?->other_city,
+                ],
             ],
             // Area and financing are editable until DO; DO/Delivery lock them, a cancelled DO returns to SPK.
             'can_edit_metadata' => $actor->can('update', $transaction),
@@ -475,7 +486,7 @@ class TransactionController extends Controller
         /** @var User $actor */
         $actor = $request->user();
         [$query, $filters] = $this->filtered($request, $actor);
-        $query->with(['customer:id,name,phone', 'sales:id,name,username']);
+        $query->with(['customer:id,name,phone,gender,address,birth_date,occupation,region_code,district_code,other_city', 'sales:id,name,username']);
 
         $paginated = $query->paginate(15)->withQueryString();
         [$regions, $districts, $supervisors] = $this->lookups($paginated->items());

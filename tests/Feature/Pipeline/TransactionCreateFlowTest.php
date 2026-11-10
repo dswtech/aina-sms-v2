@@ -35,11 +35,11 @@ it('offers Admin the dealer Sales and shows only active leasing', function () {
 
 it('stores a new customer lead with area, financing and social account through the shared service', function () {
     $this->actingAs($this->sales)->post('/transactions', [
-        'name' => 'Rina', 'phone' => '081234567890', 'social_media_account' => '@rina',
+        'name' => 'Rina', 'gender' => 'P', 'phone' => '081234567890', 'social_media_account' => '@rina',
         'vehicle_model' => 'Avanza', 'source' => 'digital_ad', 'source_channel' => 'instagram', 'notes' => 'Ingin test drive',
         'expected_closing_month' => '2026-12',
         'area' => ['region_code' => '32.73', 'district_code' => '32.73.05'],
-        'financing' => ['type' => 'credit', 'leasing_id' => 'other', 'other_name' => 'Leasing X'],
+        'financing' => ['type' => 'credit', 'leasing_id' => 'other', 'other_name' => 'Leasing X', 'tenor_months' => 36, 'insurance_type' => 'tlo'],
     ])->assertRedirect('/transactions');
 
     $deal = DealTransaction::query()->firstOrFail();
@@ -53,7 +53,7 @@ it('stores a new customer lead with area, financing and social account through t
 
 it('keeps everything unwritten when validation fails', function () {
     $this->actingAs($this->sales)->post('/transactions', [
-        'name' => 'Rina', 'phone' => '081234567890', 'vehicle_model' => 'Avanza', 'source' => 'digital_ad',
+        'name' => 'Rina', 'gender' => 'P', 'phone' => '081234567890', 'vehicle_model' => 'Avanza', 'source' => 'digital_ad',
     ])->assertSessionHasErrors('source_channel');
     $this->assertDatabaseCount('customers', 0);
     $this->assertDatabaseCount('deal_transactions', 0);

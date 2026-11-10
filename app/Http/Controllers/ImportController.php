@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Occupation;
 use App\Enums\UserRole;
 use App\Models\CsvImportBatch;
 use App\Models\Customer;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,9 +37,10 @@ class ImportController extends Controller
         'notes',
         'contact_channel_preference',
         'sales_username',
+        'gender',
     ];
 
-    private const OPTIONAL_HEADERS = ['social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name'];
+    private const OPTIONAL_HEADERS = ['social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name', 'tenor_months', 'insurance_type', 'birth_date', 'occupation'];
 
     public function index(Request $request): Response
     {
@@ -81,7 +84,8 @@ class ImportController extends Controller
                 'Lead dari showroom',
                 'whatsapp',
                 'sales_username',
-                '@budi', '', '32.17', '32.17.08', '', 'cash', '', '',
+                'L',
+                '@budi', '', '32.17', '32.17.08', '', 'cash', '', '', '', '', '1990-01-31', 'employee',
             ]);
             fclose($handle);
         }, 'template-import-lead.csv', [
@@ -113,7 +117,7 @@ class ImportController extends Controller
         }
 
         $header = array_map(fn ($value): string => Str::lower(trim((string) $value)), $header);
-        foreach (['name', 'phone', 'vehicle_model', 'source', 'sales_username'] as $requiredHeader) {
+        foreach (['name', 'phone', 'vehicle_model', 'source', 'sales_username', 'gender'] as $requiredHeader) {
             if (! in_array($requiredHeader, $header, true)) {
                 fclose($handle);
                 abort(422, "Header wajib tidak ditemukan: {$requiredHeader}.");
@@ -212,6 +216,8 @@ class ImportController extends Controller
                     'sales_id' => $sales->id,
                     'name' => trim((string) $record['name']), 'phone' => (string) $record['phone'],
                     'email' => $this->nullableString($record['email']), 'address' => $this->nullableString($record['address']),
+                    'gender' => $this->nullableString($record['gender']), 'birth_date' => $this->nullableString($record['birth_date'] ?? null),
+                    'occupation' => $this->nullableString($record['occupation'] ?? null),
                     'contact_channel_preference' => $this->nullableString($record['contact_channel_preference']),
                     'notes' => $this->nullableString($record['notes']),
                     'vehicle_model' => trim((string) $record['vehicle_model']),
@@ -249,11 +255,15 @@ class ImportController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'contact_channel_preference' => ['nullable', 'in:whatsapp,phone,any'],
             'sales_username' => ['required', 'string', 'max:255'],
+            'gender' => ['required', Rule::in(['L', 'P'])],
+            'birth_date' => ['nullable', 'date_format:Y-m-d', 'before:today'],
+            'occupation' => ['nullable', Rule::enum(Occupation::class)],
         ], [], [
             'name' => 'Nama', 'phone' => 'Nomor telepon', 'email' => 'Email',
             'address' => 'Alamat', 'vehicle_model' => 'Model kendaraan',
             'estimated_value' => 'Estimasi nilai', 'source' => 'Sumber', 'notes' => 'Catatan',
             'contact_channel_preference' => 'Preferensi kontak', 'sales_username' => 'Username Sales',
+            'gender' => 'Gender', 'birth_date' => 'Tanggal lahir', 'occupation' => 'Pekerjaan',
         ])->errors()->all();
 
         try {
@@ -313,6 +323,8 @@ class ImportController extends Controller
                 'leasing_id' => $this->resolveLeasing($this->nullableString($record['leasing_id'] ?? null), $dealerId)
                     ?? ($this->nullableString($record['financing_other_name'] ?? null) !== null ? 'other' : null),
                 'other_name' => $this->nullableString($record['financing_other_name'] ?? null),
+                'tenor_months' => $this->nullableString($record['tenor_months'] ?? null),
+                'insurance_type' => $this->nullableString($record['insurance_type'] ?? null),
             ],
         ];
     }

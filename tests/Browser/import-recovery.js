@@ -21,7 +21,7 @@ async function importRecovery(page) {
             name: filename,
             mimeType: 'text/csv',
             buffer: Buffer.from(
-                `name,phone,vehicle_model,source,sales_username\n${name},0812345698${index}1,G11 Import Model,walk_in,g11.sales\n`,
+                `name,gender,phone,vehicle_model,source,sales_username\n${name},L,0812345698${index}1,G11 Import Model,walk_in,g11.sales\n`,
             ),
         });
         let batchPath;
@@ -185,7 +185,7 @@ async function importRecovery(page) {
         name: 'g11-response-lost.csv',
         mimeType: 'text/csv',
         buffer: Buffer.from(
-            'name,phone,vehicle_model,source,sales_username\nG11 Import Response Lost,081234569899,G11 Import Model,walk_in,g11.sales\n',
+            'name,gender,phone,vehicle_model,source,sales_username\nG11 Import Response Lost,L,081234569899,G11 Import Model,walk_in,g11.sales\n',
         ),
     });
     await page.getByRole('button', { name: 'Preview', exact: true }).click();

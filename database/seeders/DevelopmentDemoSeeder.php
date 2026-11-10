@@ -231,6 +231,10 @@ class DevelopmentDemoSeeder extends Seeder
                 'opt_out' => $index % 23 === 0,
                 'last_contact_at' => $index % 9 === 0 ? null : now()->subDays(mt_rand(0, 14)),
                 'notes' => '[demo] Pelanggan contoh untuk pengembangan lokal.',
+                'gender' => $index % 2 === 0 ? 'L' : 'P',
+                'birth_date' => now()->subYears(25 + $index % 30)->subDays($index)->toDateString(),
+                'occupation' => ['employee', 'entrepreneur', 'civil-servant', 'teacher', 'farmer', 'others'][$index % 6],
+                'region_code' => '32.17', 'district_code' => '32.17.08',
             ]);
 
             if ($index % 11 === 0 && count($salesList) > 1) {
@@ -393,6 +397,8 @@ class DevelopmentDemoSeeder extends Seeder
                 'region_code' => '32.17', 'district_code' => '32.17.08',
                 'financing_type' => $index % 2 === 0 ? 'cash' : 'credit',
                 'leasing_id' => $index % 2 === 0 ? null : DB::table('leasing_companies')->where('dealer_id', $dealer->id)->where('code', 'acc')->value('id'),
+                'tenor_months' => $index % 2 === 0 ? null : [12, 24, 36, 48, 60][$index % 5],
+                'insurance_type' => $index % 2 === 0 ? null : ['tlo', 'all_risk', 'combination'][$index % 3],
                 'current_stage' => $stage,
                 'booking_fee_confirmed_at' => $bookingFeeConfirmedAt,
                 'lost_reason' => $lostReason,

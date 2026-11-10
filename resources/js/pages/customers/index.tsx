@@ -1,9 +1,16 @@
 import { CustomerHistory } from '@/components/customer-history';
+import { CustomerProfileFields } from '@/components/customer-profile-fields';
 import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import type { HistoryTransaction, TimelineComment } from '@/types/history';
 import { ClosingMonthForm } from '@/components/team-performance';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { canContact } from '@/lib/customer-contact';
+import {
+    draftFromProfile,
+    missingProfileFields,
+    profilePayload,
+    requiredProfileFields,
+} from '@/lib/customer-profile';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import {
@@ -53,6 +60,12 @@ export type CustomerItem = {
     phone: string;
     email: string | null;
     address: string | null;
+    gender: string | null;
+    birth_date: string | null;
+    occupation: string | null;
+    region_code: string | null;
+    district_code: string | null;
+    other_city: string | null;
     contact_channel_preference: string | null;
     opt_out: boolean;
     last_contact_at: string | null;
@@ -86,6 +99,8 @@ export type CustomerItem = {
 
 type Props = {
     vehicleOptions?: VehicleOption[];
+    regions?: { code: string; name: string }[];
+    districts?: { code: string; region_code: string; name: string }[];
     customers: {
         data: CustomerItem[];
         current_page: number;
@@ -139,6 +154,8 @@ export default function CustomersIndex({
     counts,
     assignableSales = [],
     vehicleOptions = [],
+    regions = [],
+    districts = [],
 }: Props) {
     const { auth, errors } = usePage().props;
     const role = auth.user.role;
@@ -191,6 +208,8 @@ export default function CustomersIndex({
     const [lostReason, setLostReason] = useState('price_budget');
     const [bookingFee, setBookingFee] = useState(false);
     const [vehicle, setVehicle] = useState('');
+    const [profile, setProfile] = useState(draftFromProfile());
+    const profileFields = missingProfileFields(nextStage, selectedCustomer);
     const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
 
     const [reassignSalesId, setReassignSalesId] = useState('');
@@ -385,6 +404,7 @@ export default function CustomersIndex({
             selectedCustomer?.active_deal?.stage_event_id ?? null;
         setNextStage(stage);
         setVehicle('');
+        setProfile(draftFromProfile(selectedCustomer));
         setDoChecklist(emptyDoChecklist);
         setStageOpen(true);
     }
@@ -400,6 +420,10 @@ export default function CustomersIndex({
                 notes: stageNotes,
                 booking_fee_confirmed: bookingFee,
                 vehicle_model: vehicle || undefined,
+                customer: profilePayload(
+                    profile,
+                    requiredProfileFields(nextStage),
+                ),
                 ...doChecklist,
                 lost_reason: nextStage === 'lost' ? lostReason : undefined,
                 lost_notes: nextStage === 'lost' ? stageNotes : undefined,
@@ -1403,6 +1427,27 @@ export default function CustomersIndex({
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {profileFields.length > 0 && (
+                                <div className="space-y-3 rounded-lg border p-3">
+                                    <p className="text-sm text-muted-foreground">
+                                        Lengkapi data pelanggan untuk tahap ini.
+                                    </p>
+                                    <CustomerProfileFields
+                                        fields={profileFields}
+                                        requiredFields={profileFields}
+                                        value={profile}
+                                        onChange={setProfile}
+                                        regions={regions}
+                                        districts={districts}
+                                        errors={
+                                            errors as Record<string, string>
+                                        }
+                                        errorPrefix="customer."
+                                        idPrefix="stage-"
+                                    />
+                                </div>
+                            )}
 
                             {nextStage === 'spk' &&
                                 !selectedCustomer?.active_deal

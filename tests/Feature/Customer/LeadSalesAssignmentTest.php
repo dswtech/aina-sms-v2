@@ -19,7 +19,7 @@ function leadAssignmentFixture(string $role = 'supervisor'): array
     foreach ([$actor, $sales] as $user) {
         TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => $user->role]);
     }
-    $payload = ['name' => 'Pelanggan QA', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in', 'expected_closing_month' => '2026-12'];
+    $payload = ['name' => 'Pelanggan QA', 'gender' => 'L', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in', 'expected_closing_month' => '2026-12'];
 
     return compact('dealer', 'team', 'actor', 'sales', 'payload');
 }

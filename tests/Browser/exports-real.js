@@ -95,6 +95,7 @@ async function exportsReal(page) {
     await open('/transactions/create');
     await page.locator('#name').fill(`=2+2 EXPT${tag}`);
     await page.locator('#phone').fill(`0814${tag}`);
+    await page.locator('#gender').selectOption('L');
     await page.locator('#social').fill('@qa.export');
     await page.locator('#model').selectOption('+SUM EXPT');
     await page.locator('#notes').fill(`@notes EXPT${tag}`);

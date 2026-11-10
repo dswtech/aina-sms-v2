@@ -204,7 +204,7 @@ it('lists stagnant and closing priorities without exposing revoked coaching noti
 it('persists closing estimates and team attribution in both transaction creation flows', function () {
     $f = g02Fixture();
     $this->actingAs($f['sales'])->post('/customers', [
-        'name' => 'Lead closing', 'phone' => '081234560001', 'vehicle_model' => 'Model baru',
+        'name' => 'Lead closing', 'gender' => 'L', 'phone' => '081234560001', 'vehicle_model' => 'Model baru',
         'source' => 'walk_in', 'expected_closing_month' => '2026-12',
     ])->assertRedirect()->assertSessionHasNoErrors();
     $created = DealTransaction::query()->where('vehicle_model', 'Model baru')->sole();

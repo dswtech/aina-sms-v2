@@ -35,7 +35,8 @@ class StoreCustomerLeadRequest extends FormRequest
                 }
             }],
             'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:1000'],
+            ...Customer::profileRules(),
+            'gender' => [Rule::requiredIf(! $this->filled('existing_customer_id')), 'nullable', Rule::in(['L', 'P'])],
             'vehicle_model' => ['nullable', 'string', 'max:255', TransactionMasters::vehicleRule((int) $this->user()?->dealer_id)],
             'expected_closing_month' => ['nullable', 'date_format:Y-m'],
             'estimated_value' => ['nullable', 'integer', 'min:0'],

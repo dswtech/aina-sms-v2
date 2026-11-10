@@ -27,6 +27,10 @@ class CustomerFactory extends Factory
             'opt_out' => false,
             'last_contact_at' => null,
             'notes' => fake()->sentence(),
+            'gender' => fake()->randomElement(['L', 'P']),
+            'occupation' => 'employee',
+            'region_code' => '32.17',
+            'district_code' => '32.17.08',
         ];
     }
 

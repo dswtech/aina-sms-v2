@@ -62,23 +62,43 @@ test('area is only complete once the district (or the free city) is chosen', () 
     });
 });
 
-test('financing is only complete once cash, a leasing, or the free name is chosen', () => {
+test('credit financing is only complete once leasing, tenor and insurance are chosen', () => {
     assert.deepEqual(financingPatch(['']), { financing: null });
     assert.deepEqual(financingPatch(['cash']), {
-        financing: { type: 'cash', leasing_id: null, other_name: null },
-    });
-    assert.equal(financingPatch(['credit']), null);
-    assert.deepEqual(financingPatch(['credit', '5']), {
-        financing: { type: 'credit', leasing_id: '5', other_name: null },
-    });
-    assert.equal(financingPatch(['credit', 'other']), null);
-    assert.deepEqual(financingPatch(['credit', 'other', 'Leasing X']), {
         financing: {
-            type: 'credit',
-            leasing_id: 'other',
-            other_name: 'Leasing X',
+            type: 'cash',
+            leasing_id: null,
+            other_name: null,
+            tenor_months: null,
+            insurance_type: null,
         },
     });
+    assert.equal(financingPatch(['credit']), null);
+    assert.equal(financingPatch(['credit', '5']), null);
+    assert.equal(financingPatch(['credit', '5', '36']), null);
+    assert.deepEqual(financingPatch(['credit', '5', '36', 'all_risk']), {
+        financing: {
+            type: 'credit',
+            leasing_id: '5',
+            other_name: null,
+            tenor_months: 36,
+            insurance_type: 'all_risk',
+        },
+    });
+    assert.equal(financingPatch(['credit', 'other']), null);
+    assert.equal(financingPatch(['credit', 'other', 'Leasing X', '24']), null);
+    assert.deepEqual(
+        financingPatch(['credit', 'other', 'Leasing X', '24', 'tlo']),
+        {
+            financing: {
+                type: 'credit',
+                leasing_id: 'other',
+                other_name: 'Leasing X',
+                tenor_months: 24,
+                insurance_type: 'tlo',
+            },
+        },
+    );
 });
 
 test('the composer remounts when switching between edit, reply and new on the same comment', () => {

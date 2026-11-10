@@ -26,6 +26,7 @@ async function leadServerSave(page) {
     await page.waitForURL('**/transactions/create');
     await page.locator('#name').fill('G11 Lead Persisted');
     await page.locator('#phone').fill('081234567899');
+    await page.locator('#gender').selectOption('L');
     await page.locator('#model').selectOption('G11 Test Model');
     const save = page.getByRole('button', {
         name: 'Simpan transaksi',
@@ -64,6 +65,7 @@ async function leadServerSave(page) {
     await page.goto(`${origin}/transactions/create`);
     await page.locator('#name').fill('G11 Duplicate Name');
     await page.locator('#phone').fill('081234567899');
+    await page.locator('#gender').selectOption('L');
     await page.locator('#model').selectOption('G11 Test Model');
     await save.click();
     await page.getByText('Nomor telepon sudah terdaftar', { exact: false }).waitFor();

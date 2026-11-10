@@ -22,6 +22,8 @@ export type RowDetail = {
         leasing_id: number | null;
         other_name: string | null;
         leasing_name?: string | null;
+        tenor_months?: number | null;
+        insurance_type?: string | null;
     };
     supervisors: { id: number; name: string }[];
 };
@@ -52,9 +54,25 @@ export const areaLabel = (t: { area: Area }, full = false) => {
 };
 export const supervisorLabel = (t: RowDetail) =>
     t.supervisors.map((user) => user.name).join(', ') || '-';
-export const financingLabel = (t: RowDetail) =>
-    t.financing.type === 'cash'
-        ? 'Cash'
-        : t.financing.type === 'credit'
-          ? `Kredit${t.financing.leasing_name || t.financing.other_name ? ` · ${t.financing.leasing_name ?? t.financing.other_name}` : ''}`
-          : 'Belum ditentukan';
+const INSURANCE_LABELS: Record<string, string> = {
+    tlo: 'TLO',
+    all_risk: 'All Risk',
+    combination: 'Kombinasi',
+};
+export const financingLabel = (t: RowDetail) => {
+    if (t.financing.type === 'cash') return 'Cash';
+    if (t.financing.type !== 'credit') return 'Belum ditentukan';
+    const { leasing_name, other_name, tenor_months, insurance_type } =
+        t.financing;
+
+    return [
+        'Kredit',
+        leasing_name ?? other_name,
+        tenor_months ? `${tenor_months} bulan` : null,
+        insurance_type
+            ? (INSURANCE_LABELS[insurance_type] ?? insurance_type)
+            : null,
+    ]
+        .filter(Boolean)
+        .join(' · ');
+};

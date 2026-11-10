@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.44 |
-| Diperbarui | 9 November 2026 |
+| Versi | v1.45 |
+| Diperbarui | 10 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 10 November 2026 — profil pelanggan bertahap dan detail kredit
+
+Branch `feat/customer-stage-fields` dari `origin/main` `31d11e2`, belum ada PR. Kontrak ada di [PRD](PRD.md) bagian "Kontrak tambahan profil pelanggan dan detail kredit". Customer mendapat gender, tanggal lahir, pekerjaan (enum `Occupation`) dan kecamatan/Kota Lain; gate di `DealTransaction::transitionTo` lewat `Customer::assertProfileFor` (alamat+gender dari Prospect, pekerjaan+kecamatan di SPK). Transaksi kredit mendapat `tenor_months` dan `insurance_type` di `TransactionMetadata::normalize`. Migration `2026_11_10_100000_add_customer_profile_and_credit_details` belum dijalankan di database non-test.
+
+Bukti: Pest 501 tes (496 lulus, lima skip), PHPStan bersih, 50 tes frontend, tsc dan lint bersih, suite browser terisolasi lengkap lulus (`acceptance-flow.js` kini mengisi alamat di Prospect, pekerjaan dan kecamatan di SPK, tenor dan asuransi pada kredit). Tes PostgreSQL (`tests/Performance`) hanya disesuaikan fixture-nya dan tidak dijalankan. Pemeriksaan visual manual dan UAT belum dilakukan.
 
 ## Pembaruan 9 November 2026 — MSCP ditutup
 
