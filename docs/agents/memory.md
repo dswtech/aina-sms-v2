@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.46 |
+| Versi | v1.47 |
 | Diperbarui | 10 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 11 November 2026 — revisi modal detail
+
+Branch `fix/detail-modal-revisions` dari `origin/main` `722881d` (PR #90 sudah merged). Keterangan minimal dua baris, ikon Telepon dan WhatsApp hijau seperti Buku Pelanggan, tombol Ubah tahap berikon, tanggal lahir memakai input date, dan telepon dapat dikoreksi lewat `PATCH /customers/{customer}/profile` (valid, dinormalkan, unik per dealer). Riwayat pelanggan sengaja dibiarkan walau sebagian tumpang tindih dengan pergerakan tahap. Bukti: Pest 513 tes (508 lulus, lima skip), PHPStan, `tsc`, `vp check` dan 50 tes frontend bersih, 15 skrip browser terisolasi lulus, cek visual 1440px dan 375px. Duplikasi telepon dicek di aplikasi, bukan indeks unik database, jadi dua koreksi serentak ke nomor yang sama masih bisa lolos.
 
 ## Pembaruan 10 November 2026 — modal detail sebagai ruang kerja
 

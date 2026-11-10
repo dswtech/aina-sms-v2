@@ -233,6 +233,9 @@ function DetailView({
         href: string,
     ) => {
         const Icon = channel === 'phone' ? Phone : MessageCircle;
+        // Same greens as the Buku Pelanggan quick actions.
+        const tone =
+            channel === 'phone' ? 'text-emerald-600' : 'text-emerald-500';
 
         return canContact(detail.customer, channel) ? (
             <Button
@@ -249,7 +252,7 @@ function DetailView({
                         ? { target: '_blank', rel: 'noopener noreferrer' }
                         : {})}
                 >
-                    <Icon aria-hidden className="size-4" />
+                    <Icon aria-hidden className={`size-4 ${tone}`} />
                 </a>
             </Button>
         ) : (
@@ -292,6 +295,7 @@ function DetailView({
                             className="min-h-9"
                             onClick={() => openStage(null)}
                         >
+                            <ArrowRightLeft aria-hidden className="size-4" />
                             Ubah tahap
                         </Button>
                     )}

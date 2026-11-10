@@ -199,9 +199,9 @@ export function DetailProperties({
         (chosen: string[]): PickerStep | null =>
             chosen.length > 0 ? null : { title, options };
     const textStep =
-        (title: string) =>
+        (title: string, type?: 'date') =>
         (chosen: string[]): PickerStep | null =>
-            chosen.length > 0 ? null : { title, text: true };
+            chosen.length > 0 ? null : { title, text: true, type };
     const customerAreaStep = (chosen: string[]): PickerStep | null => {
         const next = areaStep(chosen);
 
@@ -335,7 +335,15 @@ export function DetailProperties({
                     <Value>{detail.expected_closing_month ?? '-'}</Value>
                 </Row>
                 <Row icon={Phone} label="Telepon">
-                    <Value>{detail.customer.phone || '-'}</Value>
+                    <PropertyPicker
+                        label="Telepon"
+                        display={detail.customer.phone || '-'}
+                        disabled={!canEditCustomer}
+                        getStep={textStep('Telepon')}
+                        onCommit={(chosen) =>
+                            commitCustomer({ phone: chosen[0]?.trim() })
+                        }
+                    />
                 </Row>
                 <Row icon={AtSign} label="Media sosial">
                     <Value>{detail.customer.social_media_account ?? '-'}</Value>
@@ -360,7 +368,7 @@ export function DetailProperties({
                         label="Tanggal lahir"
                         display={detail.customer.birth_date ?? '-'}
                         disabled={!canEditCustomer}
-                        getStep={textStep('Tanggal lahir (YYYY-MM-DD)')}
+                        getStep={textStep('Tanggal lahir', 'date')}
                         onCommit={(chosen) =>
                             commitCustomer({ birth_date: chosen[0]?.trim() })
                         }
@@ -438,7 +446,7 @@ export function DetailProperties({
                         save({ notes: draft || null });
                     else setDraft(null);
                 }}
-                className="-mx-2 block field-sizing-content min-h-11 w-[calc(100%+1rem)] resize-none rounded-md border-0 bg-transparent px-2 py-2 text-sm leading-6 outline-none hover:bg-muted read-only:hover:bg-transparent focus:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                className="-mx-2 block field-sizing-content min-h-16 w-[calc(100%+1rem)] resize-none rounded-md border-0 bg-transparent px-2 py-2 text-sm leading-6 outline-none hover:bg-muted read-only:hover:bg-transparent focus:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
             />
         </section>
     );
