@@ -1,6 +1,3 @@
-import { ClosingMonthForm } from '@/components/team-performance';
-import { CustomerProfileFields } from '@/components/customer-profile-fields';
-import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, RefreshCw, Search, Truck, Undo2 } from 'lucide-react';
@@ -10,23 +7,10 @@ import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangeField } from '@/components/date-range-field';
-import {
-    type CustomerProfile,
-    draftFromProfile,
-    missingProfileFields,
-    profilePayload,
-    requiredProfileFields,
-} from '@/lib/customer-profile';
+import type { CustomerProfile } from '@/lib/customer-profile';
 import {
     type Area,
     CHANNEL_LABELS,
@@ -35,10 +19,8 @@ import {
     sourceLabel,
     supervisorLabel,
 } from '@/lib/transaction-labels';
-import {
-    VehicleSelect,
-    type VehicleOption,
-} from '@/components/transaction-fields';
+import type { VehicleOption } from '@/components/transaction-fields';
+import type { StageAction } from '@/components/transaction-detail/stage-form';
 import { TransactionDetailModal } from '@/components/transaction-detail/transaction-detail-modal';
 
 type Transaction = {
@@ -190,24 +172,9 @@ export default function TransactionsIndex({
     const [salesId, setSalesId] = useState(
         filters.sales_id ? String(filters.sales_id) : '',
     );
-    const [selected, setSelected] = useState<Transaction | null>(null);
-    const [fulfillmentAction, setFulfillmentAction] = useState<
-        'delivery' | 'cancel' | null
-    >(null);
-    const [toStage, setToStage] = useState('');
-    const profileFields = missingProfileFields(
-        fulfillmentAction ?? toStage,
-        selected?.customer_profile,
-    );
-    const [notes, setNotes] = useState('');
-    const [bookingFee, setBookingFee] = useState(false);
-    const [vehicle, setVehicle] = useState('');
-    const [profile, setProfile] = useState(draftFromProfile());
-    const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
-    const [lostReason, setLostReason] = useState('');
-    const [lostNotes, setLostNotes] = useState('');
-    const [isSavingStage, setIsSavingStage] = useState(false);
-    const [stageNetworkError, setStageNetworkError] = useState(false);
+    const [detailIntent, setDetailIntent] = useState<{
+        action: StageAction;
+    } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [failedVisit, setFailedVisit] = useState<{
         target: FilterQuery | string;
@@ -277,68 +244,6 @@ export default function TransactionsIndex({
     const applyFilters = (nextTab = filters.tab) =>
         visitTransactions({ ...draft, tab: nextTab });
 
-    const openUpdate = (
-        transaction: Transaction,
-        action: typeof fulfillmentAction,
-    ) => {
-        setSelected(transaction);
-        setFulfillmentAction(action);
-        setToStage(transaction.current_stage);
-        setNotes('');
-        setBookingFee(false);
-        setVehicle('');
-        setProfile(draftFromProfile(transaction.customer_profile));
-        setDoChecklist(emptyDoChecklist);
-        setLostReason('');
-        setLostNotes('');
-        setStageNetworkError(false);
-    };
-
-    const submitUpdate = (event: React.FormEvent) => {
-        event.preventDefault();
-        if (!selected || isSavingStage) return;
-        const options = {
-            onStart: () => {
-                setStageNetworkError(false);
-                setIsSavingStage(true);
-            },
-            onFinish: () => setIsSavingStage(false),
-            onNetworkError: () => {
-                setStageNetworkError(true);
-                return false;
-            },
-            onSuccess: () => setSelected(null),
-        };
-        const url = `/transactions/${selected.public_id}`;
-        if (fulfillmentAction === 'cancel') {
-            router.post(
-                `${url}/cancel-do`,
-                { reason: notes.trim(), do_event_id: selected.do_event_id },
-                options,
-            );
-            return;
-        }
-        router.patch(
-            `${url}/stage`,
-            {
-                to_stage: fulfillmentAction ?? toStage,
-                do_event_id: selected.do_event_id,
-                stage_event_id: selected.stage_event_id,
-                notes: notes || null,
-                booking_fee_confirmed: bookingFee,
-                vehicle_model: vehicle || undefined,
-                customer: profilePayload(
-                    profile,
-                    requiredProfileFields(fulfillmentAction ?? toStage),
-                ),
-                ...doChecklist,
-                lost_reason: lostReason || null,
-                lost_notes: lostNotes || null,
-            },
-            options,
-        );
-    };
-
     const iconButton = (
         label: string,
         tone: string,
@@ -360,12 +265,10 @@ export default function TransactionsIndex({
     );
 
     const renderActions = (transaction: Transaction) => {
-        const open =
-            (action: typeof fulfillmentAction) =>
-            (button: HTMLButtonElement) => {
-                actionTriggerRef.current = button;
-                openUpdate(transaction, action);
-            };
+        const open = (action: StageAction) => (button: HTMLButtonElement) => {
+            actionTriggerRef.current = button;
+            openDetail(transaction, { action });
+        };
 
         return (
             <>
@@ -403,8 +306,13 @@ export default function TransactionsIndex({
         );
     };
 
-    const openDetail = (transaction: Transaction) =>
+    const openDetail = (
+        transaction: Transaction,
+        intent: { action: StageAction } | null = null,
+    ) => {
+        setDetailIntent(intent);
         setDetailTarget(transaction);
+    };
 
     const resetFilters = () => {
         const today = new Date().toLocaleDateString('en-CA', {
@@ -442,11 +350,6 @@ export default function TransactionsIndex({
             onStart: () => setIsLoading(true),
             onFinish: () => setIsLoading(false),
         });
-
-    const fulfillmentTitle =
-        fulfillmentAction === 'delivery'
-            ? 'Konfirmasi Delivery'
-            : 'Batalkan DO';
 
     return (
         <>
@@ -1034,315 +937,19 @@ export default function TransactionsIndex({
                     </CardContent>
                 </Card>
 
-                {selected && !fulfillmentAction && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                        <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl bg-background p-5 shadow-xl">
-                            <h2 className="text-lg font-semibold">
-                                Ubah tahap transaksi
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                {selected.customer?.name} ·{' '}
-                                {selected.vehicle_model ?? 'Belum dipilih'}
-                            </p>
-                            <div className="mt-4">
-                                <ClosingMonthForm
-                                    key={selected.public_id}
-                                    transactionId={selected.public_id}
-                                    month={
-                                        selected.expected_closing_month ?? null
-                                    }
-                                />
-                            </div>
-                            <form
-                                onSubmit={submitUpdate}
-                                className="mt-4 space-y-4"
-                            >
-                                <div>
-                                    <Label htmlFor="to_stage">Tahap baru</Label>
-                                    <select
-                                        id="to_stage"
-                                        value={toStage}
-                                        onChange={(event) =>
-                                            setToStage(event.target.value)
-                                        }
-                                        className="native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3"
-                                    >
-                                        {stages
-                                            .filter(
-                                                (item) =>
-                                                    item.value !== 'delivery' &&
-                                                    (item.value !== 'do' ||
-                                                        selected.can_record_do),
-                                            )
-                                            .map((item) => (
-                                                <option
-                                                    key={item.value}
-                                                    value={item.value}
-                                                >
-                                                    {item.label}
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="notes">Catatan</Label>
-                                    <Input
-                                        id="notes"
-                                        value={notes}
-                                        onChange={(event) =>
-                                            setNotes(event.target.value)
-                                        }
-                                        className="mt-2 min-h-11"
-                                    />
-                                </div>
-                                {profileFields.length > 0 && (
-                                    <div className="space-y-3 rounded-lg border p-3">
-                                        <p className="text-sm text-muted-foreground">
-                                            Lengkapi data pelanggan untuk tahap
-                                            ini.
-                                        </p>
-                                        <CustomerProfileFields
-                                            fields={profileFields}
-                                            requiredFields={profileFields}
-                                            value={profile}
-                                            onChange={setProfile}
-                                            regions={regions}
-                                            districts={districts}
-                                            errors={errors ?? {}}
-                                            errorPrefix="customer."
-                                            idPrefix="stage-"
-                                        />
-                                    </div>
-                                )}
-                                {toStage === 'spk' &&
-                                    !selected.vehicle_model && (
-                                        <div>
-                                            <Label htmlFor="spk-vehicle">
-                                                Kendaraan (wajib untuk SPK)
-                                            </Label>
-                                            <div className="mt-2">
-                                                <VehicleSelect
-                                                    id="spk-vehicle"
-                                                    value={vehicle}
-                                                    options={vehicleOptions}
-                                                    onChange={setVehicle}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                {toStage === 'spk' && (
-                                    <label className="flex items-center gap-2 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={bookingFee}
-                                            onChange={(event) =>
-                                                setBookingFee(
-                                                    event.target.checked,
-                                                )
-                                            }
-                                        />
-                                        Konfirmasi booking fee
-                                    </label>
-                                )}
-                                {toStage === 'do' && (
-                                    <DoChecklist
-                                        value={doChecklist}
-                                        onChange={setDoChecklist}
-                                    />
-                                )}
-                                {toStage === 'lost' && (
-                                    <>
-                                        <div>
-                                            <Label htmlFor="lost_reason">
-                                                Alasan lost
-                                            </Label>
-                                            <select
-                                                id="lost_reason"
-                                                value={lostReason}
-                                                onChange={(event) =>
-                                                    setLostReason(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                className="native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3"
-                                            >
-                                                <option value="">
-                                                    Pilih alasan
-                                                </option>
-                                                {lostReasons.map((item) => (
-                                                    <option
-                                                        key={item.value}
-                                                        value={item.value}
-                                                    >
-                                                        {item.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="lost_notes">
-                                                Catatan lost
-                                            </Label>
-                                            <Input
-                                                id="lost_notes"
-                                                value={lostNotes}
-                                                onChange={(event) =>
-                                                    setLostNotes(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                className="mt-2 min-h-11"
-                                            />
-                                        </div>
-                                    </>
-                                )}
-                                {stageNetworkError ? (
-                                    <div
-                                        role="alert"
-                                        className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-                                    >
-                                        Koneksi terputus saat menyimpan tahap.
-                                        Draft tetap tersedia. Periksa koneksi
-                                        dan status transaksi sebelum mencoba
-                                        lagi.
-                                    </div>
-                                ) : (
-                                    errors &&
-                                    Object.keys(errors).length > 0 && (
-                                        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                                            {Object.values(errors).join(' ')}
-                                        </div>
-                                    )
-                                )}
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={isSavingStage}
-                                        onClick={() => setSelected(null)}
-                                    >
-                                        Batal
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        className="min-h-11"
-                                        disabled={
-                                            isSavingStage ||
-                                            (toStage === 'do' &&
-                                                !Object.values(
-                                                    doChecklist,
-                                                ).every(Boolean))
-                                        }
-                                    >
-                                        {isSavingStage
-                                            ? 'Menyimpan…'
-                                            : 'Simpan'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                <Dialog
-                    open={Boolean(selected && fulfillmentAction)}
-                    onOpenChange={(open) => {
-                        if (!open && !isSavingStage) setSelected(null);
-                    }}
-                >
-                    <DialogContent
-                        className="max-h-[90dvh] overflow-y-auto sm:max-w-md"
-                        onCloseAutoFocus={(event) => {
-                            event.preventDefault();
-                            if (actionTriggerRef.current?.isConnected) {
-                                actionTriggerRef.current.focus();
-                            } else {
-                                headingRef.current?.focus();
-                            }
-                        }}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>{fulfillmentTitle}</DialogTitle>
-                            <DialogDescription>
-                                {selected?.vehicle_model ?? 'Belum dipilih'}.{' '}
-                                {fulfillmentAction === 'delivery'
-                                    ? 'Konfirmasi bahwa kendaraan sudah terkirim.'
-                                    : 'Transaksi akan kembali ke SPK dan DO ini dikeluarkan dari realisasi.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={submitUpdate} className="space-y-4">
-                            {fulfillmentAction === 'cancel' && (
-                                <div className="space-y-1">
-                                    <Label htmlFor="cancel-do-reason">
-                                        Alasan pembatalan
-                                    </Label>
-                                    <Input
-                                        id="cancel-do-reason"
-                                        required
-                                        maxLength={2000}
-                                        value={notes}
-                                        onChange={(event) =>
-                                            setNotes(event.target.value)
-                                        }
-                                    />
-                                </div>
-                            )}
-                            {stageNetworkError ? (
-                                <p
-                                    role="alert"
-                                    className="text-sm text-destructive"
-                                >
-                                    Koneksi terputus. Periksa status transaksi
-                                    sebelum mencoba lagi.
-                                </p>
-                            ) : (
-                                errors &&
-                                Object.keys(errors).length > 0 && (
-                                    <p
-                                        role="alert"
-                                        className="text-sm text-destructive"
-                                    >
-                                        {Object.values(errors).join(' ')}
-                                    </p>
-                                )
-                            )}
-                            <div className="flex flex-wrap justify-end gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={isSavingStage}
-                                    onClick={() => setSelected(null)}
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant={
-                                        fulfillmentAction === 'cancel'
-                                            ? 'destructive'
-                                            : 'default'
-                                    }
-                                    disabled={
-                                        isSavingStage ||
-                                        (fulfillmentAction === 'cancel' &&
-                                            !notes.trim())
-                                    }
-                                >
-                                    {isSavingStage
-                                        ? 'Menyimpan…'
-                                        : fulfillmentTitle}
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
                 <TransactionDetailModal
+                    // Reopening with another intent (Detail, then Ubah tahap) must start the view over.
+                    key={`${detailTarget?.public_id}-${detailIntent?.action ?? 'detail'}-${detailIntent ? 'stage' : ''}`}
                     target={detailTarget}
+                    intent={detailIntent}
                     onClose={() => setDetailTarget(null)}
                     regions={regions ?? []}
                     districts={districts ?? []}
                     leasings={leasings ?? []}
+                    stages={stages}
+                    lostReasons={lostReasons}
+                    vehicleOptions={vehicleOptions}
+                    assignableSales={assignableSales}
                 />
             </div>
         </>

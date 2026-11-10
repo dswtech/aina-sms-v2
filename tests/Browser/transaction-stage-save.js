@@ -16,13 +16,16 @@ async function transactionStageSave(page) {
     await page
         .getByText('Lead', { exact: true })
         .filter({ visible: true })
+        .first()
         .waitFor();
     await page.getByRole('button', { name: 'Ubah tahap', exact: true }).click();
 
-    const title = page.getByRole('heading', { name: 'Ubah tahap transaksi' });
+    const title = page
+        .getByRole('dialog')
+        .getByRole('heading', { name: 'Ubah tahap', exact: true });
     const stage = page.getByLabel('Tahap baru');
     const notes = page.getByLabel('Catatan', { exact: true });
-    const save = page.getByRole('button', { name: 'Simpan', exact: true });
+    const save = page.getByRole('button', { name: 'Simpan tahap', exact: true });
     const patchStage = () =>
         page.waitForResponse(
             (response) =>
@@ -47,6 +50,7 @@ async function transactionStageSave(page) {
     await page
         .getByText('Lead', { exact: true })
         .filter({ visible: true })
+        .first()
         .waitFor();
 
     const confirmation = page.getByRole('checkbox', {
@@ -70,6 +74,7 @@ async function transactionStageSave(page) {
         await page
             .getByText('Lead', { exact: true })
             .filter({ visible: true })
+            .first()
             .waitFor();
     } finally {
         await page.context().setOffline(false);

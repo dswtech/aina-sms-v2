@@ -3,6 +3,7 @@ import {
     AtSign,
     Briefcase,
     CalendarDays,
+    Car,
     Cake,
     Coins,
     CreditCard,
@@ -13,6 +14,7 @@ import {
     User,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { VehicleOption } from '@/components/transaction-fields';
 import type { ReactNode } from 'react';
 import {
     GENDERS,
@@ -35,9 +37,20 @@ type Props = {
     regions: { code: string; name: string }[];
     districts: { code: string; region_code: string; name: string }[];
     leasings: { id: number; name: string }[];
+    vehicleOptions: VehicleOption[];
     canEdit: boolean;
     onSaved: () => void;
 };
+
+// Stages from which a value is required: shown beside an empty value so it can be filled early.
+const REQUIRED_AT = {
+    gender: 'Prospect',
+    address: 'Prospect',
+    occupation: 'SPK',
+    area: 'SPK',
+    vehicle: 'SPK',
+};
+const LOCKED_VEHICLE_STAGES = ['spk', 'do', 'delivery'];
 
 // Keeps this panel's validation errors apart from the page's own forms.
 const ERROR_BAG = 'transactionDetail';
@@ -73,9 +86,11 @@ export function DetailProperties({
     regions,
     districts,
     leasings,
+    vehicleOptions,
     canEdit,
     onSaved,
 }: Props) {
+    const canEditCustomer = detail.can_edit_customer;
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState(false);
     // Draft is dropped whenever the server notes change (adjust-state-during-render pattern).
@@ -113,11 +128,14 @@ export function DetailProperties({
         [],
     );
 
-    const save = (data: Record<string, unknown>) => {
+    const save = (
+        data: Record<string, unknown>,
+        url = `/transactions/${detail.public_id}`,
+    ) => {
         setError(null);
         // Pickers show server values, so they revert on their own; a typed note stays for another try.
         const fail = (message: string) => setError(message);
-        router.patch(`/transactions/${detail.public_id}`, data as never, {
+        router.patch(url, data as never, {
             preserveScroll: true,
             preserveState: true,
             async: true, // a following edit must not cancel this request
@@ -147,6 +165,50 @@ export function DetailProperties({
 
     const commit = (patch: Record<string, unknown> | null) => {
         if (patch) save(patch);
+    };
+    const commitCustomer = (patch: Record<string, unknown> | null) => {
+        if (patch && detail.customer.public_id)
+            save(
+                { customer: patch },
+                `/customers/${detail.customer.public_id}/profile`,
+            );
+    };
+
+    const hint = (field: keyof typeof REQUIRED_AT, filled: boolean) =>
+        filled ? '' : `Belum diisi · wajib di ${REQUIRED_AT[field]}`;
+    const vehicleLocked = LOCKED_VEHICLE_STAGES.includes(detail.current_stage);
+    const vehicleStep = (chosen: string[]): PickerStep | null =>
+        chosen.length > 0
+            ? null
+            : {
+                  title: 'Kendaraan',
+                  options: [
+                      ...(vehicleLocked
+                          ? []
+                          : [{ value: '', label: 'Belum ditentukan' }]),
+                      ...vehicleOptions.flatMap((group) =>
+                          group.models.map((model) => ({
+                              value: model.name,
+                              label: `${model.name} · ${group.type}`,
+                          })),
+                      ),
+                  ],
+              };
+    const optionStep =
+        (title: string, options: { value: string; label: string }[]) =>
+        (chosen: string[]): PickerStep | null =>
+            chosen.length > 0 ? null : { title, options };
+    const textStep =
+        (title: string) =>
+        (chosen: string[]): PickerStep | null =>
+            chosen.length > 0 ? null : { title, text: true };
+    const customerAreaStep = (chosen: string[]): PickerStep | null => {
+        const next = areaStep(chosen);
+
+        // The server never blanks a customer value, so there is no "Belum diisi" choice here.
+        return next && 'options' in next
+            ? { ...next, options: next.options.filter((o) => o.value !== '') }
+            : next;
     };
 
     const regionName = (code: string) =>
@@ -232,6 +294,17 @@ export function DetailProperties({
     return (
         <section aria-label="Properti transaksi">
             <div className="grid grid-cols-[repeat(auto-fit,minmax(17rem,1fr))] gap-x-6">
+                <Row icon={Car} label="Kendaraan">
+                    <PropertyPicker
+                        label="Kendaraan"
+                        display={detail.vehicle_model ?? hint('vehicle', false)}
+                        disabled={!canEdit}
+                        getStep={vehicleStep}
+                        onCommit={(chosen) =>
+                            commit({ vehicle_model: chosen[0] || null })
+                        }
+                    />
+                </Row>
                 <Row icon={MapPin} label="Area">
                     <PropertyPicker
                         label="Area"
@@ -268,23 +341,74 @@ export function DetailProperties({
                     <Value>{detail.customer.social_media_account ?? '-'}</Value>
                 </Row>
                 <Row icon={User} label="Gender">
-                    <Value>
-                        {optionLabel(GENDERS, detail.customer.gender)}
-                    </Value>
+                    <PropertyPicker
+                        label="Gender"
+                        display={
+                            detail.customer.gender
+                                ? optionLabel(GENDERS, detail.customer.gender)
+                                : hint('gender', false)
+                        }
+                        disabled={!canEditCustomer}
+                        getStep={optionStep('Gender', GENDERS)}
+                        onCommit={(chosen) =>
+                            commitCustomer({ gender: chosen[0] })
+                        }
+                    />
                 </Row>
                 <Row icon={Cake} label="Tanggal lahir">
-                    <Value>{detail.customer.birth_date ?? '-'}</Value>
+                    <PropertyPicker
+                        label="Tanggal lahir"
+                        display={detail.customer.birth_date ?? '-'}
+                        disabled={!canEditCustomer}
+                        getStep={textStep('Tanggal lahir (YYYY-MM-DD)')}
+                        onCommit={(chosen) =>
+                            commitCustomer({ birth_date: chosen[0]?.trim() })
+                        }
+                    />
                 </Row>
                 <Row icon={Briefcase} label="Pekerjaan">
-                    <Value>
-                        {optionLabel(OCCUPATIONS, detail.customer.occupation)}
-                    </Value>
+                    <PropertyPicker
+                        label="Pekerjaan"
+                        display={
+                            detail.customer.occupation
+                                ? optionLabel(
+                                      OCCUPATIONS,
+                                      detail.customer.occupation,
+                                  )
+                                : hint('occupation', false)
+                        }
+                        disabled={!canEditCustomer}
+                        getStep={optionStep('Pekerjaan', OCCUPATIONS)}
+                        onCommit={(chosen) =>
+                            commitCustomer({ occupation: chosen[0] })
+                        }
+                    />
                 </Row>
                 <Row icon={Home} label="Alamat">
-                    <Value>{detail.customer.address ?? '-'}</Value>
+                    <PropertyPicker
+                        label="Alamat"
+                        display={
+                            detail.customer.address ?? hint('address', false)
+                        }
+                        disabled={!canEditCustomer}
+                        getStep={textStep('Alamat')}
+                        onCommit={(chosen) =>
+                            commitCustomer({ address: chosen[0]?.trim() })
+                        }
+                    />
                 </Row>
                 <Row icon={MapPin} label="Kecamatan">
-                    <Value>{customerAreaLabel}</Value>
+                    <PropertyPicker
+                        label="Kecamatan pelanggan"
+                        display={
+                            customerAreaLabel === '-'
+                                ? hint('area', false)
+                                : customerAreaLabel
+                        }
+                        disabled={!canEditCustomer}
+                        getStep={customerAreaStep}
+                        onCommit={(chosen) => commitCustomer(areaPatch(chosen))}
+                    />
                 </Row>
             </div>
             <div className="min-h-5 text-right text-xs">

@@ -420,6 +420,30 @@ class CustomerController extends Controller
         return back();
     }
 
+    /** Profile data is editable before the stage that requires it; like a stage change, it never blanks a stored value. */
+    public function updateProfile(Request $request, Customer $customer): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $this->authorize('update', $customer);
+        $validated = $request->validate([
+            ...Customer::profileRules('customer'),
+            'customer' => ['nullable', 'array:gender,address,birth_date,occupation,area'],
+        ]);
+        DB::transaction(function () use ($actor, $customer, $validated): void {
+            $locked = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+            $this->authorize('update', $locked);
+            $before = $locked->only(['gender', 'address', 'birth_date', 'occupation', 'region_code', 'district_code', 'other_city']);
+            $locked->applyProfile($validated['customer'] ?? []);
+            if ($locked->isDirty()) {
+                $locked->save();
+                AuditRecorder::record($actor, 'customer.profile_updated', $locked, $before, $locked->only(array_keys($before)));
+            }
+        });
+
+        return back();
+    }
+
     public function updateStage(UpdateDealStageRequest $request, DealTransaction $transaction): RedirectResponse
     {
         /** @var User $actor */

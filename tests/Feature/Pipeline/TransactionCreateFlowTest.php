@@ -101,6 +101,23 @@ it('shows a detail payload only for visible transactions, with locking flag afte
     $this->actingAs($stranger)->getJson("/transactions/{$deal->public_id}")->assertForbidden();
 });
 
+it('adds the customer workspace data to the detail payload', function () {
+    $customer = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'opt_out' => false, 'contact_channel_preference' => 'whatsapp']);
+    $customer->assignTo($this->sales);
+    $deal = DealTransaction::create(['dealer_id' => $this->dealer->id, 'customer_id' => $customer->id, 'sales_id' => $this->sales->id, 'vehicle_model' => 'Creta']);
+    $customer->scheduleFollowUp($this->sales, $this->sales, now()->addDay(), 'Telepon lagi');
+
+    $this->actingAs($this->sales)->getJson("/transactions/{$deal->public_id}")->assertOk()
+        ->assertJsonPath('customer.public_id', $customer->public_id)
+        ->assertJsonPath('customer.contact_channel_preference', 'whatsapp')->assertJsonPath('customer.opt_out', false)
+        ->assertJsonPath('customer.assigned_sales.name', $this->sales->name)
+        ->assertJsonPath('customer.next_follow_up.plan_notes', 'Telepon lagi')
+        ->assertJsonPath('can_edit_customer', true)->assertJsonPath('can_assign_customer', false)
+        ->assertJsonPath('deal_id', $deal->id);
+    $this->actingAs(User::factory()->admin()->create(['dealer_id' => $this->dealer->id]))->getJson("/transactions/{$deal->public_id}")
+        ->assertJsonPath('can_assign_customer', true);
+});
+
 it('preselects an accessible customer with an active assignment from the customer query', function () {
     $mine = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'name' => 'Sari Dewi', 'social_media_account' => '@sari']);
     $mine->assignTo($this->sales);

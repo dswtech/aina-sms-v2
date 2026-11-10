@@ -317,6 +317,14 @@ Ketentuan berikut memperinci CRM-01/08/14 dan PIP-01 untuk data pelanggan yang d
 
 - Kecamatan Customer tidak menggantikan area transaksi KTP/STNK dan tidak masuk laporan Area. Ia hanya menjadi nilai awal: area transaksi yang masih kosong terisi dari kecamatan Customer saat transaksi dibuat untuk Customer existing atau saat pindah tahap; area yang sudah terisi tidak pernah ditimpa dan tetap dapat diubah.
 
+### Kontrak modal detail sebagai ruang kerja (10 November 2026)
+
+Modal Detail pada halaman Transaksi menjadi satu tempat kerja per transaksi dan pelanggannya:
+
+- Ubah tahap, Konfirmasi Delivery dan Batalkan DO dikerjakan di modal (mode Tahap pada panel kanan); halaman Transaksi tidak lagi memiliki dialog tahap sendiri. Aturan tahap, gerbang profil dan otorisasi tidak berubah.
+- Isian yang baru wajib di tahap tertentu (gender, alamat, pekerjaan, kecamatan, kendaraan, tenor/asuransi) tampil dan dapat diedit di modal sejak tahap awal, dengan penanda "wajib di <tahap>" selagi kosong. Profil pelanggan disimpan lewat `PATCH /customers/{customer}/profile` dengan aturan yang sama seperti blok `customer` pada pindah tahap: nilai kosong tidak pernah menimpa data tersimpan.
+- Fitur detail Buku Pelanggan tersedia di modal: catat aktivitas, jadwalkan follow-up, preferensi kontak, ganti PIC Sales (Admin, dan Supervisor untuk Sales timnya), riwayat pelanggan, serta tombol Telepon dan WhatsApp di header yang mengikuti kanal pilihan dan penolakan kontak. Branch Manager tetap tanpa komentar, riwayat dan penulisan data pelanggan.
+
 Laporan/master/form operasional dan cutover preview mengikuti gerbang rencana end-to-end. Data preview tidak dianggap data dealer atau aktivasi laporan nyata.
 
 | Entitas | Peran | Catatan |

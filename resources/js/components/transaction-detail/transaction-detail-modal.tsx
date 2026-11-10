@@ -1,12 +1,20 @@
 import {
     Activity,
+    ArrowRightLeft,
+    Bell,
     ChevronsLeft,
     ChevronsRight,
     FileText,
+    History,
+    MessageCircle,
     MessageSquare,
+    Phone,
+    User,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentType, PointerEvent } from 'react';
+import { CustomerHistory } from '@/components/customer-history';
+import type { VehicleOption } from '@/components/transaction-fields';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { TimelineEntry } from '@/components/transaction-timeline';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { canContact } from '@/lib/customer-contact';
 import {
     clampPanelWidth,
     composerKey,
@@ -25,7 +34,10 @@ import {
 import { supervisorLabel } from '@/lib/transaction-labels';
 import type { TimelineComment, TransactionDetailData } from '@/types/history';
 import { CommentComposer } from './comment-composer';
+import { ActivityForm, CustomerPanel, FollowUpPanel } from './customer-panels';
 import { DetailProperties } from './detail-properties';
+import { StageForm } from './stage-form';
+import type { StageAction } from './stage-form';
 import { StageTimeline } from './stage-timeline';
 import { useTransactionFeed } from './use-transaction-feed';
 
@@ -41,9 +53,30 @@ type Props = {
     regions: { code: string; name: string }[];
     districts: { code: string; region_code: string; name: string }[];
     leasings: { id: number; name: string }[];
+    stages: { value: string; label: string }[];
+    lostReasons: { value: string; label: string }[];
+    vehicleOptions: VehicleOption[];
+    assignableSales: { id: number; name: string }[];
+    /** Opens straight into the stage form (Ubah tahap, Konfirmasi Delivery, Batalkan DO). */
+    intent?: { action: StageAction } | null;
 };
 
-type Mode = 'comments' | 'activities';
+type Mode =
+    | 'comments'
+    | 'activities'
+    | 'followups'
+    | 'customer'
+    | 'history'
+    | 'stage';
+
+const modeTitles: Record<Mode, string> = {
+    comments: 'Komentar coaching',
+    activities: 'Aktivitas pelanggan',
+    followups: 'Follow-up',
+    customer: 'Pelanggan',
+    history: 'Riwayat pelanggan',
+    stage: 'Ubah tahap',
+};
 type View = 'detail' | Mode;
 
 const noVehicle = 'Kendaraan belum ditentukan';
@@ -81,6 +114,11 @@ function DetailView({
     regions,
     districts,
     leasings,
+    stages,
+    lostReasons,
+    vehicleOptions,
+    assignableSales,
+    intent,
     onSaved,
     refreshFailed,
 }: Omit<Props, 'target' | 'onClose'> & {
@@ -91,8 +129,14 @@ function DetailView({
     const isMobile = useIsMobile();
     const bodyRef = useRef<HTMLDivElement>(null);
     const feedRef = useRef<HTMLDivElement>(null);
-    const [view, setView] = useState<View>('detail');
-    const [mode, setMode] = useState<Mode>('comments');
+    const startsInStage = intent != null;
+    const [view, setView] = useState<View>(startsInStage ? 'stage' : 'detail');
+    const [mode, setMode] = useState<Mode>(
+        startsInStage ? 'stage' : 'comments',
+    );
+    const [stageAction, setStageAction] = useState<StageAction>(
+        intent?.action ?? null,
+    );
     const [collapsed, setCollapsed] = useState(false);
     const [width, setWidth] = useState(DEFAULT_PANEL_WIDTH);
     const [bodyWidth, setBodyWidth] = useState(0);
@@ -101,9 +145,9 @@ function DetailView({
 
     // On a phone the rail picks one column; on desktop it picks the right panel's mode.
     const activeMode: Mode = isMobile
-        ? view === 'activities'
-            ? 'activities'
-            : 'comments'
+        ? view === 'detail'
+            ? 'comments'
+            : view
         : mode;
     const showLeft = !isMobile || view === 'detail';
     const showRight = isMobile ? view !== 'detail' : !collapsed;
@@ -120,6 +164,7 @@ function DetailView({
         null,
         showRight && activeMode === 'activities',
     );
+    const isFeed = activeMode === 'comments' || activeMode === 'activities';
     const feed = activeMode === 'comments' ? comments : activities;
     const newestKey = feed.events.at(-1)?.key;
 
@@ -164,6 +209,64 @@ function DetailView({
             setCollapsed(false);
         }
     };
+    const openStage = (action: StageAction) => {
+        setStageAction(action);
+        pickMode('stage');
+    };
+    const afterStage = () => {
+        onSaved();
+        setStageAction(null);
+        pickMode('comments');
+    };
+    const canStage =
+        detail.can_update ||
+        detail.can_confirm_delivery ||
+        detail.can_cancel_do;
+    // Branch Managers get no timeline or history, and no customer writes.
+    const hasCustomer = detail.customer.public_id !== null;
+    const canHistory = hasCustomer && detail.stages !== null;
+    const phone = detail.customer.phone;
+    const waHref = `https://wa.me/${phone.replace(/[^\d]/g, '').replace(/^0/, '62')}`;
+    const contactButton = (
+        channel: 'phone' | 'whatsapp',
+        label: string,
+        href: string,
+    ) => {
+        const Icon = channel === 'phone' ? Phone : MessageCircle;
+
+        return canContact(detail.customer, channel) ? (
+            <Button
+                asChild
+                variant="outline"
+                size="icon"
+                className="size-9"
+                title={label}
+            >
+                <a
+                    href={href}
+                    aria-label={`${label} ${detail.customer.name}`}
+                    {...(channel === 'whatsapp'
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                >
+                    <Icon aria-hidden className="size-4" />
+                </a>
+            </Button>
+        ) : (
+            <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-9 opacity-50"
+                aria-disabled="true"
+                aria-label={`${label} tidak tersedia`}
+                title={`${label} tidak tersedia: pelanggan menolak dihubungi lewat kanal ini`}
+                onClick={(event) => event.preventDefault()}
+            >
+                <Icon aria-hidden className="size-4" />
+            </Button>
+        );
+    };
 
     const canReply = detail.can_comment && activeMode === 'comments';
     const days = daysInStageLabel(detail.days_in_stage);
@@ -179,6 +282,47 @@ function DetailView({
                     <span>Sales: {detail.sales?.name ?? '-'}</span>
                     <span>Supervisor: {supervisorLabel(detail)}</span>
                     {days && <span className="text-amber-600">{days}</span>}
+                </div>
+                {/* The header's right padding clears the close button; the buttons sit below it. */}
+                <div className="-mr-10 flex flex-wrap items-center gap-2 pt-1">
+                    {detail.can_update && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            className="min-h-9"
+                            onClick={() => openStage(null)}
+                        >
+                            Ubah tahap
+                        </Button>
+                    )}
+                    {detail.can_confirm_delivery && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="min-h-9"
+                            onClick={() => openStage('delivery')}
+                        >
+                            Konfirmasi Delivery
+                        </Button>
+                    )}
+                    {detail.can_cancel_do && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="min-h-9 text-destructive"
+                            onClick={() => openStage('cancel')}
+                        >
+                            Batalkan DO
+                        </Button>
+                    )}
+                    {hasCustomer &&
+                        phone &&
+                        contactButton('phone', 'Telepon', `tel:${phone}`)}
+                    {hasCustomer &&
+                        phone &&
+                        contactButton('whatsapp', 'WhatsApp', waHref)}
                 </div>
             </div>
             {refreshFailed && (
@@ -201,6 +345,7 @@ function DetailView({
                             regions={regions}
                             districts={districts}
                             leasings={leasings}
+                            vehicleOptions={vehicleOptions}
                             canEdit={detail.can_edit_metadata}
                             onSaved={onSaved}
                         />
@@ -257,89 +402,139 @@ function DetailView({
                             id="detail-feed-title"
                             className="px-3 py-2 text-sm font-medium"
                         >
-                            {activeMode === 'comments'
-                                ? 'Komentar coaching'
-                                : 'Aktivitas pelanggan'}
+                            {modeTitles[activeMode]}
                         </h2>
-                        <div
-                            ref={feedRef}
-                            role="region"
-                            aria-labelledby="detail-feed-title"
-                            aria-busy={feed.state === 'loading'}
-                            className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-3"
-                        >
-                            {feed.hasEarlier && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={feed.state === 'loading'}
-                                    onClick={feed.loadEarlier}
-                                >
-                                    Muat sebelumnya
-                                </Button>
-                            )}
-                            {feed.state === 'error' && (
-                                <p role="alert" className="text-sm">
-                                    Belum dapat dimuat.{' '}
-                                    <button
-                                        type="button"
-                                        className="underline"
-                                        onClick={feed.retry}
-                                    >
-                                        Coba lagi
-                                    </button>
-                                </p>
-                            )}
-                            {feed.state === 'loading' && (
-                                <p
-                                    role="status"
-                                    className="text-sm text-muted-foreground"
-                                >
-                                    Memuat…
-                                </p>
-                            )}
-                            {feed.events.length === 0 &&
-                                feed.fetched &&
-                                feed.state === 'idle' && (
-                                    <p className="text-sm text-muted-foreground">
-                                        {activeMode === 'comments'
-                                            ? 'Belum ada komentar.'
-                                            : 'Belum ada aktivitas.'}
-                                    </p>
-                                )}
-                            <ol className="space-y-3">
-                                {feed.events.map((event) => (
-                                    <TimelineEntry
-                                        key={event.key}
-                                        event={event}
-                                        className="rounded-lg bg-muted/40 p-2"
-                                        onReply={
-                                            canReply
-                                                ? (comment) => {
-                                                      setEditing(null);
-                                                      setReplyTo(comment);
-                                                  }
-                                                : undefined
-                                        }
-                                        onEdit={
-                                            canReply
-                                                ? (comment) => {
-                                                      setReplyTo(null);
-                                                      setEditing(comment);
-                                                  }
-                                                : undefined
-                                        }
+                        {activeMode === 'stage' && (
+                            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                                <StageForm
+                                    key={`${detail.public_id}-${stageAction}`}
+                                    detail={detail}
+                                    action={stageAction}
+                                    stages={stages}
+                                    lostReasons={lostReasons}
+                                    vehicleOptions={vehicleOptions}
+                                    regions={regions}
+                                    districts={districts}
+                                    onDone={afterStage}
+                                    onCancel={() => pickMode('comments')}
+                                />
+                            </div>
+                        )}
+                        {activeMode === 'customer' && (
+                            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                                <CustomerPanel
+                                    detail={detail}
+                                    assignableSales={assignableSales}
+                                    onSaved={onSaved}
+                                />
+                            </div>
+                        )}
+                        {activeMode === 'followups' && (
+                            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                                <FollowUpPanel
+                                    detail={detail}
+                                    onSaved={onSaved}
+                                />
+                            </div>
+                        )}
+                        {activeMode === 'history' &&
+                            detail.customer.public_id && (
+                                <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                                    <CustomerHistory
+                                        customerId={detail.customer.public_id}
+                                        refreshKey={detail.progress_at}
+                                        onSelection={() => undefined}
+                                        onReply={() => undefined}
+                                        onEdit={() => undefined}
                                     />
-                                ))}
-                            </ol>
-                            {activeMode === 'activities' &&
-                                feed.events.length > 0 && (
-                                    <p className="text-center text-xs text-muted-foreground">
-                                        Hanya baca
+                                </div>
+                            )}
+                        {isFeed && (
+                            <div
+                                ref={feedRef}
+                                role="region"
+                                aria-labelledby="detail-feed-title"
+                                aria-busy={feed.state === 'loading'}
+                                className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-3"
+                            >
+                                {feed.hasEarlier && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={feed.state === 'loading'}
+                                        onClick={feed.loadEarlier}
+                                    >
+                                        Muat sebelumnya
+                                    </Button>
+                                )}
+                                {feed.state === 'error' && (
+                                    <p role="alert" className="text-sm">
+                                        Belum dapat dimuat.{' '}
+                                        <button
+                                            type="button"
+                                            className="underline"
+                                            onClick={feed.retry}
+                                        >
+                                            Coba lagi
+                                        </button>
                                     </p>
                                 )}
-                        </div>
+                                {feed.state === 'loading' && (
+                                    <p
+                                        role="status"
+                                        className="text-sm text-muted-foreground"
+                                    >
+                                        Memuat…
+                                    </p>
+                                )}
+                                {feed.events.length === 0 &&
+                                    feed.fetched &&
+                                    feed.state === 'idle' && (
+                                        <p className="text-sm text-muted-foreground">
+                                            {activeMode === 'comments'
+                                                ? 'Belum ada komentar.'
+                                                : 'Belum ada aktivitas.'}
+                                        </p>
+                                    )}
+                                <ol className="space-y-3">
+                                    {feed.events.map((event) => (
+                                        <TimelineEntry
+                                            key={event.key}
+                                            event={event}
+                                            className="rounded-lg bg-muted/40 p-2"
+                                            onReply={
+                                                canReply
+                                                    ? (comment) => {
+                                                          setEditing(null);
+                                                          setReplyTo(comment);
+                                                      }
+                                                    : undefined
+                                            }
+                                            onEdit={
+                                                canReply
+                                                    ? (comment) => {
+                                                          setReplyTo(null);
+                                                          setEditing(comment);
+                                                      }
+                                                    : undefined
+                                            }
+                                        />
+                                    ))}
+                                </ol>
+                            </div>
+                        )}
+                        {activeMode === 'activities' &&
+                            detail.can_edit_customer &&
+                            hasCustomer && (
+                                <ActivityForm
+                                    detail={detail}
+                                    onSaved={() => {
+                                        onSaved();
+                                        activities.reload();
+                                    }}
+                                />
+                            )}
                         {activeMode === 'comments' && detail.can_comment && (
                             <CommentComposer
                                 key={composerKey(editing, replyTo)}
@@ -403,6 +598,54 @@ function DetailView({
                         }
                         onClick={() => pickMode('activities')}
                     />
+                    {hasCustomer && (
+                        <RailButton
+                            label="Follow-up"
+                            icon={Bell}
+                            pressed={
+                                isMobile
+                                    ? view === 'followups'
+                                    : !collapsed && mode === 'followups'
+                            }
+                            onClick={() => pickMode('followups')}
+                        />
+                    )}
+                    {hasCustomer && (
+                        <RailButton
+                            label="Pelanggan"
+                            icon={User}
+                            pressed={
+                                isMobile
+                                    ? view === 'customer'
+                                    : !collapsed && mode === 'customer'
+                            }
+                            onClick={() => pickMode('customer')}
+                        />
+                    )}
+                    {canHistory && (
+                        <RailButton
+                            label="Riwayat"
+                            icon={History}
+                            pressed={
+                                isMobile
+                                    ? view === 'history'
+                                    : !collapsed && mode === 'history'
+                            }
+                            onClick={() => pickMode('history')}
+                        />
+                    )}
+                    {canStage && (
+                        <RailButton
+                            label="Ubah tahap"
+                            icon={ArrowRightLeft}
+                            pressed={
+                                isMobile
+                                    ? view === 'stage'
+                                    : !collapsed && mode === 'stage'
+                            }
+                            onClick={() => openStage(null)}
+                        />
+                    )}
                 </div>
             </div>
         </div>
@@ -415,6 +658,11 @@ export function TransactionDetailModal({
     regions,
     districts,
     leasings,
+    stages,
+    lostReasons,
+    vehicleOptions,
+    assignableSales,
+    intent,
 }: Props) {
     const publicId = target?.public_id ?? null;
     // Keep showing the last transaction while the dialog animates closed.
@@ -491,6 +739,11 @@ export function TransactionDetailModal({
                         regions={regions}
                         districts={districts}
                         leasings={leasings}
+                        stages={stages}
+                        lostReasons={lostReasons}
+                        vehicleOptions={vehicleOptions}
+                        assignableSales={assignableSales}
+                        intent={intent}
                         onSaved={() => void load(true)}
                         refreshFailed={refreshFailed}
                     />

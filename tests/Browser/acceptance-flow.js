@@ -124,11 +124,12 @@ async function acceptanceFlow(page) {
     const changeStage = async (stage, extra = async () => {}) => {
         await findRow(model);
         await rowButton('Ubah tahap').click();
-        await page.getByRole('heading', { name: 'Ubah tahap transaksi' }).waitFor();
-        await page.locator('#to_stage').selectOption(stage);
+        await page.getByRole('dialog').getByRole('heading', { name: 'Ubah tahap', exact: true }).waitFor();
+        await page.locator('#stage-to').selectOption(stage);
         await extra();
-        await page.getByRole('button', { name: 'Simpan', exact: true }).click();
-        await page.getByRole('heading', { name: 'Ubah tahap transaksi' }).waitFor({ state: 'hidden' });
+        await page.getByRole('button', { name: 'Simpan tahap', exact: true }).click();
+        await page.getByRole('dialog').getByRole('heading', { name: 'Ubah tahap', exact: true }).waitFor({ state: 'hidden' });
+        await page.keyboard.press('Escape');
         const row = await findRow(model);
         assert(row.current_stage === stage, `Stage is ${row.current_stage}, expected ${stage}`);
         return row;
@@ -142,10 +143,11 @@ async function acceptanceFlow(page) {
     const fulfil = async (button, reason) => {
         await findRow(model);
         await rowButton(button).click();
-        const dialog = page.getByRole('dialog', { name: button });
-        if (reason) await dialog.getByRole('textbox', { name: 'Alasan pembatalan' }).fill(reason);
-        await dialog.getByRole('button', { name: button, exact: true }).click();
-        await dialog.waitFor({ state: 'hidden' });
+        const form = page.getByRole('dialog').getByRole('form', { name: button });
+        if (reason) await form.getByRole('textbox', { name: 'Alasan pembatalan' }).fill(reason);
+        await form.getByRole('button', { name: button, exact: true }).click();
+        await form.waitFor({ state: 'hidden' });
+        await page.keyboard.press('Escape');
     };
     const openDetail = async () => {
         await findRow(model);
