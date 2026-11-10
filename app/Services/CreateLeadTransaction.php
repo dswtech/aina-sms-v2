@@ -109,6 +109,9 @@ final class CreateLeadTransaction
             }
 
             $metadata = TransactionMetadata::normalize($validated, $customer->dealer_id);
+            if ($metadata['region_code'] === null && $metadata['other_city'] === null && $customer->hasArea()) {
+                $metadata = [...$metadata, ...$customer->only(['region_code', 'district_code', 'other_city'])];
+            }
 
             $deal = $customer->transactions()->create([
                 ...$metadata,

@@ -315,6 +315,8 @@ Ketentuan berikut memperinci CRM-01/08/14 dan PIP-01 untuk data pelanggan yang d
 - Kecamatan Customer memakai master 106 kecamatan; pilihan Kota Lain mewajibkan nama kota dan tanpa kecamatan. Ini terpisah dari area transaksi KTP/STNK. Pekerjaan memakai daftar tetap `farmer`, `employee`, `civil-servant`, `teacher`, `entrepreneur`, `others` (label Indonesia: Petani, Karyawan, PNS, Guru, Wiraswasta, Lainnya). Field baru hanya lewat route Customer/Transaksi sehingga tetap tertutup bagi Branch Manager (CRM-14).
 - Pembiayaan Kredit wajib tenor (12, 24, 36, 48 atau 60 bulan) dan jenis asuransi (`tlo`, `all_risk`, `combination`: TLO, All Risk, Kombinasi) sejak Kredit dipilih; Cash atau belum ditentukan mengosongkan keduanya. Kewajiban hanya berlaku saat blok pembiayaan dikirim (buat, impor, ubah pembiayaan); mengubah properti lain pada transaksi kredit lama tanpa tenor tidak ditolak. Impor CSV memakai kolom `tenor_months` dan `insurance_type` yang wajib bila `financing_type=credit`.
 
+- Kecamatan Customer tidak menggantikan area transaksi KTP/STNK dan tidak masuk laporan Area. Ia hanya menjadi nilai awal: area transaksi yang masih kosong terisi dari kecamatan Customer saat transaksi dibuat untuk Customer existing atau saat pindah tahap; area yang sudah terisi tidak pernah ditimpa dan tetap dapat diubah.
+
 Laporan/master/form operasional dan cutover preview mengikuti gerbang rencana end-to-end. Data preview tidak dianggap data dealer atau aktivasi laporan nyata.
 
 | Entitas | Peran | Catatan |

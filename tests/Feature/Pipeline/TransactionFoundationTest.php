@@ -30,6 +30,7 @@ function foundationDeal($test, array $attributes = []): DealTransaction
 
 it('rejects DO without complete area at the domain boundary', function () {
     $deal = foundationDeal($this);
+    $this->customer->update(['region_code' => null, 'district_code' => null]); // no kecamatan to default from
     expect(fn () => $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
         'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]))->toThrow(ValidationException::class);

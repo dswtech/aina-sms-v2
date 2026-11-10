@@ -235,6 +235,10 @@ class DealTransaction extends Model
             }
             $customer->assertProfileFor($toStage);
             $customer->save();
+            // Empty transaction area defaults to the customer's kecamatan; an area already set is never overwritten.
+            if ($this->region_code === null && $this->other_city === null && $customer->hasArea()) {
+                $this->fill($customer->only(['region_code', 'district_code', 'other_city']));
+            }
             $snapshots = $toStage === PipelineStage::Do ? TransactionSnapshots::capture($this) : [];
             // One instant for the deal and its history row, so progress_at equals the event time.
             $at = now();

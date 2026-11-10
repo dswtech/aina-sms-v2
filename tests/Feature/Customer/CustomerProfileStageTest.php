@@ -130,3 +130,26 @@ it('lets a legacy credit deal without tenor be edited elsewhere but not re-saved
         ->assertSessionHasNoErrors();
     expect($deal->fresh()->only(['tenor_months', 'insurance_type']))->toBe(['tenor_months' => 48, 'insurance_type' => 'all_risk']);
 });
+
+it('defaults an empty transaction area to the customer kecamatan at SPK but keeps an area already set', function () {
+    $spk = ['to_stage' => 'spk', 'booking_fee_confirmed' => true];
+    $profile = ['occupation' => 'farmer', 'area' => ['region_code' => '32.17', 'district_code' => '32.17.08']];
+
+    $empty = profileDeal($this, ['gender' => 'L', 'address' => 'Jl. A']);
+    $this->actingAs($this->sales)->patch(route('transactions.stage', $empty), [...$spk, 'customer' => $profile])->assertSessionHasNoErrors();
+    expect($empty->fresh()->only(['region_code', 'district_code']))->toBe(['region_code' => '32.17', 'district_code' => '32.17.08']);
+
+    $set = profileDeal($this, ['gender' => 'L', 'address' => 'Jl. B'], deal: ['region_code' => '32.73', 'district_code' => '32.73.05']);
+    $this->patch(route('transactions.stage', $set), [...$spk, 'customer' => $profile])->assertSessionHasNoErrors();
+    expect($set->fresh()->only(['region_code', 'district_code']))->toBe(['region_code' => '32.73', 'district_code' => '32.73.05']);
+});
+
+it('defaults the area of a repeat-order transaction to the existing customer kecamatan', function () {
+    $customer = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'phone' => '+6281234567890', 'region_code' => 'other', 'district_code' => null, 'other_city' => 'Garut']);
+    $customer->assignTo($this->sales);
+    $this->actingAs($this->sales)->post('/transactions', leadPayload(['existing_customer_id' => $customer->public_id]))->assertSessionHasNoErrors();
+    expect(DealTransaction::query()->sole()->only(['region_code', 'district_code', 'other_city']))->toBe(['region_code' => 'other', 'district_code' => null, 'other_city' => 'Garut']);
+
+    $this->post('/transactions', leadPayload(['existing_customer_id' => $customer->public_id, 'area' => ['region_code' => '32.17', 'district_code' => '32.17.08']]))->assertSessionHasNoErrors();
+    expect(DealTransaction::query()->latest('id')->first()->district_code)->toBe('32.17.08');
+});
