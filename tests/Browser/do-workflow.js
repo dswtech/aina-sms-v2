@@ -30,7 +30,7 @@ async function doWorkflow(page) {
         await stage.selectOption('do');
         if (await stage.locator('option[value="delivery"]').count())
             throw new Error('Delivery is exposed as an ordinary stage change');
-        const save = page.getByRole('button', { name: 'Simpan', exact: true });
+        const save = page.getByRole('button', { name: 'Simpan tahap', exact: true });
         await page.getByRole('checkbox', { name: 'PO', exact: true }).check();
         await page.getByRole('checkbox', { name: 'DP', exact: true }).check();
         if (await save.isEnabled())
@@ -38,8 +38,10 @@ async function doWorkflow(page) {
         await page.getByRole('checkbox', { name: 'Unit', exact: true }).check();
         await save.click();
         await page
-            .getByRole('heading', { name: 'Ubah tahap transaksi' })
+            .getByRole('dialog')
+            .getByRole('heading', { name: 'Ubah tahap', exact: true })
             .waitFor({ state: 'hidden' });
+        await page.keyboard.press('Escape');
         await expectStage('DO');
     };
 
@@ -49,7 +51,9 @@ async function doWorkflow(page) {
     await page
         .getByRole('button', { name: 'Konfirmasi Delivery', exact: true })
         .click();
-    const delivery = page.getByRole('dialog', { name: 'Konfirmasi Delivery' });
+    const delivery = page
+        .getByRole('dialog')
+        .getByRole('form', { name: 'Konfirmasi Delivery' });
     await delivery
         .getByRole('button', { name: 'Konfirmasi Delivery', exact: true })
         .click();
@@ -63,7 +67,9 @@ async function doWorkflow(page) {
     await page
         .getByRole('button', { name: 'Batalkan DO', exact: true })
         .click();
-    const correction = page.getByRole('dialog', { name: 'Batalkan DO' });
+    const correction = page
+        .getByRole('dialog')
+        .getByRole('form', { name: 'Batalkan DO' });
     await correction
         .getByRole('textbox', { name: 'Alasan pembatalan' })
         .fill('Koreksi data sintetis.');

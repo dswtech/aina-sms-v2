@@ -12,8 +12,13 @@ type ContactCustomer = {
 
 export function CustomerContactPreferences({
     customer,
+    keepState = false,
+    onSaved,
 }: {
     customer: ContactCustomer;
+    /** Inside a modal: a remount would close it, so keep the page state after saving. */
+    keepState?: boolean;
+    onSaved?: () => void;
 }) {
     const form = useForm({
         contact_channel_preference: customer.contact_channel_preference ?? '',
@@ -45,6 +50,8 @@ export function CustomerContactPreferences({
                         `/customers/${customer.public_id}/contact-preferences`,
                         {
                             preserveScroll: true,
+                            ...(keepState ? { preserveState: true } : {}),
+                            onSuccess: () => onSaved?.(),
                             onNetworkError: () => {
                                 form.setError(
                                     'opt_out',

@@ -46,9 +46,10 @@ async function narrowViewportReflow(page) {
             .getByRole('button', { name: 'Ubah tahap', exact: true })
             .click();
         await page
-            .getByRole('heading', { name: 'Ubah tahap transaksi' })
+            .getByRole('dialog')
+            .getByRole('heading', { name: 'Ubah tahap', exact: true })
             .waitFor();
-        const save = page.getByRole('button', { name: 'Simpan', exact: true });
+        const save = page.getByRole('button', { name: 'Simpan tahap', exact: true });
         await save.scrollIntoViewIfNeeded();
         const bounds = await save.boundingBox();
         const width = await page.evaluate(() => innerWidth);

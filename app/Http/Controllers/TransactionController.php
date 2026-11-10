@@ -322,12 +322,21 @@ class TransactionController extends Controller
         /** @var User $actor */
         $actor = $request->user();
         $this->authorize('view', $transaction);
-        $transaction->load(['customer:id,name,phone,social_media_account,email,address,gender,birth_date,occupation,region_code,district_code,other_city', 'sales:id,name,username']);
+        $transaction->load(['customer:id,public_id,dealer_id,name,phone,social_media_account,email,address,gender,birth_date,occupation,region_code,district_code,other_city,contact_channel_preference,opt_out,last_contact_at', 'customer.activeAssignment.sales:id,name', 'customer.nextFollowUp', 'sales:id,name,username']);
         [$regions, $districts, $supervisors] = $this->lookups([$transaction]);
+        $customer = $transaction->customer;
 
         return response()->json([
             ...$this->row($transaction, $actor, $regions, $districts, $supervisors, $this->leasingNames([$transaction])),
+            'deal_id' => $transaction->id,
+            'can_edit_customer' => $customer !== null && $actor->can('update', $customer),
+            'can_assign_customer' => $customer !== null && $actor->can('assign', $customer),
             'customer' => [
+                'public_id' => $customer?->public_id,
+                'contact_channel_preference' => $customer?->contact_channel_preference, 'opt_out' => (bool) $customer?->opt_out,
+                'last_contact_at' => $customer?->last_contact_at?->toIso8601String(),
+                'assigned_sales' => $customer?->activeAssignment?->sales ? ['id' => $customer->activeAssignment->sales->id, 'name' => $customer->activeAssignment->sales->name] : null,
+                'next_follow_up' => $customer?->nextFollowUp ? ['scheduled_at' => $customer->nextFollowUp->scheduled_at->toIso8601String(), 'plan_notes' => $customer->nextFollowUp->plan_notes] : null,
                 'name' => $transaction->customer?->name, 'phone' => $transaction->customer?->phone,
                 'social_media_account' => $transaction->customer?->social_media_account,
                 'email' => $transaction->customer?->email, 'address' => $transaction->customer?->address,

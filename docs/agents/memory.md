@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.45 |
+| Versi | v1.46 |
 | Diperbarui | 10 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 10 November 2026 — modal detail sebagai ruang kerja
+
+Branch `feat/transaction-detail-workspace` dari `origin/main` `cea84c8`, belum ada PR. Kontrak ada di [PRD](PRD.md) bagian "Kontrak modal detail sebagai ruang kerja". Mode Tahap, Follow-up, Pelanggan dan Riwayat ditambahkan di rail modal (`transaction-detail/stage-form.tsx`, `customer-panels.tsx`); dialog tahap di halaman Transaksi dihapus; properti pelanggan dan kendaraan dapat diedit di modal; endpoint baru `PATCH /customers/{customer}/profile`; `show()` memuat data pelanggan (preferensi kontak, PIC, follow-up berikutnya, `deal_id`, `can_edit_customer`, `can_assign_customer`).
+
+Bukti: Pest 510 tes (505 lulus, lima skip), 50 tes frontend, `tsc` dan `vp check` bersih, suite browser terisolasi lengkap lulus (15 skrip; skrip tahap diperbarui ke modal, `transaction-detail-workspace.js` baru, fixture mendapat pelanggan ber-PIC). Belum dilakukan: pemeriksaan visual manual, UAT, halaman Buku Pelanggan memakai modal yang sama (dialog tahap duplikatnya di `pages/customers` masih ada). Tanggal lahir diedit sebagai teks `YYYY-MM-DD`; profil tidak bisa dikosongkan dari modal (sama seperti pindah tahap).
 
 ## Pembaruan 10 November 2026 — profil pelanggan bertahap dan detail kredit
 

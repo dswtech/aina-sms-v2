@@ -50,6 +50,14 @@ $reportDeal = DealTransaction::create([
 ]);
 $reportDeal->forceFill(['created_at' => '2001-01-12 00:00:00', 'progress_at' => '2001-01-12 00:00:00'])->save();
 
+// An assigned customer, so Supervisors may edit the profile from the detail modal.
+$workspaceCustomer = Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'occupation' => null, 'region_code' => null, 'district_code' => null, 'other_city' => null]);
+$workspaceCustomer->assignTo($sales);
+DealTransaction::create([
+    'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
+    'customer_id' => $workspaceCustomer->id, 'vehicle_model' => 'G11 Workspace Model', 'source' => 'walk_in',
+]);
+
 for ($i = 1; $i <= 16; $i++) {
     DealTransaction::create([
         'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
