@@ -4,6 +4,7 @@ namespace App\Http\Requests\Customer;
 
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
+use App\Models\Customer;
 use App\Services\TransactionMasters;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -36,6 +37,8 @@ class UpdateDealStageRequest extends FormRequest
                 new Enum(LostReason::class),
             ],
             'lost_notes' => ['nullable', 'string', 'max:2000'],
+            'customer' => ['nullable', 'array:gender,address,birth_date,occupation,area'],
+            ...Customer::profileRules('customer'),
         ];
     }
 

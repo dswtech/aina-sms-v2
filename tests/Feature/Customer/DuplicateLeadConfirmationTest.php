@@ -19,7 +19,7 @@ function duplicateLeadFixture(): array
     TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $sales->id, 'role' => 'sales']);
     $customer = Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => 'Identitas lama', 'phone' => '081299887766', 'notes' => 'Catatan hubungan lama']);
     $customer->assignTo($sales);
-    $payload = ['name' => 'Nama draft', 'phone' => '6281299887766', 'vehicle_model' => 'Model baru', 'source' => 'referral', 'notes' => 'Catatan peluang baru', 'expected_closing_month' => '2026-12'];
+    $payload = ['name' => 'Nama draft', 'gender' => 'L', 'phone' => '6281299887766', 'vehicle_model' => 'Model baru', 'source' => 'referral', 'notes' => 'Catatan peluang baru', 'expected_closing_month' => '2026-12'];
 
     return compact('dealer', 'team', 'sales', 'customer', 'payload');
 }

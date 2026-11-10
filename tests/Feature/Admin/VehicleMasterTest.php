@@ -80,7 +80,7 @@ it('lets a lead be created without a vehicle but only from the master when given
     $type = vehicleType($this->dealer);
     vehicleModel($this->dealer, $type, 'Xpander');
     vehicleModel($this->dealer, $type, 'Lama', active: false);
-    $base = ['name' => 'Budi', 'source' => 'digital_ad', 'source_channel' => 'instagram'];
+    $base = ['name' => 'Budi', 'gender' => 'L', 'source' => 'digital_ad', 'source_channel' => 'instagram'];
 
     $this->actingAs($sales)->post('/transactions', [...$base, 'phone' => '081234567890'])->assertSessionHasNoErrors();
     expect(DealTransaction::query()->latest('id')->first()->vehicle_model)->toBeNull();

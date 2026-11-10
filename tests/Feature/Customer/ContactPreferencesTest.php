@@ -49,7 +49,7 @@ it('validates contact preference payload without changing the record', function 
 it('records contact refusal and preferred channel on a new customer', function () {
     $sales = User::factory()->sales()->create();
     $this->actingAs($sales)->post('/customers', [
-        'name' => 'Pelanggan QA', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in',
+        'name' => 'Pelanggan QA', 'gender' => 'L', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in',
         'contact_channel_preference' => 'phone', 'opt_out' => true,
     ])->assertSessionHasNoErrors();
     $customer = Customer::query()->sole();
@@ -61,7 +61,7 @@ it('preserves existing consent when a new lead draft confirms an existing custom
     $customer = Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'phone' => '081234567890', 'opt_out' => true, 'contact_channel_preference' => 'phone']);
     $customer->assignTo($sales);
     $this->actingAs($sales)->post('/customers', [
-        'name' => 'Nama draft', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in',
+        'name' => 'Nama draft', 'gender' => 'L', 'phone' => '081234567890', 'vehicle_model' => 'Model QA', 'source' => 'walk_in',
         'existing_customer_id' => $customer->public_id, 'contact_channel_preference' => 'any', 'opt_out' => false,
     ])->assertSessionHasNoErrors();
     expect($customer->fresh()->opt_out)->toBeTrue()->and($customer->fresh()->contact_channel_preference)->toBe('phone');

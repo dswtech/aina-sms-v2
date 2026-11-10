@@ -51,6 +51,9 @@ final class CreateLeadTransaction
                 'contact_channel_preference' => $validated['contact_channel_preference'] ?? null,
                 'opt_out' => $validated['opt_out'] ?? false,
                 'social_media_account' => $validated['social_media_account'] ?? null,
+                'gender' => $validated['gender'] ?? null,
+                'birth_date' => $validated['birth_date'] ?? null,
+                'occupation' => $validated['occupation'] ?? null,
             ]);
             $customer->assignTo($sales, $actor, 'Penugasan saat pembuatan lead');
             $this->createLeadTransaction($actor, $customer, $validated);

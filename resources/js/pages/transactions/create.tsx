@@ -1,3 +1,4 @@
+import { CustomerProfileFields } from '@/components/customer-profile-fields';
 import {
     AreaFields,
     Field,
@@ -12,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { draftFromProfile } from '@/lib/customer-profile';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -58,6 +60,8 @@ export default function TransactionCreate({
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [social, setSocial] = useState('');
+    const [email, setEmail] = useState('');
+    const [profile, setProfile] = useState(draftFromProfile());
     const [picked, setPicked] = useState<FoundCustomer | null>(preselected);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<FoundCustomer[]>(
@@ -157,6 +161,11 @@ export default function TransactionCreate({
                 name: existing?.name ?? name,
                 phone: existing?.phone ?? phone,
                 social_media_account: existing ? null : social || null,
+                email: existing ? null : email || null,
+                gender: existing ? null : profile.gender || null,
+                address: existing ? null : profile.address || null,
+                birth_date: existing ? null : profile.birth_date || null,
+                occupation: existing ? null : profile.occupation || null,
                 sales_id: !existing && salesId ? Number(salesId) : null,
                 vehicle_model: model || null,
                 source,
@@ -439,6 +448,38 @@ export default function TransactionCreate({
                                                 Cari sebagai Pelanggan Lama
                                             </Button>
                                         )}
+                                        <CustomerProfileFields
+                                            fields={[
+                                                'gender',
+                                                'address',
+                                                'birth_date',
+                                                'occupation',
+                                            ]}
+                                            requiredFields={['gender']}
+                                            value={profile}
+                                            onChange={touch(setProfile)}
+                                            regions={regions}
+                                            districts={districts}
+                                            errors={errors}
+                                        />
+                                        <Field
+                                            id="email"
+                                            label="Email (opsional)"
+                                            error={err('email')}
+                                        >
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                maxLength={255}
+                                                className="min-h-11"
+                                                value={email}
+                                                onChange={(e) =>
+                                                    touch(setEmail)(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </Field>
                                         <Field
                                             id="social"
                                             label="Akun media sosial (opsional)"

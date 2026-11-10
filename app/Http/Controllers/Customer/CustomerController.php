@@ -159,6 +159,12 @@ class CustomerController extends Controller
                     'phone' => $c->phone,
                     'email' => $c->email,
                     'address' => $c->address,
+                    'gender' => $c->gender,
+                    'birth_date' => $c->birth_date?->toDateString(),
+                    'occupation' => $c->occupation,
+                    'region_code' => $c->region_code,
+                    'district_code' => $c->district_code,
+                    'other_city' => $c->other_city,
                     'contact_channel_preference' => $c->contact_channel_preference,
                     'opt_out' => $c->opt_out,
                     'last_contact_at' => $c->last_contact_at?->toIso8601String(),
@@ -219,6 +225,8 @@ class CustomerController extends Controller
 
         return Inertia::render('customers/index', [
             'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
+            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
+            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
             'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
                 'phone' => $request->session()->get('duplicate_lead_phone'),
                 'customers' => Customer::query()->visibleTo($actor)

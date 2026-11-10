@@ -23,7 +23,7 @@ beforeEach(function () {
 function g10Csv(array $changes = [], bool $second = false): UploadedFile
 {
     $row = array_replace([
-        'name' => 'CSV Customer', 'phone' => '081234567890', 'email' => 'csv@example.test',
+        'name' => 'CSV Customer', 'gender' => 'L', 'phone' => '081234567890', 'email' => 'csv@example.test',
         'address' => 'Private address', 'vehicle_model' => 'Model', 'estimated_value' => '100000',
         'source' => 'walk_in', 'notes' => 'Private note', 'contact_channel_preference' => 'whatsapp',
         'sales_username' => 'csv.sales',
@@ -166,9 +166,9 @@ it('blocks import routes for unauthorized roles', function (string $role) {
 it('validates the complete template and imports its example after choosing a real Sales', function () {
     $response = $this->actingAs($this->actor)->get(route('imports.template'))->assertOk()->assertDownload('template-import-lead.csv');
     $rows = array_map('str_getcsv', explode("\n", trim($response->streamedContent())));
-    expect($rows[0])->toBe(['name', 'phone', 'email', 'address', 'vehicle_model', 'estimated_value', 'source', 'notes', 'contact_channel_preference', 'sales_username', 'social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name']);
-    expect($rows[1])->toHaveCount(18)->and($rows[1][6])->toBe('walk_in')->and($rows[1][8])->toBe('whatsapp');
-    $csv = str_replace(',sales_username,@budi', ',csv.sales,@budi', $response->streamedContent());
+    expect($rows[0])->toBe(['name', 'phone', 'email', 'address', 'vehicle_model', 'estimated_value', 'source', 'notes', 'contact_channel_preference', 'sales_username', 'gender', 'social_media_account', 'source_channel', 'region_code', 'district_code', 'other_city', 'financing_type', 'leasing_id', 'financing_other_name', 'tenor_months', 'insurance_type', 'birth_date', 'occupation']);
+    expect($rows[1])->toHaveCount(23)->and($rows[1][6])->toBe('walk_in')->and($rows[1][8])->toBe('whatsapp');
+    $csv = str_replace(',sales_username,L,@budi', ',csv.sales,L,@budi', $response->streamedContent());
     $this->post(route('imports.preview'), ['file' => UploadedFile::fake()->createWithContent('template.csv', $csv)])
         ->assertInertia(fn (Assert $p) => $p->where('preview.accepted_count', 1)->where('preview.rejected_count', 0));
     g10NoImportWrites();
@@ -177,7 +177,7 @@ it('validates the complete template and imports its example after choosing a rea
 });
 
 it('reports malformed CSV records instead of discarding extra cells', function () {
-    $csv = "name,phone,vehicle_model,source,sales_username\nName,081234567890,Model,walk_in,csv.sales,unexpected\n";
+    $csv = "name,gender,phone,vehicle_model,source,sales_username\nName,L,081234567890,Model,walk_in,csv.sales,unexpected\n";
     $this->actingAs($this->actor)->post(route('imports.preview'), ['file' => UploadedFile::fake()->createWithContent('malformed.csv', $csv)])
         ->assertInertia(fn (Assert $p) => $p->where('preview.rows.0.valid', false)->where('preview.rows.0.row_number', 2)
             ->where('preview.rows.0.errors', fn ($errors) => count($errors) > 0));

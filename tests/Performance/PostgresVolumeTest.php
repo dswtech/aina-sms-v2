@@ -126,17 +126,17 @@ it('measures real Laravel endpoints on a synthetic PostgreSQL workload', functio
     for ($i = 1; $i <= 32; $i++) {
         $measure('customers', fn () => $this->get('/customers'), $i)->assertOk();
         $measure('create_lead', fn () => $this->post('/customers', [
-            'name' => 'Synthetic lead '.$i, 'phone' => '0815'.str_pad((string) $i, 8, '0', STR_PAD_LEFT),
+            'name' => 'Synthetic lead '.$i, 'gender' => 'L', 'phone' => '0815'.str_pad((string) $i, 8, '0', STR_PAD_LEFT),
             'vehicle_model' => 'Model 1', 'source' => 'walk_in',
         ]), $i)->assertRedirect()->assertSessionHasNoErrors();
     }
     $this->actingAs($admin);
     for ($i = 1; $i <= 32; $i++) {
         $this->travel(2)->minutes();
-        $csv = "name,phone,vehicle_model,source,sales_username\n";
+        $csv = "name,gender,phone,vehicle_model,source,sales_username\n";
         for ($row = 1; $row <= 100; $row++) {
             $phone = '0816'.str_pad((string) ($i * 100 + $row), 8, '0', STR_PAD_LEFT);
-            $csv .= "Synthetic import,{$phone},Model 1,walk_in,{$sales->username}\n";
+            $csv .= "Synthetic import,L,{$phone},Model 1,walk_in,{$sales->username}\n";
         }
         $file = UploadedFile::fake()->createWithContent('g13.csv', $csv);
         $measure('import_preview_100', fn () => $this->post('/imports/preview', ['file' => $file]), $i)->assertOk();

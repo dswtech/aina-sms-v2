@@ -49,27 +49,33 @@ export function areaPatch(chosen: string[]) {
         : null;
 }
 
+/** Credit needs every step: leasing (and its name for Kredit Lain), then tenor, then insurance. */
 export function financingPatch(chosen: string[]) {
-    const [type, leasing, name] = chosen;
+    const [type, leasing, ...rest] = chosen;
     if (!type) return { financing: null };
     if (type === 'cash')
         return {
-            financing: { type: 'cash', leasing_id: null, other_name: null },
+            financing: {
+                type: 'cash',
+                leasing_id: null,
+                other_name: null,
+                tenor_months: null,
+                insurance_type: null,
+            },
         };
     if (!leasing) return null;
-    if (leasing === 'other')
-        return name?.trim()
-            ? {
-                  financing: {
-                      type: 'credit',
-                      leasing_id: 'other',
-                      other_name: name.trim(),
-                  },
-              }
-            : null;
+    const other = leasing === 'other';
+    const [name, tenor, insurance] = other ? rest : [null, ...rest];
+    if ((other && !name?.trim()) || !tenor || !insurance) return null;
 
     return {
-        financing: { type: 'credit', leasing_id: leasing, other_name: null },
+        financing: {
+            type: 'credit',
+            leasing_id: leasing,
+            other_name: other ? name!.trim() : null,
+            tenor_months: Number(tenor),
+            insurance_type: insurance,
+        },
     };
 }
 

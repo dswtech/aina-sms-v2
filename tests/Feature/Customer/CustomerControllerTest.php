@@ -70,6 +70,7 @@ it('creates a new lead with customer, transaction, and initial assignment in one
     $response = $this->actingAs($sales)
         ->post(route('customers.store'), [
             'name' => 'Doni Kusuma',
+            'gender' => 'L',
             'phone' => '081234567890',
             'email' => 'doni@example.com',
             'vehicle_model' => 'Stargazer Prime',

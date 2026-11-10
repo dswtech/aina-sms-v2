@@ -1,4 +1,5 @@
 import { ClosingMonthForm } from '@/components/team-performance';
+import { CustomerProfileFields } from '@/components/customer-profile-fields';
 import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -20,6 +21,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangeField } from '@/components/date-range-field';
 import {
+    type CustomerProfile,
+    draftFromProfile,
+    missingProfileFields,
+    profilePayload,
+    requiredProfileFields,
+} from '@/lib/customer-profile';
+import {
     type Area,
     CHANNEL_LABELS,
     areaLabel,
@@ -37,6 +45,7 @@ type Transaction = {
     id: number;
     public_id: string;
     customer: { name: string; phone: string } | null;
+    customer_profile: CustomerProfile | null;
     sales: { name: string; username: string } | null;
     vehicle_model: string | null;
     source: string;
@@ -186,9 +195,14 @@ export default function TransactionsIndex({
         'delivery' | 'cancel' | null
     >(null);
     const [toStage, setToStage] = useState('');
+    const profileFields = missingProfileFields(
+        fulfillmentAction ?? toStage,
+        selected?.customer_profile,
+    );
     const [notes, setNotes] = useState('');
     const [bookingFee, setBookingFee] = useState(false);
     const [vehicle, setVehicle] = useState('');
+    const [profile, setProfile] = useState(draftFromProfile());
     const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
     const [lostReason, setLostReason] = useState('');
     const [lostNotes, setLostNotes] = useState('');
@@ -273,6 +287,7 @@ export default function TransactionsIndex({
         setNotes('');
         setBookingFee(false);
         setVehicle('');
+        setProfile(draftFromProfile(transaction.customer_profile));
         setDoChecklist(emptyDoChecklist);
         setLostReason('');
         setLostNotes('');
@@ -312,6 +327,10 @@ export default function TransactionsIndex({
                 notes: notes || null,
                 booking_fee_confirmed: bookingFee,
                 vehicle_model: vehicle || undefined,
+                customer: profilePayload(
+                    profile,
+                    requiredProfileFields(fulfillmentAction ?? toStage),
+                ),
                 ...doChecklist,
                 lost_reason: lostReason || null,
                 lost_notes: lostNotes || null,
@@ -1076,6 +1095,25 @@ export default function TransactionsIndex({
                                         className="mt-2 min-h-11"
                                     />
                                 </div>
+                                {profileFields.length > 0 && (
+                                    <div className="space-y-3 rounded-lg border p-3">
+                                        <p className="text-sm text-muted-foreground">
+                                            Lengkapi data pelanggan untuk tahap
+                                            ini.
+                                        </p>
+                                        <CustomerProfileFields
+                                            fields={profileFields}
+                                            requiredFields={profileFields}
+                                            value={profile}
+                                            onChange={setProfile}
+                                            regions={regions}
+                                            districts={districts}
+                                            errors={errors ?? {}}
+                                            errorPrefix="customer."
+                                            idPrefix="stage-"
+                                        />
+                                    </div>
+                                )}
                                 {toStage === 'spk' &&
                                     !selected.vehicle_model && (
                                         <div>

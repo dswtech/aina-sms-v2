@@ -79,6 +79,16 @@ export type TransactionDetailData = {
         name: string;
         phone: string;
         social_media_account: string | null;
+        email: string | null;
+        address: string | null;
+        gender: string | null;
+        birth_date: string | null;
+        occupation: string | null;
+        area: {
+            region_code: string | null;
+            district_code: string | null;
+            other_city: string | null;
+        };
     };
     sales: { name: string; username: string } | null;
     supervisors: { id: number; name: string }[];
@@ -88,6 +98,8 @@ export type TransactionDetailData = {
         leasing_id: number | null;
         other_name: string | null;
         leasing_name?: string | null;
+        tenor_months?: number | null;
+        insurance_type?: string | null;
     };
     can_edit_metadata: boolean;
     can_comment: boolean;

@@ -38,7 +38,7 @@ use InvalidArgumentException;
  */
 #[Fillable([
     'notes', 'source_channel', 'region_code', 'district_code', 'other_city',
-    'financing_type', 'leasing_id', 'financing_other_name', 'progress_at',
+    'financing_type', 'leasing_id', 'financing_other_name', 'tenor_months', 'insurance_type', 'progress_at',
     'public_id',
     'dealer_id',
     'customer_id',
@@ -228,6 +228,13 @@ class DealTransaction extends Model
             if ($fromStage === $toStage) {
                 throw new InvalidArgumentException('Tahap tujuan harus berbeda dari tahap saat ini.');
             }
+            // Profile data arrives with the stage change and is saved with it, or the change is rejected.
+            $customer = Customer::query()->whereKey($this->customer_id)->lockForUpdate()->firstOrFail();
+            if (! empty($options['customer'])) {
+                $customer->applyProfile($options['customer']);
+            }
+            $customer->assertProfileFor($toStage);
+            $customer->save();
             $snapshots = $toStage === PipelineStage::Do ? TransactionSnapshots::capture($this) : [];
             // One instant for the deal and its history row, so progress_at equals the event time.
             $at = now();

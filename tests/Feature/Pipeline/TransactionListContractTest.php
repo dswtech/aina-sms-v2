@@ -177,7 +177,7 @@ it('exports no customer phone, address, social account or coaching text', functi
 it('rejects a boolean leasing id instead of failing in the database', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
-    $this->actingAs($sales)->postJson('/transactions', ['name' => 'Rina', 'phone' => '081234567890', 'vehicle_model' => 'Avanza', 'source' => 'walk_in',
+    $this->actingAs($sales)->postJson('/transactions', ['name' => 'Rina', 'gender' => 'P', 'phone' => '081234567890', 'vehicle_model' => 'Avanza', 'source' => 'walk_in',
         'financing' => ['type' => 'credit', 'leasing_id' => true]])->assertUnprocessable()->assertJsonValidationErrors('financing.leasing_id');
 });
 

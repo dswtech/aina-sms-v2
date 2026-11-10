@@ -160,6 +160,7 @@ it('warns about an inaccessible duplicate before creating a lead', function () {
     $this->actingAs($sales)
         ->post(route('customers.store'), [
             'name' => 'Agus Duplikat',
+            'gender' => 'L',
             'phone' => '6281299887766',
             'vehicle_model' => 'Stargazer',
             'source' => 'walk_in',

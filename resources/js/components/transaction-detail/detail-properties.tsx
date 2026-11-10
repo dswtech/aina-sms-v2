@@ -1,15 +1,25 @@
 import { router } from '@inertiajs/react';
 import {
     AtSign,
+    Briefcase,
     CalendarDays,
+    Cake,
     Coins,
     CreditCard,
+    Home,
     MapPin,
     Phone,
     Store,
+    User,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+    GENDERS,
+    INSURANCES,
+    OCCUPATIONS,
+    TENORS,
+} from '@/lib/customer-profile';
 import { areaPatch, financingPatch } from '@/lib/transaction-detail';
 import {
     areaLabel,
@@ -187,9 +197,37 @@ export function DetailProperties({
             };
         if (chosen.length === 2 && chosen[1] === 'other')
             return { title: 'Nama leasing', text: true };
+        // Past the leasing (and its name for Kredit Lain): tenor, then insurance.
+        const done = chosen[1] === 'other' ? 3 : 2;
+        if (chosen.length === done)
+            return {
+                title: 'Tenor',
+                options: TENORS.map((months) => ({
+                    value: String(months),
+                    label: `${months} bulan`,
+                })),
+            };
+        if (chosen.length === done + 1)
+            return {
+                title: 'Jenis asuransi',
+                options: INSURANCES.map((i) => ({
+                    value: i.value,
+                    label: i.label,
+                })),
+            };
 
         return null;
     };
+
+    const customerArea = detail.customer.area;
+    const customerAreaLabel = customerArea.other_city
+        ? customerArea.other_city
+        : (districts.find((d) => d.code === customerArea.district_code)?.name ??
+          '-');
+    const optionLabel = (
+        options: { value: string; label: string }[],
+        value: string | null,
+    ) => options.find((o) => o.value === value)?.label ?? '-';
 
     return (
         <section aria-label="Properti transaksi">
@@ -228,6 +266,25 @@ export function DetailProperties({
                 </Row>
                 <Row icon={AtSign} label="Media sosial">
                     <Value>{detail.customer.social_media_account ?? '-'}</Value>
+                </Row>
+                <Row icon={User} label="Gender">
+                    <Value>
+                        {optionLabel(GENDERS, detail.customer.gender)}
+                    </Value>
+                </Row>
+                <Row icon={Cake} label="Tanggal lahir">
+                    <Value>{detail.customer.birth_date ?? '-'}</Value>
+                </Row>
+                <Row icon={Briefcase} label="Pekerjaan">
+                    <Value>
+                        {optionLabel(OCCUPATIONS, detail.customer.occupation)}
+                    </Value>
+                </Row>
+                <Row icon={Home} label="Alamat">
+                    <Value>{detail.customer.address ?? '-'}</Value>
+                </Row>
+                <Row icon={MapPin} label="Kecamatan">
+                    <Value>{customerAreaLabel}</Value>
                 </Row>
             </div>
             <div className="min-h-5 text-right text-xs">
