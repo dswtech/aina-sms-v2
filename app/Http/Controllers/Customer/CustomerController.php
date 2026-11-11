@@ -428,13 +428,26 @@ class CustomerController extends Controller
         $this->authorize('update', $customer);
         $validated = $request->validate([
             ...Customer::profileRules('customer'),
-            'customer' => ['nullable', 'array:gender,address,birth_date,occupation,area'],
+            'customer' => ['nullable', 'array:phone,gender,address,birth_date,occupation,area'],
+            // Unlike the other fields a phone is never blank, and it identifies the customer within the dealer.
+            'customer.phone' => ['sometimes', 'required', 'string', 'max:32', function (string $attribute, mixed $value, \Closure $fail) use ($customer): void {
+                $normalized = PhoneNormalizer::normalize((string) $value);
+                if ($normalized === null) {
+                    $fail('Nomor telepon tidak valid.');
+                } elseif (Customer::query()->where('dealer_id', $customer->dealer_id)->where('phone', $normalized)->whereKeyNot($customer->id)->exists()) {
+                    // No name: the other customer may be outside this user's access.
+                    $fail('Nomor telepon sudah dipakai pelanggan lain.');
+                }
+            }],
         ]);
         DB::transaction(function () use ($actor, $customer, $validated): void {
             $locked = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $this->authorize('update', $locked);
-            $before = $locked->only(['gender', 'address', 'birth_date', 'occupation', 'region_code', 'district_code', 'other_city']);
+            $before = $locked->only(['phone', 'gender', 'address', 'birth_date', 'occupation', 'region_code', 'district_code', 'other_city']);
             $locked->applyProfile($validated['customer'] ?? []);
+            if (isset($validated['customer']['phone'])) {
+                $locked->phone = $validated['customer']['phone'];
+            }
             if ($locked->isDirty()) {
                 $locked->save();
                 AuditRecorder::record($actor, 'customer.profile_updated', $locked, $before, $locked->only(array_keys($before)));

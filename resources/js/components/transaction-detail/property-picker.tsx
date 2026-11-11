@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 export type PickerOption = { value: string; label: string };
 export type PickerStep =
     | { title: string; options: PickerOption[] }
-    | { title: string; text: true };
+    | { title: string; text: true; type?: 'date' };
 
 type Props = {
     label: string;
@@ -245,6 +245,15 @@ export function PropertyPicker({
                     >
                         <input
                             autoFocus
+                            type={step.type ?? 'text'}
+                            // A birth date cannot be in the future; the server also requires a past day.
+                            max={
+                                step.type === 'date'
+                                    ? new Date().toLocaleDateString('en-CA', {
+                                          timeZone: 'Asia/Jakarta',
+                                      })
+                                    : undefined
+                            }
                             value={text}
                             onChange={(event) => setText(event.target.value)}
                             aria-label={step.title}
