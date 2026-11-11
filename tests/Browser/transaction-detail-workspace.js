@@ -37,6 +37,19 @@ async function transactionDetailWorkspace(page) {
     await page.getByRole('option', { name: 'Perempuan', exact: true }).click();
     await dialog.getByRole('status').filter({ hasText: 'Tersimpan' }).waitFor();
     await dialog.getByRole('button', { name: /^Kendaraan:/ }).waitFor();
+
+    // Birth date uses a date input; the phone is editable and stored normalized.
+    await dialog.getByRole('button', { name: /^Tanggal lahir:/ }).click();
+    const birth = page.getByLabel('Tanggal lahir', { exact: true });
+    assert((await birth.getAttribute('type')) === 'date', 'Birth date is not a date input');
+    await birth.fill('1990-05-01');
+    await page.getByRole('button', { name: 'Simpan', exact: true }).click();
+    await dialog.getByRole('button', { name: /^Tanggal lahir: 1990-05-01/ }).waitFor();
+    await dialog.getByRole('button', { name: /^Telepon:/ }).click();
+    await page.getByLabel('Telepon', { exact: true }).fill('0812 3456 0000');
+    await page.getByRole('button', { name: 'Simpan', exact: true }).click();
+    await dialog.getByRole('button', { name: /^Telepon: \+6281234560000/ }).waitFor();
+    checked.push('phone and birth date editable');
     checked.push('profile and vehicle editable');
 
     // Rail modes from the customer detail.

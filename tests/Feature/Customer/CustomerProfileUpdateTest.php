@@ -58,3 +58,45 @@ it('rejects profile writes from roles or users without access', function (string
 
     expect($customer->fresh()->address)->toBe('Jl. Tetap');
 })->with(['foreign', 'manager', 'other-sales']);
+
+it('lets the assigned sales correct the phone number, stored normalized', function () {
+    $sales = User::factory()->sales()->create();
+    $customer = Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'phone' => '081234567890']);
+    $customer->assignTo($sales);
+
+    $this->actingAs($sales)->patch('/customers/'.$customer->public_id.'/profile', ['customer' => ['phone' => '0812 3456 7899']])
+        ->assertSessionHasNoErrors();
+
+    expect($customer->fresh()->phone)->toBe('+6281234567899');
+    $audit = AuditLog::query()->where('action', 'customer.profile_updated')->sole();
+    expect($audit->metadata['before']['phone'])->toBe('+6281234567890')->and($audit->metadata['after']['phone'])->toBe('+6281234567899');
+});
+
+it('rejects an invalid, blank or already used phone number without naming the other customer', function () {
+    $sales = User::factory()->sales()->create();
+    $customer = Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'phone' => '081234567890']);
+    $customer->assignTo($sales);
+    Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'name' => 'Rahasia Lain', 'phone' => '+6281999999999']);
+    $other = Customer::factory()->create(['dealer_id' => User::factory()->admin()->create()->dealer_id, 'phone' => '+6281777777777']);
+
+    $url = '/customers/'.$customer->public_id.'/profile';
+    $this->actingAs($sales)->patch($url, ['customer' => ['phone' => 'abc']])->assertSessionHasErrors('customer.phone');
+    $this->actingAs($sales)->patch($url, ['customer' => ['phone' => '']])->assertSessionHasErrors('customer.phone');
+    $this->actingAs($sales)->patch($url, ['customer' => ['phone' => '0819 9999 9999']])
+        ->assertSessionHasErrors(['customer.phone' => 'Nomor telepon sudah dipakai pelanggan lain.']);
+    // The same number in another dealer is not a duplicate.
+    $this->actingAs($sales)->patch($url, ['customer' => ['phone' => '0817 7777 7777']])->assertSessionHasNoErrors();
+
+    expect($customer->fresh()->phone)->toBe('+6281777777777')->and($other->fresh()->phone)->toBe('+6281777777777');
+});
+
+it('keeps the same phone number valid when it is sent back unchanged', function () {
+    $sales = User::factory()->sales()->create();
+    $customer = Customer::factory()->create(['dealer_id' => $sales->dealer_id, 'phone' => '+6281234567890']);
+    $customer->assignTo($sales);
+
+    $this->actingAs($sales)->patch('/customers/'.$customer->public_id.'/profile', ['customer' => ['phone' => '081234567890', 'address' => 'Jl. A']])
+        ->assertSessionHasNoErrors();
+
+    expect($customer->fresh()->phone)->toBe('+6281234567890');
+});

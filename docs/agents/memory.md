@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.47 |
+| Versi | v1.48 |
 | Diperbarui | 10 November 2026 |
 | Status | Aktif |
 
@@ -11,7 +11,11 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 ## Pembaruan 11 November 2026 — Buku Pelanggan memakai modal detail
 
-Branch `feat/customers-use-detail-modal` dari `origin/main` `722881d`. Tiga tombol "Ubah Tahap" di Buku Pelanggan (tabel, kartu, detail) kini membuka `TransactionDetailModal` pada form tahap; dialog tahap duplikat dan state-nya dihapus. `customers.index` menambah props `stages`, `lostReasons` dan `leasings`. Modal mendapat prop `onCloseAutoFocus` agar fokus kembali ke tombol asal; `key` modal di halaman Transaksi tidak boleh berubah saat ditutup karena memutus pemulihan fokus. Bukti: Pest 511 tes (506 lulus, lima skip), PHPStan, `tsc`, `vp check` dan 50 tes frontend bersih, 15 skrip browser terisolasi lulus, `customer-history.js` (6) dan `accessibility.js` (22) lulus dengan mock disesuaikan. Dialog detail, aktivitas, follow-up dan penugasan ulang di Buku Pelanggan masih terpisah dari modal.
+Branch `feat/customers-use-detail-modal` dari `origin/main` `722881d`, digabung dengan `main` `fdb4c4e` (PR #91 merged). Tiga tombol "Ubah Tahap" di Buku Pelanggan (tabel, kartu, detail) kini membuka `TransactionDetailModal` pada form tahap; dialog tahap duplikat dan state-nya dihapus. `customers.index` menambah props `stages`, `lostReasons` dan `leasings`. Modal mendapat prop `onCloseAutoFocus` agar fokus kembali ke tombol asal; `key` modal di halaman Transaksi tidak boleh berubah saat ditutup karena memutus pemulihan fokus. Bukti: Pest 511 tes (506 lulus, lima skip), PHPStan, `tsc`, `vp check` dan 50 tes frontend bersih, 15 skrip browser terisolasi lulus, `customer-history.js` (6) dan `accessibility.js` (22) lulus dengan mock disesuaikan. Dialog detail, aktivitas, follow-up dan penugasan ulang di Buku Pelanggan masih terpisah dari modal.
+
+## Pembaruan 11 November 2026 — revisi modal detail
+
+Branch `fix/detail-modal-revisions` dari `origin/main` `722881d` (PR #90 sudah merged). Keterangan minimal dua baris, ikon Telepon dan WhatsApp hijau seperti Buku Pelanggan, tombol Ubah tahap berikon, tanggal lahir memakai input date, dan telepon dapat dikoreksi lewat `PATCH /customers/{customer}/profile` (valid, dinormalkan, unik per dealer). Riwayat pelanggan sengaja dibiarkan walau sebagian tumpang tindih dengan pergerakan tahap. Bukti: Pest 513 tes (508 lulus, lima skip), PHPStan, `tsc`, `vp check` dan 50 tes frontend bersih, 15 skrip browser terisolasi lulus, cek visual 1440px dan 375px. Duplikasi telepon dicek di aplikasi, bukan indeks unik database, jadi dua koreksi serentak ke nomor yang sama masih bisa lolos.
 
 ## Pembaruan 10 November 2026 — modal detail sebagai ruang kerja
 
