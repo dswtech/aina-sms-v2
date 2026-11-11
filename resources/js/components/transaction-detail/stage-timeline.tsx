@@ -28,8 +28,10 @@ export function StageTimeline({
                                 aria-hidden="true"
                                 className="absolute top-1.5 -left-[1.3rem] size-2 rounded-full bg-primary"
                             />
-                            <span className="font-medium">{event.label}</span>{' '}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="block font-medium">
+                                {event.label}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
                                 {event.actor_name ?? 'Sistem'} ·{' '}
                                 {historyDate(event.occurred_at)}
                             </span>

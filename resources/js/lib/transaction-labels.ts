@@ -59,20 +59,32 @@ const INSURANCE_LABELS: Record<string, string> = {
     all_risk: 'All Risk',
     combination: 'Kombinasi',
 };
-export const financingLabel = (t: RowDetail) => {
-    if (t.financing.type === 'cash') return 'Cash';
-    if (t.financing.type !== 'credit') return 'Belum ditentukan';
+/** `main` is the type and leasing; `detail` the credit terms, shown on a second line where there is room. */
+export const financingParts = (
+    t: RowDetail,
+): { main: string; detail: string } => {
+    if (t.financing.type === 'cash') return { main: 'Cash', detail: '' };
+    if (t.financing.type !== 'credit')
+        return { main: 'Belum ditentukan', detail: '' };
     const { leasing_name, other_name, tenor_months, insurance_type } =
         t.financing;
 
-    return [
-        'Kredit',
-        leasing_name ?? other_name,
-        tenor_months ? `${tenor_months} bulan` : null,
-        insurance_type
-            ? (INSURANCE_LABELS[insurance_type] ?? insurance_type)
-            : null,
-    ]
-        .filter(Boolean)
-        .join(' · ');
+    return {
+        main: ['Kredit', leasing_name ?? other_name]
+            .filter(Boolean)
+            .join(' · '),
+        detail: [
+            tenor_months ? `${tenor_months} bulan` : null,
+            insurance_type
+                ? (INSURANCE_LABELS[insurance_type] ?? insurance_type)
+                : null,
+        ]
+            .filter(Boolean)
+            .join(' · '),
+    };
+};
+export const financingLabel = (t: RowDetail) => {
+    const { main, detail } = financingParts(t);
+
+    return [main, detail].filter(Boolean).join(' · ');
 };
