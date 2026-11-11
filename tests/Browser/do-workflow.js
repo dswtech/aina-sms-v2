@@ -42,6 +42,7 @@ async function doWorkflow(page) {
             .getByRole('heading', { name: 'Ubah tahap', exact: true })
             .waitFor({ state: 'hidden' });
         await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
         await expectStage('DO');
     };
 

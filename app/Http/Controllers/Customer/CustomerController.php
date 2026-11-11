@@ -227,6 +227,10 @@ class CustomerController extends Controller
             'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
+            // For the shared transaction detail modal (stage form, financing picker).
+            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'stages' => array_map(fn (PipelineStage $stage): array => ['value' => $stage->value, 'label' => $stage->label()], PipelineStage::cases()),
+            'lostReasons' => array_map(fn (LostReason $reason): array => ['value' => $reason->value, 'label' => $reason->label()], LostReason::cases()),
             'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
                 'phone' => $request->session()->get('duplicate_lead_phone'),
                 'customers' => Customer::query()->visibleTo($actor)
