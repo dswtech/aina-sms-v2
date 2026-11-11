@@ -25,7 +25,7 @@ import {
 import { areaPatch, financingPatch } from '@/lib/transaction-detail';
 import {
     areaLabel,
-    financingLabel,
+    financingParts,
     sourceLabel,
 } from '@/lib/transaction-labels';
 import type { TransactionDetailData } from '@/types/history';
@@ -40,6 +40,8 @@ type Props = {
     vehicleOptions: VehicleOption[];
     canEdit: boolean;
     onSaved: () => void;
+    /** Shown beside the Transaksi card when the panel is wide enough (the stage timeline). */
+    aside?: ReactNode;
 };
 
 // Stages from which a value is required: shown beside an empty value so it can be filled early.
@@ -55,18 +57,36 @@ const LOCKED_VEHICLE_STAGES = ['spk', 'do', 'delivery'];
 // Keeps this panel's validation errors apart from the page's own forms.
 const ERROR_BAG = 'transactionDetail';
 
+function Card({ title, children }: { title: string; children: ReactNode }) {
+    return (
+        <div
+            role="group"
+            aria-label={title}
+            className="rounded-lg border px-3 pt-2 pb-1"
+        >
+            <h3 className="text-xs text-muted-foreground">{title}</h3>
+            {children}
+        </div>
+    );
+}
+
 function Row({
     icon: Icon,
     label,
     children,
+    wide = false,
 }: {
     icon: typeof MapPin;
     label: string;
     children: ReactNode;
+    /** Spans both columns of the two-column Pelanggan grid. */
+    wide?: boolean;
 }) {
     return (
-        <div className="grid min-h-11 grid-cols-[8.5rem_minmax(0,1fr)] items-center text-sm">
-            <span className="flex items-center gap-2 text-muted-foreground">
+        <div
+            className={`grid grid-cols-1 items-start text-sm @min-[22rem]:grid-cols-[8rem_minmax(0,1fr)] ${wide ? '@min-[34rem]:col-span-full' : ''}`}
+        >
+            <span className="flex min-h-6 items-center gap-2 pt-1 text-muted-foreground @min-[22rem]:min-h-11 @min-[22rem]:pt-0">
                 <Icon aria-hidden="true" className="size-4 shrink-0" />
                 {label}
             </span>
@@ -89,6 +109,7 @@ export function DetailProperties({
     vehicleOptions,
     canEdit,
     onSaved,
+    aside,
 }: Props) {
     const canEditCustomer = detail.can_edit_customer;
     const [error, setError] = useState<string | null>(null);
@@ -292,132 +313,184 @@ export function DetailProperties({
     ) => options.find((o) => o.value === value)?.label ?? '-';
 
     return (
-        <section aria-label="Properti transaksi">
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(17rem,1fr))] gap-x-6">
-                <Row icon={Car} label="Kendaraan">
-                    <PropertyPicker
-                        label="Kendaraan"
-                        display={detail.vehicle_model ?? hint('vehicle', false)}
-                        disabled={!canEdit}
-                        getStep={vehicleStep}
-                        onCommit={(chosen) =>
-                            commit({ vehicle_model: chosen[0] || null })
-                        }
-                    />
-                </Row>
-                <Row icon={MapPin} label="Area">
-                    <PropertyPicker
-                        label="Area"
-                        display={areaLabel(detail, true)}
-                        disabled={!canEdit}
-                        getStep={areaStep}
-                        onCommit={(chosen) => commit(areaPatch(chosen))}
-                    />
-                </Row>
-                <Row icon={CreditCard} label="Pembiayaan">
-                    <PropertyPicker
-                        label="Pembiayaan"
-                        display={financingLabel(detail)}
-                        disabled={!canEdit}
-                        getStep={financingStep}
-                        onCommit={(chosen) => commit(financingPatch(chosen))}
-                    />
-                </Row>
-                <Row icon={Store} label="Sumber">
-                    <Value>{sourceLabel(detail)}</Value>
-                </Row>
-                <Row icon={Coins} label="Estimasi nilai">
-                    <Value>
-                        {detail.estimated_value?.toLocaleString('id-ID') ?? '-'}
-                    </Value>
-                </Row>
-                <Row icon={CalendarDays} label="Estimasi closing">
-                    <Value>{detail.expected_closing_month ?? '-'}</Value>
-                </Row>
-                <Row icon={Phone} label="Telepon">
-                    <PropertyPicker
-                        label="Telepon"
-                        display={detail.customer.phone || '-'}
-                        disabled={!canEditCustomer}
-                        getStep={textStep('Telepon')}
-                        onCommit={(chosen) =>
-                            commitCustomer({ phone: chosen[0]?.trim() })
-                        }
-                    />
-                </Row>
-                <Row icon={AtSign} label="Media sosial">
-                    <Value>{detail.customer.social_media_account ?? '-'}</Value>
-                </Row>
-                <Row icon={User} label="Gender">
-                    <PropertyPicker
-                        label="Gender"
-                        display={
-                            detail.customer.gender
-                                ? optionLabel(GENDERS, detail.customer.gender)
-                                : hint('gender', false)
-                        }
-                        disabled={!canEditCustomer}
-                        getStep={optionStep('Gender', GENDERS)}
-                        onCommit={(chosen) =>
-                            commitCustomer({ gender: chosen[0] })
-                        }
-                    />
-                </Row>
-                <Row icon={Cake} label="Tanggal lahir">
-                    <PropertyPicker
-                        label="Tanggal lahir"
-                        display={detail.customer.birth_date ?? '-'}
-                        disabled={!canEditCustomer}
-                        getStep={textStep('Tanggal lahir', 'date')}
-                        onCommit={(chosen) =>
-                            commitCustomer({ birth_date: chosen[0]?.trim() })
-                        }
-                    />
-                </Row>
-                <Row icon={Briefcase} label="Pekerjaan">
-                    <PropertyPicker
-                        label="Pekerjaan"
-                        display={
-                            detail.customer.occupation
-                                ? optionLabel(
-                                      OCCUPATIONS,
-                                      detail.customer.occupation,
-                                  )
-                                : hint('occupation', false)
-                        }
-                        disabled={!canEditCustomer}
-                        getStep={optionStep('Pekerjaan', OCCUPATIONS)}
-                        onCommit={(chosen) =>
-                            commitCustomer({ occupation: chosen[0] })
-                        }
-                    />
-                </Row>
-                <Row icon={Home} label="Alamat">
-                    <PropertyPicker
-                        label="Alamat"
-                        display={
-                            detail.customer.address ?? hint('address', false)
-                        }
-                        disabled={!canEditCustomer}
-                        getStep={textStep('Alamat')}
-                        onCommit={(chosen) =>
-                            commitCustomer({ address: chosen[0]?.trim() })
-                        }
-                    />
-                </Row>
-                <Row icon={MapPin} label="Kecamatan">
-                    <PropertyPicker
-                        label="Kecamatan pelanggan"
-                        display={
-                            customerAreaLabel === '-'
-                                ? hint('area', false)
-                                : customerAreaLabel
-                        }
-                        disabled={!canEditCustomer}
-                        getStep={customerAreaStep}
-                        onCommit={(chosen) => commitCustomer(areaPatch(chosen))}
-                    />
-                </Row>
+        // @container: the layout follows the width of this panel, which depends on the right panel, not the window.
+        <section
+            aria-label="Properti transaksi"
+            className="@container space-y-3"
+        >
+            <Card title="Pelanggan">
+                <div className="grid grid-cols-1 gap-x-6 @min-[34rem]:grid-cols-2">
+                    <Row icon={Phone} label="Telepon">
+                        <PropertyPicker
+                            label="Telepon"
+                            display={detail.customer.phone || '-'}
+                            disabled={!canEditCustomer}
+                            getStep={textStep('Telepon')}
+                            onCommit={(chosen) =>
+                                commitCustomer({ phone: chosen[0]?.trim() })
+                            }
+                        />
+                    </Row>
+                    <Row icon={AtSign} label="Media sosial">
+                        <Value>
+                            {detail.customer.social_media_account ?? '-'}
+                        </Value>
+                    </Row>
+                    <Row icon={User} label="Gender">
+                        <PropertyPicker
+                            label="Gender"
+                            display={
+                                detail.customer.gender
+                                    ? optionLabel(
+                                          GENDERS,
+                                          detail.customer.gender,
+                                      )
+                                    : hint('gender', false)
+                            }
+                            disabled={!canEditCustomer}
+                            getStep={optionStep('Gender', GENDERS)}
+                            onCommit={(chosen) =>
+                                commitCustomer({ gender: chosen[0] })
+                            }
+                        />
+                    </Row>
+                    <Row icon={Cake} label="Tanggal lahir">
+                        <PropertyPicker
+                            label="Tanggal lahir"
+                            display={detail.customer.birth_date ?? '-'}
+                            disabled={!canEditCustomer}
+                            getStep={textStep('Tanggal lahir', 'date')}
+                            onCommit={(chosen) =>
+                                commitCustomer({
+                                    birth_date: chosen[0]?.trim(),
+                                })
+                            }
+                        />
+                    </Row>
+                    <Row icon={Briefcase} label="Pekerjaan">
+                        <PropertyPicker
+                            label="Pekerjaan"
+                            display={
+                                detail.customer.occupation
+                                    ? optionLabel(
+                                          OCCUPATIONS,
+                                          detail.customer.occupation,
+                                      )
+                                    : hint('occupation', false)
+                            }
+                            disabled={!canEditCustomer}
+                            getStep={optionStep('Pekerjaan', OCCUPATIONS)}
+                            onCommit={(chosen) =>
+                                commitCustomer({ occupation: chosen[0] })
+                            }
+                        />
+                    </Row>
+                    <Row icon={MapPin} label="Kecamatan">
+                        <PropertyPicker
+                            label="Kecamatan pelanggan"
+                            display={
+                                customerAreaLabel === '-'
+                                    ? hint('area', false)
+                                    : customerAreaLabel
+                            }
+                            disabled={!canEditCustomer}
+                            getStep={customerAreaStep}
+                            onCommit={(chosen) =>
+                                commitCustomer(areaPatch(chosen))
+                            }
+                        />
+                    </Row>
+                    <Row icon={Home} label="Alamat" wide>
+                        <PropertyPicker
+                            label="Alamat"
+                            display={
+                                detail.customer.address ??
+                                hint('address', false)
+                            }
+                            disabled={!canEditCustomer}
+                            getStep={textStep('Alamat')}
+                            onCommit={(chosen) =>
+                                commitCustomer({ address: chosen[0]?.trim() })
+                            }
+                        />
+                    </Row>
+                </div>
+            </Card>
+            <div
+                className={`grid items-start gap-3 ${aside ? '@min-[35rem]:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]' : ''}`}
+            >
+                <Card title="Transaksi">
+                    <Row icon={Car} label="Kendaraan">
+                        <PropertyPicker
+                            label="Kendaraan"
+                            display={
+                                detail.vehicle_model ?? hint('vehicle', false)
+                            }
+                            disabled={!canEdit}
+                            getStep={vehicleStep}
+                            onCommit={(chosen) =>
+                                commit({ vehicle_model: chosen[0] || null })
+                            }
+                        />
+                    </Row>
+                    <Row icon={MapPin} label="Area">
+                        <PropertyPicker
+                            label="Area"
+                            display={areaLabel(detail, true)}
+                            disabled={!canEdit}
+                            getStep={areaStep}
+                            onCommit={(chosen) => commit(areaPatch(chosen))}
+                        />
+                    </Row>
+                    <Row icon={CreditCard} label="Pembiayaan">
+                        <PropertyPicker
+                            label="Pembiayaan"
+                            display={financingParts(detail).main}
+                            detail={financingParts(detail).detail}
+                            disabled={!canEdit}
+                            getStep={financingStep}
+                            onCommit={(chosen) =>
+                                commit(financingPatch(chosen))
+                            }
+                        />
+                    </Row>
+                    <Row icon={Store} label="Sumber">
+                        <Value>{sourceLabel(detail)}</Value>
+                    </Row>
+                    <Row icon={Coins} label="Estimasi nilai">
+                        <Value>
+                            {detail.estimated_value?.toLocaleString('id-ID') ??
+                                '-'}
+                        </Value>
+                    </Row>
+                    <Row icon={CalendarDays} label="Estimasi closing">
+                        <Value>{detail.expected_closing_month ?? '-'}</Value>
+                    </Row>
+                    <div className="mt-1 border-t pt-1">
+                        <textarea
+                            aria-label="Keterangan"
+                            placeholder={
+                                canEdit
+                                    ? 'Tambah keterangan…'
+                                    : 'Tidak ada keterangan'
+                            }
+                            value={notes}
+                            readOnly={!canEdit}
+                            maxLength={2000}
+                            onChange={(event) => setDraft(event.target.value)}
+                            onBlur={() => {
+                                if (
+                                    draft !== null &&
+                                    draft !== (detail.notes ?? '')
+                                )
+                                    save({ notes: draft || null });
+                                else setDraft(null);
+                            }}
+                            className="-mx-2 block field-sizing-content min-h-16 w-[calc(100%+1rem)] resize-none rounded-md border-0 bg-transparent px-2 py-2 text-sm leading-6 outline-none hover:bg-muted read-only:hover:bg-transparent focus:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                    </div>
+                </Card>
+                {aside}
             </div>
             <div className="min-h-5 text-right text-xs">
                 {error && (
@@ -431,23 +504,6 @@ export function DetailProperties({
                     </p>
                 )}
             </div>
-            <hr className="my-2" />
-            <textarea
-                aria-label="Keterangan"
-                placeholder={
-                    canEdit ? 'Tambah keterangan…' : 'Tidak ada keterangan'
-                }
-                value={notes}
-                readOnly={!canEdit}
-                maxLength={2000}
-                onChange={(event) => setDraft(event.target.value)}
-                onBlur={() => {
-                    if (draft !== null && draft !== (detail.notes ?? ''))
-                        save({ notes: draft || null });
-                    else setDraft(null);
-                }}
-                className="-mx-2 block field-sizing-content min-h-16 w-[calc(100%+1rem)] resize-none rounded-md border-0 bg-transparent px-2 py-2 text-sm leading-6 outline-none hover:bg-muted read-only:hover:bg-transparent focus:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-            />
         </section>
     );
 }

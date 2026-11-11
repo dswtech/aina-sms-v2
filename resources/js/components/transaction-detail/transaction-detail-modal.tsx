@@ -354,8 +354,12 @@ function DetailView({
                             vehicleOptions={vehicleOptions}
                             canEdit={detail.can_edit_metadata}
                             onSaved={onSaved}
+                            aside={
+                                detail.stages && (
+                                    <StageTimeline page={detail.stages} />
+                                )
+                            }
                         />
-                        <StageTimeline page={detail.stages} />
                     </div>
                 )}
                 {!isMobile && showRight && (

@@ -52,6 +52,30 @@ async function transactionDetailWorkspace(page) {
     checked.push('phone and birth date editable');
     checked.push('profile and vehicle editable');
 
+    // Cards: Pelanggan on top, Transaksi beside the timeline on desktop, stacked on a tablet; nothing is truncated.
+    const box = async (locator) => (await locator.boundingBox()) ?? assert(false, 'Missing box');
+    const customerCard = dialog.getByRole('group', { name: 'Pelanggan', exact: true });
+    const dealCard = dialog.getByRole('group', { name: 'Transaksi', exact: true });
+    const timeline = dialog.getByRole('region', { name: 'Pergerakan tahap' });
+    const wideCustomer = await box(customerCard);
+    const wideDeal = await box(dealCard);
+    const wideTimeline = await box(timeline);
+    assert(wideCustomer.y + wideCustomer.height <= wideDeal.y + 1, 'Pelanggan card is not above Transaksi');
+    assert(wideTimeline.x >= wideDeal.x + wideDeal.width - 1, 'Timeline is not beside the Transaksi card on desktop');
+    assert(Math.abs(wideTimeline.y - wideDeal.y) < 40, 'Timeline does not start level with the Transaksi card');
+    const clipped = await dialog.locator('button[aria-haspopup="dialog"] > span').evaluateAll((spans) =>
+        spans.filter((span) => span.scrollWidth > span.clientWidth + 1).length,
+    );
+    assert(clipped === 0, `${clipped} property values are truncated`);
+    await page.setViewportSize({ width: 768, height: 1024 });
+    const narrowDeal = await box(dealCard);
+    const narrowTimeline = await box(timeline);
+    assert(narrowTimeline.y >= narrowDeal.y + narrowDeal.height - 1, 'Timeline does not stack under Transaksi on a tablet');
+    const narrowCustomer = await box(customerCard);
+    assert(narrowCustomer.width <= 460, 'Pelanggan card should be one narrow column on a tablet');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    checked.push('cards layout');
+
     // Rail modes from the customer detail.
     for (const [rail, heading] of [
         ['Pelanggan', 'Pelanggan'],
@@ -60,7 +84,7 @@ async function transactionDetailWorkspace(page) {
         ['Aktivitas', 'Aktivitas pelanggan'],
     ]) {
         await dialog.getByRole('button', { name: rail, exact: true }).click();
-        await dialog.getByRole('heading', { name: heading, exact: true }).waitFor();
+        await dialog.getByRole('heading', { name: heading, exact: true, level: 2 }).waitFor();
     }
     await dialog.getByRole('form', { name: 'Catat aktivitas' }).waitFor();
     await dialog.getByRole('button', { name: 'Pelanggan', exact: true }).click();

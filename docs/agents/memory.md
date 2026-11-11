@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.48 |
+| Versi | v1.49 |
 | Diperbarui | 10 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 11 November 2026 — properti modal dalam kartu
+
+Branch `feat/detail-modal-cards` dari `origin/main` `e451125`. Panel kiri modal: kartu Pelanggan di atas, kartu Transaksi (dengan Keterangan) di samping Pergerakan tahap; di bawah sekitar 35rem lebar panel semuanya satu kolom, dan di bawah 22rem label berada di atas nilai (container query Tailwind, bukan breakpoint jendela). `PropertyPicker` membungkus teks dan punya baris `detail`; `financingParts` memisahkan leasing dari tenor dan asuransi. Bukti: Pest 514 tes (509 lulus, lima skip), 50 tes frontend, `tsc` dan `vp check` bersih, 15 skrip browser terisolasi lulus (`transaction-detail-workspace.js` kini memeriksa susunan dan tidak ada nilai terpotong di 1440 dan 768 px), cek visual 1440, 768 dan 375 px. Satu kegagalan `transactions-financing-roles.js` pada satu putaran suite tidak muncul lagi pada dua putaran berikutnya dan saat dijalankan sendiri; diperlakukan sebagai flaky akibat beban, belum diselidiki.
 
 ## Pembaruan 11 November 2026 — Buku Pelanggan memakai modal detail
 

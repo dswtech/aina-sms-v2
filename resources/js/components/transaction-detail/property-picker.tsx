@@ -10,6 +10,8 @@ export type PickerStep =
 type Props = {
     label: string;
     display: string;
+    /** Second, smaller line under the value (e.g. credit terms). */
+    detail?: string;
     disabled: boolean;
     /** The step to show after `chosen`; `null` means the choice is complete. */
     getStep: (chosen: string[]) => PickerStep | null;
@@ -26,6 +28,7 @@ const rowClass =
 export function PropertyPicker({
     label,
     display,
+    detail,
     disabled,
     getStep,
     onCommit,
@@ -277,13 +280,21 @@ export function PropertyPicker({
             <button
                 ref={triggerRef}
                 type="button"
-                aria-label={`${label}: ${display}`}
+                aria-label={`${label}: ${display}${detail ? ` · ${detail}` : ''}`}
+                title={detail ? `${display} · ${detail}` : display}
                 aria-haspopup="dialog"
                 aria-expanded={open}
                 onClick={() => (open ? close(false) : openPanel())}
                 className={`${rowClass} outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring`}
             >
-                <span className="truncate">{display}</span>
+                <span className="flex min-w-0 flex-col">
+                    <span className="[overflow-wrap:anywhere]">{display}</span>
+                    {detail && (
+                        <span className="text-xs text-muted-foreground">
+                            {detail}
+                        </span>
+                    )}
+                </span>
             </button>
             {panel && container && createPortal(panel, container)}
         </>
