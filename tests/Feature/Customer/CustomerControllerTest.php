@@ -250,3 +250,14 @@ it('finds customers by name regardless of letter case (PostgreSQL LIKE is case-s
     $this->actingAs($sales)->get(route('customers.index', ['search' => 'budi']))
         ->assertInertia(fn (Assert $page) => $page->has('customers.data', 1)->where('customers.data.0.name', 'Budi Santoso'));
 });
+
+it('gives Buku Pelanggan what the shared detail modal needs for the stage form', function () {
+    $sales = User::factory()->sales()->create();
+
+    $this->actingAs($sales)->get(route('customers.index'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('stages', fn (Assert $stages) => $stages->each(fn (Assert $stage) => $stage->has('value')->has('label')))
+            ->has('lostReasons')
+            ->has('leasings')
+        );
+});

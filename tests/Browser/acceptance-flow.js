@@ -130,6 +130,7 @@ async function acceptanceFlow(page) {
         await page.getByRole('button', { name: 'Simpan tahap', exact: true }).click();
         await page.getByRole('dialog').getByRole('heading', { name: 'Ubah tahap', exact: true }).waitFor({ state: 'hidden' });
         await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
         const row = await findRow(model);
         assert(row.current_stage === stage, `Stage is ${row.current_stage}, expected ${stage}`);
         return row;
@@ -148,6 +149,7 @@ async function acceptanceFlow(page) {
         await form.getByRole('button', { name: button, exact: true }).click();
         await form.waitFor({ state: 'hidden' });
         await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
     };
     const openDetail = async () => {
         await findRow(model);

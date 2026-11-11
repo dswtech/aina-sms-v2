@@ -938,8 +938,8 @@ export default function TransactionsIndex({
                 </Card>
 
                 <TransactionDetailModal
-                    // Reopening with another intent (Detail, then Ubah tahap) must start the view over.
-                    key={`${detailTarget?.public_id}-${detailIntent?.action ?? 'detail'}-${detailIntent ? 'stage' : ''}`}
+                    // Another intent (Detail, then Ubah tahap) starts the view over. The key must not change on close, or focus is not restored.
+                    key={`${detailIntent?.action ?? 'detail'}-${detailIntent ? 'stage' : ''}`}
                     target={detailTarget}
                     intent={detailIntent}
                     onClose={() => setDetailTarget(null)}

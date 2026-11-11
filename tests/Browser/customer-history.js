@@ -75,6 +75,13 @@ async function customerHistory(page) {
             notifications: [],
             notificationsUnreadCount: 0,
             sidebarOpen: true,
+            // The stage form lives in the shared transaction detail modal.
+            stages: [
+                { value: 'lead', label: 'Lead' },
+                { value: 'prospect', label: 'Prospect' },
+            ],
+            lostReasons: [],
+            leasings: [],
             customers: {
                 data: [
                     customer,
@@ -169,6 +176,30 @@ async function customerHistory(page) {
                 contentType: 'application/json',
                 headers: { 'X-Inertia': 'true' },
                 body: JSON.stringify(fixture()),
+            });
+        }
+        const detailMatch = url.pathname.match(/^\/transactions\/(qa-deal-(\d+))$/);
+        if (detailMatch && request.headers().accept?.includes('application/json')) {
+            const page1 = { data: [], current_page: 1, last_page: 1, total: 0 };
+            const area = { region_code: null, region_name: null, district_code: null, district_name: null, other_city: null };
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    public_id: detailMatch[1], deal_id: Number(detailMatch[2]), vehicle_model: `Model QA ${detailMatch[2]}`,
+                    source: 'walk_in', source_channel: null, notes: null, current_stage: 'lead', stage_label: 'Lead',
+                    estimated_value: null, expected_closing_month: null, progress_at: null, customer_profile: null,
+                    customer: {
+                        public_id: 'qa-customer-b', contact_channel_preference: null, opt_out: false, last_contact_at: null,
+                        assigned_sales: null, next_follow_up: null, name: 'Pelanggan B QA', phone: '628123456789',
+                        social_media_account: null, email: null, address: null, gender: null, birth_date: null, occupation: null, area,
+                    },
+                    sales: null, supervisors: [], area,
+                    financing: { type: null, leasing_id: null, other_name: null },
+                    can_edit_metadata: true, can_edit_customer: true, can_assign_customer: false, can_update: true,
+                    can_record_do: false, can_confirm_delivery: false, can_cancel_do: false, do_event_id: null, stage_event_id: null,
+                    can_comment: true, days_in_stage: 0, stages: page1, comments: page1,
+                }),
             });
         }
         if (url.pathname.endsWith('/history')) {
@@ -425,19 +456,14 @@ async function customerHistory(page) {
             .filter({ hasText: 'Pelanggan B QA' })
             .getByRole('button', { name: 'Ubah Tahap', exact: true })
             .click();
+        // The shared detail modal opens on the stage form of customer B's transaction.
+        const stageModal = page.getByRole('dialog');
+        await stageModal.getByRole('heading', { name: 'Ubah tahap', exact: true }).waitFor();
         assert(
-            await page
-                .getByRole('dialog')
-                .getByText('Transaksi: Model QA 3', { exact: false })
-                .isVisible(),
+            await stageModal.getByText('Model QA 3', { exact: false }).first().isVisible(),
             'Quick action for customer B must use B transaction after viewing A history',
         );
-        await page
-            .getByRole('button', {
-                name: 'Konfirmasi Perubahan Tahap',
-                exact: true,
-            })
-            .click();
+        await stageModal.getByRole('button', { name: 'Simpan tahap', exact: true }).click();
         assert(
             submissions.at(-1).url === '/transactions/qa-deal-3/stage',
             'Quick stage write must target customer B transaction',

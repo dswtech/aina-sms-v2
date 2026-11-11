@@ -15,6 +15,7 @@ use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
 use App\Models\DealComment;
+use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\Team;
@@ -227,6 +228,10 @@ class CustomerController extends Controller
             'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
+            // For the shared transaction detail modal (stage form, financing picker).
+            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'stages' => array_map(fn (PipelineStage $stage): array => ['value' => $stage->value, 'label' => $stage->label()], PipelineStage::cases()),
+            'lostReasons' => array_map(fn (LostReason $reason): array => ['value' => $reason->value, 'label' => $reason->label()], LostReason::cases()),
             'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
                 'phone' => $request->session()->get('duplicate_lead_phone'),
                 'customers' => Customer::query()->visibleTo($actor)
@@ -429,14 +434,10 @@ class CustomerController extends Controller
         $validated = $request->validate([
             ...Customer::profileRules('customer'),
             'customer' => ['nullable', 'array:phone,gender,address,birth_date,occupation,area'],
-            // Unlike the other fields a phone is never blank, and it identifies the customer within the dealer.
-            'customer.phone' => ['sometimes', 'required', 'string', 'max:32', function (string $attribute, mixed $value, \Closure $fail) use ($customer): void {
-                $normalized = PhoneNormalizer::normalize((string) $value);
-                if ($normalized === null) {
+            // Unlike the other fields a phone is never blank. Uniqueness is checked under the dealer lock below.
+            'customer.phone' => ['sometimes', 'required', 'string', 'max:32', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! PhoneNormalizer::isValid((string) $value)) {
                     $fail('Nomor telepon tidak valid.');
-                } elseif (Customer::query()->where('dealer_id', $customer->dealer_id)->where('phone', $normalized)->whereKeyNot($customer->id)->exists()) {
-                    // No name: the other customer may be outside this user's access.
-                    $fail('Nomor telepon sudah dipakai pelanggan lain.');
                 }
             }],
         ]);
@@ -446,6 +447,13 @@ class CustomerController extends Controller
             $before = $locked->only(['phone', 'gender', 'address', 'birth_date', 'occupation', 'region_code', 'district_code', 'other_city']);
             $locked->applyProfile($validated['customer'] ?? []);
             if (isset($validated['customer']['phone'])) {
+                // The dealer lock is the one lead creation takes, so two writers cannot both claim a number.
+                Dealer::query()->whereKey($locked->dealer_id)->lockForUpdate()->firstOrFail();
+                $normalized = PhoneNormalizer::normalize($validated['customer']['phone']);
+                if (Customer::query()->where('dealer_id', $locked->dealer_id)->where('phone', $normalized)->whereKeyNot($locked->id)->exists()) {
+                    // No name: the other customer may be outside this user's access.
+                    throw ValidationException::withMessages(['customer.phone' => 'Nomor telepon sudah dipakai pelanggan lain.']);
+                }
                 $locked->phone = $validated['customer']['phone'];
             }
             if ($locked->isDirty()) {

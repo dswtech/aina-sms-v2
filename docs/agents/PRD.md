@@ -321,7 +321,7 @@ Ketentuan berikut memperinci CRM-01/08/14 dan PIP-01 untuk data pelanggan yang d
 
 Modal Detail pada halaman Transaksi menjadi satu tempat kerja per transaksi dan pelanggannya:
 
-- Ubah tahap, Konfirmasi Delivery dan Batalkan DO dikerjakan di modal (mode Tahap pada panel kanan); halaman Transaksi tidak lagi memiliki dialog tahap sendiri. Aturan tahap, gerbang profil dan otorisasi tidak berubah.
+- Ubah tahap, Konfirmasi Delivery dan Batalkan DO dikerjakan di modal (mode Tahap pada panel kanan); halaman Transaksi tidak lagi memiliki dialog tahap sendiri, dan Buku Pelanggan membuka modal yang sama untuk Ubah Tahap (dialog tahap duplikatnya dihapus). Aturan tahap, gerbang profil dan otorisasi tidak berubah.
 - Isian yang baru wajib di tahap tertentu (gender, alamat, pekerjaan, kecamatan, kendaraan, tenor/asuransi) tampil dan dapat diedit di modal sejak tahap awal, dengan penanda "wajib di <tahap>" selagi kosong. Profil pelanggan disimpan lewat `PATCH /customers/{customer}/profile` dengan aturan yang sama seperti blok `customer` pada pindah tahap: nilai kosong tidak pernah menimpa data tersimpan. Telepon juga dapat dikoreksi dari modal: wajib, divalidasi dan disimpan dinormalkan (E.164), dan ditolak bila sudah dipakai pelanggan lain pada dealer yang sama tanpa menyebut nama pelanggan itu.
 - Fitur detail Buku Pelanggan tersedia di modal: catat aktivitas, jadwalkan follow-up, preferensi kontak, ganti PIC Sales (Admin, dan Supervisor untuk Sales timnya), riwayat pelanggan, serta tombol Telepon dan WhatsApp di header yang mengikuti kanal pilihan dan penolakan kontak. Branch Manager tetap tanpa komentar, riwayat dan penulisan data pelanggan.
 

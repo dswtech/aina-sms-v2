@@ -59,6 +59,8 @@ type Props = {
     assignableSales: { id: number; name: string }[];
     /** Opens straight into the stage form (Ubah tahap, Konfirmasi Delivery, Batalkan DO). */
     intent?: { action: StageAction } | null;
+    /** Lets a page send focus back to the control that opened the modal. */
+    onCloseAutoFocus?: (event: Event) => void;
 };
 
 type Mode =
@@ -667,6 +669,7 @@ export function TransactionDetailModal({
     vehicleOptions,
     assignableSales,
     intent,
+    onCloseAutoFocus,
 }: Props) {
     const publicId = target?.public_id ?? null;
     // Keep showing the last transaction while the dialog animates closed.
@@ -720,6 +723,7 @@ export function TransactionDetailModal({
         >
             <DialogContent
                 aria-describedby={undefined}
+                onCloseAutoFocus={onCloseAutoFocus}
                 // Radix hears Escape on the document first; an open picker must close alone.
                 onEscapeKeyDown={(event) => {
                     if (

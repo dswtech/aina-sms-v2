@@ -1,16 +1,9 @@
 import { CustomerHistory } from '@/components/customer-history';
-import { CustomerProfileFields } from '@/components/customer-profile-fields';
-import { DoChecklist, emptyDoChecklist } from '@/components/do-checklist';
+import { TransactionDetailModal } from '@/components/transaction-detail/transaction-detail-modal';
 import type { HistoryTransaction, TimelineComment } from '@/types/history';
 import { ClosingMonthForm } from '@/components/team-performance';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { canContact } from '@/lib/customer-contact';
-import {
-    draftFromProfile,
-    missingProfileFields,
-    profilePayload,
-    requiredProfileFields,
-} from '@/lib/customer-profile';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import {
@@ -42,10 +35,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    VehicleSelect,
-    type VehicleOption,
-} from '@/components/transaction-fields';
+import { type VehicleOption } from '@/components/transaction-fields';
 import {
     Select,
     SelectContent,
@@ -101,6 +91,9 @@ type Props = {
     vehicleOptions?: VehicleOption[];
     regions?: { code: string; name: string }[];
     districts?: { code: string; region_code: string; name: string }[];
+    leasings?: { id: number; name: string }[];
+    stages?: { value: string; label: string }[];
+    lostReasons?: { value: string; label: string }[];
     customers: {
         data: CustomerItem[];
         current_page: number;
@@ -156,13 +149,15 @@ export default function CustomersIndex({
     vehicleOptions = [],
     regions = [],
     districts = [],
+    leasings = [],
+    stages = [],
+    lostReasons = [],
 }: Props) {
     const { auth, errors } = usePage().props;
     const role = auth.user.role;
     const [search, setSearch] = useState(filters.search || '');
     const [activityOpen, setActivityOpen] = useState(false);
     const [followUpOpen, setFollowUpOpen] = useState(false);
-    const [stageOpen, setStageOpen] = useState(false);
     const [detailOpen, setDetailOpen] = useState(false);
     const customerActionTriggerRef = useRef<HTMLButtonElement | null>(null);
     const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
@@ -202,15 +197,11 @@ export default function CustomersIndex({
     const [followUpSaving, setFollowUpSaving] = useState(false);
     const [followUpError, setFollowUpError] = useState('');
 
-    const [nextStage, setNextStage] = useState('prospect');
-    const [stageNotes, setStageNotes] = useState('');
-    const stageEventId = useRef<number | null>(null);
-    const [lostReason, setLostReason] = useState('price_budget');
-    const [bookingFee, setBookingFee] = useState(false);
-    const [vehicle, setVehicle] = useState('');
-    const [profile, setProfile] = useState(draftFromProfile());
-    const profileFields = missingProfileFields(nextStage, selectedCustomer);
-    const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
+    const [stageTarget, setStageTarget] = useState<{
+        public_id: string;
+        vehicle_model: string | null;
+        customerName: string;
+    } | null>(null);
 
     const [reassignSalesId, setReassignSalesId] = useState('');
     const [reassignNotes, setReassignNotes] = useState('');
@@ -242,10 +233,7 @@ export default function CustomersIndex({
             setReplyBody('');
             setEditingCommentId(null);
             setEditBody('');
-            setStageOpen(false);
-            setStageNotes('');
-            setBookingFee(false);
-            setVehicle('');
+            setStageTarget(null);
             setActivityOpen(false);
             setActNotes('');
             setFollowUpOpen(false);
@@ -316,8 +304,7 @@ export default function CustomersIndex({
         setActNotes('');
         setFuDate('');
         setFuNotes('');
-        setStageNotes('');
-        setBookingFee(false);
+        setStageTarget(null);
     }
     function openDetail(customer: CustomerItem, trigger: HTMLButtonElement) {
         customerActionTriggerRef.current = trigger;
@@ -399,42 +386,15 @@ export default function CustomersIndex({
         );
     }
 
-    function openStage(stage: string) {
-        stageEventId.current =
-            selectedCustomer?.active_deal?.stage_event_id ?? null;
-        setNextStage(stage);
-        setVehicle('');
-        setProfile(draftFromProfile(selectedCustomer));
-        setDoChecklist(emptyDoChecklist);
-        setStageOpen(true);
-    }
-
-    function handleUpdateStage(e: React.FormEvent) {
-        e.preventDefault();
-        if (!selectedCustomer || !selectedCustomer.active_deal) return;
-        router.patch(
-            `/transactions/${selectedCustomer.active_deal.public_id}/stage`,
-            {
-                to_stage: nextStage,
-                stage_event_id: stageEventId.current,
-                notes: stageNotes,
-                booking_fee_confirmed: bookingFee,
-                vehicle_model: vehicle || undefined,
-                customer: profilePayload(
-                    profile,
-                    requiredProfileFields(nextStage),
-                ),
-                ...doChecklist,
-                lost_reason: nextStage === 'lost' ? lostReason : undefined,
-                lost_notes: nextStage === 'lost' ? stageNotes : undefined,
-            },
-            {
-                onSuccess: () => {
-                    setStageOpen(false);
-                    setStageNotes('');
-                },
-            },
-        );
+    function openStage(
+        deal: { public_id: string; vehicle_model: string | null },
+        customerName: string,
+    ) {
+        setStageTarget({
+            public_id: deal.public_id,
+            vehicle_model: deal.vehicle_model,
+            customerName,
+        });
     }
 
     function handleReassign(e: React.FormEvent) {
@@ -899,8 +859,8 @@ export default function CustomersIndex({
                                                                 c,
                                                             );
                                                             openStage(
-                                                                c.active_deal!
-                                                                    .current_stage,
+                                                                c.active_deal!,
+                                                                c.name,
                                                             );
                                                         }}
                                                     >
@@ -1127,9 +1087,8 @@ export default function CustomersIndex({
                                                                     c,
                                                                 );
                                                                 openStage(
-                                                                    c
-                                                                        .active_deal!
-                                                                        .current_stage,
+                                                                    c.active_deal!,
+                                                                    c.name,
                                                                 );
                                                             }}
                                                         >
@@ -1370,199 +1329,25 @@ export default function CustomersIndex({
                     </DialogContent>
                 </Dialog>
 
-                {/* Dialog: Ubah Tahap Pipeline */}
-                <Dialog open={stageOpen} onOpenChange={setStageOpen}>
-                    <DialogContent
-                        className="sm:max-w-md"
-                        onCloseAutoFocus={restoreCustomerActionFocus}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>Perbarui Tahap Penjualan</DialogTitle>
-                            <DialogDescription>
-                                Transaksi:{' '}
-                                {selectedCustomer?.active_deal?.vehicle_model ??
-                                    'Belum dipilih'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form
-                            onSubmit={handleUpdateStage}
-                            className="space-y-4 pt-2"
-                        >
-                            <div className="space-y-1">
-                                <Label htmlFor="stage-select">
-                                    Tahap Berikutnya
-                                </Label>
-                                <Select
-                                    value={nextStage}
-                                    onValueChange={setNextStage}
-                                >
-                                    <SelectTrigger
-                                        id="stage-select"
-                                        className="min-h-11 w-full"
-                                    >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="lead">
-                                            Lead
-                                        </SelectItem>
-                                        <SelectItem value="prospect">
-                                            Prospect
-                                        </SelectItem>
-                                        <SelectItem value="hot_prospect">
-                                            Hot Prospect
-                                        </SelectItem>
-                                        <SelectItem value="spk">
-                                            SPK (Pemesanan)
-                                        </SelectItem>
-                                        {selectedCustomer?.active_deal
-                                            ?.can_record_do && (
-                                            <SelectItem value="do">
-                                                DO (Delivery Order)
-                                            </SelectItem>
-                                        )}
-                                        <SelectItem value="lost">
-                                            Lost (Gagal Closing)
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {profileFields.length > 0 && (
-                                <div className="space-y-3 rounded-lg border p-3">
-                                    <p className="text-sm text-muted-foreground">
-                                        Lengkapi data pelanggan untuk tahap ini.
-                                    </p>
-                                    <CustomerProfileFields
-                                        fields={profileFields}
-                                        requiredFields={profileFields}
-                                        value={profile}
-                                        onChange={setProfile}
-                                        regions={regions}
-                                        districts={districts}
-                                        errors={
-                                            errors as Record<string, string>
-                                        }
-                                        errorPrefix="customer."
-                                        idPrefix="stage-"
-                                    />
-                                </div>
-                            )}
-
-                            {nextStage === 'spk' &&
-                                !selectedCustomer?.active_deal
-                                    ?.vehicle_model && (
-                                    <div className="space-y-1">
-                                        <Label htmlFor="spk-vehicle">
-                                            Kendaraan (wajib untuk SPK)
-                                        </Label>
-                                        <VehicleSelect
-                                            id="spk-vehicle"
-                                            value={vehicle}
-                                            options={vehicleOptions}
-                                            onChange={setVehicle}
-                                        />
-                                    </div>
-                                )}
-
-                            {nextStage === 'spk' && (
-                                <div className="flex items-center gap-2 rounded-lg border p-3">
-                                    <input
-                                        type="checkbox"
-                                        id="booking-fee"
-                                        checked={bookingFee}
-                                        onChange={(e) =>
-                                            setBookingFee(e.target.checked)
-                                        }
-                                        className="size-4"
-                                    />
-                                    <Label
-                                        htmlFor="booking-fee"
-                                        className="text-sm font-normal"
-                                    >
-                                        Booking fee telah diterima dan
-                                        terverifikasi sesuai kebijakan dealer.
-                                    </Label>
-                                </div>
-                            )}
-
-                            {nextStage === 'do' && (
-                                <DoChecklist
-                                    value={doChecklist}
-                                    onChange={setDoChecklist}
-                                />
-                            )}
-
-                            {nextStage === 'lost' && (
-                                <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="lost-reason">
-                                            Alasan Lost *
-                                        </Label>
-                                        <Select
-                                            value={lostReason}
-                                            onValueChange={setLostReason}
-                                        >
-                                            <SelectTrigger
-                                                id="lost-reason"
-                                                className="min-h-11 w-full"
-                                            >
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="competitor">
-                                                    Membeli di kompetitor /
-                                                    merek lain
-                                                </SelectItem>
-                                                <SelectItem value="price_budget">
-                                                    Harga / anggaran belum cocok
-                                                </SelectItem>
-                                                <SelectItem value="credit_rejected">
-                                                    Pengajuan leasing ditolak
-                                                </SelectItem>
-                                                <SelectItem value="no_response">
-                                                    Tidak merespons follow-up
-                                                </SelectItem>
-                                                <SelectItem value="cancel_purchase">
-                                                    Batal / menunda beli
-                                                </SelectItem>
-                                                <SelectItem value="other">
-                                                    Alasan lainnya
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="space-y-1">
-                                <Label htmlFor="stage-notes">
-                                    Catatan Transisi
-                                </Label>
-                                <Input
-                                    id="stage-notes"
-                                    value={stageNotes}
-                                    onChange={(e) =>
-                                        setStageNotes(e.target.value)
-                                    }
-                                    placeholder="Keterangan pendukung kemajuan tahap..."
-                                    className="min-h-11"
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="min-h-11 w-full"
-                                disabled={
-                                    nextStage === 'do' &&
-                                    !Object.values(doChecklist).every(Boolean)
-                                }
-                            >
-                                Konfirmasi Perubahan Tahap
-                            </Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {/* Ubah tahap uses the same modal as the Transactions page. */}
+                <TransactionDetailModal
+                    target={
+                        stageTarget && {
+                            ...stageTarget,
+                            customer: { name: stageTarget.customerName },
+                        }
+                    }
+                    intent={{ action: null }}
+                    onClose={() => setStageTarget(null)}
+                    onCloseAutoFocus={restoreCustomerActionFocus}
+                    regions={regions}
+                    districts={districts}
+                    leasings={leasings}
+                    stages={stages}
+                    lostReasons={lostReasons}
+                    vehicleOptions={vehicleOptions}
+                    assignableSales={assignableSales}
+                />
 
                 {/* Dialog: Penugasan Ulang */}
                 <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
@@ -1629,7 +1414,7 @@ export default function CustomersIndex({
                             if (
                                 !activityOpen &&
                                 !followUpOpen &&
-                                !stageOpen &&
+                                !stageTarget &&
                                 !reassignOpen
                             ) {
                                 customerActionTriggerRef.current?.focus({
@@ -1952,8 +1737,8 @@ export default function CustomersIndex({
                                         onClick={() => {
                                             setDetailOpen(false);
                                             openStage(
-                                                selectedCustomer.active_deal!
-                                                    .current_stage,
+                                                selectedCustomer.active_deal!,
+                                                selectedCustomer.name,
                                             );
                                         }}
                                     >
