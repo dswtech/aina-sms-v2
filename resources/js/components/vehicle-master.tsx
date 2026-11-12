@@ -277,99 +277,38 @@ export function VehicleMaster({
     const [showInactive, setShowInactive] = useState(false);
     const [draft, setDraft] = useState<Draft | null>(null);
     const query = search.trim().toLowerCase();
+    const typeName = (id: number) =>
+        types.find((t) => t.id === id)?.name ?? '-';
+    const rows = models.filter(
+        (m) =>
+            (showInactive || m.is_active) &&
+            m.name.toLowerCase().includes(query),
+    );
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Master kendaraan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                    Sales memilih model dari daftar ini; kendaraan wajib terisi
-                    saat transaksi masuk tahap SPK. Model yang sudah dipakai
-                    tidak dihapus, hanya dinonaktifkan.
-                </p>
-                <form
-                    className="flex flex-wrap items-end gap-3"
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        router.post(
-                            '/dealer-settings/vehicle-types',
-                            { name: newType },
-                            {
-                                preserveScroll: true,
-                                onSuccess: () => setNewType(''),
-                            },
-                        );
-                    }}
-                >
-                    <div className="min-w-48 flex-1">
-                        <Label htmlFor="new-vehicle-type">
-                            Tambah jenis kendaraan
-                        </Label>
-                        <Input
-                            id="new-vehicle-type"
-                            className="mt-1 min-h-11"
-                            value={newType}
-                            onChange={(e) => setNewType(e.target.value)}
-                        />
-                        <InputError message={errors?.name} />
-                    </div>
-                    <Button
-                        type="submit"
-                        className="min-h-11"
-                        disabled={newType.trim() === ''}
-                    >
-                        Tambah jenis
-                    </Button>
-                    <Button
-                        type="button"
-                        className="min-h-11"
-                        disabled={types.length === 0}
-                        onClick={() => setDraft(emptyDraft)}
-                    >
-                        Tambah model
-                    </Button>
-                </form>
-
-                <div className="flex flex-wrap items-center gap-3">
-                    <Input
-                        className="min-h-11 max-w-xs"
-                        placeholder="Cari model…"
-                        aria-label="Cari model"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <label className="flex min-h-11 items-center gap-2 text-sm">
-                        <input
-                            type="checkbox"
-                            checked={showInactive}
-                            onChange={(e) => setShowInactive(e.target.checked)}
-                        />
-                        Tampilkan nonaktif
-                    </label>
-                </div>
-
-                {types.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        Belum ada jenis kendaraan. Tambahkan jenis lebih dulu
-                        (mis. MPV, SUV, Pickup).
-                    </p>
-                )}
-                {types
-                    .filter((t) => showInactive || t.is_active)
-                    .map((type) => {
-                        const rows = models.filter(
-                            (m) =>
-                                m.vehicle_type_id === type.id &&
-                                (showInactive || m.is_active) &&
-                                m.name.toLowerCase().includes(query),
-                        );
-                        if (query !== '' && rows.length === 0) return null;
-                        return (
-                            <section
+        <div className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+                Sales memilih model dari daftar ini; kendaraan wajib terisi saat
+                transaksi masuk tahap SPK. Model yang sudah dipakai tidak
+                dihapus, hanya dinonaktifkan.
+            </p>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Jenis kendaraan</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {types.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            Belum ada jenis kendaraan. Tambahkan jenis lebih
+                            dulu (mis. MPV, SUV, Pickup).
+                        </p>
+                    )}
+                    {types
+                        .filter((t) => showInactive || t.is_active)
+                        .map((type) => (
+                            <div
                                 key={`${type.id}-${type.name}-${type.is_active}`}
-                                className="space-y-2 rounded-lg border p-3"
+                                className="rounded-lg border p-3"
                             >
                                 <TypeHeader
                                     type={type}
@@ -380,77 +319,142 @@ export function VehicleMaster({
                                         ).length
                                     }
                                 />
-                                {rows.length > 0 && (
-                                    <ul className="divide-y">
-                                        {rows.map((m) => (
-                                            <li
-                                                key={m.id}
-                                                className="flex flex-wrap items-center gap-3 py-2"
-                                            >
-                                                <span className="min-w-40 flex-1 font-medium">
-                                                    {m.name}
-                                                </span>
-                                                <span className="text-sm text-muted-foreground">
-                                                    {vehiclePriceRange(
-                                                        m.price_min,
-                                                        m.price_max,
-                                                    ) ?? 'Harga tidak diisi'}
-                                                </span>
-                                                <span className="text-sm">
-                                                    {m.is_active
-                                                        ? 'Aktif'
-                                                        : 'Nonaktif'}
-                                                </span>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="min-h-11"
-                                                    aria-label={`Ubah ${m.name}`}
-                                                    onClick={() =>
-                                                        setDraft({
-                                                            id: m.id,
-                                                            vehicle_type_id:
-                                                                String(
-                                                                    m.vehicle_type_id,
-                                                                ),
-                                                            name: m.name,
-                                                            price_min:
-                                                                m.price_min ===
-                                                                null
-                                                                    ? ''
-                                                                    : String(
-                                                                          m.price_min,
-                                                                      ),
-                                                            price_max:
-                                                                m.price_max ===
-                                                                null
-                                                                    ? ''
-                                                                    : String(
-                                                                          m.price_max,
-                                                                      ),
-                                                            is_active:
-                                                                m.is_active,
-                                                        })
-                                                    }
-                                                >
-                                                    Ubah
-                                                </Button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </section>
-                        );
-                    })}
-                {draft && (
-                    <ModelDialog
-                        key={draft.id ?? 'new'}
-                        draft={draft}
-                        types={types}
-                        onClose={() => setDraft(null)}
-                    />
-                )}
-            </CardContent>
-        </Card>
+                            </div>
+                        ))}
+                    <form
+                        className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed p-3"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            router.post(
+                                '/dealer-settings/vehicle-types',
+                                { name: newType },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => setNewType(''),
+                                },
+                            );
+                        }}
+                    >
+                        <div className="min-w-48 flex-1">
+                            <Label htmlFor="new-vehicle-type">
+                                Tambah jenis kendaraan
+                            </Label>
+                            <Input
+                                id="new-vehicle-type"
+                                className="mt-1 min-h-11"
+                                value={newType}
+                                onChange={(e) => setNewType(e.target.value)}
+                            />
+                            <InputError message={errors?.name} />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="min-h-11"
+                            disabled={newType.trim() === ''}
+                        >
+                            Tambah jenis
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Model kendaraan</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Input
+                            className="min-h-11 max-w-xs"
+                            placeholder="Cari model…"
+                            aria-label="Cari model"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <label className="flex min-h-11 items-center gap-2 text-sm">
+                            <input
+                                type="checkbox"
+                                checked={showInactive}
+                                onChange={(e) =>
+                                    setShowInactive(e.target.checked)
+                                }
+                            />
+                            Tampilkan nonaktif
+                        </label>
+                        <Button
+                            type="button"
+                            className="ml-auto min-h-11"
+                            disabled={types.length === 0}
+                            onClick={() => setDraft(emptyDraft)}
+                        >
+                            Tambah model
+                        </Button>
+                    </div>
+                    {rows.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            Belum ada model yang cocok.
+                        </p>
+                    )}
+                    <ul className="divide-y rounded-lg border">
+                        {rows.map((m) => (
+                            <li
+                                key={m.id}
+                                className="flex flex-wrap items-center gap-3 px-3 py-2"
+                            >
+                                <span className="min-w-40 flex-1 font-medium">
+                                    {m.name}
+                                </span>
+                                <span className="text-sm">
+                                    {typeName(m.vehicle_type_id)}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                    {vehiclePriceRange(
+                                        m.price_min,
+                                        m.price_max,
+                                    ) ?? 'Harga tidak diisi'}
+                                </span>
+                                <span className="text-sm">
+                                    {m.is_active ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11"
+                                    aria-label={`Ubah ${m.name}`}
+                                    onClick={() =>
+                                        setDraft({
+                                            id: m.id,
+                                            vehicle_type_id: String(
+                                                m.vehicle_type_id,
+                                            ),
+                                            name: m.name,
+                                            price_min:
+                                                m.price_min === null
+                                                    ? ''
+                                                    : String(m.price_min),
+                                            price_max:
+                                                m.price_max === null
+                                                    ? ''
+                                                    : String(m.price_max),
+                                            is_active: m.is_active,
+                                        })
+                                    }
+                                >
+                                    Ubah
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+            {draft && (
+                <ModelDialog
+                    key={draft.id ?? 'new'}
+                    draft={draft}
+                    types={types}
+                    onClose={() => setDraft(null)}
+                />
+            )}
+        </div>
     );
 }

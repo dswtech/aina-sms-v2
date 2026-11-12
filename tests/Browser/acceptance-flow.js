@@ -162,6 +162,8 @@ async function acceptanceFlow(page) {
     const settings = () => open('/dealer-settings');
     const setFoa = async (changes) => {
         const p = await settings();
+        // Regions are collapsible; open them all so every checkbox is reachable.
+        await page.locator('details').evaluateAll((all) => all.forEach((d) => (d.open = true)));
         const regionName = (code) => p.regions.find((r) => r.code === p.districts.find((d) => d.code === code).region_code).name;
         const districtName = (code) => p.districts.find((d) => d.code === code).name;
         for (const [code, on] of Object.entries(changes))
@@ -178,15 +180,16 @@ async function acceptanceFlow(page) {
         for (const [code, on] of Object.entries(changes))
             assert(after.foa.includes(code) === on, `FOA ${code} expected ${on} after save`);
     };
+    const leasingPage = () => open('/dealer-settings/leasing');
     const setMonitored = async (leasing, on) => {
-        await settings();
+        await leasingPage();
         const row = page.locator('li').filter({ has: page.locator(`#leasing-${leasing.id}`) });
         await row.getByLabel('Pantauan').setChecked(on);
         await Promise.all([
             page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes(`/dealer-settings/leasing/${leasing.id}`)),
             row.getByRole('button', { name: `Simpan ${leasing.name}`, exact: true }).click(),
         ]);
-        const after = await settings();
+        const after = await leasingPage();
         assert(
             after.leasings.find((l) => l.id === leasing.id).is_monitored === on,
             `Leasing ${leasing.name} monitored expected ${on} after save`,
@@ -199,7 +202,7 @@ async function acceptanceFlow(page) {
     try {
         // ---- 0. admin: choose FOA districts D/E in Kab. Bandung Barat (32.17) and a monitored leasing ----
         await login('g11.admin');
-        const master = await settings();
+        const master = { ...(await settings()), ...(await leasingPage()) };
         const bb = master.districts.filter((d) => d.region_code === '32.17').map((d) => d.code);
         assert(bb.length >= 2, 'Expected Kabupaten Bandung Barat districts in the master');
         const foaBb = master.foa.filter((code) => bb.includes(code));

@@ -67,7 +67,7 @@ it('updates a vehicle model, clears prices and deactivates it', function () {
 it('renders vehicle masters for Admin and rejects other roles', function () {
     $type = vehicleType($this->dealer);
     vehicleModel($this->dealer, $type);
-    $this->actingAs($this->admin)->get('/dealer-settings')->assertInertia(fn (Assert $p) => $p
+    $this->actingAs($this->admin)->get('/dealer-settings/vehicles')->assertInertia(fn (Assert $p) => $p
         ->has('vehicleTypes', 1)->has('vehicleModels', 1));
 
     $this->actingAs(User::factory()->sales()->create(['dealer_id' => $this->dealer->id]));

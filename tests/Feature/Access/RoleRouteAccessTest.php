@@ -7,7 +7,7 @@ dataset('role route access', [
     'sales' => [
         UserRole::Sales,
         ['/dashboard', '/customers', '/transactions', '/notifications'],
-        ['/team-performance', '/targets', '/analytics', '/imports', '/users', '/teams', '/dealer-settings'],
+        ['/team-performance', '/targets', '/analytics', '/imports', '/users', '/teams', '/dealer-settings', '/dealer-settings/leasing', '/dealer-settings/vehicles'],
     ],
     'supervisor' => [
         UserRole::Supervisor,
@@ -21,7 +21,7 @@ dataset('role route access', [
     ],
     'admin' => [
         UserRole::Admin,
-        ['/dashboard', '/customers', '/transactions', '/users', '/teams', '/analytics', '/imports', '/dealer-settings', '/notifications', '/targets'],
+        ['/dashboard', '/customers', '/transactions', '/users', '/teams', '/analytics', '/imports', '/dealer-settings', '/dealer-settings/leasing', '/dealer-settings/vehicles', '/notifications', '/targets'],
         ['/team-performance'],
     ],
 ]);

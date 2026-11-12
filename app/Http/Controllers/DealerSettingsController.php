@@ -29,9 +29,25 @@ class DealerSettingsController extends Controller
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
             'foa' => DB::table('dealer_foa_districts')->where('dealer_id', $actor->dealer_id)->orderBy('district_code')->pluck('district_code'),
+        ]);
+    }
+
+    public function leasing(Request $request): Response
+    {
+        $actor = $this->actor($request);
+
+        return Inertia::render('dealer-settings/leasing', [
             'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->orderBy('name')
                 ->get(['id', 'name', 'is_active', 'is_monitored'])
                 ->map(fn ($row) => ['id' => $row->id, 'name' => $row->name, 'is_active' => (bool) $row->is_active, 'is_monitored' => (bool) $row->is_monitored]),
+        ]);
+    }
+
+    public function vehicles(Request $request): Response
+    {
+        $actor = $this->actor($request);
+
+        return Inertia::render('dealer-settings/vehicles', [
             'vehicleTypes' => DB::table('vehicle_types')->where('dealer_id', $actor->dealer_id)->orderBy('name')->get(['id', 'name', 'is_active'])
                 ->map(fn ($row) => ['id' => $row->id, 'name' => $row->name, 'is_active' => (bool) $row->is_active]),
             'vehicleModels' => DB::table('vehicle_models')->where('dealer_id', $actor->dealer_id)->orderBy('name')->get(['id', 'vehicle_type_id', 'name', 'price_min', 'price_max', 'is_active'])

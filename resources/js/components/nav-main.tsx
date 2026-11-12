@@ -100,9 +100,9 @@ export function NavMain({ items }: { items: NavItem[] }) {
                 {items.map((item) =>
                     item.children?.length ? (
                         <NavigationGroup
-                            key={`${item.title}:${isCurrentUrl(item.href)}`}
+                            key={`${item.title}:${isNavigationItemActive(item, url)}`}
                             item={item}
-                            active={isCurrentUrl(item.href)}
+                            active={isNavigationItemActive(item, url)}
                             url={url}
                         />
                     ) : (

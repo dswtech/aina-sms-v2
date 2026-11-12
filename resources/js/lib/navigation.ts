@@ -83,6 +83,11 @@ const shared = {
         title: 'Pengaturan Dealer',
         href: '/dealer-settings',
         icon: Landmark,
+        children: [
+            { title: 'Area & FOA', href: '/dealer-settings' },
+            { title: 'Leasing', href: '/dealer-settings/leasing' },
+            { title: 'Master Kendaraan', href: '/dealer-settings/vehicles' },
+        ],
     },
     notifications: {
         key: 'notifications',

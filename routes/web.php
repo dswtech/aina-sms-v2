@@ -106,6 +106,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('team-memberships', [TeamMembershipController::class, 'store'])->name('team-memberships.store');
         Route::delete('team-memberships/{user}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
         Route::get('dealer-settings', [DealerSettingsController::class, 'edit'])->name('dealer-settings.edit');
+        Route::get('dealer-settings/leasing', [DealerSettingsController::class, 'leasing'])->name('dealer-settings.leasing');
+        Route::get('dealer-settings/vehicles', [DealerSettingsController::class, 'vehicles'])->name('dealer-settings.vehicles');
         Route::patch('dealer-settings/area-foa', [DealerSettingsController::class, 'updateFoa'])->name('dealer-settings.area-foa');
         Route::post('dealer-settings/leasing', [DealerSettingsController::class, 'storeLeasing'])->name('dealer-settings.leasing.store');
         Route::patch('dealer-settings/leasing/{leasing}', [DealerSettingsController::class, 'updateLeasing'])->whereNumber('leasing')->name('dealer-settings.leasing.update');
