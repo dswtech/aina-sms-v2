@@ -501,13 +501,15 @@ class CustomerController extends Controller
             ]);
             $original = $this->assertCurrentDoEvent($locked, (int) $validated['do_event_id']);
 
-            $locked->forceFill(['current_stage' => PipelineStage::Spk, 'last_activity_at' => now(), 'progress_at' => now()])->save();
+            // One instant for the deal and its history row, so progress_at equals the event time.
+            $at = now();
+            $locked->forceFill(['current_stage' => PipelineStage::Spk, 'last_activity_at' => $at, 'progress_at' => $at])->save();
             $locked->stageHistories()->create([
                 'from_stage' => PipelineStage::Do,
                 'to_stage' => PipelineStage::Spk,
                 'actor_id' => $actor->id,
                 'notes' => $validated['reason'],
-                'created_at' => now(),
+                'created_at' => $at,
                 'reverses_stage_history_id' => $original->id,
             ]);
         });
