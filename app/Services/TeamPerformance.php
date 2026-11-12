@@ -154,7 +154,7 @@ class TeamPerformance
                 'realizationUnits' => $metrics['realization_units'], 'forecastUnits' => $metrics['forecast_units'],
                 'forecastValue' => $metrics['forecast_value'], 'forecastApproved' => (bool) config('forecast.approved', false),
                 'gapUnits' => $metrics['gap_units'], 'forecastGapUnits' => $metrics['forecast_gap_units'],
-                'stageCounts' => $metrics['stage_counts'], 'stagnantCount' => $stagnantCount,
+                'stageCounts' => $metrics['stage_counts'], 'forecastStages' => $metrics['forecast_stages'], 'stagnantCount' => $stagnantCount,
                 'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDoHistoryCount' => $metrics['missing_do_history_count'],
                 'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
@@ -180,6 +180,7 @@ class TeamPerformance
         $missingClosingMonth = $missingDoHistory = 0;
         $weighted = $weightedValue = 0.0;
         $weights = config('forecast.weights', []);
+        $stageForecast = [];
         foreach ($deals as $deal) {
             // Work with the selected flags and raw values to avoid repeating model casts for each report row.
             $row = $deal instanceof DealTransaction ? $deal->getAttributes() : (array) $deal;
@@ -203,12 +204,21 @@ class TeamPerformance
                 if (! $historical && $row['closing_in_period']) {
                     $weight = (float) ($weights[$stage->value] ?? 0);
                     $weighted += $weight;
+                    $stageForecast[$stage->value] = ($stageForecast[$stage->value] ?? 0) + 1;
                     $weightedValue += (float) ($row['estimated_value'] ?? 0) * $weight;
                 }
             }
         }
         $realized = $stageCounts[PipelineStage::Do->value];
         $forecast = $historical ? null : round($realized + $weighted, 2);
+        $forecastStages = [];
+        foreach (PipelineStage::cases() as $open) {
+            if (! $historical && $open->openRank() !== null) {
+                $weight = (float) ($weights[$open->value] ?? 0);
+                $count = $stageForecast[$open->value] ?? 0;
+                $forecastStages[] = ['stage' => $open->value, 'count' => $count, 'weight' => $weight, 'units' => round($count * $weight, 4)];
+            }
+        }
 
         return [
             'target_units' => $target, 'realization_units' => $realized, 'forecast_units' => $forecast,
@@ -218,6 +228,7 @@ class TeamPerformance
             'missing_closing_month_count' => $missingClosingMonth,
             'missing_do_history_count' => $missingDoHistory,
             'stage_counts' => $stageCounts,
+            'forecast_stages' => $historical ? null : $forecastStages,
         ];
     }
 

@@ -337,3 +337,27 @@ it('can roll back only the G02 schema without removing existing sales targets', 
         ->and(Schema::hasColumn('deal_transactions', 'expected_closing_month'))->toBeFalse()
         ->and(Schema::hasTable('sales_targets'))->toBeTrue();
 });
+
+it('breaks the weighted pipeline down per stage so it adds up to the forecast', function () {
+    $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
+    $f = g02Fixture();
+    g02Deal($f, ['current_stage' => PipelineStage::Lead]);
+    g02Deal($f, ['current_stage' => PipelineStage::Lead]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => '2026-12-01']);
+    g02Deal($f, ['current_stage' => PipelineStage::Prospect, 'expected_closing_month' => null]);
+    g02Deal($f, ['current_stage' => PipelineStage::Lost]);
+    $stages = [
+        ['stage' => 'lead', 'count' => 2, 'weight' => 0.1, 'units' => 0.2],
+        ['stage' => 'prospect', 'count' => 0, 'weight' => 0.25, 'units' => 0],
+        ['stage' => 'hot_prospect', 'count' => 0, 'weight' => 0.5, 'units' => 0],
+        ['stage' => 'spk', 'count' => 1, 'weight' => 0.75, 'units' => 0.75],
+    ];
+    $this->actingAs($f['supervisor'])->get('/targets?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.forecastUnits', 0.95)->where('dashboard.missingClosingMonthCount', 1)
+        ->where('dashboard.forecastStages', $stages)
+        ->where('dashboard.teams.0.forecast_stages', $stages)
+        ->where('dashboard.performance.0.forecast_stages', $stages));
+    $this->get('/targets?period=2026-10')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.forecastStages', null)->where('dashboard.performance.0.forecast_stages', null));
+});
