@@ -258,15 +258,20 @@ async function acceptanceFlow(page) {
         await open(`/customers?search=${encodeURIComponent(custName)}`);
         // Quick actions live on the card layout (mobile); the desktop table only has Detail/Ubah Tahap.
         await page.setViewportSize({ width: 390, height: 844 });
+        const modal = page.getByRole('dialog');
+        const posted = (suffix) =>
+            page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith(suffix));
         await page.getByRole('button', { name: 'Catat Aktivitas', exact: true }).filter({ visible: true }).first().click();
-        await page.locator('#act-notes').fill('Aktivitas acceptance');
-        await page.getByRole('button', { name: 'Simpan Aktivitas' }).click();
-        await page.getByRole('heading', { name: 'Catat Aktivitas Lapangan' }).waitFor({ state: 'hidden' });
+        await modal.locator('#detail-act-notes').fill('Aktivitas acceptance');
+        await Promise.all([posted('/activities'), modal.getByRole('button', { name: 'Catat aktivitas', exact: true }).click()]);
+        await page.keyboard.press('Escape');
+        await modal.waitFor({ state: 'hidden' });
         await page.getByRole('button', { name: 'Follow-Up', exact: true }).filter({ visible: true }).first().click();
-        await page.locator('#fu-date').fill('2030-01-01T10:00');
-        await page.locator('#fu-notes').fill('Follow-up acceptance');
-        await page.getByRole('button', { name: 'Jadwalkan Tindak Lanjut' }).click();
-        await page.getByRole('heading', { name: 'Jadwalkan Tindak Lanjut Berikutnya' }).waitFor({ state: 'hidden' });
+        await modal.locator('#detail-fu-date').fill('2030-01-01T10:00');
+        await modal.locator('#detail-fu-notes').fill('Follow-up acceptance');
+        await Promise.all([posted('/follow-ups'), modal.getByRole('button', { name: 'Jadwalkan', exact: true }).click()]);
+        await page.keyboard.press('Escape');
+        await modal.waitFor({ state: 'hidden' });
         await page.setViewportSize({ width: 1440, height: 900 });
 
         await open(`/transactions/${publicId}/coaching`);

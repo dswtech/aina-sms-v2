@@ -6,7 +6,7 @@
 | Tanggal penyusunan | 4 November 2026, Asia/Jakarta |
 | Sumber kebutuhan | [PRD](PRD.md), terutama bagian 7, 11, 13, dan 14 |
 | Gerbang rilis | [Roadmap Fase 6](roadmap.md#fase-6--import-hardening-dan-pilot) |
-| Status UAT | **Belum dijalankan** untuk seluruh skenario; belum ada persetujuan go-live |
+| Status UAT | Kolom UAT per skenario tetap **Belum dijalankan**. Pada 12 November 2026 pemilik menyatakan UAT manual dilewati dan dianggap lolos ([G15](#g15)); ini deklarasi pemilik, bukan hasil eksekusi. Belum ada persetujuan go-live |
 
 Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
 
@@ -486,7 +486,7 @@ Urutan ini adalah rekomendasi triase engineering, bukan perubahan prioritas requ
 
 ### G15
 
-**Gerbang penerimaan — UAT/pilot belum dijalankan.** Bukti: [laporan QA][qa] membatasi audit sebagai bukan UAT; dokumen ini belum berisi hasil aktual atau tanda tangan pengguna. Tindak lanjut: O04 setelah blocker teknis ditriase, data awal direkonsiliasi, peserta dijadwalkan dan lingkungan/write diotorisasi. Pemilik: PO + pemilik empat role + QA/operasional. Fase 6 dan go-live tetap terbuka.
+**Gerbang penerimaan — UAT manual dilewati atas keputusan pemilik (12 November 2026).** Pemilik menyatakan UAT dianggap lolos dan tidak dijalankan manual, termasuk form UAT modal detail transaksi yang tidak diisi. Keputusan ini tidak mengubah kolom UAT per skenario dan tidak menjadi bukti eksekusi atau tanda tangan pengguna; pilot dan go-live tetap mengikuti roadmap. Setelah keputusan itu, [PR #94](https://github.com/dswtech/aina-sms-v2/pull/94) menyatukan dialog detail Buku Pelanggan ke modal transaksi bersama, mewajibkan catatan alasan saat tahap mundur, dan memecah Pengaturan Dealer menjadi submenu; bukti teknisnya `composer ci:check` dan suite Browser terisolasi. Catatan sebelumnya: UAT/pilot belum dijalankan. Bukti: [laporan QA][qa] membatasi audit sebagai bukan UAT; dokumen ini belum berisi hasil aktual atau tanda tangan pengguna. Tindak lanjut: O04 setelah blocker teknis ditriase, data awal direkonsiliasi, peserta dijadwalkan dan lingkungan/write diotorisasi. Pemilik: PO + pemilik empat role + QA/operasional. Fase 6 dan go-live tetap terbuka.
 
 ## Verifikasi dokumen dan baseline awal (4 November 2026)
 

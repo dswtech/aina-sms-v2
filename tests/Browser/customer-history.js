@@ -516,9 +516,9 @@ async function customerHistory(page) {
             .getByRole('button', { name: 'Catat Aktivitas', exact: true })
             .first()
             .click();
-        await page.locator('#act-notes').fill('Aktivitas cepat QA');
+        await page.locator('#detail-act-notes').fill('Aktivitas cepat QA');
         await page
-            .getByRole('button', { name: 'Simpan Aktivitas', exact: true })
+            .getByRole('button', { name: 'Catat aktivitas', exact: true })
             .click();
         assert(
             submissions.at(-1).url === '/customers/qa-customer/activities' &&

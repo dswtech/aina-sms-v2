@@ -58,7 +58,7 @@ type Props = {
     vehicleOptions: VehicleOption[];
     assignableSales: { id: number; name: string }[];
     /** Opens straight into the stage form (Ubah tahap, Konfirmasi Delivery, Batalkan DO). */
-    intent?: { action: StageAction } | null;
+    intent?: { action: StageAction; mode?: Mode } | null;
     /** Lets a page send focus back to the control that opened the modal. */
     onCloseAutoFocus?: (event: Event) => void;
 };
@@ -131,11 +131,9 @@ function DetailView({
     const isMobile = useIsMobile();
     const bodyRef = useRef<HTMLDivElement>(null);
     const feedRef = useRef<HTMLDivElement>(null);
-    const startsInStage = intent != null;
-    const [view, setView] = useState<View>(startsInStage ? 'stage' : 'detail');
-    const [mode, setMode] = useState<Mode>(
-        startsInStage ? 'stage' : 'comments',
-    );
+    const startMode: Mode | null = intent ? (intent.mode ?? 'stage') : null;
+    const [view, setView] = useState<View>(startMode ?? 'detail');
+    const [mode, setMode] = useState<Mode>(startMode ?? 'comments');
     const [stageAction, setStageAction] = useState<StageAction>(
         intent?.action ?? null,
     );
