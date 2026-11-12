@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\ReassignCustomerRequest;
 use App\Http\Requests\Customer\StoreCustomerActivityRequest;
 use App\Http\Requests\Customer\StoreCustomerLeadRequest;
-use App\Http\Requests\Customer\StoreCustomerTransactionRequest;
 use App\Http\Requests\Customer\StoreFollowUpRequest;
 use App\Http\Requests\Customer\UpdateDealStageRequest;
 use App\Models\Customer;
@@ -337,24 +336,6 @@ class CustomerController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Tindak lanjut berhasil dijadwalkan.',
-        ]);
-
-        return back();
-    }
-
-    public function storeTransaction(StoreCustomerTransactionRequest $request, Customer $customer): RedirectResponse
-    {
-        /** @var User $actor */
-        $actor = $request->user();
-        $this->authorize('update', $customer);
-
-        $validated = $request->validated();
-
-        app(CreateLeadTransaction::class)->createLeadTransaction($actor, $customer, $validated);
-
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => "Transaksi baru untuk {$customer->name} berhasil dibuat.",
         ]);
 
         return back();

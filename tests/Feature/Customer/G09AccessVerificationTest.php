@@ -155,7 +155,7 @@ it('retains inactive-team history for admin while rejecting new transactions and
     $this->team->update(['is_active' => false]);
     $admin = User::factory()->admin()->create(['dealer_id' => $this->dealer->id]);
     $this->actingAs($admin)->getJson(route('customers.history', $this->customer))->assertOk();
-    $this->postJson(route('customers.transactions.store', $this->customer), ['vehicle_model' => 'Baru', 'source' => 'walk_in'])->assertUnprocessable();
+    $this->postJson(route('transactions.store'), ['existing_customer_id' => $this->customer->public_id, 'name' => $this->customer->name, 'phone' => $this->customer->phone, 'vehicle_model' => 'Baru', 'source' => 'walk_in'])->assertUnprocessable();
     foreach ([$admin, $this->sales, $this->supervisor] as $actor) {
         $this->actingAs($actor)->patchJson(route('transactions.stage', $this->deal), ['to_stage' => 'prospect'])->assertForbidden();
     }

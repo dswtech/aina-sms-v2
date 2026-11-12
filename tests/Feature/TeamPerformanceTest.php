@@ -210,14 +210,11 @@ it('persists closing estimates and team attribution in both transaction creation
     $created = DealTransaction::query()->where('vehicle_model', 'Model baru')->sole();
     expect($created->expected_closing_month->format('Y-m-d'))->toBe('2026-12-01')
         ->and($created->team_id)->toBe($f['team']->id);
-    $this->post('/customers/'.$f['customer']->public_id.'/transactions', [
-        'vehicle_model' => 'Repeat order', 'source' => 'referral', 'expected_closing_month' => '2027-01',
-    ])->assertRedirect()->assertSessionHasNoErrors();
+    $existing = ['existing_customer_id' => $f['customer']->public_id, 'name' => $f['customer']->name, 'phone' => $f['customer']->phone, 'source' => 'referral'];
+    $this->post('/transactions', $existing + ['vehicle_model' => 'Repeat order', 'expected_closing_month' => '2027-01'])->assertRedirect()->assertSessionHasNoErrors();
     $repeat = DealTransaction::query()->where('vehicle_model', 'Repeat order')->sole();
     expect($repeat->expected_closing_month->format('Y-m-d'))->toBe('2027-01-01')->and($repeat->team_id)->toBe($f['team']->id);
-    $this->post('/customers/'.$f['customer']->public_id.'/transactions', [
-        'vehicle_model' => 'Invalid', 'source' => 'referral', 'expected_closing_month' => '2026-13',
-    ])->assertSessionHasErrors('expected_closing_month');
+    $this->post('/transactions', $existing + ['vehicle_model' => 'Invalid', 'expected_closing_month' => '2026-13'])->assertSessionHasErrors('expected_closing_month');
     $this->assertDatabaseMissing('deal_transactions', ['vehicle_model' => 'Invalid']);
 });
 
