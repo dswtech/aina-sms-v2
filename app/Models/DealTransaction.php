@@ -228,6 +228,9 @@ class DealTransaction extends Model
             if ($fromStage === $toStage) {
                 throw new InvalidArgumentException('Tahap tujuan harus berbeda dari tahap saat ini.');
             }
+            if ($fromStage->isBackwardTo($toStage) && blank($notes)) {
+                throw new InvalidArgumentException('Catatan alasan wajib diisi saat mundur tahap.');
+            }
             // Profile data arrives with the stage change and is saved with it, or the change is rejected.
             $customer = Customer::query()->whereKey($this->customer_id)->lockForUpdate()->firstOrFail();
             if (! empty($options['customer'])) {

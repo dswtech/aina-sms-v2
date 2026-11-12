@@ -86,3 +86,31 @@ it('requires lost reason when transitioning to Lost', function () {
         ->and($deal->fresh()->lost_reason)->toBe(LostReason::Competitor)
         ->and($deal->fresh()->lost_notes)->toBe('Membeli di merek lain karena inden lebih cepat');
 });
+
+it('requires a written reason when moving back to an earlier open stage', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
+
+    $deal = DealTransaction::create([
+        'dealer_id' => $dealer->id,
+        'customer_id' => $customer->id,
+        'sales_id' => $sales->id,
+        'vehicle_model' => 'Ioniq 5',
+        'current_stage' => PipelineStage::HotProspect,
+    ]);
+
+    expect(fn () => $deal->transitionTo(PipelineStage::Prospect, $sales))
+        ->toThrow(InvalidArgumentException::class, 'Catatan alasan wajib diisi saat mundur tahap.')
+        ->and(fn () => $deal->transitionTo(PipelineStage::Lead, $sales, '   '))
+        ->toThrow(InvalidArgumentException::class, 'Catatan alasan wajib diisi saat mundur tahap.')
+        ->and($deal->fresh()->current_stage)->toBe(PipelineStage::HotProspect)
+        ->and($deal->stageHistories()->count())->toBe(0);
+
+    $deal->transitionTo(PipelineStage::Prospect, $sales, 'Pelanggan minta waktu, belum siap survei');
+
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Prospect);
+    // Moving forward still needs no note.
+    $deal->transitionTo(PipelineStage::HotProspect, $sales);
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::HotProspect);
+});

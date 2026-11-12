@@ -11,9 +11,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
-import { getNavigation, roleLabels } from '@/lib/navigation';
+import {
+    getNavigation,
+    isNavigationItemActive,
+    roleLabels,
+} from '@/lib/navigation';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function AppSidebarHeader({
@@ -22,10 +25,10 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const { auth } = usePage().props;
-    const { isCurrentUrl } = useCurrentUrl();
+    const { url } = usePage();
     const getInitials = useInitials();
     const currentItem = getNavigation(auth.user.role).find((item) =>
-        isCurrentUrl(item.href),
+        isNavigationItemActive(item, url),
     );
 
     return (

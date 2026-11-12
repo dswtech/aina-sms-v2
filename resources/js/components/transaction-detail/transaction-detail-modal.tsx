@@ -211,6 +211,17 @@ function DetailView({
             setCollapsed(false);
         }
     };
+    // A finished deal (DO) is locked: the stage list would only offer moves the server rejects.
+    const formAction: StageAction =
+        stageAction ??
+        (detail.can_update
+            ? null
+            : detail.can_confirm_delivery
+              ? 'delivery'
+              : detail.can_cancel_do
+                ? 'cancel'
+                : null);
+
     const openStage = (action: StageAction) => {
         setStageAction(action);
         pickMode('stage');
@@ -417,9 +428,9 @@ function DetailView({
                         {activeMode === 'stage' && (
                             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
                                 <StageForm
-                                    key={`${detail.public_id}-${stageAction}`}
+                                    key={`${detail.public_id}-${formAction}`}
                                     detail={detail}
-                                    action={stageAction}
+                                    action={formAction}
                                     stages={stages}
                                     lostReasons={lostReasons}
                                     vehicleOptions={vehicleOptions}
@@ -453,9 +464,6 @@ function DetailView({
                                     <CustomerHistory
                                         customerId={detail.customer.public_id}
                                         refreshKey={detail.progress_at}
-                                        onSelection={() => undefined}
-                                        onReply={() => undefined}
-                                        onEdit={() => undefined}
                                     />
                                 </div>
                             )}

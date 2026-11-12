@@ -100,3 +100,14 @@ export function combinePages<T extends { key: string }>(pages: T[][]): T[] {
         .filter((event) => !seen.has(event.key) && seen.add(event.key))
         .reverse();
 }
+
+const OPEN_STAGES = ['lead', 'prospect', 'hot_prospect', 'spk'];
+
+/** Direction between two open stages; null when either is DO, Delivery or Lost, or they are equal. */
+export function stageDirection(from: string, to: string) {
+    const a = OPEN_STAGES.indexOf(from);
+    const b = OPEN_STAGES.indexOf(to);
+    if (a < 0 || b < 0 || a === b) return null;
+
+    return b > a ? 'forward' : 'backward';
+}

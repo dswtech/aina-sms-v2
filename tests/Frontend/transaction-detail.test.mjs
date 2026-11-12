@@ -8,6 +8,7 @@ import {
     daysInStageLabel,
     financingPatch,
     mergeEarlier,
+    stageDirection,
     stageCutoffLabel,
 } from '../../resources/js/lib/transaction-detail.ts';
 
@@ -134,4 +135,12 @@ test('a stage list shorter than the transaction history says how much is hidden'
         stageCutoffLabel(100, 130),
         'Menampilkan 100 perpindahan terbaru dari 130.',
     );
+});
+
+test('stage direction is known only between open stages', () => {
+    assert.equal(stageDirection('prospect', 'hot_prospect'), 'forward');
+    assert.equal(stageDirection('spk', 'lead'), 'backward');
+    assert.equal(stageDirection('lead', 'lead'), null);
+    assert.equal(stageDirection('prospect', 'lost'), null);
+    assert.equal(stageDirection('prospect', 'do'), null);
 });

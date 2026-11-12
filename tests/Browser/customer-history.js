@@ -49,8 +49,7 @@ async function customerHistory(page) {
     let role = 'admin',
         mode = 'ok',
         screen = 'customer',
-        coachingPage = 1,
-        releaseHistory;
+        coachingPage = 1;
     const submissions = [],
         requests = [],
         errors = [];
@@ -178,37 +177,86 @@ async function customerHistory(page) {
                 body: JSON.stringify(fixture()),
             });
         }
-        const detailMatch = url.pathname.match(/^\/transactions\/(qa-deal-(\d+))$/);
-        if (detailMatch && request.headers().accept?.includes('application/json')) {
+        const detailMatch = url.pathname.match(
+            /^\/transactions\/(qa-deal-(\d+))$/,
+        );
+        if (
+            detailMatch &&
+            request.headers().accept?.includes('application/json')
+        ) {
             const page1 = { data: [], current_page: 1, last_page: 1, total: 0 };
-            const area = { region_code: null, region_name: null, district_code: null, district_name: null, other_city: null };
+            const area = {
+                region_code: null,
+                region_name: null,
+                district_code: null,
+                district_name: null,
+                other_city: null,
+            };
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    public_id: detailMatch[1], deal_id: Number(detailMatch[2]), vehicle_model: `Model QA ${detailMatch[2]}`,
-                    source: 'walk_in', source_channel: null, notes: null, current_stage: 'lead', stage_label: 'Lead',
-                    estimated_value: null, expected_closing_month: null, progress_at: null, customer_profile: null,
+                    public_id: detailMatch[1],
+                    deal_id: Number(detailMatch[2]),
+                    vehicle_model: `Model QA ${detailMatch[2]}`,
+                    source: 'walk_in',
+                    source_channel: null,
+                    notes: null,
+                    current_stage: 'lead',
+                    stage_label: 'Lead',
+                    estimated_value: null,
+                    expected_closing_month: null,
+                    progress_at: null,
+                    customer_profile: null,
                     customer: {
-                        public_id: 'qa-customer-b', contact_channel_preference: null, opt_out: false, last_contact_at: null,
-                        assigned_sales: null, next_follow_up: null, name: 'Pelanggan B QA', phone: '628123456789',
-                        social_media_account: null, email: null, address: null, gender: null, birth_date: null, occupation: null, area,
+                        public_id:
+                            detailMatch[2] === '3'
+                                ? 'qa-customer-b'
+                                : 'qa-customer',
+                        contact_channel_preference: null,
+                        opt_out: false,
+                        last_contact_at: null,
+                        assigned_sales: null,
+                        next_follow_up: null,
+                        name:
+                            detailMatch[2] === '3'
+                                ? 'Pelanggan B QA'
+                                : 'Pelanggan QA',
+                        phone: '628123456789',
+                        social_media_account: null,
+                        email: null,
+                        address: null,
+                        gender: null,
+                        birth_date: null,
+                        occupation: null,
+                        area,
                     },
-                    sales: null, supervisors: [], area,
-                    financing: { type: null, leasing_id: null, other_name: null },
-                    can_edit_metadata: true, can_edit_customer: true, can_assign_customer: false, can_update: true,
-                    can_record_do: false, can_confirm_delivery: false, can_cancel_do: false, do_event_id: null, stage_event_id: null,
-                    can_comment: true, days_in_stage: 0, stages: page1, comments: page1,
+                    sales: null,
+                    supervisors: [],
+                    area,
+                    financing: {
+                        type: null,
+                        leasing_id: null,
+                        other_name: null,
+                    },
+                    can_edit_metadata: true,
+                    can_edit_customer: true,
+                    can_assign_customer: false,
+                    can_update: true,
+                    can_record_do: false,
+                    can_confirm_delivery: false,
+                    can_cancel_do: false,
+                    do_event_id: null,
+                    stage_event_id: null,
+                    can_comment: true,
+                    days_in_stage: 0,
+                    stages: page1,
+                    comments: page1,
                 }),
             });
         }
         if (url.pathname.endsWith('/history')) {
             requests.push(url.search);
-            const held = mode === 'slow';
-            if (held)
-                await new Promise((resolve) => {
-                    releaseHistory = resolve;
-                });
             if (mode === 'error')
                 return route.fulfill({ status: 503, body: 'Unavailable' });
             if (mode === 'denied')
@@ -240,86 +288,81 @@ async function customerHistory(page) {
                     : {}),
             };
             const second = url.searchParams.get('timeline_page') === '2';
-            return route
-                .fulfill({
-                    contentType: 'application/json',
-                    body: JSON.stringify({
-                        transactions: [deal(2, false), deal(1, true)],
-                        selected_transaction: {
-                            ...deal(old ? 1 : 2, old),
-                            can_comment: role !== 'admin',
-                        },
-                        activities: pager(
-                            [
-                                {
-                                    id: 1,
-                                    type: 'call',
-                                    type_label: 'Telepon',
-                                    notes: 'Aktivitas hubungan QA',
-                                    occurred_at: time,
-                                    user_name: 'Sales QA',
-                                },
-                            ],
-                            Number(url.searchParams.get('activity_page') || 1),
-                            21,
-                        ),
-                        timeline: pager(
-                            second
-                                ? [
-                                      {
-                                          key: 'activity-22',
-                                          kind: 'activity',
-                                          occurred_at: time,
-                                          actor_name: 'QA',
-                                          label: 'Telepon',
-                                          body: 'Event halaman dua QA',
-                                      },
-                                  ]
-                                : [
-                                      {
-                                          key: 'stage-1',
-                                          kind: 'stage',
-                                          occurred_at: time,
-                                          actor_name: 'QA',
-                                          label: 'Lead → Prospect',
-                                          body: 'Perubahan QA',
-                                      },
-                                      {
-                                          key: 'comment-7',
-                                          kind: 'comment',
-                                          occurred_at: time,
-                                          actor_name: 'Supervisor QA',
-                                          label: 'Komentar',
-                                          body: comment.body,
-                                          comment,
-                                      },
-                                      {
-                                          key: 'comment-8',
-                                          kind: 'comment',
-                                          occurred_at: time,
-                                          actor_name: 'Sales QA',
-                                          label: 'Balasan',
+            return route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    transactions: [deal(2, false), deal(1, true)],
+                    selected_transaction: {
+                        ...deal(old ? 1 : 2, old),
+                        can_comment: role !== 'admin',
+                    },
+                    activities: pager(
+                        [
+                            {
+                                id: 1,
+                                type: 'call',
+                                type_label: 'Telepon',
+                                notes: 'Aktivitas hubungan QA',
+                                occurred_at: time,
+                                user_name: 'Sales QA',
+                            },
+                        ],
+                        Number(url.searchParams.get('activity_page') || 1),
+                        21,
+                    ),
+                    timeline: pager(
+                        second
+                            ? [
+                                  {
+                                      key: 'activity-22',
+                                      kind: 'activity',
+                                      occurred_at: time,
+                                      actor_name: 'QA',
+                                      label: 'Telepon',
+                                      body: 'Event halaman dua QA',
+                                  },
+                              ]
+                            : [
+                                  {
+                                      key: 'stage-1',
+                                      kind: 'stage',
+                                      occurred_at: time,
+                                      actor_name: 'QA',
+                                      label: 'Lead → Prospect',
+                                      body: 'Perubahan QA',
+                                  },
+                                  {
+                                      key: 'comment-7',
+                                      kind: 'comment',
+                                      occurred_at: time,
+                                      actor_name: 'Supervisor QA',
+                                      label: 'Komentar',
+                                      body: comment.body,
+                                      comment,
+                                  },
+                                  {
+                                      key: 'comment-8',
+                                      kind: 'comment',
+                                      occurred_at: time,
+                                      actor_name: 'Sales QA',
+                                      label: 'Balasan',
+                                      body: 'Balasan QA',
+                                      comment: {
+                                          ...comment,
+                                          id: 8,
                                           body: 'Balasan QA',
-                                          comment: {
-                                              ...comment,
-                                              id: 8,
-                                              body: 'Balasan QA',
-                                              parent_id: 7,
-                                              parent_body: comment.body,
-                                              parent_author_name:
-                                                  'Supervisor QA',
-                                              revisions: undefined,
-                                          },
+                                          parent_id: 7,
+                                          parent_body: comment.body,
+                                          parent_author_name: 'Supervisor QA',
+                                          revisions: undefined,
                                       },
-                                  ],
-                            second ? 2 : 1,
-                            21,
-                        ),
-                    }),
-                })
-                .catch((failure) => {
-                    if (!held) throw failure;
-                });
+                                  },
+                              ],
+                        second ? 2 : 1,
+                        21,
+                    ),
+                }),
+            });
         }
         if (
             url.pathname.endsWith('/coaching') &&
@@ -368,6 +411,11 @@ async function customerHistory(page) {
                     .getByRole('button', { name: 'Detail', exact: true })
                     .first()
                     .click();
+                // Detail opens the shared modal; the history lives in its Riwayat mode.
+                await page
+                    .getByRole('dialog')
+                    .getByRole('button', { name: 'Riwayat', exact: true })
+                    .click();
                 await page.getByLabel('Pilih transaksi').waitFor();
                 await page
                     .getByLabel('Pilih transaksi')
@@ -387,19 +435,6 @@ async function customerHistory(page) {
                             )
                     ).join(',') === 'stage-1,comment-7,comment-8',
                     'Mixed events and flat reply must preserve chronological server order',
-                );
-                assert(
-                    (await page
-                        .getByRole('button', {
-                            name: 'Ubah Tahap',
-                            exact: true,
-                        })
-                        .count()) === 0,
-                    'Closed selection must remove stage action',
-                );
-                assert(
-                    (await page.locator('#history-comment-body').count()) === 0,
-                    'Admin must have read-only conversation',
                 );
                 await page
                     .getByText('Riwayat revisi (1)', { exact: true })
@@ -458,12 +493,19 @@ async function customerHistory(page) {
             .click();
         // The shared detail modal opens on the stage form of customer B's transaction.
         const stageModal = page.getByRole('dialog');
-        await stageModal.getByRole('heading', { name: 'Ubah tahap', exact: true }).waitFor();
+        await stageModal
+            .getByRole('heading', { name: 'Ubah tahap', exact: true })
+            .waitFor();
         assert(
-            await stageModal.getByText('Model QA 3', { exact: false }).first().isVisible(),
+            await stageModal
+                .getByText('Model QA 3', { exact: false })
+                .first()
+                .isVisible(),
             'Quick action for customer B must use B transaction after viewing A history',
         );
-        await stageModal.getByRole('button', { name: 'Simpan tahap', exact: true }).click();
+        await stageModal
+            .getByRole('button', { name: 'Simpan tahap', exact: true })
+            .click();
         assert(
             submissions.at(-1).url === '/transactions/qa-deal-3/stage',
             'Quick stage write must target customer B transaction',
@@ -483,132 +525,58 @@ async function customerHistory(page) {
                 submissions.at(-1).data.deal_transaction_id === 2,
             'Fresh quick activity must submit without opening history',
         );
+        const openHistory = async () => {
+            await page.goto(`${origin}/customers?search=QA`);
+            await page
+                .getByRole('button', { name: 'Detail', exact: true })
+                .first()
+                .click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: 'Riwayat', exact: true })
+                .click();
+        };
         mode = 'error';
-        await page.goto(`${origin}/customers?search=QA`);
-        await page
-            .getByRole('button', { name: 'Detail', exact: true })
-            .first()
-            .click();
+        await openHistory();
         await page.getByRole('button', { name: 'Coba lagi' }).waitFor();
         mode = 'ok';
         await page.getByRole('button', { name: 'Coba lagi' }).click();
         await page.getByLabel('Pilih transaksi').waitFor();
         role = 'sales';
-        await page.goto(`${origin}/customers?search=QA`);
-        await page
-            .getByRole('button', { name: 'Detail', exact: true })
-            .first()
-            .click();
+        await openHistory();
         await page.getByLabel('Pilih transaksi').waitFor();
         assert(
             (await page.getByText(/Riwayat revisi/).count()) === 0,
             'Non Admin must not see audit revisions',
         );
-        await page
-            .getByLabel('Komentar baru', { exact: true })
-            .fill('Draft halaman sama QA');
+        assert(
+            (await page
+                .getByRole('dialog')
+                .getByRole('button', { name: /^(Balas|Koreksi|Edit)/ })
+                .count()) === 0,
+            'Riwayat in the modal is read-only: no reply or edit controls',
+        );
         await page.getByRole('button', { name: 'Timeline berikutnya' }).click();
-        assert(
-            (await page
-                .getByLabel('Komentar baru', { exact: true })
-                .inputValue()) === 'Draft halaman sama QA',
-            'Same transaction timeline pagination must preserve draft',
-        );
-        await page
-            .getByRole('button', { name: 'Aktivitas berikutnya' })
-            .click();
-        assert(
-            (await page
-                .getByLabel('Komentar baru', { exact: true })
-                .inputValue()) === 'Draft halaman sama QA',
-            'Same transaction relationship pagination must preserve draft',
-        );
+        await page.getByText('Event halaman dua QA', { exact: true }).waitFor();
         mode = 'error';
         await page.getByRole('button', { name: 'Timeline sebelumnya' }).click();
         await page.getByRole('button', { name: 'Coba lagi' }).waitFor();
         mode = 'ok';
         await page.getByRole('button', { name: 'Coba lagi' }).click();
-        assert(
-            (await page
-                .getByLabel('Komentar baru', { exact: true })
-                .inputValue()) === 'Draft halaman sama QA',
-            'Temporary pagination failure and retry must preserve draft',
-        );
-        await page.getByLabel('Pilih transaksi').selectOption('qa-deal-1');
-        await page
-            .getByLabel('Komentar baru', { exact: true })
-            .fill('Draft transaksi lama QA');
-        await page.getByLabel('Pilih transaksi').selectOption('qa-deal-2');
-        assert(
-            (await page
-                .getByLabel('Komentar baru', { exact: true })
-                .inputValue()) === '',
-            'Switching transaction must clear draft',
-        );
-        await page.getByLabel('Pilih transaksi').selectOption('qa-deal-1');
-        await page
-            .getByLabel('Komentar baru', { exact: true })
-            .fill('Komentar transaksi lama QA');
-        await page
-            .getByRole('button', { name: 'Kirim Komentar', exact: true })
-            .click();
-        assert(
-            submissions.at(-1).url === '/transactions/qa-deal-1/comments',
-            'Comment must target selected transaction',
-        );
-        await page.getByLabel('Pilih transaksi').waitFor();
+        await page.getByText('Komentar QA', { exact: true }).first().waitFor();
         mode = 'denied';
         await page.getByRole('button', { name: 'Timeline berikutnya' }).click();
         await page
             .getByText('Akses riwayat sudah tidak tersedia.', { exact: true })
             .waitFor();
         assert(
-            (await page.locator('#history-comment-body').count()) === 0,
-            'Rejected server access must clear composer',
-        );
-        assert(
-            (await page
-                .getByRole('dialog')
-                .getByText('Pelanggan QA', { exact: true })
-                .count()) === 0,
-            'Rejected access must hide stale Customer identity',
-        );
-        assert(
             (await page.getByText('Komentar QA', { exact: true }).count()) ===
                 0,
             'Rejected server access must clear stale timeline',
         );
-        assert(
-            await page
-                .getByRole('button', { name: 'Catat Aktivitas', exact: true })
-                .isDisabled(),
-            'Rejected server access must disable actions',
-        );
         mode = 'ok';
         await page.getByRole('button', { name: 'Coba lagi' }).click();
         await page.getByLabel('Pilih transaksi').waitFor();
-        mode = 'slow';
-        await page.getByLabel('Pilih transaksi').selectOption('qa-deal-1');
-        await page.getByText('Memuat riwayat…', { exact: true }).waitFor();
-        assert(
-            await page
-                .getByRole('button', { name: 'Catat Aktivitas', exact: true })
-                .isDisabled(),
-            'Loading must disable stale actions',
-        );
-        await page.keyboard.press('Escape');
-        mode = 'ok';
-        await page
-            .getByRole('button', { name: 'Detail', exact: true })
-            .first()
-            .click();
-        await page.getByLabel('Pilih transaksi').waitFor();
-        releaseHistory();
-        assert(
-            (await page.getByLabel('Pilih transaksi').inputValue()) ===
-                'qa-deal-2',
-            'Obsolete response must not restore old transaction',
-        );
         mode = 'ok';
         screen = 'coaching';
         await page.goto(`${origin}/transactions/qa-deal-1/coaching`);

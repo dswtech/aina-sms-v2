@@ -15,13 +15,14 @@ import type {
 type Props = {
     customerId: string;
     refreshKey: unknown;
-    onSelection: (
+    onSelection?: (
         transaction: HistoryTransaction | null,
         ready: boolean,
         invalidate?: boolean,
     ) => void;
-    onReply: (comment: TimelineComment) => void;
-    onEdit: (comment: TimelineComment) => void;
+    /** Without these the timeline is read-only: no reply or edit controls. */
+    onReply?: (comment: TimelineComment) => void;
+    onEdit?: (comment: TimelineComment) => void;
 };
 export function CustomerHistory({
     customerId,
@@ -47,7 +48,7 @@ export function CustomerHistory({
         setLoading(true);
         setError('');
         setData(null);
-        onSelection(null, false);
+        onSelection?.(null, false);
         const params = new URLSearchParams({
             activity_page: String(request.activityPage),
             timeline_page: String(request.timelinePage),
@@ -74,12 +75,12 @@ export function CustomerHistory({
                 if (version !== generation.current || controller.signal.aborted)
                     return;
                 setData(result);
-                onSelection(result.selected_transaction, true);
+                onSelection?.(result.selected_transaction, true);
             })
             .catch((failure: unknown) => {
                 if (controller.signal.aborted || version !== generation.current)
                     return;
-                onSelection(null, false, accessRevoked);
+                onSelection?.(null, false, accessRevoked);
                 setError(
                     failure instanceof Error
                         ? failure.message
