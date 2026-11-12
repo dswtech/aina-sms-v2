@@ -18,7 +18,8 @@ it('creates a new transaction for an existing customer', function () {
     $customer->assignTo($sales);
 
     $response = $this->actingAs($sales)
-        ->post(route('customers.transactions.store', $customer), [
+        ->post(route('transactions.store'), [
+            'existing_customer_id' => $customer->public_id, 'name' => $customer->name, 'phone' => $customer->phone,
             'vehicle_model' => 'Creta IVT',
             'source' => 'walk_in',
             'estimated_value' => 300000000,

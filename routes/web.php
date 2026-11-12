@@ -42,7 +42,6 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::post('customers/{customer}/activities', [CustomerController::class, 'storeActivity'])->name('customers.activities.store');
         Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->name('customers.follow-ups.store');
-        Route::post('customers/{customer}/transactions', [CustomerController::class, 'storeTransaction'])->name('customers.transactions.store');
         Route::patch('customers/{customer}/assignment', [CustomerController::class, 'reassign'])->name('customers.reassign');
         Route::patch('customers/{customer}/profile', [CustomerController::class, 'updateProfile'])->name('customers.profile.update');
         Route::patch('customers/{customer}/contact-preferences', [CustomerController::class, 'updateContactPreferences'])->name('customers.contact-preferences.update');
