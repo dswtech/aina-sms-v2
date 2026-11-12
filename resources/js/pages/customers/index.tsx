@@ -1,10 +1,6 @@
-import { CustomerHistory } from '@/components/customer-history';
 import { TransactionDetailModal } from '@/components/transaction-detail/transaction-detail-modal';
-import type { HistoryTransaction, TimelineComment } from '@/types/history';
-import { ClosingMonthForm } from '@/components/team-performance';
-import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { canContact } from '@/lib/customer-contact';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import {
     ArrowUpDown,
@@ -20,12 +16,11 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -153,37 +148,17 @@ export default function CustomersIndex({
     stages = [],
     lostReasons = [],
 }: Props) {
-    const { auth, errors } = usePage().props;
-    const role = auth.user.role;
     const [search, setSearch] = useState(filters.search || '');
     const [activityOpen, setActivityOpen] = useState(false);
     const [followUpOpen, setFollowUpOpen] = useState(false);
-    const [detailOpen, setDetailOpen] = useState(false);
     const customerActionTriggerRef = useRef<HTMLButtonElement | null>(null);
-    const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
-    const [reassignOpen, setReassignOpen] = useState(false);
     const [selectedCustomerSnapshot, setSelectedCustomer] =
         useState<CustomerItem | null>(null);
-    const [historyDeal, setHistoryDeal] = useState<HistoryTransaction | null>(
-        null,
-    );
-    const [historyReady, setHistoryReady] = useState(false);
-    const [historyMode, setHistoryMode] = useState(false);
-    const currentCustomer =
+    const selectedCustomer =
         customers.data.find(
             (customer) =>
                 customer.public_id === selectedCustomerSnapshot?.public_id,
         ) ?? null;
-
-    const selectedCustomer =
-        currentCustomer && (!historyMode || historyReady)
-            ? {
-                  ...currentCustomer,
-                  active_deal: historyMode
-                      ? historyDeal
-                      : currentCustomer.active_deal,
-              }
-            : null;
 
     // Form states
 
@@ -197,69 +172,13 @@ export default function CustomersIndex({
     const [followUpSaving, setFollowUpSaving] = useState(false);
     const [followUpError, setFollowUpError] = useState('');
 
-    const [stageTarget, setStageTarget] = useState<{
+    // Detail and Ubah tahap share the Transactions page modal.
+    const [detail, setDetail] = useState<{
         public_id: string;
         vehicle_model: string | null;
         customerName: string;
+        stage: boolean;
     } | null>(null);
-
-    const [reassignSalesId, setReassignSalesId] = useState('');
-    const [reassignNotes, setReassignNotes] = useState('');
-
-    // Comment states
-    const [commentBody, setCommentBody] = useState('');
-    const [replyParentId, setReplyParentId] = useState<number | null>(null);
-    const [replyBody, setReplyBody] = useState('');
-    const [editingCommentId, setEditingCommentId] = useState<number | null>(
-        null,
-    );
-    const [editBody, setEditBody] = useState('');
-
-    const historyTransactionRef = useRef<string | null>(null);
-    const selectHistoryTransaction = useCallback(
-        (
-            transaction: HistoryTransaction | null,
-            ready: boolean,
-            invalidate = false,
-        ) => {
-            setHistoryDeal(transaction);
-            setHistoryReady(ready);
-            const identity = transaction?.public_id ?? null;
-            const changed = ready && identity !== historyTransactionRef.current;
-            if (ready || invalidate) historyTransactionRef.current = identity;
-            if (!changed && !invalidate) return;
-            setCommentBody('');
-            setReplyParentId(null);
-            setReplyBody('');
-            setEditingCommentId(null);
-            setEditBody('');
-            setStageTarget(null);
-            setActivityOpen(false);
-            setActNotes('');
-            setFollowUpOpen(false);
-            setFuDate('');
-            setFuNotes('');
-        },
-        [],
-    );
-    function replyToHistory(comment: TimelineComment) {
-        setEditingCommentId(null);
-        setReplyParentId(comment.id);
-        setReplyBody('');
-        window.setTimeout(
-            () => document.getElementById('history-comment-body')?.focus(),
-            0,
-        );
-    }
-    function editHistoryComment(comment: TimelineComment) {
-        setReplyParentId(null);
-        setEditingCommentId(comment.id);
-        setEditBody(comment.body);
-        window.setTimeout(
-            () => document.getElementById('history-comment-body')?.focus(),
-            0,
-        );
-    }
 
     function applyFilters(
         nextTab = filters.tab,
@@ -297,22 +216,23 @@ export default function CustomersIndex({
     function selectQuickCustomer(customer: CustomerItem) {
         setActivityError('');
         setFollowUpError('');
-        setHistoryMode(false);
-        setHistoryDeal(null);
-        setHistoryReady(false);
         setSelectedCustomer(customer);
         setActNotes('');
         setFuDate('');
         setFuNotes('');
-        setStageTarget(null);
+        setDetail(null);
     }
-    function openDetail(customer: CustomerItem, trigger: HTMLButtonElement) {
-        customerActionTriggerRef.current = trigger;
-        setSelectedCustomer(customer);
-        setHistoryMode(true);
-        setHistoryDeal(null);
-        setHistoryReady(false);
-        setDetailOpen(true);
+    function openDetail(
+        deal: { public_id: string; vehicle_model: string | null },
+        customerName: string,
+        stage: boolean,
+    ) {
+        setDetail({
+            public_id: deal.public_id,
+            vehicle_model: deal.vehicle_model,
+            customerName,
+            stage,
+        });
     }
 
     function handleLogActivity(e: React.FormEvent) {
@@ -381,75 +301,6 @@ export default function CustomersIndex({
                         'Penyimpanan jadwal belum dapat dipastikan. Isian tetap tersedia. Periksa jadwal pelanggan sebelum mencoba lagi.',
                     );
                     return false;
-                },
-            },
-        );
-    }
-
-    function openStage(
-        deal: { public_id: string; vehicle_model: string | null },
-        customerName: string,
-    ) {
-        setStageTarget({
-            public_id: deal.public_id,
-            vehicle_model: deal.vehicle_model,
-            customerName,
-        });
-    }
-
-    function handleReassign(e: React.FormEvent) {
-        e.preventDefault();
-        if (!selectedCustomer) return;
-        router.patch(
-            `/customers/${selectedCustomer.public_id}/assignment`,
-            {
-                sales_id: Number(reassignSalesId),
-                notes: reassignNotes || undefined,
-            },
-            {
-                onSuccess: () => {
-                    setReassignOpen(false);
-                    setReassignSalesId('');
-                    setReassignNotes('');
-                },
-            },
-        );
-    }
-
-    function handleCreateComment(e: React.FormEvent, parentId?: number) {
-        e.preventDefault();
-        if (!selectedCustomer?.active_deal) return;
-        const body = parentId ? replyBody : commentBody;
-        router.post(
-            `/transactions/${selectedCustomer.active_deal.public_id}/comments`,
-            {
-                body,
-                parent_id: parentId ?? undefined,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    if (parentId) {
-                        setReplyBody('');
-                        setReplyParentId(null);
-                    } else {
-                        setCommentBody('');
-                    }
-                },
-            },
-        );
-    }
-
-    function handleUpdateComment(e: React.FormEvent, commentId: number) {
-        e.preventDefault();
-        router.patch(
-            `/comments/${commentId}`,
-            { body: editBody },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setEditingCommentId(null);
-                    setEditBody('');
                 },
             },
         );
@@ -836,12 +687,22 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
-                                                onClick={(event) =>
-                                                    openDetail(
-                                                        c,
-                                                        event.currentTarget,
-                                                    )
+                                                disabled={!c.active_deal}
+                                                title={
+                                                    c.active_deal
+                                                        ? undefined
+                                                        : 'Belum ada transaksi yang dapat Anda lihat'
                                                 }
+                                                onClick={(event) => {
+                                                    customerActionTriggerRef.current =
+                                                        event.currentTarget;
+                                                    selectQuickCustomer(c);
+                                                    openDetail(
+                                                        c.active_deal!,
+                                                        c.name,
+                                                        false,
+                                                    );
+                                                }}
                                             >
                                                 Detail
                                             </Button>
@@ -858,9 +719,10 @@ export default function CustomersIndex({
                                                             selectQuickCustomer(
                                                                 c,
                                                             );
-                                                            openStage(
+                                                            openDetail(
                                                                 c.active_deal!,
                                                                 c.name,
+                                                                true,
                                                             );
                                                         }}
                                                     >
@@ -1062,12 +924,22 @@ export default function CustomersIndex({
                                                     variant="outline"
                                                     size="sm"
                                                     className="min-h-10"
-                                                    onClick={(event) =>
-                                                        openDetail(
-                                                            c,
-                                                            event.currentTarget,
-                                                        )
+                                                    disabled={!c.active_deal}
+                                                    title={
+                                                        c.active_deal
+                                                            ? undefined
+                                                            : 'Belum ada transaksi yang dapat Anda lihat'
                                                     }
+                                                    onClick={(event) => {
+                                                        customerActionTriggerRef.current =
+                                                            event.currentTarget;
+                                                        selectQuickCustomer(c);
+                                                        openDetail(
+                                                            c.active_deal!,
+                                                            c.name,
+                                                            false,
+                                                        );
+                                                    }}
                                                 >
                                                     Detail
                                                 </Button>
@@ -1086,9 +958,10 @@ export default function CustomersIndex({
                                                                 selectQuickCustomer(
                                                                     c,
                                                                 );
-                                                                openStage(
+                                                                openDetail(
                                                                     c.active_deal!,
                                                                     c.name,
+                                                                    true,
                                                                 );
                                                             }}
                                                         >
@@ -1329,16 +1202,17 @@ export default function CustomersIndex({
                     </DialogContent>
                 </Dialog>
 
-                {/* Ubah tahap uses the same modal as the Transactions page. */}
+                {/* Detail and Ubah tahap use the same modal as the Transactions page. */}
                 <TransactionDetailModal
                     target={
-                        stageTarget && {
-                            ...stageTarget,
-                            customer: { name: stageTarget.customerName },
+                        detail && {
+                            public_id: detail.public_id,
+                            vehicle_model: detail.vehicle_model,
+                            customer: { name: detail.customerName },
                         }
                     }
-                    intent={{ action: null }}
-                    onClose={() => setStageTarget(null)}
+                    intent={detail?.stage ? { action: null } : null}
+                    onClose={() => setDetail(null)}
                     onCloseAutoFocus={restoreCustomerActionFocus}
                     regions={regions}
                     districts={districts}
@@ -1348,429 +1222,6 @@ export default function CustomersIndex({
                     vehicleOptions={vehicleOptions}
                     assignableSales={assignableSales}
                 />
-
-                {/* Dialog: Penugasan Ulang */}
-                <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-                    <DialogContent
-                        className="sm:max-w-md"
-                        onCloseAutoFocus={restoreCustomerActionFocus}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>Penugasan Ulang</DialogTitle>
-                            <DialogDescription>
-                                Pindahkan {selectedCustomer?.name} ke sales
-                                lain.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form
-                            onSubmit={handleReassign}
-                            className="space-y-4 pt-2"
-                        >
-                            <div className="space-y-1">
-                                <Label htmlFor="reassign-sales">
-                                    Sales Tujuan *
-                                </Label>
-                                <Combobox
-                                    value={reassignSalesId}
-                                    onValueChange={setReassignSalesId}
-                                    options={assignableSales.map((sales) => ({
-                                        value: String(sales.id),
-                                        label: sales.name,
-                                    }))}
-                                    placeholder="Pilih sales"
-                                    searchPlaceholder="Cari sales..."
-                                    aria-label="Sales tujuan"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="reassign-notes">Catatan</Label>
-                                <Input
-                                    id="reassign-notes"
-                                    value={reassignNotes}
-                                    onChange={(e) =>
-                                        setReassignNotes(e.target.value)
-                                    }
-                                    placeholder="Alasan penugasan ulang..."
-                                    className="min-h-11"
-                                />
-                            </div>
-                            <Button type="submit" className="min-h-11 w-full">
-                                Konfirmasi Penugasan
-                            </Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Detail transaksi & riwayat (adaptif mobile/desktop) */}
-                <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-                    <DialogContent
-                        className="flex max-h-[calc(100dvh-2rem)] flex-col max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-2xl"
-                        onOpenAutoFocus={(event) => {
-                            event.preventDefault();
-                            detailTitleRef.current?.focus();
-                        }}
-                        onCloseAutoFocus={(event) => {
-                            event.preventDefault();
-                            if (
-                                !activityOpen &&
-                                !followUpOpen &&
-                                !stageTarget &&
-                                !reassignOpen
-                            ) {
-                                customerActionTriggerRef.current?.focus({
-                                    preventScroll: true,
-                                });
-                            }
-                        }}
-                    >
-                        <DialogHeader className="shrink-0">
-                            <DialogTitle
-                                ref={detailTitleRef}
-                                tabIndex={-1}
-                                className="mr-6 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
-                            >
-                                {selectedCustomer?.name ?? 'Riwayat pelanggan'}
-                            </DialogTitle>
-                            <DialogDescription>
-                                {selectedCustomer?.phone}
-                                {selectedCustomer?.email
-                                    ? ` • ${selectedCustomer.email}`
-                                    : ''}
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pr-1">
-                            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-                                <div>
-                                    <div className="text-xs text-muted-foreground">
-                                        Sales PIC
-                                    </div>
-                                    <div className="font-medium">
-                                        {selectedCustomer?.assigned_sales
-                                            ?.name ?? 'Belum ditugaskan'}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-muted-foreground">
-                                        Kontak terakhir
-                                    </div>
-                                    <div className="font-medium">
-                                        {formatDate(
-                                            selectedCustomer?.last_contact_at ??
-                                                null,
-                                        )}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-muted-foreground">
-                                        Preferensi
-                                    </div>
-                                    <div className="font-medium">
-                                        {selectedCustomer?.contact_channel_preference ??
-                                            'Tidak ditentukan'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedCustomer && (
-                                <CustomerContactPreferences
-                                    key={`${selectedCustomer.public_id}-${selectedCustomer.contact_channel_preference}-${selectedCustomer.opt_out}`}
-                                    customer={selectedCustomer}
-                                />
-                            )}
-
-                            {selectedCustomer?.active_deal && (
-                                <div className="rounded-xl border p-4">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-sm font-semibold">
-                                            {selectedCustomer.active_deal
-                                                .vehicle_model ??
-                                                'Belum dipilih'}
-                                        </span>
-                                        <StageBadge
-                                            stage={
-                                                selectedCustomer.active_deal
-                                                    .current_stage
-                                            }
-                                        >
-                                            {
-                                                selectedCustomer.active_deal
-                                                    .stage_label
-                                            }
-                                        </StageBadge>
-                                        {selectedCustomer.active_deal
-                                            .is_stagnant && (
-                                            <Badge
-                                                variant="destructive"
-                                                className="text-[10px]"
-                                            >
-                                                Stagnan &gt;3 Hari
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    {selectedCustomer.active_deal
-                                        .estimated_value !== null && (
-                                        <p className="mt-1 text-sm text-muted-foreground">
-                                            Estimasi nilai:{' '}
-                                            {new Intl.NumberFormat('id-ID', {
-                                                style: 'currency',
-                                                currency: 'IDR',
-                                                maximumFractionDigits: 0,
-                                            }).format(
-                                                selectedCustomer.active_deal
-                                                    .estimated_value,
-                                            )}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {selectedCustomer?.active_deal &&
-                                !selectedCustomer.active_deal.is_closed &&
-                                (role === 'sales' || role === 'supervisor') && (
-                                    <ClosingMonthForm
-                                        key={
-                                            selectedCustomer.active_deal
-                                                .public_id
-                                        }
-                                        transactionId={
-                                            selectedCustomer.active_deal
-                                                .public_id
-                                        }
-                                        month={
-                                            selectedCustomer.active_deal
-                                                .expected_closing_month ?? null
-                                        }
-                                    />
-                                )}
-
-                            {selectedCustomer?.next_follow_up && (
-                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                                    <div className="flex items-center gap-2 text-sm font-semibold">
-                                        <CalendarClock className="size-4" />
-                                        Tindak lanjut berikutnya
-                                    </div>
-                                    <p className="mt-1 text-sm">
-                                        {
-                                            selectedCustomer.next_follow_up
-                                                .plan_notes
-                                        }
-                                    </p>
-                                    <p className="mt-0.5 text-xs text-muted-foreground">
-                                        {formatDate(
-                                            selectedCustomer.next_follow_up
-                                                .scheduled_at,
-                                        )}
-                                    </p>
-                                </div>
-                            )}
-
-                            {currentCustomer && detailOpen && (
-                                <CustomerHistory
-                                    key={currentCustomer.public_id}
-                                    customerId={currentCustomer.public_id}
-                                    refreshKey={customers}
-                                    onSelection={selectHistoryTransaction}
-                                    onReply={replyToHistory}
-                                    onEdit={editHistoryComment}
-                                />
-                            )}
-                            {historyReady &&
-                                selectedCustomer?.active_deal?.can_comment && (
-                                    <form
-                                        onSubmit={(event) =>
-                                            editingCommentId !== null
-                                                ? handleUpdateComment(
-                                                      event,
-                                                      editingCommentId,
-                                                  )
-                                                : handleCreateComment(
-                                                      event,
-                                                      replyParentId ??
-                                                          undefined,
-                                                  )
-                                        }
-                                        className="space-y-3"
-                                    >
-                                        <Label htmlFor="history-comment-body">
-                                            {editingCommentId !== null
-                                                ? 'Edit komentar'
-                                                : replyParentId !== null
-                                                  ? 'Balas komentar'
-                                                  : 'Komentar baru'}
-                                        </Label>
-                                        <textarea
-                                            id="history-comment-body"
-                                            value={
-                                                editingCommentId !== null
-                                                    ? editBody
-                                                    : replyParentId !== null
-                                                      ? replyBody
-                                                      : commentBody
-                                            }
-                                            onChange={(event) =>
-                                                editingCommentId !== null
-                                                    ? setEditBody(
-                                                          event.target.value,
-                                                      )
-                                                    : replyParentId !== null
-                                                      ? setReplyBody(
-                                                            event.target.value,
-                                                        )
-                                                      : setCommentBody(
-                                                            event.target.value,
-                                                        )
-                                            }
-                                            required
-                                            maxLength={2000}
-                                            aria-invalid={Boolean(
-                                                errors.body || errors.parent_id,
-                                            )}
-                                            aria-describedby={
-                                                errors.body || errors.parent_id
-                                                    ? 'history-comment-error'
-                                                    : undefined
-                                            }
-                                            className="min-h-28 w-full rounded-md border bg-background p-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"
-                                        />
-                                        {(errors.body || errors.parent_id) && (
-                                            <p
-                                                id="history-comment-error"
-                                                role="alert"
-                                                className="text-sm text-destructive"
-                                            >
-                                                {errors.body ||
-                                                    errors.parent_id}
-                                            </p>
-                                        )}
-                                        <div className="flex flex-wrap gap-2">
-                                            <Button type="submit">
-                                                {editingCommentId !== null
-                                                    ? 'Simpan koreksi'
-                                                    : replyParentId !== null
-                                                      ? 'Kirim Balasan'
-                                                      : 'Kirim Komentar'}
-                                            </Button>
-                                            {(editingCommentId !== null ||
-                                                replyParentId !== null) && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setEditingCommentId(
-                                                            null,
-                                                        );
-                                                        setReplyParentId(null);
-                                                        setEditBody('');
-                                                        setReplyBody('');
-                                                    }}
-                                                >
-                                                    Batal
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </form>
-                                )}
-                        </div>
-
-                        <fieldset
-                            disabled={!historyReady}
-                            data-comfortable-controls
-                            className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3 disabled:opacity-50 sm:grid-cols-3"
-                        >
-                            {canContact(selectedCustomer, 'phone') && (
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
-                                >
-                                    <a
-                                        href={`tel:${selectedCustomer?.phone ?? ''}`}
-                                    >
-                                        <Phone className="size-4 text-emerald-600" />
-                                        Telepon
-                                    </a>
-                                </Button>
-                            )}
-                            {canContact(selectedCustomer, 'whatsapp') && (
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    className="h-auto min-h-11 min-w-0 gap-2 px-3 py-2 whitespace-normal"
-                                >
-                                    <a
-                                        href={formatPhoneLink(
-                                            selectedCustomer?.phone ?? '',
-                                        )}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <MessageSquare className="size-4 text-emerald-500" />
-                                        WhatsApp
-                                    </a>
-                                </Button>
-                            )}
-                            <Button
-                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
-                                onClick={() => {
-                                    setDetailOpen(false);
-                                    setActivityOpen(true);
-                                }}
-                            >
-                                Catat Aktivitas
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
-                                onClick={() => {
-                                    setDetailOpen(false);
-                                    setFollowUpOpen(true);
-                                }}
-                            >
-                                Follow-Up
-                            </Button>
-                            {selectedCustomer?.active_deal &&
-                                !selectedCustomer.active_deal.is_closed && (
-                                    <Button
-                                        variant="secondary"
-                                        className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
-                                        onClick={() => {
-                                            setDetailOpen(false);
-                                            openStage(
-                                                selectedCustomer.active_deal!,
-                                                selectedCustomer.name,
-                                            );
-                                        }}
-                                    >
-                                        Ubah Tahap
-                                    </Button>
-                                )}
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
-                            >
-                                <Link
-                                    href={`/transactions/create?customer=${selectedCustomer?.public_id}`}
-                                >
-                                    Buat Transaksi Baru
-                                </Link>
-                            </Button>
-                            {assignableSales.length > 0 && (
-                                <Button
-                                    variant="outline"
-                                    className="h-auto min-h-11 min-w-0 px-3 py-2 whitespace-normal"
-                                    onClick={() => {
-                                        setDetailOpen(false);
-                                        setReassignOpen(true);
-                                    }}
-                                >
-                                    Penugasan Ulang
-                                </Button>
-                            )}
-                        </fieldset>
-                    </DialogContent>
-                </Dialog>
             </div>
         </>
     );

@@ -123,6 +123,10 @@ async function customerActionRecovery(page) {
                 await page
                     .getByRole('button', { name: 'Detail', exact: true })
                     .click();
+                await page
+                    .getByRole('dialog')
+                    .getByRole('button', { name: 'Aktivitas', exact: true })
+                    .click();
                 await page.getByText(note, { exact: false }).first().waitFor();
                 await page.keyboard.press('Escape');
             }

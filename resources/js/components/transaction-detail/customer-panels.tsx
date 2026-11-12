@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { Button } from '@/components/ui/button';
@@ -144,6 +144,13 @@ export function CustomerPanel({
                     </Button>
                 </form>
             )}
+            <Button asChild variant="outline">
+                <Link
+                    href={`/transactions/create?customer=${customer.public_id}`}
+                >
+                    Buat transaksi baru
+                </Link>
+            </Button>
             {detail.can_edit_customer && (
                 <CustomerContactPreferences
                     key={`${customer.opt_out}-${customer.contact_channel_preference}`}

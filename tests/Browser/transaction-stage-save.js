@@ -12,7 +12,9 @@ async function transactionStageSave(page) {
     await page.locator('input[name="password"]').fill('password');
     await page.locator('[data-test="login-button"]').click();
     await page.waitForURL('**/dashboard');
-    await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
+    await page.goto(
+        `${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`,
+    );
     await page
         .getByText('Lead', { exact: true })
         .filter({ visible: true })
@@ -25,7 +27,10 @@ async function transactionStageSave(page) {
         .getByRole('heading', { name: 'Ubah tahap', exact: true });
     const stage = page.getByLabel('Tahap baru');
     const notes = page.getByLabel('Catatan', { exact: true });
-    const save = page.getByRole('button', { name: 'Simpan tahap', exact: true });
+    const save = page.getByRole('button', {
+        name: 'Simpan tahap',
+        exact: true,
+    });
     const patchStage = () =>
         page.waitForResponse(
             (response) =>
@@ -34,6 +39,27 @@ async function transactionStageSave(page) {
                     new URL(response.url()).pathname,
                 ),
         );
+
+    // The closing-month editor sits beside the stage form and saves on its own.
+    const [closing] = await Promise.all([
+        page.waitForResponse(
+            (response) =>
+                response.request().method() === 'PATCH' &&
+                /^\/transactions\/[^/]+\/closing-month$/.test(
+                    new URL(response.url()).pathname,
+                ),
+        ),
+        (async () => {
+            await page
+                .getByLabel('Estimasi bulan closing', { exact: true })
+                .fill('2027-01');
+            await page
+                .getByRole('button', { name: 'Simpan estimasi closing' })
+                .click();
+        })(),
+    ]);
+    if (closing.status() >= 400)
+        throw new Error('Closing month was not saved: ' + closing.status());
 
     await stage.selectOption('spk');
     await notes.fill('G11 stage validation draft');
@@ -91,6 +117,34 @@ async function transactionStageSave(page) {
     await page
         .getByText('SPK', { exact: true })
         .filter({ visible: true })
+        .waitFor();
+
+    // Moving back is marked in the list and needs a written reason.
+    await page.getByRole('button', { name: 'Ubah tahap', exact: true }).click();
+    await title.waitFor();
+    const options = await stage
+        .locator('option')
+        .evaluateAll((items) => items.map((item) => item.textContent));
+    if (!options.includes('▼ Lead'))
+        throw new Error('Earlier stage is not marked as mundur: ' + options);
+    await stage.selectOption('lead');
+    await page
+        .getByText('Mundur tahap: alasan wajib diisi pada catatan.')
+        .waitFor();
+    if (!(await save.isDisabled()))
+        throw new Error('Moving back saved without a reason');
+    await page
+        .getByLabel('Catatan alasan mundur', { exact: true })
+        .fill('G11 pelanggan menunda');
+    const [back] = await Promise.all([patchStage(), save.click()]);
+    if (![302, 303].includes(back.status()))
+        throw new Error('Moving back with a reason was rejected');
+    await title.waitFor({ state: 'hidden' });
+    await page.reload();
+    await page
+        .getByText('Lead', { exact: true })
+        .filter({ visible: true })
+        .first()
         .waitFor();
 
     return {

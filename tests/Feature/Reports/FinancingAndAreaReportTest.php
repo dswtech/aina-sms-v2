@@ -31,7 +31,8 @@ function rDeal($t, array $attrs = []): DealTransaction
 
 function rMove($t, DealTransaction $deal, PipelineStage $stage, string $when, array $options = []): void
 {
-    $history = $deal->transitionTo($stage, $t->admin, options: $options);
+    // Moving back needs a written reason; harmless for forward moves.
+    $history = $deal->transitionTo($stage, $t->admin, 'Uji', $options);
     $history->forceFill(['created_at' => $when])->save();
 }
 

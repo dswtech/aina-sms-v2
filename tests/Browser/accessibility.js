@@ -159,6 +159,67 @@ async function accessibility(page) {
             events.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at)),
         );
     };
+    // JSON of GET /transactions/{id}, the feed of the shared detail modal.
+    const detailFor = (item) => ({
+        public_id: item.active_deal.public_id,
+        vehicle_model: item.active_deal.vehicle_model,
+        source: 'walk_in',
+        source_channel: null,
+        notes: null,
+        current_stage: item.active_deal.current_stage,
+        stage_label: item.active_deal.stage_label,
+        estimated_value: item.active_deal.estimated_value,
+        expected_closing_month: null,
+        customer: {
+            public_id: item.public_id,
+            name: item.name,
+            phone: item.phone,
+            email: null,
+            social_media_account: null,
+            address: null,
+            gender: null,
+            birth_date: null,
+            occupation: null,
+            contact_channel_preference: item.contact_channel_preference,
+            opt_out: false,
+            last_contact_at: null,
+            assigned_sales: { id: 1, name: user.name },
+            next_follow_up: null,
+            area: {
+                region_code: null,
+                region_name: null,
+                district_code: null,
+                district_name: null,
+                other_city: null,
+            },
+        },
+        sales: { name: user.name, username: user.username },
+        supervisors: [],
+        area: {
+            region_code: null,
+            region_name: null,
+            district_code: null,
+            district_name: null,
+            other_city: null,
+        },
+        financing: { type: null, leasing_id: null, other_name: null },
+        deal_id: item.active_deal.id,
+        progress_at: null,
+        customer_profile: null,
+        can_edit_metadata: true,
+        can_edit_customer: true,
+        can_assign_customer: false,
+        can_update: true,
+        can_record_do: false,
+        can_confirm_delivery: false,
+        can_cancel_do: false,
+        do_event_id: null,
+        stage_event_id: null,
+        can_comment: true,
+        days_in_stage: 1,
+        stages: historyPage([]),
+        comments: historyPage([]),
+    });
     const tick = () =>
         page.evaluate(
             () =>
@@ -314,7 +375,7 @@ async function accessibility(page) {
             });
         }
     };
-    await page.route(`${origin}/**`, async (route) => {
+    const routeHandler = async (route) => {
         const request = route.request();
         if (!['GET', 'HEAD'].includes(request.method())) {
             mutations++;
@@ -348,6 +409,19 @@ async function accessibility(page) {
                     timeline: timelineFor(item),
                 }),
             });
+        } else if (
+            /^\/transactions\/[^/]+$/.test(new URL(request.url()).pathname) &&
+            (request.headers().accept ?? '').includes('application/json')
+        ) {
+            const dealId = new URL(request.url()).pathname.split('/')[2];
+            const item =
+                fixture.props.customers?.data.find(
+                    (entry) => entry.active_deal?.public_id === dealId,
+                ) ?? customer;
+            await route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify(detailFor(item)),
+            });
         } else if (request.isNavigationRequest()) {
             const json = JSON.stringify(fixture).replaceAll('<', '\\u003c');
             await route.fulfill({
@@ -362,6 +436,15 @@ async function accessibility(page) {
             // Fulfilled documents have no network address space in Chromium.
             // Serve real assets through the same route to avoid loopback CORS failures.
             await route.fulfill({ response: await route.fetch() });
+        }
+    };
+    await page.route(`${origin}/**`, async (route) => {
+        try {
+            await routeHandler(route);
+        } catch (error) {
+            // A request cancelled by navigation (the modal's feed fetch) is already handled.
+            if (!/already handled|closed|disposed/i.test(error.message))
+                throw error;
         }
     });
     const load = async (
@@ -526,235 +609,7 @@ async function accessibility(page) {
             'Detail did not return focus to its trigger',
         );
     });
-    await test('customer detail keeps its action grid readable and visible', async () => {
-        const failures = [];
-        for (const width of [390, 768, 1440]) {
-            for (const font of ['Normal', 'Ekstra']) {
-                for (const variant of [
-                    {
-                        name: '7-aksi',
-                        closed: false,
-                        assignable: true,
-                        count: 7,
-                    },
-                    {
-                        name: '6-aksi',
-                        closed: false,
-                        assignable: false,
-                        count: 6,
-                    },
-                    {
-                        name: '5-aksi',
-                        closed: true,
-                        assignable: false,
-                        count: 5,
-                    },
-                ]) {
-                    await page.setViewportSize({ width, height: 844 });
-                    await load('customers/index', {
-                        ...customerProps,
-                        customers: {
-                            ...customerProps.customers,
-                            data: [
-                                {
-                                    ...customer,
-                                    active_deal: {
-                                        ...customer.active_deal,
-                                        is_closed: variant.closed,
-                                        current_stage: variant.closed
-                                            ? 'delivery'
-                                            : 'lead',
-                                        stage_label: variant.closed
-                                            ? 'Delivery'
-                                            : 'Lead',
-                                    },
-                                },
-                            ],
-                        },
-                        assignableSales: variant.assignable
-                            ? customerProps.assignableSales
-                            : [],
-                    });
-                    await openMenu();
-                    await page
-                        .getByRole('menuitemradio', { name: font, exact: true })
-                        .click();
-                    await page.keyboard.press('Escape');
-                    await page.getByRole('menu').waitFor({ state: 'hidden' });
-                    const trigger = page
-                        .getByRole('button', { name: 'Detail', exact: true })
-                        .filter({ visible: true });
-                    await trigger.press('Enter');
-                    const dialog = page.getByRole('dialog');
-                    await settle(dialog);
-                    const metrics = await dialog.evaluate((d) => {
-                        const footer = [...d.querySelectorAll('button,a')].find(
-                            (b) =>
-                                b.textContent.trim() === 'Buat Transaksi Baru',
-                        ).parentElement;
-                        const actions = [...footer.children].filter((e) =>
-                            e.matches('button,a'),
-                        );
-                        const outside = (a, b) =>
-                            a.left < b.left - 1 ||
-                            a.right > b.right + 1 ||
-                            a.top < b.top - 1 ||
-                            a.bottom > b.bottom + 1;
-                        const rect = footer.getBoundingClientRect(),
-                            bounds = d.getBoundingClientRect();
-                        const issues = [];
-                        if (
-                            bounds.top < -1 ||
-                            bounds.bottom > innerHeight + 1 ||
-                            bounds.left < -1 ||
-                            bounds.right > innerWidth + 1
-                        )
-                            issues.push('Dialog keluar viewport');
-                        if (outside(rect, bounds))
-                            issues.push('Footer keluar dialog');
-                        const boxes = actions.map((e) =>
-                            e.getBoundingClientRect(),
-                        );
-                        for (const [index, action] of actions.entries()) {
-                            const box = boxes[index],
-                                label = action.textContent.trim();
-                            if (box.width < 43.9 || box.height < 43.9)
-                                issues.push(`Target terlalu kecil: ${label}`);
-                            if (outside(box, rect))
-                                issues.push(`Tombol keluar footer: ${label}`);
-                            const walker = document.createTreeWalker(
-                                action,
-                                NodeFilter.SHOW_TEXT,
-                            );
-                            while (walker.nextNode()) {
-                                if (!walker.currentNode.textContent.trim())
-                                    continue;
-                                const range = document.createRange();
-                                range.selectNodeContents(walker.currentNode);
-                                if (
-                                    [...range.getClientRects()].some((r) =>
-                                        outside(r, box),
-                                    )
-                                )
-                                    issues.push(`Teks keluar tombol: ${label}`);
-                            }
-                            if (
-                                [...action.querySelectorAll('svg')].some((e) =>
-                                    outside(e.getBoundingClientRect(), box),
-                                )
-                            )
-                                issues.push(`Ikon keluar tombol: ${label}`);
-                            for (let j = index + 1; j < boxes.length; j++) {
-                                const other = boxes[j];
-                                if (
-                                    Math.min(box.right, other.right) -
-                                        Math.max(box.left, other.left) >
-                                        0.5 &&
-                                    Math.min(box.bottom, other.bottom) -
-                                        Math.max(box.top, other.top) >
-                                        0.5
-                                )
-                                    issues.push('Tombol bertumpuk');
-                            }
-                        }
-                        const heading = d.querySelector('h2'),
-                            headerTop = heading.getBoundingClientRect().top;
-                        const body = [...d.children].find(
-                            (e) => getComputedStyle(e).overflowY === 'auto',
-                        );
-                        if (!body || body.scrollHeight <= body.clientHeight)
-                            issues.push(
-                                'Riwayat panjang tidak memiliki area scroll',
-                            );
-                        else {
-                            body.scrollTop = body.scrollHeight;
-                            if (
-                                Math.abs(
-                                    footer.getBoundingClientRect().top -
-                                        rect.top,
-                                ) > 1 ||
-                                Math.abs(
-                                    heading.getBoundingClientRect().top -
-                                        headerTop,
-                                ) > 1
-                            )
-                                issues.push('Header/footer ikut terscroll');
-                            if (
-                                heading.getBoundingClientRect().top < bounds.top
-                            )
-                                issues.push('Header tidak terlihat');
-                        }
-                        return {
-                            issues,
-                            count: actions.length,
-                            columns: new Set(
-                                boxes.map((b) => Math.round(b.left)),
-                            ).size,
-                        };
-                    });
-                    if (metrics.count !== variant.count)
-                        metrics.issues.push('Jumlah aksi berubah');
-                    if (metrics.columns !== (width === 390 ? 2 : 3))
-                        metrics.issues.push(
-                            'Jumlah kolom tidak sesuai viewport',
-                        );
-                    if (metrics.issues.length)
-                        failures.push({
-                            width,
-                            font,
-                            variant: variant.name,
-                            issues: metrics.issues,
-                        });
-                    else if (variant.count === 7)
-                        await dialog.screenshot({
-                            path: `.playwright-cli/customer-detail-${width}-${font}.png`,
-                        });
-                    await page.keyboard.press('Escape');
-                    await dialog.waitFor({ state: 'hidden' });
-                    assert(
-                        await trigger.evaluate(
-                            (e) => e === document.activeElement,
-                        ),
-                        'Layout change lost Detail trigger focus',
-                    );
-                }
-            }
-        }
-        await page.evaluate(() => localStorage.setItem('font-size', 'normal'));
-        await page.setViewportSize({ width: 390, height: 844 });
-        assert(
-            !failures.length,
-            `Customer detail layout failures: ${JSON.stringify(failures)}`,
-        );
-    });
-    await test('follow-on dialogs return focus to the original customer action', async () => {
-        for (const action of [
-            'Catat Aktivitas',
-            'Follow-Up',
-            'Ubah Tahap',
-            'Penugasan Ulang',
-        ]) {
-            await load();
-            const trigger = page
-                .getByRole('button', { name: 'Detail', exact: true })
-                .filter({ visible: true });
-            await trigger.click();
-            await settle(page.getByRole('dialog'));
-            const nextAction = page
-                .getByRole('dialog')
-                .getByRole('button', { name: action, exact: true });
-            await nextAction.click();
-            await page
-                .getByRole('heading', { name: 'Pelanggan QA', exact: true })
-                .waitFor({ state: 'hidden' });
-            await settle(page.getByRole('dialog'));
-            await page.keyboard.press('Escape');
-            await page.getByRole('dialog').waitFor({ state: 'hidden' });
-            assert(
-                await trigger.evaluate((e) => e === document.activeElement),
-                `${action} lost the original Detail focus`,
-            );
-        }
+    await test('row actions return focus to the original customer action', async () => {
         for (const action of ['Catat Aktivitas', 'Follow-Up', 'Ubah Tahap']) {
             await load();
             const trigger = page
@@ -836,19 +691,27 @@ async function accessibility(page) {
         );
     });
     await test('combobox exposes active option, empty results and isolated Escape', async () => {
-        await load();
-        await page
-            .getByRole('button', { name: 'Detail', exact: true })
-            .filter({ visible: true })
-            .click();
-        await page
-            .getByRole('button', { name: 'Penugasan Ulang', exact: true })
-            .click();
-        const dialog = page.getByRole('dialog');
-        await settle(dialog);
-        await page
-            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
-            .press('Enter');
+        await load(
+            'transactions/index',
+            {
+                auth: { user: { ...user, role: 'supervisor' } },
+                transactions: { data: [], links: [] },
+                filters: { search: '', stage: '', tab: 'all', sales_id: null },
+                assignableSales: [
+                    { id: 1, name: 'Sales Alpha', username: 'sales.alpha' },
+                    { id: 2, name: 'Sales Beta', username: 'sales.beta' },
+                ],
+                sourceOptions: ['walk_in', 'referral'],
+                stages: [],
+                lostReasons: [],
+            },
+            '/transactions',
+        );
+        const combobox = page.getByRole('combobox', {
+            name: 'Sales',
+            exact: true,
+        });
+        await combobox.press('Enter');
         const search = page.getByPlaceholder('Cari sales...');
         await search.waitFor();
         await search.press('ArrowDown');
@@ -857,7 +720,7 @@ async function accessibility(page) {
         assert(
             active &&
                 (await page.locator(`[id="${active}"]`).innerText()) ===
-                    'Sales Beta',
+                    'Sales Alpha',
             'ArrowDown does not expose the active option',
         );
         await search.fill('no-results-qa');
@@ -866,37 +729,25 @@ async function accessibility(page) {
             !(await search.getAttribute('aria-activedescendant')),
             'Empty search refers to a nonexistent option',
         );
-        await search.fill('Alpha');
+        await search.fill('Beta');
         await search.press('Enter');
         assert(
-            (await page
-                .getByRole('combobox', { name: 'Sales tujuan', exact: true })
-                .innerText()) === 'Sales Alpha',
+            (await combobox.innerText()) === 'Sales Beta',
             'Enter did not select filtered option',
         );
-        await page
-            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
-            .press('Enter');
+        await combobox.press('Enter');
         await page.getByPlaceholder('Cari sales...').press('Escape');
         await tick();
-        assert(
-            await dialog.isVisible(),
-            'Combobox Escape closed the parent dialog',
-        );
         assert(
             !(await page.getByRole('listbox').count()),
             'Escape did not close combobox',
         );
-        await page
-            .getByRole('combobox', { name: 'Sales tujuan', exact: true })
-            .press('Enter');
+        await combobox.press('Enter');
         await page.getByPlaceholder('Cari sales...').press('Tab');
         await tick();
         assert(
-            await page
-                .locator('#reassign-notes')
-                .evaluate((e) => e === document.activeElement),
-            'Tab did not leave combobox for the next field',
+            !(await page.getByRole('listbox').count()),
+            'Tab did not leave the combobox',
         );
     });
     await test('mobile targets are at least 44 by 44 on pages, menus and dialogs', async () => {
@@ -1585,52 +1436,6 @@ async function accessibility(page) {
                         ],
                     },
                 };
-                await load('customers/index', props);
-                await page
-                    .getByRole('button', { name: 'Detail', exact: true })
-                    .filter({ visible: true })
-                    .press('Enter');
-                const dialog = page.getByRole('dialog');
-                await dialog.waitFor({ state: 'visible' });
-                await dialog.getByLabel('Pilih transaksi').waitFor();
-                assert(
-                    (await dialog
-                        .getByText('Saat dikirim: Prospect', { exact: true })
-                        .count()) === 1,
-                    'Missing original stage metadata',
-                );
-                assert(
-                    (await dialog
-                        .getByText('Tahap saat kirim belum tercatat', {
-                            exact: true,
-                        })
-                        .count()) === 1,
-                    'Legacy stage must stay unknown',
-                );
-                assert(
-                    (await dialog
-                        .getByRole('button', {
-                            name: 'Kirim Komentar',
-                            exact: true,
-                        })
-                        .count()) === (role === 'sales' ? 1 : 0),
-                    'Admin must have no comment composer',
-                );
-                assert(
-                    (await dialog
-                        .getByRole('button', { name: 'Balas', exact: true })
-                        .count()) === (role === 'sales' ? 1 : 0),
-                    'Admin must have no reply control',
-                );
-                await page.keyboard.press('Escape');
-                await dialog.waitFor({ state: 'hidden' });
-                assert(
-                    await page.evaluate(
-                        () =>
-                            document.documentElement.scrollWidth === innerWidth,
-                    ),
-                    `G01 overflow at ${width}`,
-                );
                 await load(
                     'transactions/coaching',
                     {
@@ -1744,13 +1549,13 @@ async function accessibility(page) {
             await page.setViewportSize({ width, height: 1100 });
             await load();
             await checkFilterDisclosure('Filter pelanggan');
-            await load('transactions/index', transactionsProps, '/transactions');
+            await load(
+                'transactions/index',
+                transactionsProps,
+                '/transactions',
+            );
             const expected = width >= 1280 ? 36 : 44;
-            for (const id of [
-                'search',
-                'stage',
-                'transaction-source',
-            ]) {
+            for (const id of ['search', 'stage', 'transaction-source']) {
                 const size = await page.locator(`#${id}`).boundingBox();
                 assert(
                     Math.abs(size.height - expected) <= 0.5,
@@ -1828,7 +1633,11 @@ async function accessibility(page) {
     await test('data pages use the 1536px cap and 36px controls from 1280px', async () => {
         for (const width of [1024, 1280, 1920]) {
             await page.setViewportSize({ width, height: 1100 });
-            await load('transactions/index', transactionsProps, '/transactions');
+            await load(
+                'transactions/index',
+                transactionsProps,
+                '/transactions',
+            );
             const expected = width >= 1280 ? 36 : 44;
             const size = await page.locator('#search').boundingBox();
             assert(
@@ -2112,7 +1921,7 @@ async function accessibility(page) {
         await page.setViewportSize({ width: 390, height: 1000 });
         await load();
         await page
-            .getByRole('button', { name: 'Detail', exact: true })
+            .getByRole('button', { name: 'Ubah Tahap', exact: true })
             .first()
             .click();
         const month = page.getByLabel('Estimasi bulan closing', {
@@ -2147,7 +1956,7 @@ async function accessibility(page) {
         );
     });
 
-    await page.unrouteAll({ behavior: 'wait' });
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await page.goto(`${origin}/login`);
     const report = {
         passed: results.filter((r) => r.passed).length,
