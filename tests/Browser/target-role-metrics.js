@@ -213,8 +213,7 @@ async function targetRoleMetrics(page) {
                             })
                             .count()) >
                             0 ===
-                            (component === 'targets/index' &&
-                                role === 'supervisor'),
+                            false,
                         `Editor visibility: ${role} ${url}`,
                     );
                     if (component === 'dashboard') {

@@ -1,13 +1,11 @@
-import { TargetPlanEditor } from '@/components/target-plan-editor';
-import { Head, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     ForecastBreakdown,
     PerformanceTable,
     ReportingHeader,
     type ReportingProps,
 } from '@/components/team-performance';
-export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
-    const canManage = usePage().props.auth.user.role === 'supervisor';
+export default function Targets({ dashboard: d }: ReportingProps) {
     return (
         <>
             <Head title="Target" />
@@ -17,20 +15,12 @@ export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
                     period={d.period}
                 />
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Target management dicatat SPV, kemudian ditambah markup
-                    menjadi benchmark tim. Target personal dapat disesuaikan
-                    dengan total alokasi minimal 100% dari benchmark.
-                </p>
-                <p className="text-sm leading-6 text-muted-foreground">
                     {d.forecastUnits === null
                         ? 'Forecast bulan lampau tidak tersedia; snapshot historis belum disimpan.'
                         : 'Forecast adalah estimasi dari pipeline terkini dan estimasi bulan closing, bukan kepastian penjualan.'}{' '}
                     {!d.forecastApproved &&
                         'Bobot belum disetujui untuk production.'}
                 </p>
-                {canManage && (
-                    <TargetPlanEditor key={d.period} plans={targetPlans} />
-                )}
                 <ForecastBreakdown dashboard={d} />
                 <PerformanceTable
                     title="Target dan kinerja tim"
@@ -46,4 +36,9 @@ export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
         </>
     );
 }
-Targets.layout = { breadcrumbs: [{ title: 'Target', href: '/targets' }] };
+Targets.layout = {
+    breadcrumbs: [
+        { title: 'Target', href: '/targets' },
+        { title: 'Target & Forecast', href: '/targets' },
+    ],
+};

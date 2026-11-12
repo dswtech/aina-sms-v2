@@ -43,6 +43,16 @@ const shared = {
         href: '/targets',
         icon: Target,
     },
+    targetsWithPlans: {
+        key: 'targets',
+        title: 'Target',
+        href: '/targets',
+        icon: Target,
+        children: [
+            { title: 'Target & Forecast', href: '/targets' },
+            { title: 'Rencana Target Bulanan', href: '/targets/plans' },
+        ],
+    },
     teamPerformance: {
         key: 'team-performance',
         title: 'Kinerja Tim',
@@ -120,7 +130,7 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.home,
         customerItem('supervisor'),
         shared.transactions,
-        shared.targets,
+        shared.targetsWithPlans,
         shared.analytics,
         shared.imports,
         shared.notifications,

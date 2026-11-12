@@ -37,6 +37,23 @@ async function targetForecastBreakdown(page) {
     if (await detail.count())
         throw new Error('Sales breakdown did not collapse');
 
+    const nav = page.locator('[data-sidebar="sidebar"]');
+    const current = nav.getByRole('link', { name: 'Target & Forecast' });
+    if ((await current.getAttribute('aria-current')) !== 'page')
+        throw new Error('Target & Forecast submenu should be current');
+    await nav.getByRole('link', { name: 'Rencana Target Bulanan' }).click();
+    await page.waitForURL('**/targets/plans');
+    await page.getByRole('region', { name: 'Editor rencana target' }).waitFor();
+    if (await page.getByRole('region', { name: 'Asal forecast' }).count())
+        throw new Error('Plan page should not repeat the forecast card');
+    await page.goto(`${origin}/targets`);
+    if (
+        await page
+            .getByRole('region', { name: 'Editor rencana target' })
+            .count()
+    )
+        throw new Error('Target page should no longer hold the plan editor');
+
     await page.setViewportSize({ width: 390, height: 844 });
     const summary = page.getByText('Rincian forecast per tahap').first();
     await summary.click();

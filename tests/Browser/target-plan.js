@@ -18,7 +18,7 @@ async (page) => {
     page.on('pageerror', (error) => browserErrors.push(error.message));
     await page.addInitScript(() => { window.confirm = () => true; });
     const metrics = { target_units: 100, benchmark_units: 120, sales_target_units: 120, allocation_percent: 100, active_allocation_units: 120, realization_units: 24, achievement_percent: 24, benchmark_achievement_percent: 20, forecast_units: 80, gap_units: 76, forecast_gap_units: 20, benchmark_gap_units: 96, benchmark_forecast_gap_units: 40 };
-    const fixture = () => ({ ...initial, component: 'targets/index', url: '/targets', props: { ...initial.props, auth: { user }, errors, sidebarOpen: true, notifications: [], notificationsUnreadCount: 0, targetPlans: [plan], targetableUsers: [], targetableTeams: [], dashboard: { period: '2026-11-01', targetUnits: 100, realizationUnits: 24, forecastUnits: 80, forecastApproved: false, teams: [{ id: 'qa-team', name: 'Tim QA', ...metrics }], performance: [] } } });
+    const fixture = () => ({ ...initial, component: 'targets/plans', url: '/targets/plans', props: { ...initial.props, auth: { user }, errors, sidebarOpen: true, notifications: [], notificationsUnreadCount: 0, targetPlans: [plan], targetableUsers: [], targetableTeams: [], dashboard: { period: '2026-11-01', targetUnits: 100, realizationUnits: 24, forecastUnits: 80, forecastApproved: false, teams: [{ id: 'qa-team', name: 'Tim QA', ...metrics }], performance: [] } } });
     await page.route('**/*', async (route) => {
         const request = route.request();
         const url = new URL(request.url());
@@ -36,7 +36,7 @@ async (page) => {
             }
             return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'X-Inertia': 'true' }, body: JSON.stringify(fixture()) });
         }
-        if (url.pathname === '/targets') {
+        if (url.pathname === '/targets/plans') {
             const data = fixture();
             if (request.headers()['x-inertia']) return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'X-Inertia': 'true' }, body: JSON.stringify(data) });
             return route.fulfill({ status: 200, contentType: 'text/html', body: template.replace(bootstrap, (_, a, _b, c) => a + JSON.stringify(data).replaceAll('<', '\\u003c') + c) });
@@ -50,8 +50,8 @@ async (page) => {
         for (const theme of ['light', 'dark']) {
             plan = freshPlan(); errors = {};
             await page.setViewportSize({ width, height: 1000 });
-            await page.goto(`${origin}/targets`);
-            await page.getByRole('heading', { name: 'Rencana target bulanan' }).waitFor();
+            await page.goto(`${origin}/targets/plans`);
+            await page.getByRole('heading', { name: 'Rencana target bulanan', level: 2 }).waitFor();
             await page.getByRole('button', { name: 'Buka kontrol panel pengguna' }).click();
             await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Gelap' : 'Terang', exact: true }).click();
             await page.keyboard.press('Escape');
@@ -89,7 +89,7 @@ async (page) => {
         { ...members[1], allocated: true, target_units: 60 },
         { ...members[2], allocated: false, target_units: null },
     ] };
-    await page.goto(`${origin}/targets`);
+    await page.goto(`${origin}/targets/plans`);
     assert(await page.getByLabel('Sales 1', { exact: true }).getAttribute('readonly') !== null, 'Former member target must stay read only');
     assert((await page.getByTestId('allocation-summary').textContent()).includes('Risiko kapasitas'), 'Former members must show capacity risk');
     await page.getByRole('button', { name: /Pakai saran 20 unit/ }).click();
