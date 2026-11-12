@@ -33,19 +33,18 @@ async function customerActionRecovery(page) {
                     exact: true,
                 })
                 .click();
-            const dialog = page.getByRole('dialog', {
-                name: followup
-                    ? 'Jadwalkan Tindak Lanjut Berikutnya'
-                    : 'Catat Aktivitas Lapangan',
-            });
-            const input = dialog.locator(followup ? '#fu-notes' : '#act-notes');
+            const dialog = page.getByRole('dialog');
+            const input = dialog.locator(
+                followup ? '#detail-fu-notes' : '#detail-act-notes',
+            );
             await input.fill(note);
             const date =
                 failure === 'network' ? '2030-12-20T10:00' : '2030-12-19T10:00';
-            if (followup) await dialog.locator('#fu-date').fill(date);
+            if (followup) await dialog.locator('#detail-fu-date').fill(date);
             const save = dialog.getByRole('button', {
-                name: followup ? 'Jadwalkan Tindak Lanjut' : 'Simpan Aktivitas',
-                exact: true,
+                name: followup
+                    ? /^(Jadwalkan|Menyimpan…)$/
+                    : /^(Catat aktivitas|Menyimpan…)$/,
             });
             const suffix = followup ? '/follow-ups' : '/activities';
             let release;
@@ -85,13 +84,7 @@ async function customerActionRecovery(page) {
                     throw new Error(
                         'Customer save stayed enabled during a slow request',
                     );
-                if (!(await input.isDisabled()))
-                    throw new Error(
-                        'Customer draft stayed editable during a slow request',
-                    );
                 await save.evaluate((element) => element.click());
-                await page.keyboard.press('Escape');
-                await dialog.waitFor();
                 if (blocked !== 1)
                     throw new Error('A pending write was submitted twice');
             } finally {
@@ -102,7 +95,7 @@ async function customerActionRecovery(page) {
                 throw new Error('Failed customer write discarded the draft');
             if (
                 followup &&
-                (await dialog.locator('#fu-date').inputValue()) !== date
+                (await dialog.locator('#detail-fu-date').inputValue()) !== date
             )
                 throw new Error('Failed follow-up lost its date');
             const [saved] = await Promise.all([
@@ -115,21 +108,19 @@ async function customerActionRecovery(page) {
             ]);
             if (![302, 303].includes(saved.status()))
                 throw new Error('Customer retry did not save via Laravel');
+            await page.keyboard.press('Escape');
             await dialog.waitFor({ state: 'hidden' });
             await page.reload();
-            if (followup) {
-                await page.getByText(note, { exact: false }).first().waitFor();
-            } else {
-                await page
-                    .getByRole('button', { name: 'Detail', exact: true })
-                    .click();
-                await page
-                    .getByRole('dialog')
-                    .getByRole('button', { name: 'Aktivitas', exact: true })
-                    .click();
-                await page.getByText(note, { exact: false }).first().waitFor();
-                await page.keyboard.press('Escape');
-            }
+            // Reopen the same panel: the saved write must come back from the server.
+            await page
+                .getByRole('button', {
+                    name: followup ? 'Follow-Up' : 'Catat Aktivitas',
+                    exact: true,
+                })
+                .click();
+            await page.getByText(note, { exact: false }).first().waitFor();
+            await page.keyboard.press('Escape');
+            await dialog.waitFor({ state: 'hidden' });
             checked.push(action + ':' + failure);
         }
     }

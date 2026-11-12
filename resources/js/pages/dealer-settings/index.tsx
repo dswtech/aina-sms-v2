@@ -44,7 +44,7 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                         Tandai kecamatan yang menjadi FOA dealer. Bawaan
-                        sementara: seluruh Kabupaten Bandung Barat;
+                        sementara: seluruh Kabupaten Bandung Barat;{' '}
                         {selected.size} kecamatan dipilih.
                     </p>
                     {regions.map((region) => {

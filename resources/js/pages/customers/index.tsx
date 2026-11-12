@@ -21,23 +21,8 @@ import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { type VehicleOption } from '@/components/transaction-fields';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 export type CustomerItem = {
     public_id: string;
@@ -149,35 +134,14 @@ export default function CustomersIndex({
     lostReasons = [],
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [activityOpen, setActivityOpen] = useState(false);
-    const [followUpOpen, setFollowUpOpen] = useState(false);
     const customerActionTriggerRef = useRef<HTMLButtonElement | null>(null);
-    const [selectedCustomerSnapshot, setSelectedCustomer] =
-        useState<CustomerItem | null>(null);
-    const selectedCustomer =
-        customers.data.find(
-            (customer) =>
-                customer.public_id === selectedCustomerSnapshot?.public_id,
-        ) ?? null;
-
-    // Form states
-
-    const [actType, setActType] = useState('call');
-    const [actNotes, setActNotes] = useState('');
-    const [activitySaving, setActivitySaving] = useState(false);
-    const [activityError, setActivityError] = useState('');
-
-    const [fuDate, setFuDate] = useState('');
-    const [fuNotes, setFuNotes] = useState('');
-    const [followUpSaving, setFollowUpSaving] = useState(false);
-    const [followUpError, setFollowUpError] = useState('');
-
     // Detail and Ubah tahap share the Transactions page modal.
     const [detail, setDetail] = useState<{
         public_id: string;
         vehicle_model: string | null;
         customerName: string;
         stage: boolean;
+        mode?: 'activities' | 'followups';
     } | null>(null);
 
     function applyFilters(
@@ -213,97 +177,19 @@ export default function CustomersIndex({
         customerActionTriggerRef.current?.focus({ preventScroll: true });
     }
 
-    function selectQuickCustomer(customer: CustomerItem) {
-        setActivityError('');
-        setFollowUpError('');
-        setSelectedCustomer(customer);
-        setActNotes('');
-        setFuDate('');
-        setFuNotes('');
-        setDetail(null);
-    }
     function openDetail(
         deal: { public_id: string; vehicle_model: string | null },
         customerName: string,
         stage: boolean,
+        mode?: 'activities' | 'followups',
     ) {
         setDetail({
             public_id: deal.public_id,
             vehicle_model: deal.vehicle_model,
             customerName,
             stage,
+            mode,
         });
-    }
-
-    function handleLogActivity(e: React.FormEvent) {
-        e.preventDefault();
-        if (!selectedCustomer || activitySaving) return;
-        setActivitySaving(true);
-        setActivityError('');
-        router.post(
-            `/customers/${selectedCustomer.public_id}/activities`,
-            {
-                type: actType,
-                notes: actNotes,
-                deal_transaction_id: selectedCustomer.active_deal?.id,
-            },
-            {
-                onSuccess: () => {
-                    setActivityOpen(false);
-                    setActNotes('');
-                },
-                onFinish: () => setActivitySaving(false),
-                onNetworkError: () => {
-                    setActivityError(
-                        'Koneksi terputus. Penyimpanan aktivitas belum dapat dipastikan. Isian tetap tersedia. Periksa riwayat pelanggan sebelum mencoba lagi.',
-                    );
-                    return false;
-                },
-                onHttpException: (response) => {
-                    if (response.status < 500) return;
-                    setActivityError(
-                        'Penyimpanan aktivitas belum dapat dipastikan. Isian tetap tersedia. Periksa riwayat pelanggan sebelum mencoba lagi.',
-                    );
-                    return false;
-                },
-            },
-        );
-    }
-
-    function handleScheduleFollowUp(e: React.FormEvent) {
-        e.preventDefault();
-        if (!selectedCustomer || followUpSaving) return;
-        setFollowUpSaving(true);
-        setFollowUpError('');
-        router.post(
-            `/customers/${selectedCustomer.public_id}/follow-ups`,
-            {
-                scheduled_at: fuDate,
-                plan_notes: fuNotes,
-                deal_transaction_id: selectedCustomer.active_deal?.id,
-            },
-            {
-                onSuccess: () => {
-                    setFollowUpOpen(false);
-                    setFuNotes('');
-                    setFuDate('');
-                },
-                onFinish: () => setFollowUpSaving(false),
-                onNetworkError: () => {
-                    setFollowUpError(
-                        'Koneksi terputus. Penyimpanan jadwal belum dapat dipastikan. Isian tetap tersedia. Periksa jadwal pelanggan sebelum mencoba lagi.',
-                    );
-                    return false;
-                },
-                onHttpException: (response) => {
-                    if (response.status < 500) return;
-                    setFollowUpError(
-                        'Penyimpanan jadwal belum dapat dipastikan. Isian tetap tersedia. Periksa jadwal pelanggan sebelum mencoba lagi.',
-                    );
-                    return false;
-                },
-            },
-        );
     }
 
     return (
@@ -659,11 +545,21 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
+                                                disabled={!c.active_deal}
+                                                title={
+                                                    c.active_deal
+                                                        ? undefined
+                                                        : 'Belum ada transaksi yang dapat Anda lihat'
+                                                }
                                                 onClick={(event) => {
                                                     customerActionTriggerRef.current =
                                                         event.currentTarget;
-                                                    selectQuickCustomer(c);
-                                                    setActivityOpen(true);
+                                                    openDetail(
+                                                        c.active_deal!,
+                                                        c.name,
+                                                        false,
+                                                        'activities',
+                                                    );
                                                 }}
                                             >
                                                 Catat Aktivitas
@@ -673,11 +569,21 @@ export default function CustomersIndex({
                                                 variant="outline"
                                                 size="sm"
                                                 className="min-h-11 px-3"
+                                                disabled={!c.active_deal}
+                                                title={
+                                                    c.active_deal
+                                                        ? undefined
+                                                        : 'Belum ada transaksi yang dapat Anda lihat'
+                                                }
                                                 onClick={(event) => {
                                                     customerActionTriggerRef.current =
                                                         event.currentTarget;
-                                                    selectQuickCustomer(c);
-                                                    setFollowUpOpen(true);
+                                                    openDetail(
+                                                        c.active_deal!,
+                                                        c.name,
+                                                        false,
+                                                        'followups',
+                                                    );
                                                 }}
                                             >
                                                 Follow-Up
@@ -696,7 +602,6 @@ export default function CustomersIndex({
                                                 onClick={(event) => {
                                                     customerActionTriggerRef.current =
                                                         event.currentTarget;
-                                                    selectQuickCustomer(c);
                                                     openDetail(
                                                         c.active_deal!,
                                                         c.name,
@@ -716,9 +621,6 @@ export default function CustomersIndex({
                                                         onClick={(event) => {
                                                             customerActionTriggerRef.current =
                                                                 event.currentTarget;
-                                                            selectQuickCustomer(
-                                                                c,
-                                                            );
                                                             openDetail(
                                                                 c.active_deal!,
                                                                 c.name,
@@ -933,7 +835,6 @@ export default function CustomersIndex({
                                                     onClick={(event) => {
                                                         customerActionTriggerRef.current =
                                                             event.currentTarget;
-                                                        selectQuickCustomer(c);
                                                         openDetail(
                                                             c.active_deal!,
                                                             c.name,
@@ -955,9 +856,6 @@ export default function CustomersIndex({
                                                             ) => {
                                                                 customerActionTriggerRef.current =
                                                                     event.currentTarget;
-                                                                selectQuickCustomer(
-                                                                    c,
-                                                                );
                                                                 openDetail(
                                                                     c.active_deal!,
                                                                     c.name,
@@ -1010,198 +908,6 @@ export default function CustomersIndex({
                     </div>
                 )}
 
-                {/* Dialog: Catat Aktivitas */}
-                <Dialog
-                    open={activityOpen}
-                    onOpenChange={(open) => {
-                        if (activitySaving) return;
-                        setActivityOpen(open);
-                        setActivityError('');
-                    }}
-                >
-                    <DialogContent
-                        className="sm:max-w-md"
-                        onCloseAutoFocus={restoreCustomerActionFocus}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>Catat Aktivitas Lapangan</DialogTitle>
-                            <DialogDescription>
-                                Hubungi {selectedCustomer?.name} dan catat
-                                perkembangannya.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form
-                            onSubmit={handleLogActivity}
-                            className="space-y-4 pt-2"
-                        >
-                            {activityError && (
-                                <p
-                                    role="alert"
-                                    className="text-sm text-destructive"
-                                >
-                                    {activityError}
-                                </p>
-                            )}
-                            {activitySaving && (
-                                <p
-                                    role="status"
-                                    className="text-sm text-muted-foreground"
-                                >
-                                    Menyimpan aktivitas…
-                                </p>
-                            )}
-                            <fieldset
-                                disabled={activitySaving}
-                                className="space-y-4"
-                            >
-                                <div className="space-y-1">
-                                    <Label htmlFor="act-type">
-                                        Kanal Aktivitas
-                                    </Label>
-                                    <Select
-                                        value={actType}
-                                        onValueChange={setActType}
-                                    >
-                                        <SelectTrigger
-                                            id="act-type"
-                                            className="min-h-11 w-full"
-                                        >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="call">
-                                                Telepon Langsung
-                                            </SelectItem>
-                                            <SelectItem value="whatsapp">
-                                                Chat WhatsApp
-                                            </SelectItem>
-                                            <SelectItem value="visit">
-                                                Kunjungan Rumah / Kantor
-                                            </SelectItem>
-                                            <SelectItem value="meeting">
-                                                Pertemuan Showroom
-                                            </SelectItem>
-                                            <SelectItem value="note">
-                                                Catatan Tambahan
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="act-notes">
-                                        Hasil Komunikasi *
-                                    </Label>
-                                    <Input
-                                        id="act-notes"
-                                        required
-                                        value={actNotes}
-                                        onChange={(e) =>
-                                            setActNotes(e.target.value)
-                                        }
-                                        placeholder="Pelanggan menanyakan simulasi kredit 5 tahun..."
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    aria-busy={activitySaving}
-                                    className="min-h-11 w-full"
-                                >
-                                    Simpan Aktivitas
-                                </Button>
-                            </fieldset>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Jadwalkan Next Follow-Up */}
-                <Dialog
-                    open={followUpOpen}
-                    onOpenChange={(open) => {
-                        if (followUpSaving) return;
-                        setFollowUpOpen(open);
-                        setFollowUpError('');
-                    }}
-                >
-                    <DialogContent
-                        className="sm:max-w-md"
-                        onCloseAutoFocus={restoreCustomerActionFocus}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>
-                                Jadwalkan Tindak Lanjut Berikutnya
-                            </DialogTitle>
-                            <DialogDescription>
-                                Jangan biarkan pelanggan terlupakan. Tetapkan
-                                rencana dan waktu.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form
-                            onSubmit={handleScheduleFollowUp}
-                            className="space-y-4 pt-2"
-                        >
-                            {followUpError && (
-                                <p
-                                    role="alert"
-                                    className="text-sm text-destructive"
-                                >
-                                    {followUpError}
-                                </p>
-                            )}
-                            {followUpSaving && (
-                                <p
-                                    role="status"
-                                    className="text-sm text-muted-foreground"
-                                >
-                                    Menyimpan jadwal…
-                                </p>
-                            )}
-                            <fieldset
-                                disabled={followUpSaving}
-                                className="space-y-4"
-                            >
-                                <div className="space-y-1">
-                                    <Label htmlFor="fu-date">
-                                        Waktu Janji / Rencana *
-                                    </Label>
-                                    <Input
-                                        id="fu-date"
-                                        type="datetime-local"
-                                        required
-                                        value={fuDate}
-                                        onChange={(e) =>
-                                            setFuDate(e.target.value)
-                                        }
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="fu-notes">
-                                        Rencana Tindakan *
-                                    </Label>
-                                    <Input
-                                        id="fu-notes"
-                                        required
-                                        value={fuNotes}
-                                        onChange={(e) =>
-                                            setFuNotes(e.target.value)
-                                        }
-                                        placeholder="Konfirmasi kelengkapan berkas KTP dan NPWP..."
-                                        className="min-h-11"
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    aria-busy={followUpSaving}
-                                    className="min-h-11 w-full"
-                                >
-                                    Jadwalkan Tindak Lanjut
-                                </Button>
-                            </fieldset>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
                 {/* Detail and Ubah tahap use the same modal as the Transactions page. */}
                 <TransactionDetailModal
                     target={
@@ -1211,7 +917,13 @@ export default function CustomersIndex({
                             customer: { name: detail.customerName },
                         }
                     }
-                    intent={detail?.stage ? { action: null } : null}
+                    intent={
+                        detail?.mode
+                            ? { action: null, mode: detail.mode }
+                            : detail?.stage
+                              ? { action: null }
+                              : null
+                    }
                     onClose={() => setDetail(null)}
                     onCloseAutoFocus={restoreCustomerActionFocus}
                     regions={regions}
