@@ -1,6 +1,7 @@
 import { TargetPlanEditor } from '@/components/target-plan-editor';
 import { Head, usePage } from '@inertiajs/react';
 import {
+    ForecastBreakdown,
     PerformanceTable,
     ReportingHeader,
     type ReportingProps,
@@ -30,6 +31,7 @@ export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
                 {canManage && (
                     <TargetPlanEditor key={d.period} plans={targetPlans} />
                 )}
+                <ForecastBreakdown dashboard={d} />
                 <PerformanceTable
                     title="Target dan kinerja tim"
                     rows={d.teams}
@@ -38,6 +40,7 @@ export default function Targets({ dashboard: d, targetPlans }: ReportingProps) {
                 <PerformanceTable
                     title="Target dan kinerja Sales"
                     rows={d.performance}
+                    breakdown
                 />
             </div>
         </>

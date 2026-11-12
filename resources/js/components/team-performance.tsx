@@ -1,5 +1,7 @@
 import type { TargetPlan } from '@/components/target-plan-editor';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { ChevronRight } from 'lucide-react';
+import { Fragment, useState } from 'react';
 import InputError from '@/components/input-error';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,13 @@ export type Metrics = {
     forecast_gap_units: number | null;
     missing_closing_month_count?: number;
     missing_do_history_count?: number;
+    forecast_stages?: ForecastStage[] | null;
+};
+export type ForecastStage = {
+    stage: string;
+    count: number;
+    weight: number;
+    units: number;
 };
 export type PerformanceRow = Metrics & {
     id: number | string;
@@ -56,6 +65,7 @@ export type ReportingProps = {
         gapUnits: number | null;
         forecastGapUnits: number | null;
         stageCounts: Record<string, number>;
+        forecastStages: ForecastStage[] | null;
         stagnantCount: number;
         missingClosingMonthCount: number;
         missingDoHistoryCount: number;
@@ -147,15 +157,160 @@ export function PeriodPicker({ period }: { period: string }) {
     );
 }
 
+const percent = (weight: number) => amount(weight * 100) + '%';
+
+export function ForecastBreakdown({
+    dashboard: d,
+}: {
+    dashboard: ReportingProps['dashboard'];
+}) {
+    if (!d.forecastStages || d.forecastUnits === null) {
+        return null;
+    }
+    const pipeline = d.forecastStages.reduce((sum, s) => sum + s.units, 0);
+    const tiles = [
+        ['Target', amount(d.targetUnits)],
+        ['Realisasi', amount(d.realizationUnits)],
+        ['+ Pipeline berbobot', amount(Math.round(pipeline * 100) / 100)],
+        ['= Forecast (estimasi)', amount(d.forecastUnits)],
+        ['Gap ke forecast', amount(d.forecastGapUnits, '—')],
+    ];
+    return (
+        <section
+            aria-labelledby="forecast-breakdown-title"
+            className="min-w-0 overflow-hidden rounded-xl border bg-card"
+        >
+            <div className="border-b p-5">
+                <h2
+                    id="forecast-breakdown-title"
+                    className="text-base font-semibold"
+                >
+                    Asal forecast
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Transaksi aktif dengan estimasi closing pada periode ini,
+                    dikalikan bobot peluang tahapnya.
+                </p>
+            </div>
+            <dl className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-3 lg:grid-cols-5">
+                {tiles.map(([label, value]) => (
+                    <div
+                        key={label}
+                        className="min-w-0 rounded-lg bg-muted p-3"
+                    >
+                        <dt className="text-xs text-muted-foreground">
+                            {label}
+                        </dt>
+                        <dd className="mt-1 text-lg font-semibold tabular-nums">
+                            {value}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-y text-left text-xs text-muted-foreground">
+                        <th scope="col" className="px-5 py-3 font-medium">
+                            Tahap
+                        </th>
+                        <th
+                            scope="col"
+                            className="px-3 py-3 text-right font-medium"
+                        >
+                            Transaksi
+                        </th>
+                        <th
+                            scope="col"
+                            className="px-3 py-3 text-right font-medium"
+                        >
+                            Bobot
+                        </th>
+                        <th
+                            scope="col"
+                            className="px-5 py-3 text-right font-medium"
+                        >
+                            Unit berbobot
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y">
+                    {d.forecastStages.map((s) => (
+                        <tr key={s.stage}>
+                            <th
+                                scope="row"
+                                className="px-5 py-3 text-left font-medium"
+                            >
+                                {stageLabel(s.stage)}
+                            </th>
+                            <td className="px-3 py-3 text-right tabular-nums">
+                                {amount(s.count)}
+                            </td>
+                            <td className="px-3 py-3 text-right tabular-nums">
+                                {percent(s.weight)}
+                            </td>
+                            <td className="px-5 py-3 text-right tabular-nums">
+                                {amount(s.units)}
+                            </td>
+                        </tr>
+                    ))}
+                    {d.missingClosingMonthCount > 0 && (
+                        <tr>
+                            <th
+                                scope="row"
+                                className="px-5 py-3 text-left font-medium"
+                            >
+                                Tanpa estimasi closing
+                            </th>
+                            <td className="px-3 py-3 text-right tabular-nums">
+                                {amount(d.missingClosingMonthCount)}
+                            </td>
+                            <td className="px-3 py-3 text-right">—</td>
+                            <td className="px-5 py-3 text-right text-muted-foreground">
+                                Tidak dihitung
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </section>
+    );
+}
+
+function StageSummary({ row }: { row: PerformanceRow }) {
+    return (
+        <p className="text-xs leading-5 text-muted-foreground">
+            {(row.forecast_stages ?? [])
+                .map(
+                    (s) =>
+                        `${stageLabel(s.stage)} ${amount(s.count)} × ${percent(s.weight)} = ${amount(s.units)}`,
+                )
+                .join(' · ')}
+            {!!row.missing_closing_month_count &&
+                ` · ${row.missing_closing_month_count} tanpa estimasi closing`}
+        </p>
+    );
+}
+
 export function PerformanceTable({
     title,
     rows,
     team = false,
+    breakdown = false,
 }: {
     title: string;
     rows: PerformanceRow[];
     team?: boolean;
+    breakdown?: boolean;
 }) {
+    const [open, setOpen] = useState<Set<PerformanceRow['id']>>(new Set());
+    const toggle = (id: PerformanceRow['id']) =>
+        setOpen((current) => {
+            const next = new Set(current);
+            if (!next.delete(id)) {
+                next.add(id);
+            }
+            return next;
+        });
     const role = usePage().props.auth.user.role;
     const showManagement =
         !team || role === 'supervisor' || role === 'branch_manager';
@@ -258,6 +413,14 @@ export function PerformanceTable({
                                         </div>
                                     ))}
                                 </dl>
+                                {breakdown && row.forecast_stages && (
+                                    <details className="mt-3">
+                                        <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium text-primary">
+                                            Rincian forecast per tahap
+                                        </summary>
+                                        <StageSummary row={row} />
+                                    </details>
+                                )}
                                 {team && !!row.sales_targets_missing && (
                                     <p className="mt-3 text-xs text-muted-foreground">
                                         {row.sales_targets_missing} Sales belum
@@ -295,39 +458,84 @@ export function PerformanceTable({
                         </thead>
                         <tbody className="divide-y">
                             {rows.map((row) => (
-                                <tr className="striped-row" key={row.id}>
-                                    <th
-                                        scope="row"
-                                        className="px-4 py-4 text-left font-medium break-words"
-                                    >
-                                        {row.name}
-                                        {row.is_active === false && (
-                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                                (Tim nonaktif)
-                                            </span>
-                                        )}
-                                        {row.is_current_member === false && (
-                                            <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                                                Bukan anggota aktif
-                                            </span>
-                                        )}
-                                        {team &&
-                                            !!row.sales_targets_missing && (
-                                                <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                                                    {row.sales_targets_missing}{' '}
-                                                    target Sales belum diisi
+                                <Fragment key={row.id}>
+                                    <tr className="striped-row">
+                                        <th
+                                            scope="row"
+                                            className="px-4 py-4 text-left font-medium break-words"
+                                        >
+                                            {breakdown &&
+                                            row.forecast_stages ? (
+                                                <button
+                                                    type="button"
+                                                    aria-expanded={open.has(
+                                                        row.id,
+                                                    )}
+                                                    aria-controls={`forecast-stages-${row.id}`}
+                                                    onClick={() =>
+                                                        toggle(row.id)
+                                                    }
+                                                    className="-ml-1 inline-flex min-h-11 items-center gap-1 rounded text-left font-medium hover:underline"
+                                                >
+                                                    <ChevronRight
+                                                        aria-hidden="true"
+                                                        className={`size-4 shrink-0 transition-transform ${open.has(row.id) ? 'rotate-90' : ''}`}
+                                                    />
+                                                    {row.name}
+                                                    <span className="sr-only">
+                                                        : rincian forecast per
+                                                        tahap
+                                                    </span>
+                                                </button>
+                                            ) : (
+                                                row.name
+                                            )}
+                                            {row.is_active === false && (
+                                                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                    (Tim nonaktif)
                                                 </span>
                                             )}
-                                    </th>
-                                    {values(row).map((v, i) => (
-                                        <td
-                                            className="px-3 py-4 text-right break-words tabular-nums"
-                                            key={columns[i]}
-                                        >
-                                            {v}
-                                        </td>
-                                    ))}
-                                </tr>
+                                            {row.is_current_member ===
+                                                false && (
+                                                <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                                                    Bukan anggota aktif
+                                                </span>
+                                            )}
+                                            {team &&
+                                                !!row.sales_targets_missing && (
+                                                    <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                                                        {
+                                                            row.sales_targets_missing
+                                                        }{' '}
+                                                        target Sales belum diisi
+                                                    </span>
+                                                )}
+                                        </th>
+                                        {values(row).map((v, i) => (
+                                            <td
+                                                className="px-3 py-4 text-right break-words tabular-nums"
+                                                key={columns[i]}
+                                            >
+                                                {v}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                    {breakdown &&
+                                        row.forecast_stages &&
+                                        open.has(row.id) && (
+                                            <tr
+                                                id={`forecast-stages-${row.id}`}
+                                                className="bg-muted/50"
+                                            >
+                                                <td
+                                                    colSpan={columns.length + 1}
+                                                    className="px-4 py-3 pl-10"
+                                                >
+                                                    <StageSummary row={row} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
