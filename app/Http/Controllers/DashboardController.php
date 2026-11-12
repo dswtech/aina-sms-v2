@@ -20,6 +20,11 @@ class DashboardController extends Controller
         return $this->render($request, $performance, 'targets/index');
     }
 
+    public function targetPlans(Request $request, TeamPerformance $performance): Response
+    {
+        return $this->render($request, $performance, 'targets/plans');
+    }
+
     public function teams(Request $request, TeamPerformance $performance): Response
     {
         return $this->render($request, $performance, 'team-performance/index');

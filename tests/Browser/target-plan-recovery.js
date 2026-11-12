@@ -12,7 +12,7 @@ async function targetPlanRecovery(page) {
     await page.locator('input[name="password"]').fill('password');
     await page.locator('[data-test="login-button"]').click();
     await page.waitForURL('**/dashboard');
-    await page.goto(`${origin}/targets`);
+    await page.goto(`${origin}/targets/plans`);
 
     const editor = page.getByRole('region', { name: 'Editor rencana target' });
     const target = editor.getByLabel('Target management (unit)');

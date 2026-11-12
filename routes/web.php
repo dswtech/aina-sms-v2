@@ -66,6 +66,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ->middleware('role:supervisor,admin')
         ->name('targets.index');
 
+    Route::get('targets/plans', [DashboardController::class, 'targetPlans'])
+        ->middleware('role:supervisor')
+        ->name('targets.plans');
+
     Route::post('team-targets', [TargetController::class, 'storeTeam'])->middleware(['role:supervisor,admin', 'throttle:20,1'])->name('team-targets.store');
 
     Route::post('targets', [TargetController::class, 'store'])

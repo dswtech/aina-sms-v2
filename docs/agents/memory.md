@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 12 November 2026 — Rencana Target Bulanan di halaman sendiri
+
+Branch `feat/target-plans-page` dari `origin/main` `cdbde47`. Editor rencana target pindah dari `/targets` ke `/targets/plans` (route `targets.plans`, hanya Supervisor). Menu Target Supervisor kini punya dua submenu, "Target & Forecast" dan "Rencana Target Bulanan"; Admin tetap satu tautan Target karena tidak memiliki editor. Kedua halaman memakai `TeamPerformance::build()` yang sama. Bukti: Pest 517 tes (512 lulus, lima skip), pemeriksaan frontend/PHP bersih, suite browser terisolasi lulus termasuk navigasi submenu.
+
 ## Pembaruan 12 November 2026 — rincian forecast per tahap di halaman Target
 
 Branch `feat/target-forecast-stage-breakdown` dari `origin/main` `1768b56`. Pemilik memilih kedua wireframe: kartu "Asal forecast" (target, realisasi, pipeline berbobot, forecast, gap, lalu transaksi × bobot = unit per tahap Lead–SPK dan baris tanpa estimasi closing) di atas tabel tim, serta baris Sales yang bisa dibuka di tabel Sales. `TeamPerformance::metrics()` menghasilkan `forecast_stages` dari loop forecast yang sama (null untuk bulan lampau), sehingga jumlahnya sama dengan forecast. Rincian hanya aktif di halaman Target; dashboard tidak berubah. Bobot tetap baseline belum disetujui ([PRD FCT-02](PRD.md)).

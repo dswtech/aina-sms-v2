@@ -234,3 +234,14 @@ it('preserves four decimal places in personal forecast gaps', function () {
     $this->actingAs($f['sales'][0])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.targetUnits', 17.1429)->where('dashboard.gapUnits', 17.1429)->where('dashboard.forecastGapUnits', 17.1429));
 });
+
+it('serves the monthly plan editor on its own page for Supervisors only', function () {
+    $f = allocationFixture();
+    $this->actingAs($f['supervisor'])->get('/targets/plans?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->component('targets/plans')->where('dashboard.period', '2026-11-01')->has('targetPlans', 1));
+    $this->get('/targets/plans?period=bad')->assertSessionHasErrors('period');
+    foreach (['admin', 'sales'] as $role) {
+        $user = User::factory()->{$role}()->create(['dealer_id' => $f['supervisor']->dealer_id]);
+        $this->actingAs($user)->get('/targets/plans')->assertForbidden();
+    }
+});
