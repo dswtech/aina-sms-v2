@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\User;
+use App\Services\TransactionMasters;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -26,6 +27,20 @@ function vehicleModel(Dealer $dealer, int $typeId, string $name = 'Xpander', boo
 {
     return DB::table('vehicle_models')->insertGetId(['dealer_id' => $dealer->id, 'vehicle_type_id' => $typeId, 'name' => $name, 'is_active' => $active]);
 }
+
+it('fills the Toyota catalog once and keeps Admin-edited prices', function () {
+    TransactionMasters::initializeVehicles($this->dealer->id);
+    DB::table('vehicle_models')->where('name', 'Toyota Avanza')->update(['price_min' => 1]);
+    TransactionMasters::initializeVehicles($this->dealer->id);
+
+    $models = DB::table('vehicle_models')->where('dealer_id', $this->dealer->id);
+    expect((clone $models)->count())->toBe(20)
+        ->and((clone $models)->where('name', 'not like', 'Toyota %')->count())->toBe(0)
+        ->and(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->pluck('name')->sort()->values()->all())
+        ->toBe(['Hatchback', 'Komersial', 'MPV', 'Pickup', 'SUV', 'Sedan'])
+        ->and((clone $models)->where('name', 'Toyota Avanza')->value('price_min'))->toBe(1)
+        ->and((clone $models)->where('name', 'Toyota Alphard')->value('price_max'))->toBe(1_700_000_000);
+});
 
 it('creates and updates vehicle types with audit, rejecting duplicates and other dealers', function () {
     $this->actingAs($this->admin)->post('/dealer-settings/vehicle-types', ['name' => 'SUV'])->assertRedirect();
