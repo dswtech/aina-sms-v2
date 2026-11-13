@@ -1,4 +1,4 @@
-# Product Context — DealDrive Supervisor
+# Product Context — AIna DealDrive
 
 <!-- impeccable:product-schema 1 -->
 
@@ -47,7 +47,7 @@ Customer menjadi identitas hubungan jangka panjang yang terpisah dari transaksi,
 
 ## Brand Commitments
 
-- Nama kerja: “DealDrive Supervisor”.
+- Nama kerja: “AIna DealDrive”.
 - Arah visual awal: netral dengan aksen biru.
 - Bahasa antarmuka: Bahasa Indonesia dengan istilah domain dari PRD.
 - Belum tersedia logo, font khusus, atau pedoman merek final.
