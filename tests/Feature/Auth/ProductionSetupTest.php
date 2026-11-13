@@ -21,7 +21,7 @@ function productionSetupConfiguration(array $overrides = []): void
         'dealer' => 'Production Test Dealer',
         'name' => 'Test Owner',
         'email' => 'owner@example.test',
-        'username' => 'owner',
+        'username' => 'ownerone',
     ], $overrides)]);
 }
 

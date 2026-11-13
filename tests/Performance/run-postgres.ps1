@@ -61,6 +61,10 @@ try {
         $env:DB_DATABASE = 'aina_g13_concurrency'
         Invoke-Checked createdb ($client + $env:DB_DATABASE)
         Invoke-Checked php @('vendor/bin/pest', 'tests/Performance/PostgresImportConcurrencyTest.php', '--compact')
+
+        $env:DB_DATABASE = 'aina_g13_username'
+        Invoke-Checked createdb ($client + $env:DB_DATABASE)
+        Invoke-Checked php @('vendor/bin/pest', 'tests/Performance/PostgresUsernameRaceTest.php', '--compact')
     }
 
     if (!$SkipBenchmark) {

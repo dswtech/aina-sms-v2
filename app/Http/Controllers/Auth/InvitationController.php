@@ -11,8 +11,8 @@ use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Notifications\InvitationCreated;
+use App\Services\UsernameReservations;
 use App\Support\AuditRecorder;
-use App\Support\UsernameGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,14 +24,14 @@ use Inertia\Response;
 
 class InvitationController extends Controller
 {
-    public function store(StoreInvitationRequest $request): RedirectResponse
+    public function store(StoreInvitationRequest $request, UsernameReservations $usernames): RedirectResponse
     {
         $actor = $request->user();
         $validated = $request->validated();
         $plainToken = Str::random(64);
-        $username = $this->availableUsername(UsernameGenerator::fromName($validated['name']));
 
-        $invitation = DB::transaction(function () use ($actor, $plainToken, $username, $validated): Invitation {
+        $invitation = DB::transaction(function () use ($actor, $plainToken, $usernames, $validated): Invitation {
+            $username = $usernames->reserve($validated['name']);
             $invitation = Invitation::query()->create([
                 'public_id' => (string) Str::uuid(),
                 'dealer_id' => $actor->dealer_id,
@@ -89,9 +89,9 @@ class InvitationController extends Controller
         return Inertia::render('auth/activate-invitation', $props);
     }
 
-    public function accept(AcceptInvitationRequest $request, string $token): RedirectResponse
+    public function accept(AcceptInvitationRequest $request, string $token, UsernameReservations $usernames): RedirectResponse
     {
-        DB::transaction(function () use ($request, $token): void {
+        DB::transaction(function () use ($request, $token, $usernames): void {
             $invitation = Invitation::query()
                 ->where('token_hash', hash('sha256', $token))
                 ->lockForUpdate()
@@ -138,6 +138,8 @@ class InvitationController extends Controller
             }
 
             $invitation->update(['accepted_at' => now()]);
+            // users.username now guards the name, so the hold can go.
+            $usernames->release($invitation->username);
             AuditRecorder::record(
                 $user,
                 'invitation.accepted',
@@ -156,19 +158,5 @@ class InvitationController extends Controller
             ->with('team')
             ->where('token_hash', hash('sha256', $token))
             ->first();
-    }
-
-    private function availableUsername(string $base): string
-    {
-        $candidate = $base;
-        $suffix = 1;
-
-        while (User::query()->where('username', $candidate)->exists()
-            || Invitation::query()->where('username', $candidate)->whereNull('accepted_at')->whereNull('revoked_at')->exists()) {
-            $suffix++;
-            $candidate = Str::limit($base, 12 - strlen((string) $suffix), '').$suffix;
-        }
-
-        return $candidate;
     }
 }

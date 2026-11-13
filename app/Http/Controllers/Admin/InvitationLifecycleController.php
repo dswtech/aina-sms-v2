@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
 use App\Notifications\InvitationCreated;
+use App\Services\UsernameReservations;
 use App\Support\AuditRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class InvitationLifecycleController extends Controller
         return back()->with('status', 'Undangan dikirim ulang.');
     }
 
-    public function revoke(Request $request, Invitation $invitation): RedirectResponse
+    public function revoke(Request $request, Invitation $invitation, UsernameReservations $usernames): RedirectResponse
     {
         $this->authorize('update', $invitation);
 
@@ -59,9 +60,10 @@ class InvitationLifecycleController extends Controller
             throw ValidationException::withMessages(['invitation' => 'Undangan ini tidak dapat dicabut.']);
         }
 
-        DB::transaction(function () use ($invitation, $request): void {
+        DB::transaction(function () use ($invitation, $request, $usernames): void {
             $before = ['state' => $invitation->state()];
             $invitation->update(['revoked_at' => now()]);
+            $usernames->release($invitation->username);
             AuditRecorder::record(
                 $request->user(),
                 'invitation.revoked',

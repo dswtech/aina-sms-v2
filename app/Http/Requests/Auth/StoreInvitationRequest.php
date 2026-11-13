@@ -22,13 +22,20 @@ class StoreInvitationRequest extends FormRequest
         return $this->user()?->can('create', Invitation::class) === true;
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['name.regex' => 'Nama wajib memuat minimal satu huruf Latin (a–z).'];
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
         $requiresTeam = in_array($this->input('role'), [UserRole::Sales->value, UserRole::Supervisor->value], true);
 
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // The username is built from Latin letters of the name, so at least one is needed.
+            'name' => ['required', 'string', 'max:255', 'regex:/[A-Za-z]/'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'role' => ['required', Rule::enum(UserRole::class)],
             'team_id' => [
