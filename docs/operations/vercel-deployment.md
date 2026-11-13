@@ -116,7 +116,7 @@ Jadwal GitHub bersifat best effort, dapat terlambat/dilewati ketika layanan sibu
 
 ## Rilis dan rollback
 
-Pemicu rilis production mengikuti [ADR 006](../agents/adr/ADR-006-versioned-production-releases.md). Merge main menjalankan CI dan tidak memicu deployment Git Vercel setelah konfigurasi baru digabung. Preview branch tetap aktif. Di Vercel, Auto-Assign Custom Production Domains harus false; deployment current tetap melayani domain.
+Pemicu rilis production mengikuti [ADR 006](../agents/adr/ADR-006-versioned-production-releases.md). Merge main menjalankan CI dan tidak memicu deployment Git Vercel setelah konfigurasi baru digabung. Sejak 13 November 2026 preview branch juga dinonaktifkan atas keputusan pemilik (`git.deploymentEnabled: false`), sehingga push dan PR tidak membuat deployment Vercel. Di Vercel, Auto-Assign Custom Production Domains harus false; deployment current tetap melayani domain.
 
 Persiapan satu kali: pemilik menyimpan Vercel token yang dibatasi ke tim deployment sebagai GitHub Actions Secret VERCEL_TOKEN (dapat memakai environment production). Jangan menaruh token pada chat, argumen command line atau file repository. Workflow tidak memerlukan salinan APP_KEY, koneksi Neon, atau credential Brevo. Secret belum terpasang sampai metadata GitHub menyatakan tersedia.
 

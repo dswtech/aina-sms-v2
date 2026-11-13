@@ -9,7 +9,7 @@
 
 Pemilik memilih GitHub Release bernomor agar merge main tidak langsung mengubah aplikasi yang dipakai dealer. Release production memakai format vMAJOR.MINOR.PATCH, dipublikasikan sebagai stable release, dan menunjuk commit dalam main yang lulus workflow tests.yml pada event push main. Draft, prerelease, tag yang berpindah dan commit tanpa CI sukses ditolak.
 
-vercel.json menonaktifkan deployment Git otomatis untuk main. Branch lain tetap memperoleh preview. Auto-assign production domains dinonaktifkan di Vercel. Workflow production-release membuat build production dari SHA yang dipastikan, menunggu READY, memeriksa ulang release, lalu melakukan promote eksplisit. Domain final harus menunjuk deployment baru dan health endpoint merespons 200 sebelum workflow melaporkan berhasil.
+vercel.json menonaktifkan deployment Git otomatis untuk main. Sejak 13 November 2026 pemilik juga menonaktifkan preview untuk branch lain (`git.deploymentEnabled: false`). Auto-assign production domains dinonaktifkan di Vercel. Workflow production-release membuat build production dari SHA yang dipastikan, menunggu READY, memeriksa ulang release, lalu melakukan promote eksplisit. Domain final harus menunjuk deployment baru dan health endpoint merespons 200 sebelum workflow melaporkan berhasil.
 
 Alternatif branch production lebih sederhana tetapi tidak memberikan pemicu publikasi versi yang dipilih pemilik. GitHub Release membutuhkan satu Vercel token di GitHub Secret; ini memakai REST dengan Node bawaan, tanpa dependency/CLI tambahan dan tanpa memindahkan credential database/email dari Vercel.
 
