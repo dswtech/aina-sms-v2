@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { validateRelease, deployRelease, checkProduction } from '../../deploy/vercel/release.mjs';
+import { api, validateRelease, deployRelease, checkProduction } from '../../deploy/vercel/release.mjs';
 
 const sha = 'a'.repeat(40);
 const release = { action: 'published', release: { draft: false, prerelease: false, tag_name: 'v1.2.3' } };
@@ -87,4 +87,14 @@ test('health verification waits for the domain to point to this deployment', asy
     assert.equal(checks, 2);
     await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ alias: [] }), sleep: async () => {} }));
     await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ alias: ['aiia.toyotabandung.web.id'] }), probe: async () => ({ status: 500 }), sleep: async () => {} }));
+});
+
+test('API responses without a body resolve to an empty object', async (t) => {
+    const responses = [new Response(null, { status: 202 }), new Response('', { status: 200 }), Response.json({ id: 'dpl_x' })];
+    t.mock.method(globalThis, 'fetch', async () => responses.shift());
+    const request = api('https://api.vercel.com', 'test-token');
+
+    assert.deepEqual(await request('/v10/projects/p/promote/dpl_x', {}), {});
+    assert.deepEqual(await request('/v9/projects/p'), {});
+    assert.deepEqual(await request('/v13/deployments/dpl_x'), { id: 'dpl_x' });
 });
