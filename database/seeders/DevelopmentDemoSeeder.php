@@ -304,7 +304,7 @@ class DevelopmentDemoSeeder extends Seeder
         shuffle($stagePlan);
 
         TransactionMasters::initializeVehicles($dealer->id);
-        $vehicleModels = array_merge(...array_map(array_keys(...), array_values(TransactionMasters::TOYOTA_CATALOG)));
+        $vehicleModels = TransactionMasters::catalogNames();
 
         $sources = ['walk_in', 'digital_ad', 'referral', 'exhibition', 'call'];
 

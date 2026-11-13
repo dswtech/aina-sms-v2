@@ -21,28 +21,34 @@ final class TransactionMasters
      */
     public const TOYOTA_CATALOG = [
         'MPV' => [
-            'Toyota Calya' => [174_000_000, 195_000_000], 'Toyota Avanza' => [247_000_000, 285_000_000],
-            'Toyota Veloz' => [306_000_000, 388_000_000], 'Toyota Innova Zenix' => [441_000_000, 625_000_000],
-            'Toyota Voxy' => [639_000_000, 650_000_000], 'Toyota Alphard' => [1_291_000_000, 1_700_000_000],
+            'Calya' => [174_000_000, 195_000_000], 'Avanza' => [247_000_000, 285_000_000],
+            'Veloz' => [306_000_000, 388_000_000], 'Innova Zenix' => [441_000_000, 625_000_000],
+            'Voxy' => [639_000_000, 650_000_000], 'Alphard' => [1_291_000_000, 1_700_000_000],
         ],
         'SUV' => [
-            'Toyota Raize' => [247_000_000, 320_000_000], 'Toyota Rush' => [293_000_000, 320_000_000],
-            'Toyota Yaris Cross' => [363_000_000, 452_000_000], 'Toyota Corolla Cross' => [610_000_000, 655_000_000],
-            'Toyota Fortuner' => [588_000_000, 777_000_000],
+            'Raize' => [247_000_000, 320_000_000], 'Rush' => [293_000_000, 320_000_000],
+            'Yaris Cross' => [363_000_000, 452_000_000], 'Corolla Cross' => [610_000_000, 655_000_000],
+            'Fortuner' => [588_000_000, 777_000_000],
         ],
         'Hatchback' => [
-            'Toyota Agya' => [177_000_000, 266_000_000], 'Toyota Yaris' => [350_000_000, 365_000_000],
+            'Agya' => [177_000_000, 266_000_000], 'Yaris' => [350_000_000, 365_000_000],
         ],
         'Sedan' => [
-            'Toyota Vios' => [379_000_000, 464_000_000], 'Toyota Corolla Altis' => [643_000_000, 700_000_000],
-            'Toyota Camry' => [859_000_000, 980_000_000],
+            'Vios' => [379_000_000, 464_000_000], 'Corolla Altis' => [643_000_000, 700_000_000],
+            'Camry' => [859_000_000, 980_000_000],
         ],
         'Pickup' => [
-            'Toyota Hilux Rangga' => [197_000_000, 260_000_000], 'Toyota Hilux Single Cab' => [420_000_000, 440_000_000],
-            'Toyota Hilux Double Cab' => [469_000_000, 560_000_000],
+            'Hilux Rangga' => [197_000_000, 260_000_000], 'Hilux Single Cab' => [420_000_000, 440_000_000],
+            'Hilux Double Cab' => [469_000_000, 560_000_000],
         ],
-        'Komersial' => ['Toyota Hiace' => [682_000_000, 780_000_000]],
+        'Komersial' => ['Hiace' => [682_000_000, 780_000_000]],
     ];
+
+    /** @return list<string> */
+    public static function catalogNames(): array
+    {
+        return array_merge(...array_map(array_keys(...), array_values(self::TOYOTA_CATALOG)));
+    }
 
     /**
      * Adds only what is missing, matching names case-insensitively like the Admin forms do,

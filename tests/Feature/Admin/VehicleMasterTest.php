@@ -30,26 +30,26 @@ function vehicleModel(Dealer $dealer, int $typeId, string $name = 'Xpander', boo
 
 it('fills the Toyota catalog once and keeps Admin-edited prices', function () {
     TransactionMasters::initializeVehicles($this->dealer->id);
-    DB::table('vehicle_models')->where('name', 'Toyota Avanza')->update(['price_min' => 1]);
+    DB::table('vehicle_models')->where('name', 'Avanza')->update(['price_min' => 1]);
     TransactionMasters::initializeVehicles($this->dealer->id);
 
     $models = DB::table('vehicle_models')->where('dealer_id', $this->dealer->id);
     expect((clone $models)->count())->toBe(20)
-        ->and((clone $models)->where('name', 'not like', 'Toyota %')->count())->toBe(0)
+        ->and((clone $models)->whereNotIn('name', TransactionMasters::catalogNames())->count())->toBe(0)
         ->and(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->pluck('name')->sort()->values()->all())
         ->toBe(['Hatchback', 'Komersial', 'MPV', 'Pickup', 'SUV', 'Sedan'])
-        ->and((clone $models)->where('name', 'Toyota Avanza')->value('price_min'))->toBe(1)
-        ->and((clone $models)->where('name', 'Toyota Alphard')->value('price_max'))->toBe(1_700_000_000);
+        ->and((clone $models)->where('name', 'Avanza')->value('price_min'))->toBe(1)
+        ->and((clone $models)->where('name', 'Alphard')->value('price_max'))->toBe(1_700_000_000);
 });
 
 it('reuses Admin-owned types and models that differ only by letter case', function () {
     $suv = vehicleType($this->dealer, 'suv');
-    vehicleModel($this->dealer, $suv, 'toyota raize');
+    vehicleModel($this->dealer, $suv, 'raize');
     TransactionMasters::initializeVehicles($this->dealer->id);
 
     expect(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['suv'])->count())->toBe(1)
-        ->and(DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['toyota raize'])->count())->toBe(1)
-        ->and(DB::table('vehicle_models')->where('name', 'Toyota Rush')->value('vehicle_type_id'))->toBe($suv);
+        ->and(DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['raize'])->count())->toBe(1)
+        ->and(DB::table('vehicle_models')->where('name', 'Rush')->value('vehicle_type_id'))->toBe($suv);
 });
 
 it('migration fills the catalog for existing dealers only and keeps it on rollback', function () {

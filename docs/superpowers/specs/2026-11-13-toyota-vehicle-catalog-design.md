@@ -27,7 +27,7 @@ MPV: Calya 174–195*, Avanza 247–285, Veloz 306–388, Innova Zenix 441–625
 SUV: Raize 247–320, Rush 293–320, Yaris Cross 363–452, Corolla Cross 610–655*, Fortuner 588–777.
 Hatchback: Agya 177–266, Yaris 350–365*. Sedan: Vios 379–464, Corolla Altis 643–700*, Camry 859–980.
 Pickup: Hilux Rangga 197–260*, Hilux Single Cab 420–440*, Hilux Double Cab 469–560*. Komersial: Hiace 682–780*.
-Nama tersimpan dengan awalan "Toyota ". Sumber: harga mulai OTR Jabodetabek auto2000.co.id Okt–Nov 2026 + ±Rp3 jt.
+Nama tersimpan tanpa awalan merek (mis. "Avanza"). Sumber: harga mulai OTR Jabodetabek auto2000.co.id Okt–Nov 2026 + ±Rp3 jt.
 
 ## Risiko
-Model yang sudah diisi Admin dengan nama berbeda (mis. "Avanza") akan berdampingan dengan "Toyota Avanza".
+Nama dicocokkan tanpa membedakan huruf besar-kecil; model Admin dengan ejaan lain (mis. "All New Avanza") akan berdampingan dengan "Avanza".
