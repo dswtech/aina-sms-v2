@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\User;
+use App\Services\TransactionMasters;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -26,6 +27,41 @@ function vehicleModel(Dealer $dealer, int $typeId, string $name = 'Xpander', boo
 {
     return DB::table('vehicle_models')->insertGetId(['dealer_id' => $dealer->id, 'vehicle_type_id' => $typeId, 'name' => $name, 'is_active' => $active]);
 }
+
+it('fills the Toyota catalog once and keeps Admin-edited prices', function () {
+    TransactionMasters::initializeVehicles($this->dealer->id);
+    DB::table('vehicle_models')->where('name', 'Avanza')->update(['price_min' => 1]);
+    TransactionMasters::initializeVehicles($this->dealer->id);
+
+    $models = DB::table('vehicle_models')->where('dealer_id', $this->dealer->id);
+    expect((clone $models)->count())->toBe(20)
+        ->and((clone $models)->whereNotIn('name', TransactionMasters::catalogNames())->count())->toBe(0)
+        ->and(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->pluck('name')->sort()->values()->all())
+        ->toBe(['Hatchback', 'Komersial', 'MPV', 'Pickup', 'SUV', 'Sedan'])
+        ->and((clone $models)->where('name', 'Avanza')->value('price_min'))->toBe(1)
+        ->and((clone $models)->where('name', 'Alphard')->value('price_max'))->toBe(1_700_000_000);
+});
+
+it('reuses Admin-owned types and models that differ only by letter case', function () {
+    $suv = vehicleType($this->dealer, 'suv');
+    vehicleModel($this->dealer, $suv, 'raize');
+    TransactionMasters::initializeVehicles($this->dealer->id);
+
+    expect(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['suv'])->count())->toBe(1)
+        ->and(DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['raize'])->count())->toBe(1)
+        ->and(DB::table('vehicle_models')->where('name', 'Rush')->value('vehicle_type_id'))->toBe($suv);
+});
+
+it('migration fills the catalog for existing dealers only and keeps it on rollback', function () {
+    $migration = require database_path('migrations/2026_11_13_100000_seed_toyota_vehicle_catalog.php');
+    $migration->up();
+    $migration->up();
+    $count = fn (): int => DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->count();
+    expect($count())->toBe(20);
+
+    $migration->down();
+    expect($count())->toBe(20);
+});
 
 it('creates and updates vehicle types with audit, rejecting duplicates and other dealers', function () {
     $this->actingAs($this->admin)->post('/dealer-settings/vehicle-types', ['name' => 'SUV'])->assertRedirect();

@@ -10,6 +10,7 @@ use App\Models\FollowUp;
 use App\Models\Invitation;
 use App\Models\SalesTarget;
 use App\Models\StageHistory;
+use App\Services\TransactionMasters;
 use Database\Seeders\AreaMasterSeeder;
 use Database\Seeders\DevelopmentDemoSeeder;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,10 @@ it('seeds complete and idempotent local demo data', function () {
         ->and(SalesTarget::query()->count())->toBe(48)
         ->and(CsvImportBatch::query()->count())->toBe(8)
         ->and(Invitation::query()->count())->toBe(4)
-        ->and(DB::table('notifications')->count())->toBeGreaterThan(0);
+        ->and(DB::table('notifications')->count())->toBeGreaterThan(0)
+        ->and(DB::table('vehicle_models')->count())->toBe(20)
+        ->and(DB::table('vehicle_models')->whereNotIn('name', TransactionMasters::catalogNames())->count())->toBe(0)
+        ->and(DealTransaction::query()->whereNotIn('vehicle_model', TransactionMasters::catalogNames())->count())->toBe(0);
 
     expect(StageHistory::query()->where('to_stage', PipelineStage::Do)->count())->toBe(44)
         ->and(StageHistory::query()->where('to_stage', PipelineStage::Do)->whereNotNull('area_snapshot')->count())->toBe(44)

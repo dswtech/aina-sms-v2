@@ -303,14 +303,8 @@ class DevelopmentDemoSeeder extends Seeder
 
         shuffle($stagePlan);
 
-        $vehicleModels = [
-            'Toyota Avanza', 'Toyota Veloz', 'Daihatsu Xenia', 'Honda BR-V',
-            'Honda HR-V', 'Mitsubishi Xpander', 'Suzuki Ertiga', 'Hyundai Creta',
-            'Kia Seltos', 'Toyota Raize', 'Toyota Innova Zenix', 'Wuling Almaz',
-            'Nissan Magnite', 'Daihatsu Terios', 'Honda Brio', 'Toyota Yaris Cross',
-        ];
-
-        $this->seedVehicleMaster($dealer);
+        TransactionMasters::initializeVehicles($dealer->id);
+        $vehicleModels = TransactionMasters::catalogNames();
 
         $sources = ['walk_in', 'digital_ad', 'referral', 'exhibition', 'call'];
 
@@ -440,33 +434,6 @@ class DevelopmentDemoSeeder extends Seeder
         }
 
         return $records;
-    }
-
-    /** Demo master kendaraan; insertOrIgnore keeps re-runs free of duplicates and leaves Admin edits intact. */
-    private function seedVehicleMaster(Dealer $dealer): void
-    {
-        $catalog = [
-            'MPV' => [
-                'Toyota Avanza' => [240_000_000, 290_000_000], 'Toyota Veloz' => [285_000_000, 310_000_000],
-                'Daihatsu Xenia' => [245_000_000, 285_000_000], 'Mitsubishi Xpander' => [255_000_000, 330_000_000],
-                'Suzuki Ertiga' => [250_000_000, 305_000_000], 'Toyota Innova Zenix' => [430_000_000, 560_000_000],
-            ],
-            'SUV' => [
-                'Honda BR-V' => [275_000_000, 335_000_000], 'Honda HR-V' => [380_000_000, 520_000_000],
-                'Hyundai Creta' => [315_000_000, 400_000_000], 'Kia Seltos' => [330_000_000, 410_000_000],
-                'Toyota Raize' => [220_000_000, 285_000_000], 'Wuling Almaz' => [360_000_000, 420_000_000],
-                'Nissan Magnite' => [210_000_000, 260_000_000], 'Daihatsu Terios' => [260_000_000, 320_000_000],
-                'Toyota Yaris Cross' => [370_000_000, 450_000_000],
-            ],
-            'Hatchback' => ['Honda Brio' => [170_000_000, 240_000_000]],
-        ];
-        foreach ($catalog as $type => $models) {
-            DB::table('vehicle_types')->insertOrIgnore(['dealer_id' => $dealer->id, 'name' => $type]);
-            $typeId = DB::table('vehicle_types')->where('dealer_id', $dealer->id)->where('name', $type)->value('id');
-            foreach ($models as $name => [$min, $max]) {
-                DB::table('vehicle_models')->insertOrIgnore(['dealer_id' => $dealer->id, 'vehicle_type_id' => $typeId, 'name' => $name, 'price_min' => $min, 'price_max' => $max]);
-            }
-        }
     }
 
     private function seedStageHistories(

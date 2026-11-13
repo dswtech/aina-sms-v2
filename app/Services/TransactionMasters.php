@@ -15,6 +15,60 @@ use Illuminate\Validation\ValidationException;
 
 final class TransactionMasters
 {
+    /**
+     * Default Toyota catalog: type => model => [price_min, price_max]. Prices are rough OTR Bandung
+     * estimates for late 2026 (Jabodetabek list + ~Rp3 jt), not an official price list; Admin corrects them.
+     */
+    public const TOYOTA_CATALOG = [
+        'MPV' => [
+            'Calya' => [174_000_000, 195_000_000], 'Avanza' => [247_000_000, 285_000_000],
+            'Veloz' => [306_000_000, 388_000_000], 'Innova Zenix' => [441_000_000, 625_000_000],
+            'Voxy' => [639_000_000, 650_000_000], 'Alphard' => [1_291_000_000, 1_700_000_000],
+        ],
+        'SUV' => [
+            'Raize' => [247_000_000, 320_000_000], 'Rush' => [293_000_000, 320_000_000],
+            'Yaris Cross' => [363_000_000, 452_000_000], 'Corolla Cross' => [610_000_000, 655_000_000],
+            'Fortuner' => [588_000_000, 777_000_000],
+        ],
+        'Hatchback' => [
+            'Agya' => [177_000_000, 266_000_000], 'Yaris' => [350_000_000, 365_000_000],
+        ],
+        'Sedan' => [
+            'Vios' => [379_000_000, 464_000_000], 'Corolla Altis' => [643_000_000, 700_000_000],
+            'Camry' => [859_000_000, 980_000_000],
+        ],
+        'Pickup' => [
+            'Hilux Rangga' => [197_000_000, 260_000_000], 'Hilux Single Cab' => [420_000_000, 440_000_000],
+            'Hilux Double Cab' => [469_000_000, 560_000_000],
+        ],
+        'Komersial' => ['Hiace' => [682_000_000, 780_000_000]],
+    ];
+
+    /** @return list<string> */
+    public static function catalogNames(): array
+    {
+        return array_merge(...array_map(array_keys(...), array_values(self::TOYOTA_CATALOG)));
+    }
+
+    /**
+     * Adds only what is missing, matching names case-insensitively like the Admin forms do,
+     * so re-runs and Admin-created or edited rows are left intact.
+     */
+    public static function initializeVehicles(int $dealerId): void
+    {
+        $find = fn (string $table, string $name) => DB::table($table)->where('dealer_id', $dealerId)
+            ->whereRaw('lower(name) = ?', [mb_strtolower($name)])->value('id');
+
+        foreach (self::TOYOTA_CATALOG as $type => $models) {
+            $typeId = $find('vehicle_types', $type) ?? DB::table('vehicle_types')->insertGetId(['dealer_id' => $dealerId, 'name' => $type]);
+            foreach ($models as $name => [$min, $max]) {
+                if ($find('vehicle_models', $name) === null) {
+                    DB::table('vehicle_models')->insert(['dealer_id' => $dealerId, 'vehicle_type_id' => $typeId, 'name' => $name, 'price_min' => $min, 'price_max' => $max]);
+                }
+            }
+        }
+    }
+
     public static function initialize(int $dealerId): void
     {
         foreach (['maybank' => 'MayBank', 'muf' => 'Mandiri Utama Finance', 'acc' => 'ACC', 'taf' => 'TAF', 'mtf' => 'Mandiri Tunas Finance', 'bca' => 'BCA Finance', 'niaga' => 'Niaga Finance', 'adira' => 'Adira Finance'] as $code => $name) {

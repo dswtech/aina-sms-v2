@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.50 |
+| Versi | v1.51 |
 | Diperbarui | 13 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 13 November 2026 — katalog kendaraan Toyota bawaan
+
+- Master kendaraan berisi 20 model Toyota dalam enam tipe (MPV, SUV, Hatchback, Sedan, Pickup, Komersial) dari `TransactionMasters::TOYOTA_CATALOG`, dengan nama tanpa awalan merek (mis. "Avanza"). Harga adalah perkiraan OTR Bandung akhir 2026 (harga mulai Jabodetabek auto2000.co.id + ±Rp3 jt), bukan pricelist resmi; Admin mengoreksinya. Dealer production yang ada mendapat katalog lewat migration `2026_11_13_100000_seed_toyota_vehicle_catalog`, dealer baru lewat `app:invite-first-admin`; seeder demo memakai katalog yang sama. Nama dicocokkan tanpa membedakan huruf besar-kecil sehingga data Admin tidak ditimpa atau digandakan dan rollback tidak menghapus katalog. Migration belum dijalankan pada database non-test. Desain: [spec](../superpowers/specs/2026-11-13-toyota-vehicle-catalog-design.md).
 
 ## Pembaruan 13 November 2026 — keputusan terbuka PRD ditutup
 
