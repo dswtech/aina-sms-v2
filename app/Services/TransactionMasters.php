@@ -44,14 +44,21 @@ final class TransactionMasters
         'Komersial' => ['Toyota Hiace' => [682_000_000, 780_000_000]],
     ];
 
-    /** insertOrIgnore keeps re-runs free of duplicates and leaves Admin-created or edited rows intact. */
+    /**
+     * Adds only what is missing, matching names case-insensitively like the Admin forms do,
+     * so re-runs and Admin-created or edited rows are left intact.
+     */
     public static function initializeVehicles(int $dealerId): void
     {
+        $find = fn (string $table, string $name) => DB::table($table)->where('dealer_id', $dealerId)
+            ->whereRaw('lower(name) = ?', [mb_strtolower($name)])->value('id');
+
         foreach (self::TOYOTA_CATALOG as $type => $models) {
-            DB::table('vehicle_types')->insertOrIgnore(['dealer_id' => $dealerId, 'name' => $type]);
-            $typeId = DB::table('vehicle_types')->where('dealer_id', $dealerId)->where('name', $type)->value('id');
+            $typeId = $find('vehicle_types', $type) ?? DB::table('vehicle_types')->insertGetId(['dealer_id' => $dealerId, 'name' => $type]);
             foreach ($models as $name => [$min, $max]) {
-                DB::table('vehicle_models')->insertOrIgnore(['dealer_id' => $dealerId, 'vehicle_type_id' => $typeId, 'name' => $name, 'price_min' => $min, 'price_max' => $max]);
+                if ($find('vehicle_models', $name) === null) {
+                    DB::table('vehicle_models')->insert(['dealer_id' => $dealerId, 'vehicle_type_id' => $typeId, 'name' => $name, 'price_min' => $min, 'price_max' => $max]);
+                }
             }
         }
     }

@@ -42,6 +42,16 @@ it('fills the Toyota catalog once and keeps Admin-edited prices', function () {
         ->and((clone $models)->where('name', 'Toyota Alphard')->value('price_max'))->toBe(1_700_000_000);
 });
 
+it('reuses Admin-owned types and models that differ only by letter case', function () {
+    $suv = vehicleType($this->dealer, 'suv');
+    vehicleModel($this->dealer, $suv, 'toyota raize');
+    TransactionMasters::initializeVehicles($this->dealer->id);
+
+    expect(DB::table('vehicle_types')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['suv'])->count())->toBe(1)
+        ->and(DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->whereRaw('lower(name) = ?', ['toyota raize'])->count())->toBe(1)
+        ->and(DB::table('vehicle_models')->where('name', 'Toyota Rush')->value('vehicle_type_id'))->toBe($suv);
+});
+
 it('migration fills the catalog for existing dealers only and keeps it on rollback', function () {
     $migration = require database_path('migrations/2026_11_13_100000_seed_toyota_vehicle_catalog.php');
     $migration->up();
