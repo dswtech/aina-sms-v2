@@ -4,7 +4,7 @@
 **Tanggal:** 5 November 2026  
 **Status:** Panduan penjelasan. Seluruh angka simulasi merupakan data contoh, bukan data pelanggan atau hasil penjualan dealer.
 
-> Bobot dalam dokumen ini mengikuti baseline development aplikasi pada tanggal di atas. Bobot tersebut **belum disetujui untuk production**. Dokumen ini tidak menetapkan atau mengubah bobot resmi dealer.
+> Bobot dalam dokumen ini (10/25/50/75%) **disetujui Product Owner untuk production pada 13 November 2026**. Dokumen ini tidak mengubah bobot; perubahan bobot memerlukan persetujuan baru.
 
 ## 1. Untuk apa bobot forecast?
 

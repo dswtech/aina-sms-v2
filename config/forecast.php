@@ -2,10 +2,10 @@
 
 return [
     /*
-     * Nilai ini hanya baseline pengembangan. Aktivasi produksi menunggu
-     * persetujuan Product Owner dan operasional dealer (PRD FCT-02).
+     * Disetujui Product Owner pada 13 November 2026 untuk production (PRD FCT-02).
+     * Ubah bobot hanya dengan persetujuan baru dari Product Owner.
      */
-    'approved' => false,
+    'approved' => true,
     'weights' => [
         'lead' => 0.10,
         'prospect' => 0.25,

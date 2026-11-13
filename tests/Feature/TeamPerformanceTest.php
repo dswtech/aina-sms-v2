@@ -361,3 +361,10 @@ it('breaks the weighted pipeline down per stage so it adds up to the forecast', 
     $this->get('/targets?period=2026-10')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.forecastStages', null)->where('dashboard.performance.0.forecast_stages', null));
 });
+
+test('production forecast weights are the owner-approved baseline', function () {
+    expect(config('forecast.approved'))->toBeTrue()
+        ->and(config('forecast.weights'))->toBe(['lead' => 0.10, 'prospect' => 0.25, 'hot_prospect' => 0.50, 'spk' => 0.75]);
+    $f = g02Fixture();
+    $this->actingAs($f['supervisor'])->get('/targets')->assertInertia(fn (Assert $p) => $p->where('dashboard.forecastApproved', true));
+});
