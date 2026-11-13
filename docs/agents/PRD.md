@@ -431,12 +431,12 @@ Baseline penggunaan dikumpulkan setelah dua minggu pertama; target yang bergantu
 
 | No | Pertanyaan | Pemutus | Yang tertahan | Prioritas |
 |---:|---|---|---|---|
-| 1 | Apa nama produk final? | Product Owner | Branding, title, logo, dan alamat deployment. | S |
-| 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, dan SPK? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. | M |
+| 1 | Apa nama produk final? | Product Owner | Branding, title, logo, dan alamat deployment. Ditutup 13 November 2026: nama produk final **AIna DealDrive**, dipilih Product Owner. Penerapan ke branding, title, logo dan alamat deployment dikerjakan terpisah. | S |
+| 2 | Berapa bobot peluang untuk Lead, Prospect, Hot Prospect, dan SPK? | Product Owner + operasional dealer | Aktivasi forecast production dan acceptance rekonsiliasi. Ditutup 13 November 2026: pemilik, sebagai Product Owner sekaligus perwakilan operasional dealer, menyetujui bobot baseline Lead 10%, Prospect 25%, Hot Prospect 50%, SPK 75%; `config/forecast.php` approved=true. | M |
 | 3 | Penyedia email apa yang digunakan? | Product Owner + IT | Development memakai Mailtrap Sandbox, dipilih pengguna 5 November 2026. Pada 7 November 2026 pengguna mula-mula memilih Gmail pribadi, lalu mengganti pengiriman awal ke Brevo SMTP. Undangan preview tercatat Delivered; credential production diisi pemilik secara langsung. Konfigurasi dan gerbang aktual mengikuti runbook deployment; kapasitas provider dievaluasi pada pilot. | M |
 | 4 | Di mana aplikasi production akan dijalankan? | Product Owner + IT | Pada 7 November 2026 pengguna memilih Vercel untuk deployment awal dan Neon Free baru sebagai PostgreSQL. Implementasi dan batas kesiapan mengikuti ADR 005 serta runbook Vercel. | M |
-| 5 | Bukti booking fee apa yang cukup untuk masuk SPK? | Product Owner + operasional dealer | Validasi final transisi ke SPK. | M |
-| 6 | Berapa lama data pelanggan dan audit disimpan? | Product Owner + legal/operasional | Kebijakan retensi, archive, dan penghapusan. | S |
+| 5 | Bukti booking fee apa yang cukup untuk masuk SPK? | Product Owner + operasional dealer | Validasi final transisi ke SPK. Ditutup 13 November 2026: konfirmasi eksplisit bahwa booking fee sudah diterima, dengan pelaku dan waktu tercatat, sudah cukup. Nominal atau nomor kuitansi tidak diwajibkan; perilaku saat ini menjadi aturan final. | M |
+| 6 | Berapa lama data pelanggan dan audit disimpan? | Product Owner + legal/operasional | Kebijakan retensi, archive, dan penghapusan. Ditutup sementara 13 November 2026: data pelanggan dan audit disimpan tanpa batas waktu; tidak ada archive atau penghapusan otomatis. Kebijakan ditinjau ulang setelah satu tahun pemakaian production. | S |
 
 Keputusan teknis yang mahal dibalik harus ditutup melalui ADR baru. Keputusan produk tetap ditutup di bagian ini dengan tanggal dan alasan, tanpa menghapus pertanyaannya.
 

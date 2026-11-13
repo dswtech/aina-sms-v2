@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.49 |
-| Diperbarui | 10 November 2026 |
+| Versi | v1.50 |
+| Diperbarui | 13 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 13 November 2026 — keputusan terbuka PRD ditutup
+
+Branch `docs/close-open-decisions`. Pemilik menutup sisa keputusan PRD bagian 14: bukti booking fee cukup konfirmasi eksplisit (perilaku sekarang, tanpa kode baru), nama produk final **AIna DealDrive**, retensi data pelanggan dan audit tanpa batas dan ditinjau setelah satu tahun production. Baris bobot forecast di PRD juga dicatat. PIP-03 kini Terverifikasi teknis dan G12 ditutup. Belum dikerjakan: penerapan nama AIna DealDrive ke `APP_NAME`, title, logo dan domain.
 
 ## Pembaruan 13 November 2026 — bobot forecast disetujui
 
