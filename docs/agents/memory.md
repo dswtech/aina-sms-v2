@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 13 November 2026 — bobot forecast disetujui
+
+Branch `chore/approve-forecast-weights` dari `origin/main` `d3323dc`. Pemilik memutuskan memakai bobot yang ada (Lead 10%, Prospect 25%, Hot Prospect 50%, SPK 75%). `config/forecast.php` kini `approved => true`, sehingga catatan "Bobot belum disetujui untuk production." hilang dari Dashboard dan Target; label estimasi tetap ada. Pemilik juga mewakili operasional dealer dan menyatakan FCT-02 lulus; panduan forecast, baris FCT-02 dan G12 di matriks UAT diperbarui; tes Pest baru mengunci bobot dan status persetujuan.
+
 ## Pembaruan 12 November 2026 — Rencana Target Bulanan di halaman sendiri
 
 Branch `feat/target-plans-page` dari `origin/main` `cdbde47`. Editor rencana target pindah dari `/targets` ke `/targets/plans` (route `targets.plans`, hanya Supervisor). Menu Target Supervisor kini punya dua submenu, "Target & Forecast" dan "Rencana Target Bulanan"; Admin tetap satu tautan Target karena tidak memiliki editor. Kedua halaman memakai `TeamPerformance::build()` yang sama. Bukti: Pest 517 tes (512 lulus, lima skip), pemeriksaan frontend/PHP bersih, suite browser terisolasi lulus termasuk navigasi submenu.

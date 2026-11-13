@@ -33,7 +33,7 @@ Gap ke forecast = target dikurangi forecast, pada contoh 20 − 15,25 = 4,75. Ar
 ## Batasannya
 
 - Forecast bukan janji. Bila tahap atau estimasi closing berubah, forecast ikut berubah.
-- Akurasi bergantung pada bobot. Bobot 10/25/50/75% adalah baseline development (`config/forecast.php`, `approved` masih `false`) dan belum disetujui untuk production. Bila di dealer hanya 5% lead yang jadi, forecast akan terlalu optimistis.
+- Akurasi bergantung pada bobot. Bobot 10/25/50/75% (`config/forecast.php`) disetujui Product Owner untuk production pada 13 November 2026. Bila di dealer hanya 5% lead yang jadi, forecast akan terlalu optimistis.
 - Forecast bulan yang sudah lewat tidak tersedia karena kondisi pipeline pada waktu itu tidak disimpan.
 
 ## Hubungan dengan menu Target
