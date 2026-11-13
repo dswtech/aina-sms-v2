@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 13 November 2026 — rilis v1.1.0 dan migrasi username
+
+Release `v1.1.0` (commit `a382758`, PR #107) dipromote ke production lewat `dpl_A4nP5sg7T65WGMhNcZeKUrMJxqBM`. Atas pilihan pemilik, rilis dilakukan sebelum migrate. Workflow berhenti dengan exit 1 setelah promote dan sebelum health check; dugaan penyebabnya respons promote tanpa body, diperbaiki di branch `fix/release-empty-promote-body`. Setelah promote, `/up` dan `/login` dicek manual dan mengembalikan 200. Nilai `autoAssignCustomDomains` setelah promote belum terverifikasi. Atas perintah pemilik dan tanpa backup, operator menjalankan `migrate` dari lokal melalui koneksi langsung Neon `main`; hanya `2026_11_13_200000_create_username_reservations_table` yang tertunda, dan migrasi itu kini tercatat Ran pada batch 2. Membuat dan menerima undangan di production belum diuji pemilik.
+
 ## Pembaruan 13 November 2026 — username otomatis untuk akun baru
 
 Branch `feat/username-generator` menerapkan IAM-08 dan [ADR 007](adr/ADR-007-generated-usernames.md): generator murni di `App\Support\UsernameGenerator`, reservasi di `App\Services\UsernameReservations`, dan tabel `username_reservations` (migrasi schema saja). Pemakainya undangan Admin, aktivasi, pencabutan, penonaktifan tim, dan `app:invite-first-admin`. Bootstrap production kini menolak username di bawah 6 karakter, username yang diawali digit, atau yang memuat kata terlarang, jadi `AINA_PRODUCTION_ADMIN_USERNAME` dan `AINA_PREVIEW_ADMIN_USERNAME` harus memenuhi aturan itu untuk instalasi baru. Production yang sudah berjalan perlu backup dan `migrate` oleh operator sebelum rilis berikutnya, karena `app:prepare-production` menolak migrasi pada skema berisi. Test race PostgreSQL ada di `tests/Performance/PostgresUsernameRaceTest.php` dan dijalankan oleh `run-postgres.ps1`.
