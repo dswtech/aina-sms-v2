@@ -90,10 +90,12 @@ it('serializes metadata edits with DO and freezes snapshots until cancellation a
     expect($original->fresh()->area_snapshot['is_foa'])->toBeTrue()
         ->and($original->fresh()->financing_snapshot['leasing_name'])->toBe('ACC');
     $this->patchJson($path, ['notes' => 'Dikunci'])->assertForbidden();
+    // Later than the earlier history rows, so the newest-row lookup cannot pass by a same-second tie.
+    $this->travel(1)->minutes();
     $this->actingAs($admin)->post(route('transactions.cancel-do', $deal), [
         'reason' => 'Koreksi', 'do_event_id' => $original->id,
     ])->assertRedirect()->assertSessionHasNoErrors();
-    expect($deal->fresh()->progress_at->equalTo($deal->stageHistories()->latest('id')->first()->created_at))->toBeTrue();
+    expect($deal->fresh()->progress_at->equalTo($deal->stageHistories()->reorder()->latest('id')->first()->created_at))->toBeTrue();
     $redo = $deal->transitionTo(PipelineStage::Do, $this->sales, options: $checklist);
     expect($redo->area_snapshot['is_foa'])->toBeFalse()
         ->and($redo->financing_snapshot['is_monitored'])->toBeFalse()
