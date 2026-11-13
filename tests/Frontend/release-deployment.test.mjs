@@ -42,7 +42,7 @@ test('waits for the pinned production build before promoting', async () => {
     await deployRelease({ sha, tag: 'v1.2.3', request: api.request, sleep: async () => {} });
     const create = api.calls.find(({ path }) => path === '/v13/deployments');
     assert.equal(create.body.gitSource.sha, sha);
-    assert.equal(create.body.gitSource.ref, sha);
+    assert.equal(create.body.gitSource.ref, 'main');
     assert.equal(create.body.meta.releaseTag, 'v1.2.3');
     assert.equal(api.calls.some(({ path }) => path.includes('/promote/dpl_test')), true);
     assert.deepEqual(api.calls.at(-1), {

@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.51 |
+| Versi | v1.52 |
 | Diperbarui | 13 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 13 November 2026 — reset database production dan rilis v1.0.0
+
+Atas permintaan pemilik, Neon main dikosongkan (`DROP SCHEMA public CASCADE`) tanpa backup, lalu dipasang ulang lewat `app:prepare-production`. Release GitHub `v1.0.0` (commit `6c8d767`) gagal karena `release.mjs` membuat deployment dengan `ref: sha`, sehingga `VERCEL_GIT_COMMIT_REF` bukan `main` dan setup dilewati diam-diam; `/login` sempat 500. Atas persetujuan pemilik, deployment `dpl_BeBbGZ4GoQAQ9Q2fSSFLL7PD589b` dibuat manual dari commit yang sama dengan `ref: main`, migration selesai, satu undangan Admin terkirim (instance lain menolak duplikat), lalu dipromote; `/up` dan `/login` 200. Flag setup dikembalikan `false` dan deadline `0`. Penegasan ulang auto-assign domain `false` setelah promote manual ditolak izin agent dan perlu dicek pemilik di Vercel. Branch `fix/release-ref-main` mengubah `ref` deployment rilis menjadi `main` (sha tetap mengunci build). Aktivasi Admin belum terverifikasi.
 
 ## Pembaruan 13 November 2026 — katalog kendaraan Toyota bawaan
 

@@ -34,7 +34,8 @@ export async function deployRelease({ sha, tag, request, sleep: pause = sleep, b
     }
     const deployment = await request('/v13/deployments', {
         name: 'aina-sms', project, target: 'production',
-        gitSource: { type: 'github', repoId: '1437177802', ref: sha, sha },
+        // app:prepare-production requires VERCEL_GIT_COMMIT_REF=main; sha still pins the build.
+        gitSource: { type: 'github', repoId: '1437177802', ref: 'main', sha },
         projectSettings: { framework: 'container' },
         meta: { releaseTag: tag, releaseCommit: sha },
     });
