@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 13 November 2026 — username otomatis untuk akun baru
+
+Branch `feat/username-generator` menerapkan IAM-08 dan [ADR 007](adr/ADR-007-generated-usernames.md): generator murni di `App\Support\UsernameGenerator`, reservasi di `App\Services\UsernameReservations`, dan tabel `username_reservations` (migrasi schema saja). Pemakainya undangan Admin, aktivasi, pencabutan, penonaktifan tim, dan `app:invite-first-admin`. Bootstrap production kini menolak username di bawah 6 karakter, username yang diawali digit, atau yang memuat kata terlarang, jadi `AINA_PRODUCTION_ADMIN_USERNAME` dan `AINA_PREVIEW_ADMIN_USERNAME` harus memenuhi aturan itu untuk instalasi baru. Production yang sudah berjalan perlu backup dan `migrate` oleh operator sebelum rilis berikutnya, karena `app:prepare-production` menolak migrasi pada skema berisi. Test race PostgreSQL ada di `tests/Performance/PostgresUsernameRaceTest.php` dan dijalankan oleh `run-postgres.ps1`.
+
 ## Pembaruan 13 November 2026 — reset database production dan rilis v1.0.0
 
 Atas permintaan pemilik, Neon main dikosongkan (`DROP SCHEMA public CASCADE`) tanpa backup, lalu dipasang ulang lewat `app:prepare-production`. Release GitHub `v1.0.0` (commit `6c8d767`) gagal karena `release.mjs` membuat deployment dengan `ref: sha`, sehingga `VERCEL_GIT_COMMIT_REF` bukan `main` dan setup dilewati diam-diam; `/login` sempat 500. Atas persetujuan pemilik, deployment `dpl_BeBbGZ4GoQAQ9Q2fSSFLL7PD589b` dibuat manual dari commit yang sama dengan `ref: main`, migration selesai, satu undangan Admin terkirim (instance lain menolak duplikat), lalu dipromote; `/up` dan `/login` 200. Flag setup dikembalikan `false` dan deadline `0`. Penegasan ulang auto-assign domain `false` setelah promote manual ditolak izin agent dan perlu dicek pemilik di Vercel. Branch `fix/release-ref-main` mengubah `ref` deployment rilis menjadi `main` (sha tetap mengunci build). Aktivasi Admin belum terverifikasi.

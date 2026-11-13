@@ -7,7 +7,6 @@ use App\Models\Dealer;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
-use App\Support\UsernameGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +43,7 @@ class DevelopmentUserSeeder extends Seeder
 
         $this->upsertUser([
             'name' => 'Bima Pratama',
-            'username' => UsernameGenerator::fromName('Bima Pratama'),
+            'username' => $this->demoUsername('Bima Pratama'),
             'role' => UserRole::BranchManager,
         ], $password, $dealer->id);
 
@@ -104,7 +103,7 @@ class DevelopmentUserSeeder extends Seeder
             );
             $supervisor = $this->upsertUser([
                 'name' => $supervisorName,
-                'username' => UsernameGenerator::fromName($supervisorName),
+                'username' => $this->demoUsername($supervisorName),
                 'role' => UserRole::Supervisor,
             ], $password, $dealer->id);
             $this->upsertMembership($teamModel, $supervisor, UserRole::Supervisor, $admin);
@@ -112,7 +111,7 @@ class DevelopmentUserSeeder extends Seeder
             foreach ($team['sales'] as $salesName) {
                 $sales = $this->upsertUser([
                     'name' => $salesName,
-                    'username' => UsernameGenerator::fromName($salesName),
+                    'username' => $this->demoUsername($salesName),
                     'role' => UserRole::Sales,
                 ], $password, $dealer->id);
                 $this->upsertMembership($teamModel, $sales, UserRole::Sales, $admin);
@@ -139,6 +138,20 @@ class DevelopmentUserSeeder extends Seeder
         ])->save();
 
         return $user;
+    }
+
+    /** Deterministic demo logins (e.g. dhaseswib), kept stable across reseeds; real accounts use UsernameReservations. */
+    private function demoUsername(string $name): string
+    {
+        $parts = Str::of($name)->ascii()->lower()->replaceMatches('/[^a-z0-9\s]+/', ' ')->squish()->explode(' ')->filter()->values();
+
+        if ($parts->count() === 1) {
+            return Str::limit((string) $parts->first(), 12, '');
+        }
+
+        $chunkLength = $parts->count() === 2 ? 4 : 3;
+
+        return Str::limit($parts->map(fn (string $part): string => Str::substr($part, 0, $chunkLength))->implode(''), 12, '');
     }
 
     private function upsertMembership(Team $team, User $user, UserRole $role, User $admin): void

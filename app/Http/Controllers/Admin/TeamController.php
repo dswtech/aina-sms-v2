@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateTeamRequest;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\UsernameReservations;
 use App\Support\AuditRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,13 +81,13 @@ class TeamController extends Controller
         return back()->with('status', "{$team->name} berhasil dibuat.");
     }
 
-    public function update(UpdateTeamRequest $request, Team $team): RedirectResponse
+    public function update(UpdateTeamRequest $request, Team $team, UsernameReservations $usernames): RedirectResponse
     {
         $validated = $request->validated();
         $wasActive = $team->is_active;
         $before = ['name' => $team->name, 'is_active' => $team->is_active];
 
-        DB::transaction(function () use ($before, $request, $team, $validated, $wasActive): void {
+        DB::transaction(function () use ($before, $request, $team, $usernames, $validated, $wasActive): void {
             $team->update($validated);
             $action = array_key_exists('is_active', $validated) && $wasActive !== $team->is_active
                 ? ($team->is_active ? 'team.reactivated' : 'team.deactivated')
@@ -94,11 +95,12 @@ class TeamController extends Controller
 
             if (! $team->is_active && $wasActive) {
                 $team->activeMemberships()->update(['ended_at' => now()]);
-                Invitation::query()
+                $pending = Invitation::query()
                     ->where('team_id', $team->id)
                     ->whereNull('accepted_at')
-                    ->whereNull('revoked_at')
-                    ->update(['revoked_at' => now()]);
+                    ->whereNull('revoked_at');
+                $usernames->release($pending->clone()->get()->map(fn (Invitation $invitation): string => $invitation->username)->all());
+                $pending->update(['revoked_at' => now()]);
             }
 
             AuditRecorder::record(

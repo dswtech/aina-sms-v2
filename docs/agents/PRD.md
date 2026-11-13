@@ -169,6 +169,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | IAM-05 | **Setiap request data wajib melewati pemeriksaan role dan cakupan organisasi.** Menyembunyikan menu saja tidak dianggap sebagai pengamanan. | M |
 | IAM-06 | **Password tidak pernah dapat dibaca kembali oleh Admin atau role lain.** Reset menggunakan alur token, bukan menampilkan password lama. | M |
 | IAM-07 | **Registrasi publik tidak disediakan pada MVP.** Keanggotaan dealer hanya berasal dari undangan Admin. | W |
+| IAM-08 | **Username akun baru dibuat otomatis dari nama lengkap saat undangan dibuat.** Hasilnya diawali huruf, 6–12 karakter huruf/digit, unik global, dan tidak memuat nama sistem atau brand; username akun lama tidak diubah. Keputusan teknis: [ADR 007](adr/ADR-007-generated-usernames.md). | M |
 
 ### 7.2 Organization & Team (`ORG`)
 

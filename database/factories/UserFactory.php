@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Enums\UserRole;
 use App\Models\Dealer;
 use App\Models\User;
-use App\Support\UsernameGenerator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,7 +30,7 @@ class UserFactory extends Factory
             'dealer_id' => Dealer::factory(),
             'public_id' => (string) Str::uuid(),
             'name' => fake()->name(),
-            'username' => UsernameGenerator::fromName(fake()->unique()->name()),
+            'username' => fake()->unique()->lexify('user????????'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
