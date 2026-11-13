@@ -45,7 +45,7 @@ export function AppSidebarHeader({
                 <div className="min-w-0">
                     <div className="md:hidden">
                         <p className="truncate text-sm font-semibold">
-                            {currentItem?.title ?? 'DealDrive Supervisor'}
+                            {currentItem?.title ?? 'AIna DealDrive'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                             {auth.user.name}

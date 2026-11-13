@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = 'DealDrive Supervisor';
+const appName = 'AIna DealDrive';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

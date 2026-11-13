@@ -29,7 +29,7 @@ export default function AuthCardLayout({
                     <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                         <AppLogoIcon className="size-5" />
                     </div>
-                    <span>DealDrive Supervisor</span>
+                    <span>AIna DealDrive</span>
                 </Link>
 
                 <div className="flex flex-col gap-6">

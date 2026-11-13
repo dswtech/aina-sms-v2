@@ -1,4 +1,4 @@
-# Design System — DealDrive Supervisor
+# Design System — AIna DealDrive
 
 > Keputusan struktur kanonik berada di [`docs/design/aina-sms-navigation/direction-approved.md`](docs/design/aina-sms-navigation/direction-approved.md). Requirement produk tetap mengikuti PRD dan ADR.
 

@@ -1,6 +1,6 @@
-# AINA SMS
+# AIna DealDrive
 
-Development baseline untuk **DealDrive Supervisor** memakai Laravel 13, Inertia 3, React 19, TypeScript, Tailwind CSS 4, dan komponen shadcn/ui.
+Development baseline untuk **AIna DealDrive** memakai Laravel 13, Inertia 3, React 19, TypeScript, Tailwind CSS 4, dan komponen shadcn/ui.
 
 ## Kebutuhan lokal
 

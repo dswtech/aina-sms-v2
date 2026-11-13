@@ -25,7 +25,7 @@ class InvitationCreated extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Aktifkan akun DealDrive Supervisor')
+            ->subject('Aktifkan akun AIna DealDrive')
             ->greeting('Halo '.$this->invitation->name.',')
             ->line('Admin dealer mengundang Anda untuk bergabung sebagai '.$this->invitation->role->value.'.')
             ->action('Aktifkan akun', route('invitations.show', $this->plainToken))
