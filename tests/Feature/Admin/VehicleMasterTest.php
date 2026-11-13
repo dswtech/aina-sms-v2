@@ -42,6 +42,17 @@ it('fills the Toyota catalog once and keeps Admin-edited prices', function () {
         ->and((clone $models)->where('name', 'Toyota Alphard')->value('price_max'))->toBe(1_700_000_000);
 });
 
+it('migration fills the catalog for existing dealers only and keeps it on rollback', function () {
+    $migration = require database_path('migrations/2026_11_13_100000_seed_toyota_vehicle_catalog.php');
+    $migration->up();
+    $migration->up();
+    $count = fn (): int => DB::table('vehicle_models')->where('dealer_id', $this->dealer->id)->count();
+    expect($count())->toBe(20);
+
+    $migration->down();
+    expect($count())->toBe(20);
+});
+
 it('creates and updates vehicle types with audit, rejecting duplicates and other dealers', function () {
     $this->actingAs($this->admin)->post('/dealer-settings/vehicle-types', ['name' => 'SUV'])->assertRedirect();
     $this->post('/dealer-settings/vehicle-types', ['name' => 'suv'])->assertSessionHasErrors('name');

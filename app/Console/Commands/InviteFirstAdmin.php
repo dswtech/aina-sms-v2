@@ -7,6 +7,7 @@ use App\Models\Dealer;
 use App\Models\Invitation;
 use App\Models\User;
 use App\Notifications\InvitationCreated;
+use App\Services\TransactionMasters;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -87,12 +88,15 @@ class InviteFirstAdmin extends Command
                     return self::FAILURE;
                 }
 
-                $dealer ??= Dealer::query()->create([
-                    'public_id' => (string) Str::uuid(),
-                    'name' => $input['dealer'],
-                    'timezone' => 'Asia/Jakarta',
-                    'is_active' => true,
-                ]);
+                if ($dealer === null) {
+                    $dealer = Dealer::query()->create([
+                        'public_id' => (string) Str::uuid(),
+                        'name' => $input['dealer'],
+                        'timezone' => 'Asia/Jakarta',
+                        'is_active' => true,
+                    ]);
+                    TransactionMasters::initializeVehicles((int) $dealer->getKey());
+                }
                 $token = Str::random(64);
                 $invitation = Invitation::query()->create([
                     'public_id' => (string) Str::uuid(),

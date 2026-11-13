@@ -6,6 +6,7 @@ use App\Models\Invitation;
 use App\Models\User;
 use App\Notifications\InvitationCreated;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 function firstAdminOptions(array $overrides = []): array
@@ -33,6 +34,7 @@ it('bootstraps only an invitation and lets its owner set the first admin passwor
     $invitation = Invitation::query()->sole();
     expect(User::query()->count())->toBe(0)
         ->and(Dealer::query()->sole()->name)->toBe('Pilot Dealer')
+        ->and(DB::table('vehicle_models')->where('dealer_id', Dealer::query()->sole()->id)->count())->toBe(20)
         ->and($invitation->invited_by_id)->toBeNull()
         ->and($invitation->role)->toBe(UserRole::Admin)
         ->and($invitation->team_id)->toBeNull()
