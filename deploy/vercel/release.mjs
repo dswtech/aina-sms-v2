@@ -74,7 +74,7 @@ export async function checkProduction({ id, request, probe = fetch, sleep: pause
     throw new ReleaseError('Production domain or health verification failed; inspect and roll back through Vercel if needed.');
 }
 
-function api(origin, token) {
+export function api(origin, token) {
     if (!token) throw new ReleaseError('Required deployment credential is missing.');
     return async (path, body, method = body === undefined ? 'GET' : 'POST') => {
         const url = new URL(path, origin);
@@ -86,7 +86,9 @@ function api(origin, token) {
             signal: AbortSignal.timeout(30000),
         });
         if (!response.ok) throw new ReleaseError(`Release API request failed (HTTP ${response.status}); inspect the service before retrying.`);
-        return response.status === 204 ? {} : response.json();
+        // Vercel promote answers 202 without a body; v1.1.0 stopped after promoting on response.json().
+        const text = await response.text();
+        return text === '' ? {} : JSON.parse(text);
     };
 }
 
@@ -129,7 +131,8 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
     main().catch((error) => {
-        if (error instanceof ReleaseError) console.error(error.message);
+        // Only the class name for unexpected errors: their messages may echo URLs or response bodies.
+        console.error(error instanceof ReleaseError ? error.message : `Unexpected ${error?.name ?? 'error'} in the release script.`);
         console.error('Release stopped. Inspect GitHub CI and Vercel deployment status; no automatic retry, migration or rollback was performed.');
         process.exitCode = 1;
     });
