@@ -542,6 +542,15 @@ class DevelopmentDemoSeeder extends Seeder
             ]);
 
             if ($index % 9 === 0) {
+                $completedAt = now()->subDays(mt_rand(1, 6));
+                // A completed plan points at the activity that recorded its result.
+                $result = CustomerActivity::create([
+                    'customer_id' => $customer->id,
+                    'user_id' => $sales->id,
+                    'type' => ActivityType::Call,
+                    'notes' => 'Hasil follow-up: pelanggan sudah dihubungi.',
+                    'occurred_at' => $completedAt,
+                ]);
                 FollowUp::create([
                     'customer_id' => $customer->id,
                     'deal_transaction_id' => null,
@@ -550,7 +559,21 @@ class DevelopmentDemoSeeder extends Seeder
                     'scheduled_at' => now()->subDays(mt_rand(7, 20)),
                     'plan_notes' => 'Follow-up sebelumnya sudah selesai.',
                     'status' => 'completed',
-                    'completed_at' => now()->subDays(mt_rand(1, 6)),
+                    'completed_at' => $completedAt,
+                    'completed_activity_id' => $result->id,
+                ]);
+            }
+
+            if ($index % 12 === 0) {
+                FollowUp::create([
+                    'customer_id' => $customer->id,
+                    'deal_transaction_id' => null,
+                    'assigned_to_id' => $sales->id,
+                    'created_by_id' => $creator->id,
+                    'scheduled_at' => now()->subDays(mt_rand(2, 10)),
+                    'plan_notes' => 'Tawarkan promo akhir tahun.',
+                    'status' => 'cancelled',
+                    'cancel_reason' => 'Pelanggan minta dihubungi bulan depan.',
                 ]);
             }
         }

@@ -226,6 +226,14 @@
 }
 
 @layer utilities {
+    .calendar-weekend {
+        background-image: repeating-linear-gradient(
+            135deg,
+            color-mix(in oklab, var(--muted-foreground) 16%, transparent) 0 1px,
+            transparent 1px 7px
+        );
+    }
+
     :is([data-slot='input'], [data-slot='select-trigger'][data-size], [data-slot='combobox-trigger'], .native-select) {
         background-color: var(--background);
     }

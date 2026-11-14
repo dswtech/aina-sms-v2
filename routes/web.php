@@ -15,6 +15,7 @@ use App\Http\Controllers\DealerSettingsController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SalesCalendarController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\TargetPlanController;
 use App\Http\Controllers\TransactionController;
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::post('customers/{customer}/activities', [CustomerController::class, 'storeActivity'])->name('customers.activities.store');
         Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->name('customers.follow-ups.store');
+        Route::patch('customers/{customer}/follow-ups/{followUp}/cancel', [CustomerController::class, 'cancelFollowUp'])->scopeBindings()->name('customers.follow-ups.cancel');
         Route::patch('customers/{customer}/assignment', [CustomerController::class, 'reassign'])->name('customers.reassign');
         Route::patch('customers/{customer}/profile', [CustomerController::class, 'updateProfile'])->name('customers.profile.update');
         Route::patch('customers/{customer}/contact-preferences', [CustomerController::class, 'updateContactPreferences'])->name('customers.contact-preferences.update');
@@ -61,6 +63,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('transactions/{transaction}/feed', [TransactionController::class, 'feed'])->name('transactions.feed');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
+
+    Route::get('kalender', SalesCalendarController::class)
+        ->middleware('role:sales,supervisor')
+        ->name('calendar');
 
     Route::get('targets', [DashboardController::class, 'targets'])
         ->middleware('role:supervisor,admin')

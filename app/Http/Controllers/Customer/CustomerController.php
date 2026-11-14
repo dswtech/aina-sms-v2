@@ -16,6 +16,7 @@ use App\Models\Customer;
 use App\Models\DealComment;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\FollowUp;
 use App\Models\StageHistory;
 use App\Models\Team;
 use App\Models\TeamMembership;
@@ -292,18 +293,58 @@ class CustomerController extends Controller
             ? Carbon::parse($validated['occurred_at'])
             : now();
 
-        $customer->logActivity(
-            actor: $actor,
-            type: ActivityType::from($validated['type']),
-            notes: $validated['notes'],
-            deal: $deal,
-            occurredAt: $occurredAt,
-        );
+        $completes = ! empty($validated['follow_up_id']);
+        DB::transaction(function () use ($customer, $actor, $validated, $deal, $occurredAt, $completes): void {
+            $followUp = null;
+            if ($completes) {
+                $followUp = $customer->followUps()->whereKey($validated['follow_up_id'])
+                    ->where('status', 'pending')->lockForUpdate()->first();
+                if ($followUp === null) {
+                    throw ValidationException::withMessages(['follow_up_id' => 'Follow-up ini sudah tidak tertunda atau bukan milik pelanggan ini.']);
+                }
+                if ($deal === null && $followUp->dealTransaction !== null) {
+                    $deal = $followUp->dealTransaction;
+                    $this->authorize('view', $deal);
+                }
+            }
+
+            $activity = $customer->logActivity(
+                actor: $actor,
+                type: ActivityType::from($validated['type']),
+                notes: $validated['notes'],
+                deal: $deal,
+                occurredAt: $occurredAt,
+            );
+
+            $followUp?->update([
+                'status' => 'completed',
+                'completed_at' => $activity->occurred_at,
+                'completed_activity_id' => $activity->id,
+            ]);
+        });
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Aktivitas berhasil dicatat.',
+            'message' => $completes ? 'Aktivitas dicatat dan follow-up selesai.' : 'Aktivitas berhasil dicatat.',
         ]);
+
+        return back();
+    }
+
+    public function cancelFollowUp(Request $request, Customer $customer, FollowUp $followUp): RedirectResponse
+    {
+        $this->authorize('view', $customer);
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:500']]);
+
+        DB::transaction(function () use ($followUp, $validated): void {
+            $locked = FollowUp::query()->whereKey($followUp->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'pending') {
+                throw ValidationException::withMessages(['follow_up' => 'Follow-up ini sudah tidak tertunda.']);
+            }
+            $locked->update(['status' => 'cancelled', 'cancel_reason' => $validated['reason']]);
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Follow-up dibatalkan.']);
 
         return back();
     }

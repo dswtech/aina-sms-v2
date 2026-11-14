@@ -82,7 +82,11 @@ export type TransactionDetailData = {
         opt_out: boolean;
         last_contact_at: string | null;
         assigned_sales: { id: number; name: string } | null;
-        next_follow_up: { scheduled_at: string; plan_notes: string } | null;
+        next_follow_up: {
+            id: number;
+            scheduled_at: string;
+            plan_notes: string;
+        } | null;
         name: string;
         phone: string;
         social_media_account: string | null;

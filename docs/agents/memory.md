@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.52 |
-| Diperbarui | 13 November 2026 |
+| Versi | v1.53 |
+| Diperbarui | 14 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 14 November 2026 — Kalender Kegiatan Sales
+
+Branch `feat/sales-calendar` dari `origin/main` `5030ba5` menerapkan [CRM-16](PRD.md#73-customer--lead-crm). Route `GET /kalender` (`calendar`, role sales dan supervisor) di `SalesCalendarController` membaca `follow_ups` sebagai rencana dan `customer_activities` non-sistem sebagai realisasi pada hari Asia/Jakarta; tanpa migration dan tanpa package baru. UI di `resources/js/pages/calendar` dan `resources/js/components/calendar` mengikuti canvas desain Kalender Kegiatan Sales milik pemilik: grid Sales × hari/jam untuk Supervisor, grid bulan dan agenda per jam untuk Sales, tooltip di desktop dan bottom sheet di layar sentuh. Menu "Kalender" ada di sidebar dan menu Lainnya pada mobile. Libur nasional belum didukung.
+
+Di branch yang sama, [CRM-17](PRD.md#73-customer--lead-crm) menambah penyelesaian follow-up: migration `2026_11_14_100000_add_completion_to_follow_ups_table` (kolom `completed_activity_id`, `cancel_reason`; status `pending|completed|cancelled`), checkbox "Selesaikan follow-up" di form Catat Aktivitas untuk follow-up yang jatuh tempo hari ini atau sebelumnya, route `customers.follow-ups.cancel`, dialog Catat hasil/Batalkan di kalender, serta pembatalan otomatis follow-up tertunda saat transaksi menjadi Lost atau Delivery. Migration belum dijalankan ke database lokal atau production.
 
 ## Pembaruan 13 November 2026 — rilis v1.1.0 dan migrasi username
 

@@ -336,7 +336,7 @@ class TransactionController extends Controller
                 'contact_channel_preference' => $customer?->contact_channel_preference, 'opt_out' => (bool) $customer?->opt_out,
                 'last_contact_at' => $customer?->last_contact_at?->toIso8601String(),
                 'assigned_sales' => $customer?->activeAssignment?->sales ? ['id' => $customer->activeAssignment->sales->id, 'name' => $customer->activeAssignment->sales->name] : null,
-                'next_follow_up' => $customer?->nextFollowUp ? ['scheduled_at' => $customer->nextFollowUp->scheduled_at->toIso8601String(), 'plan_notes' => $customer->nextFollowUp->plan_notes] : null,
+                'next_follow_up' => $customer?->nextFollowUp ? ['id' => $customer->nextFollowUp->id, 'scheduled_at' => $customer->nextFollowUp->scheduled_at->toIso8601String(), 'plan_notes' => $customer->nextFollowUp->plan_notes] : null,
                 'name' => $transaction->customer?->name, 'phone' => $transaction->customer?->phone,
                 'social_media_account' => $transaction->customer?->social_media_account,
                 'email' => $transaction->customer?->email, 'address' => $transaction->customer?->address,

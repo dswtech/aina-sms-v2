@@ -266,6 +266,15 @@ class DealTransaction extends Model
 
             $this->save();
 
+            // A closed deal needs no more contact plans; completed ones stay as history.
+            if ($toStage === PipelineStage::Lost || $toStage === PipelineStage::Delivery) {
+                $this->followUps()->where('status', 'pending')->update([
+                    'status' => 'cancelled',
+                    'cancel_reason' => 'Transaksi '.($toStage === PipelineStage::Lost ? 'Lost' : 'Delivery'),
+                    'updated_at' => $at,
+                ]);
+            }
+
             $checklist = $toStage === PipelineStage::Do
                 ? ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true] : [];
 

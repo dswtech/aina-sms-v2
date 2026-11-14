@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatDate } from '@/lib/transaction-labels';
@@ -168,6 +169,19 @@ export function CustomerPanel({
     );
 }
 
+const jakartaDate = (date: Date) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(date);
+
+/** The pending follow-up an activity can close: one scheduled for today or earlier (Jakarta days). */
+function dueFollowUp(
+    next: TransactionDetailData['customer']['next_follow_up'],
+) {
+    return next &&
+        jakartaDate(new Date(next.scheduled_at)) <= jakartaDate(new Date())
+        ? next
+        : null;
+}
+
 export function ActivityForm({
     detail,
     onSaved,
@@ -177,6 +191,8 @@ export function ActivityForm({
 }) {
     const [type, setType] = useState('call');
     const [notes, setNotes] = useState('');
+    const due = dueFollowUp(detail.customer.next_follow_up);
+    const [complete, setComplete] = useState(true);
     const post = usePost(
         'post',
         `/customers/${detail.customer.public_id}/activities`,
@@ -191,7 +207,12 @@ export function ActivityForm({
             onSubmit={(event) => {
                 event.preventDefault();
                 post.send(
-                    { type, notes, deal_transaction_id: detail.deal_id },
+                    {
+                        type,
+                        notes,
+                        deal_transaction_id: detail.deal_id,
+                        follow_up_id: due && complete ? due.id : undefined,
+                    },
                     () => setNotes(''),
                 );
             }}
@@ -218,6 +239,22 @@ export function ActivityForm({
                 onChange={(event) => setNotes(event.target.value)}
                 className="min-h-11"
             />
+            {due && (
+                <Label
+                    htmlFor="detail-act-complete"
+                    className="flex min-h-11 items-center gap-3 leading-5 font-normal"
+                >
+                    <Checkbox
+                        id="detail-act-complete"
+                        checked={complete}
+                        onCheckedChange={(value) => setComplete(value === true)}
+                    />
+                    <span>
+                        Selesaikan follow-up {formatDate(due.scheduled_at)} ·{' '}
+                        {due.plan_notes}
+                    </span>
+                </Label>
+            )}
             <Message error={post.error} />
             <Button type="submit" disabled={post.saving || !notes.trim()}>
                 {post.saving ? 'Menyimpan…' : 'Catat aktivitas'}

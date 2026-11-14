@@ -23,6 +23,7 @@ class StoreCustomerActivityRequest extends FormRequest
             'type' => ['required', new Enum(ActivityType::class)],
             'notes' => ['required', 'string', 'max:2000'],
             'occurred_at' => ['nullable', 'date'],
+            'follow_up_id' => ['nullable', 'integer'],
         ];
     }
 }
