@@ -75,18 +75,19 @@ test('a moved release stops before promotion even after a successful build', asy
 });
 
 test('health verification waits for the domain to point to this deployment', async () => {
-    let reads = 0;
+    const paths = [];
     let checks = 0;
+    // Vercel lists only Git aliases on the deployment, so the domain is resolved by hostname instead.
     await checkProduction({
         id: 'dpl_test',
-        request: async () => ({ alias: ++reads === 1 ? [] : ['aiia.toyotabandung.web.id'] }),
+        request: async (path) => { paths.push(path); return { id: paths.length === 1 ? 'dpl_old' : 'dpl_test', alias: ['aina-sms-git-main.vercel.app'] }; },
         probe: async () => { checks++; return { status: 200 }; },
         sleep: async () => {},
     });
-    assert.equal(reads, 2);
+    assert.deepEqual(paths, ['/v13/deployments/aiia.toyotabandung.web.id', '/v13/deployments/aiia.toyotabandung.web.id']);
     assert.equal(checks, 2);
-    await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ alias: [] }), sleep: async () => {} }));
-    await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ alias: ['aiia.toyotabandung.web.id'] }), probe: async () => ({ status: 500 }), sleep: async () => {} }));
+    await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ id: 'dpl_old' }), sleep: async () => {} }));
+    await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ id: 'dpl_test' }), probe: async () => ({ status: 500 }), sleep: async () => {} }));
 });
 
 test('API responses without a body resolve to an empty object', async (t) => {

@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.53 |
+| Versi | v1.54 |
 | Diperbarui | 14 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 14 November 2026 — rilis v1.2.0 dan cek domain rilis
+
+Atas perintah pemilik, migration `2026_11_14_100000_add_completion_to_follow_ups_table` dijalankan ke Neon `main` sebelum rilis, tanpa backup, lewat skrip operator yang menerima URL koneksi langsung dari pemilik di terminal (nilai tidak tercatat). Skrip mengecek host `*.neon.tech` non-pooler dan memastikan hanya migration itu yang tertunda; hasilnya Ran tanpa sisa. `vercel env pull` tidak bisa dipakai karena `DATABASE_URL*` bertanda sensitive dan hanya ditarik sebagai placeholder.
+
+Release `v1.2.0` (commit `fd0dfcb`, PR #110) membuat `dpl_E47sJY8qrfGgXYSns6pCgJwH4PSd` dan promote berhasil: domain production melayani deployment itu, `/up` dan `/login` 200. Workflow tetap exit 1 karena `checkProduction` menunggu custom domain di field `alias` deployment, padahal Vercel hanya mencantumkan alias Git di sana. Ini juga penyebab sebenarnya exit 1 pada v1.1.0. Branch `fix/release-domain-check` mengganti cek itu dengan membaca deployment yang dilayani hostname production. Uji pemilik di production (kalender, Catat hasil) belum dilakukan.
 
 ## Pembaruan 14 November 2026 — Kalender Kegiatan Sales
 

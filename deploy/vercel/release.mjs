@@ -64,8 +64,10 @@ export async function deployRelease({ sha, tag, request, sleep: pause = sleep, b
 
 export async function checkProduction({ id, request, probe = fetch, sleep: pause = sleep }) {
     for (let attempt = 0; attempt < 12; attempt++) {
-        const deployment = await request(`/v13/deployments/${id}`);
-        if (deployment.alias?.includes(new URL(production).hostname)) {
+        // A deployment's alias list holds only Git aliases, never the custom domain (v1.1.0 and v1.2.0
+        // were promoted yet failed here); ask which deployment the domain serves instead.
+        const serving = await request(`/v13/deployments/${new URL(production).hostname}`);
+        if (serving.id === id) {
             const responses = await Promise.all(['/up', '/login'].map((path) => probe(`${production}${path}`, { redirect: 'error', signal: AbortSignal.timeout(15000) })));
             if (responses.every((response) => response.status === 200)) return;
         }
