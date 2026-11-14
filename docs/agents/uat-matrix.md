@@ -8,7 +8,7 @@
 | Gerbang rilis | [Roadmap Fase 6](roadmap.md#fase-6--import-hardening-dan-pilot) |
 | Status UAT | Kolom UAT per skenario tetap **Belum dijalankan**. Pada 12 November 2026 pemilik menyatakan UAT manual dilewati dan dianggap lolos ([G15](#g15)); ini deklarasi pemilik, bukan hasil eksekusi. Belum ada persetujuan go-live |
 
-Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
+Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh dua baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
 
 ## Cara membaca dan menjalankan
 
@@ -73,6 +73,8 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [CRM-13](PRD.md#73-customer--lead-crm) | V, A | [A04](#a04), [V01](#v01) | [E10](#e10): assignment lama ended dan dua record tetap ada. | Parsial | Belum mengassert aktivitas/transaksi tak berubah dan otoritas Sales lama/baru setelah alih tugas. | Belum dijalankan |
 | [CRM-14](PRD.md#73-customer--lead-crm) | V, A, B | [V01](#v01), [B02](#b02) | [E07](#e07), [E18](#e18): scope Customer/query, route B 403 dan sanitasi drilldown. | Parsial | Query model B memuat Customer; perlindungan HTTP harus tetap diuji di semua jalur [G09](#g09). | Belum dijalankan |
 | [CRM-15](PRD.md#73-customer--lead-crm) | S, V | [S04](#s04), [X04](#x04) | [E13](#e13): pembaruan preference/opt-out sesuai akses, audit dan gating aksi telepon/WhatsApp. | Terverifikasi teknis | Data legacy bukan bukti opt-in; skenario manusia dan kanal nyata belum diuji, batas bukti di [G05](#g05). | Belum dijalankan |
+| [CRM-16](PRD.md#73-customer--lead-crm) | S, V | — | `tests/Feature/SalesCalendarTest.php`: scope Sales/Supervisor, filter tim, batas bulan/hari Jakarta, event sistem dikecualikan, flag terlambat; `RoleRouteAccessTest` B/A 403; `tests/Frontend/calendar.test.mjs`; `tests/Browser/sales-calendar.js` (props sintetis, 390/768/1440, light/dark, tooltip/sheet). | Terverifikasi teknis | Skrip browser memakai props sintetis dan belum masuk `run-isolated.ps1`; UAT manusia belum dijalankan. | Belum dijalankan |
+| [CRM-17](PRD.md#73-customer--lead-crm) | S, V | — | `tests/Feature/Customer/FollowUpCompletionTest.php`: selesai lewat aktivitas dan tautannya, follow-up milik pelanggan lain atau tidak tertunda ditolak, batal dengan alasan, akses Sales lain 403, batal otomatis saat Lost, tampilan kalender; `tests/Browser/sales-calendar.js` (dialog Catat hasil/Batalkan, tulis disadap). | Terverifikasi teknis | Batal otomatis saat Delivery mengikuti jalur kode yang sama dengan Lost tetapi belum diuji tersendiri; UAT manusia belum dijalankan. | Belum dijalankan |
 
 ### Pipeline
 

@@ -1,6 +1,7 @@
 import {
     BarChart3,
     Bell,
+    CalendarDays,
     ContactRound,
     Gauge,
     Handshake,
@@ -18,6 +19,7 @@ type NavKey =
     | 'home'
     | 'customers'
     | 'transactions'
+    | 'calendar'
     | 'targets'
     | 'team-performance'
     | 'analytics'
@@ -36,6 +38,12 @@ const shared = {
         title: 'Transaksi',
         href: '/transactions',
         icon: Handshake,
+    },
+    calendar: {
+        key: 'calendar',
+        title: 'Kalender',
+        href: '/kalender',
+        icon: CalendarDays,
     },
     targets: {
         key: 'targets',
@@ -124,12 +132,14 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.home,
         customerItem('sales'),
         shared.transactions,
+        shared.calendar,
         shared.notifications,
     ],
     supervisor: [
         shared.home,
         customerItem('supervisor'),
         shared.transactions,
+        shared.calendar,
         shared.targetsWithPlans,
         shared.analytics,
         shared.imports,

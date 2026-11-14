@@ -64,3 +64,24 @@ test('mobile more menu keeps nested analytics reachable even with a primary anal
         );
     }
 });
+
+test('calendar is offered to sales and supervisors only', () => {
+    for (const [role, expected] of [
+        ['sales', true],
+        ['supervisor', true],
+        ['branch_manager', false],
+        ['admin', false],
+    ]) {
+        const item = getNavigation(role).find((nav) => nav.key === 'calendar');
+        assert.equal(!!item, expected);
+        if (expected) {
+            assert.equal(item.href, '/kalender');
+            assert.equal(
+                getMobileNavigation(role).more.some(
+                    (nav) => nav.key === 'calendar',
+                ),
+                true,
+            );
+        }
+    }
+});

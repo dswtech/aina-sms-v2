@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $plan_notes
  * @property string $status
  * @property CarbonInterface|null $completed_at
+ * @property int|null $completed_activity_id
+ * @property string|null $cancel_reason
  */
 #[Fillable([
     'customer_id',
@@ -28,6 +30,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'plan_notes',
     'status',
     'completed_at',
+    'completed_activity_id',
+    'cancel_reason',
 ])]
 class FollowUp extends Model
 {
@@ -61,6 +65,14 @@ class FollowUp extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /**
+     * @return BelongsTo<CustomerActivity, $this>
+     */
+    public function completedActivity(): BelongsTo
+    {
+        return $this->belongsTo(CustomerActivity::class, 'completed_activity_id');
     }
 
     /**
