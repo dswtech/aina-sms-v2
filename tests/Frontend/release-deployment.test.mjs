@@ -80,12 +80,17 @@ test('health verification waits for the domain to point to this deployment', asy
     // Vercel lists only Git aliases on the deployment, so the domain is resolved by hostname instead.
     await checkProduction({
         id: 'dpl_test',
-        request: async (path) => { paths.push(path); return { id: paths.length === 1 ? 'dpl_old' : 'dpl_test', alias: ['aina-sms-git-main.vercel.app'] }; },
-        probe: async () => { checks++; return { status: 200 }; },
+        request: async (path) => {
+            paths.push(path);
+            if (paths.length === 2) throw new Error('HTTP 502');
+            return { id: paths.length === 1 ? 'dpl_old' : 'dpl_test' };
+        },
+        probe: async () => { if (++checks === 1) throw new TypeError('redirect'); return { status: 200 }; },
         sleep: async () => {},
     });
-    assert.deepEqual(paths, ['/v13/deployments/aiia.toyotabandung.web.id', '/v13/deployments/aiia.toyotabandung.web.id']);
-    assert.equal(checks, 2);
+    // Attempts: old id, API error, probe throws, then healthy.
+    assert.deepEqual(paths, Array(4).fill('/v13/deployments/aiia.toyotabandung.web.id'));
+    assert.equal(checks, 4);
     await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ id: 'dpl_old' }), sleep: async () => {} }));
     await assert.rejects(checkProduction({ id: 'dpl_test', request: async () => ({ id: 'dpl_test' }), probe: async () => ({ status: 500 }), sleep: async () => {} }));
 });

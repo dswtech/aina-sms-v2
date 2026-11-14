@@ -66,10 +66,14 @@ export async function checkProduction({ id, request, probe = fetch, sleep: pause
     for (let attempt = 0; attempt < 12; attempt++) {
         // A deployment's alias list holds only Git aliases, never the custom domain (v1.1.0 and v1.2.0
         // were promoted yet failed here); ask which deployment the domain serves instead.
-        const serving = await request(`/v13/deployments/${new URL(production).hostname}`);
-        if (serving.id === id) {
-            const responses = await Promise.all(['/up', '/login'].map((path) => probe(`${production}${path}`, { redirect: 'error', signal: AbortSignal.timeout(15000) })));
-            if (responses.every((response) => response.status === 200)) return;
+        try {
+            const serving = await request(`/v13/deployments/${new URL(production).hostname}`);
+            if (serving.id === id) {
+                const responses = await Promise.all(['/up', '/login'].map((path) => probe(`${production}${path}`, { redirect: 'error', signal: AbortSignal.timeout(15000) })));
+                if (responses.every((response) => response.status === 200)) return;
+            }
+        } catch {
+            // The release is already promoted; a transient API error, timeout or redirect gets another attempt.
         }
         await pause(5000);
     }
