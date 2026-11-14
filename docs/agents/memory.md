@@ -3,19 +3,21 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.55 |
+| Versi | v1.56 |
 | Diperbarui | 14 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
-## Pembaruan 14 November 2026 — rilis v1.2.0, v1.2.1 dan cek domain rilis
+## Pembaruan 14 November 2026 — rilis v1.2.0, v1.2.1, v1.2.2 dan cek domain rilis
 
 Atas perintah pemilik, migration `2026_11_14_100000_add_completion_to_follow_ups_table` dijalankan ke Neon `main` sebelum rilis, tanpa backup, lewat skrip operator yang menerima URL koneksi langsung dari pemilik di terminal (nilai tidak tercatat). Skrip mengecek host `*.neon.tech` non-pooler dan memastikan hanya migration itu yang tertunda; hasilnya Ran tanpa sisa. `vercel env pull` tidak bisa dipakai karena `DATABASE_URL*` bertanda sensitive dan hanya ditarik sebagai placeholder.
 
 Release `v1.2.0` (commit `fd0dfcb`, PR #110) membuat `dpl_E47sJY8qrfGgXYSns6pCgJwH4PSd` dan promote berhasil: domain production melayani deployment itu, `/up` dan `/login` 200. Workflow tetap exit 1 karena `checkProduction` menunggu custom domain di field `alias` deployment, padahal Vercel hanya mencantumkan alias Git di sana. Ini juga penyebab sebenarnya exit 1 pada v1.1.0. PR #111 (`4c8ee04`) mengganti cek itu dengan membaca deployment yang dilayani hostname production.
 
-Release `v1.2.1` (commit `4c8ee04`, hanya skrip rilis dan dokumentasi, tanpa migration) membuktikan perbaikan: workflow `production-release` hijau dari awal sampai akhir untuk pertama kalinya, `dpl_HWBUyQZ45p5evm3ohsnYotPxb6rw` melayani domain production, dan `/up` serta `/login` 200. Uji pemilik di production (kalender, Catat hasil) belum dilakukan.
+Release `v1.2.1` (commit `4c8ee04`, hanya skrip rilis dan dokumentasi, tanpa migration) membuktikan perbaikan: workflow `production-release` hijau dari awal sampai akhir untuk pertama kalinya, `dpl_HWBUyQZ45p5evm3ohsnYotPxb6rw` melayani domain production, dan `/up` serta `/login` 200.
+
+PR #113 (`fecbc07`) membuat `checkProduction` mencoba lagi bila satu percobaan melempar error (HTTP non-2xx dari API Vercel, probe timeout, atau redirect), alih-alih berhenti dengan exit 1 setelah rilis sudah live; setelah 12 percobaan tetap gagal dengan `ReleaseError`. Release `v1.2.2` (commit `fecbc07`, tanpa perubahan aplikasi dan tanpa migration) hijau: `dpl_Hrza2fhWYvZAAc8dxrZYsn1nCHa5` melayani domain production, `/up` dan `/login` 200. Uji pemilik di production (kalender, Catat hasil) belum dilakukan.
 
 ## Pembaruan 14 November 2026 — Kalender Kegiatan Sales
 
