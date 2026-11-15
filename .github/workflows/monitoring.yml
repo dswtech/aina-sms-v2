@@ -2,7 +2,7 @@ name: production-monitor
 
 on:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: '7 0 * * *' # sekali sehari (07:07 WIB); tiap 15 menit membuat container Vercel tetap hidup dan menghabiskan kuota Hobby
   workflow_dispatch:
 
 permissions:
