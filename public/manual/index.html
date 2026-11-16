@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual Book AIna DealDrive</title>
+<meta name="description" content="Panduan penggunaan aplikasi AIna DealDrive untuk Sales.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #f6f8fc;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #5b6475;
+  --border: #dde3ee;
+  --brand: #1769e0;
+  --brand-soft: #e8f0fd;
+  --warn-bg: #fff7e6;
+  --warn-border: #f2c46d;
+  --tip-bg: #ecf8f1;
+  --tip-border: #8fd1ad;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--brand); }
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+nav.toc {
+  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  padding: 28px 20px; border-right: 1px solid var(--border); background: var(--surface);
+}
+.toc .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 4px; }
+.toc .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 600; }
+.toc .ver { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+.toc h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 14px; }
+.toc li a:hover { background: var(--brand-soft); color: var(--brand); }
+main { padding: 40px 48px 80px; min-width: 0; }
+header.doc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin-bottom: 40px; }
+header.doc h1 { margin: 0 0 6px; font-size: 30px; line-height: 1.25; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.meta li { background: var(--brand-soft); color: var(--brand); border-radius: 999px; padding: 3px 12px; font-size: 13px; font-weight: 600; }
+section { margin-bottom: 56px; }
+h2.part { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--brand); margin: 0 0 4px; }
+section > h2 { font-size: 24px; margin: 0 0 12px; padding-top: 8px; border-top: 1px solid var(--border); padding-top: 24px; }
+h3 { font-size: 18px; margin: 28px 0 8px; }
+p, li { max-width: 72ch; }
+ol.steps { padding-left: 22px; }
+ol.steps li { margin-bottom: 6px; }
+figure { margin: 18px 0 26px; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 1px 3px rgba(15, 23, 42, .06); }
+figure a { display: inline-block; max-width: 100%; }
+figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.phones { display: flex; flex-wrap: wrap; gap: 18px; }
+.phones figure { margin: 0; flex: 0 1 260px; }
+.callout { border-left: 4px solid; border-radius: 8px; padding: 12px 16px; margin: 16px 0; max-width: 72ch; }
+.callout.tip { background: var(--tip-bg); border-color: var(--tip-border); }
+.callout.warn { background: var(--warn-bg); border-color: var(--warn-border); }
+.callout p { margin: 0; }
+table { border-collapse: collapse; width: 100%; max-width: 820px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 15px; margin: 12px 0 20px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: #f1f4f9; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+.table-wrap { overflow-x: auto; }
+.stages { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0; }
+.stages span { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 2px 12px; font-size: 14px; font-weight: 600; }
+.stages i { color: var(--muted); font-style: normal; }
+kbd, .ui { background: #eef2f8; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; font: inherit; font-size: .92em; white-space: nowrap; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); padding-top: 20px; }
+@media (max-width: 900px) {
+  .layout { display: block; }
+  nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 20px 16px; }
+  main { padding: 24px 16px 60px; }
+  header.doc { padding: 20px; }
+  header.doc h1 { font-size: 24px; }
+  .phones figure { flex-basis: 100%; max-width: 320px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  figure { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Daftar isi">
+  <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
+  <p class="ver">Manual Book · Versi 1.0.0</p>
+  <h2>Umum</h2>
+  <ol>
+    <li><a href="#tentang">Tentang manual ini</a></li>
+  </ol>
+  <h2>Sales</h2>
+  <ol>
+    <li><a href="#masuk">1. Masuk &amp; akun</a></li>
+    <li><a href="#navigasi">2. Navigasi aplikasi</a></li>
+    <li><a href="#beranda">3. Beranda</a></li>
+    <li><a href="#pelanggan">4. Buku Pelanggan Saya</a></li>
+    <li><a href="#lead-baru">5. Membuat lead baru</a></li>
+    <li><a href="#transaksi">6. Daftar Transaksi</a></li>
+    <li><a href="#detail">7. Detail transaksi</a></li>
+    <li><a href="#tahap">8. Mengubah tahap pipeline</a></li>
+    <li><a href="#coaching">9. Komentar coaching</a></li>
+    <li><a href="#kalender">10. Kalender</a></li>
+    <li><a href="#notifikasi">11. Notifikasi</a></li>
+    <li><a href="#tips">12. Lead stagnan &amp; tips harian</a></li>
+  </ol>
+  <h2>Lainnya</h2>
+  <ol>
+    <li><a href="#riwayat-versi">Riwayat versi</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="doc">
+  <h1>Manual Book AIna DealDrive</h1>
+  <p>Panduan langkah demi langkah memakai aplikasi AIna DealDrive.</p>
+  <ul class="meta">
+    <li>Versi 1.0.0</li>
+    <li>16 November 2026</li>
+    <li>Berlaku untuk aplikasi v1.2.2</li>
+    <li>Peran: Sales</li>
+  </ul>
+</header>
+
+<section id="tentang">
+  <h2>Tentang manual ini</h2>
+  <p>Manual ini menjelaskan cara memakai AIna DealDrive. Versi ini baru memuat panduan untuk <strong>Sales</strong>. Panduan untuk Supervisor dan Branch Manager akan ditambahkan pada versi berikutnya.</p>
+  <p>Setiap ada fitur baru atau perubahan, nomor versi manual dinaikkan dan perubahannya dicatat di bagian <a href="#riwayat-versi">Riwayat versi</a>. Pastikan Anda membaca versi terbaru.</p>
+  <div class="callout tip"><p>Semua nama pelanggan, nomor telepon, dan angka pada gambar adalah <strong>data contoh</strong>. Tampilan di akun Anda menampilkan data pelanggan Anda sendiri.</p></div>
+  <p>Klik gambar mana pun untuk membukanya dalam ukuran penuh.</p>
+</section>
+
+<!-- ============================ SALES ============================ -->
+
+<section id="masuk">
+  <h2 class="part">Sales</h2>
+  <h2>1. Masuk &amp; akun</h2>
+
+  <h3>Aktivasi akun pertama kali</h3>
+  <p>Akun Sales dibuat oleh Admin dealer melalui undangan. Anda akan menerima tautan aktivasi. Buka tautan itu dan buat password Anda sendiri. Username dibuat otomatis oleh sistem dari nama Anda; username ini yang dipakai untuk masuk.</p>
+
+  <h3>Masuk ke aplikasi</h3>
+  <ol class="steps">
+    <li>Buka alamat aplikasi di browser komputer atau ponsel.</li>
+    <li>Isi <span class="ui">Username</span> (bukan email) dan <span class="ui">Password</span>.</li>
+    <li>Centang <span class="ui">Ingat saya</span> bila memakai perangkat pribadi.</li>
+    <li>Klik <span class="ui">Masuk</span>.</li>
+  </ol>
+  <figure>
+    <a href="img/login.png" target="_blank"><img src="img/login.png" alt="Halaman masuk dengan kolom Username dan Password" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Halaman masuk. Gunakan username yang diberikan, bukan alamat email.</figcaption>
+  </figure>
+
+  <h3>Lupa password</h3>
+  <p>Di halaman masuk, klik <span class="ui">Lupa password?</span>. Isi email akun Anda, lalu klik <span class="ui">Kirim tautan atur ulang password</span>. Buka email tersebut dan ikuti tautannya untuk membuat password baru.</p>
+  <figure>
+    <a href="img/forgot.png" target="_blank"><img src="img/forgot.png" alt="Formulir lupa password" width="500" height="500" loading="lazy" style="max-width:360px"></a>
+    <figcaption>Formulir lupa password.</figcaption>
+  </figure>
+
+  <h3>Menu pengguna, tema, dan keluar</h3>
+  <p>Klik nama Anda di pojok kanan atas untuk membuka menu pengguna. Dari sini Anda dapat:</p>
+  <ul>
+    <li><span class="ui">Profil</span>: mengubah nama dan email, mengganti password, dan mengatur tampilan.</li>
+    <li><span class="ui">Tema</span>: Terang, Gelap, atau mengikuti Sistem.</li>
+    <li><span class="ui">Ukuran</span>: memperbesar tulisan (Normal, Besar, Ekstra).</li>
+    <li><span class="ui">Warna</span>: memilih warna aksen aplikasi.</li>
+    <li><span class="ui">Keluar</span>: keluar dari akun. Selalu keluar bila memakai perangkat bersama.</li>
+  </ul>
+  <figure>
+    <a href="img/user-menu.png" target="_blank"><img src="img/user-menu.png" alt="Menu pengguna dengan Profil, Tema, Ukuran, Warna, dan Keluar" width="340" height="552" loading="lazy" style="max-width:300px"></a>
+    <figcaption>Menu pengguna di pojok kanan atas.</figcaption>
+  </figure>
+
+  <h3>Mengganti password</h3>
+  <p>Buka <span class="ui">Profil</span> lalu tab <span class="ui">Security</span>. Untuk keamanan, aplikasi meminta Anda memasukkan password sekali lagi sebelum halaman ini terbuka. Isi password lama, password baru, dan konfirmasinya, lalu klik <span class="ui">Save</span>.</p>
+  <figure>
+    <a href="img/settings-security.png" target="_blank"><img src="img/settings-security.png" alt="Halaman Security untuk mengganti password" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Halaman pengaturan Security.</figcaption>
+  </figure>
+</section>
+
+<section id="navigasi">
+  <h2>2. Navigasi aplikasi</h2>
+  <p>Aplikasi dapat dipakai di komputer maupun ponsel. Menu yang tersedia untuk Sales:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Menu</th><th>Fungsi</th></tr>
+    <tr><td>Beranda</td><td>Ringkasan target, realisasi, forecast, dan prioritas kerja Anda.</td></tr>
+    <tr><td>Buku Pelanggan Saya</td><td>Daftar pelanggan yang menjadi tanggung jawab Anda.</td></tr>
+    <tr><td>Transaksi</td><td>Daftar semua transaksi Anda, lengkap dengan filter dan ekspor.</td></tr>
+    <tr><td>Kalender</td><td>Rencana follow-up dan aktivitas yang sudah dicatat.</td></tr>
+    <tr><td>Notifikasi</td><td>Pemberitahuan di dalam aplikasi.</td></tr>
+  </table></div>
+  <p><strong>Di komputer</strong>, menu berada di sisi kiri. Tombol di sebelah judul halaman dapat menyembunyikan atau menampilkan menu.</p>
+  <p><strong>Di ponsel</strong>, menu utama ada di bagian bawah layar: <span class="ui">Beranda</span>, <span class="ui">Pelanggan</span>, <span class="ui">Transaksi</span>, dan <span class="ui">Lainnya</span>. Menu <span class="ui">Lainnya</span> berisi Kalender, Notifikasi, Profil, dan Keluar.</p>
+  <div class="phones">
+    <figure>
+      <a href="img/m-dashboard.png" target="_blank"><img src="img/m-dashboard.png" alt="Beranda di ponsel dengan menu bawah" width="390" height="844" loading="lazy"></a>
+      <figcaption>Menu bawah di ponsel.</figcaption>
+    </figure>
+    <figure>
+      <a href="img/m-more.png" target="_blank"><img src="img/m-more.png" alt="Menu Lainnya di ponsel" width="390" height="844" loading="lazy"></a>
+      <figcaption>Isi menu <em>Lainnya</em>.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="beranda">
+  <h2>3. Beranda</h2>
+  <p>Beranda menampilkan kinerja Anda pada satu bulan. Pilih bulan di <span class="ui">Periode laporan</span>, lalu klik <span class="ui">Tampilkan</span>.</p>
+  <figure>
+    <a href="img/dashboard.png" target="_blank"><img src="img/dashboard.png" alt="Beranda Sales dengan kartu target, realisasi, dan forecast" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Bagian atas Beranda.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <tr><th>Angka</th><th>Arti</th></tr>
+    <tr><td>Target Sales</td><td>Target unit pribadi Anda untuk bulan tersebut.</td></tr>
+    <tr><td>Realisasi</td><td>Jumlah transaksi yang mencapai tahap DO pada bulan tersebut.</td></tr>
+    <tr><td>Forecast (estimasi)</td><td>Perkiraan hasil akhir bulan: realisasi ditambah peluang dari transaksi aktif yang estimasi bulan closing-nya di bulan itu. Ini perkiraan, bukan kepastian penjualan.</td></tr>
+    <tr><td>Gap ke realisasi / forecast</td><td>Target dikurangi realisasi atau forecast. Angka negatif berarti target sudah terlampaui.</td></tr>
+  </table></div>
+  <div class="callout warn"><p>Transaksi aktif yang belum punya <strong>estimasi bulan closing</strong> tidak dihitung dalam forecast. Isi estimasi ini agar perkiraan Anda akurat (lihat <a href="#tahap">bagian 8</a>).</p></div>
+  <p>Di bawahnya ada grafik <strong>Kinerja per Sales</strong>, <strong>Pipeline per tahap</strong>, dan <strong>Kontributor forecast teratas</strong>. Bagian <strong>Prioritas tindak lanjut</strong> menunjukkan hal yang perlu segera dikerjakan:</p>
+  <ul>
+    <li><strong>Transaksi stagnan</strong>: transaksi aktif yang lebih dari 3 hari tidak ada aktivitas.</li>
+    <li><strong>Komentar belum dibaca</strong>: arahan coaching dari Supervisor yang belum Anda buka.</li>
+    <li><strong>Peluang closing periode ini</strong>: transaksi yang diperkirakan closing pada bulan terpilih.</li>
+  </ul>
+  <figure>
+    <a href="img/dashboard-priority.png" target="_blank"><img src="img/dashboard-priority.png" alt="Bagian Prioritas tindak lanjut di Beranda" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Prioritas tindak lanjut. Klik nama transaksi untuk membuka detailnya.</figcaption>
+  </figure>
+</section>
+
+<section id="pelanggan">
+  <h2>4. Buku Pelanggan Saya</h2>
+  <p>Buku Pelanggan Saya adalah buku telepon kerja Anda. Isinya hanya pelanggan yang menjadi tanggung jawab Anda. Data pelanggan adalah milik dealer, sehingga tidak dapat diekspor massal.</p>
+  <figure>
+    <a href="img/customers.png" target="_blank"><img src="img/customers.png" alt="Halaman Buku Pelanggan Saya" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Daftar pelanggan dengan filter cepat dan kolom pencarian.</figcaption>
+  </figure>
+  <h3>Mencari dan memfilter</h3>
+  <ul>
+    <li>Klik salah satu filter cepat: <span class="ui">Follow-up Hari Ini</span>, <span class="ui">Belum Dihubungi</span>, <span class="ui">Peluang Aktif</span>, <span class="ui">Pernah Beli</span>, <span class="ui">Tidak Aktif</span>, <span class="ui">Potensi Repeat Order</span>, atau <span class="ui">Potensi Referral</span>. Angka di sampingnya adalah jumlah pelanggan.</li>
+    <li>Ketik nama atau nomor telepon di kolom pencarian, lalu klik <span class="ui">Cari</span>.</li>
+    <li>Klik judul kolom <span class="ui">Pelanggan</span> atau <span class="ui">Kontak terakhir</span> untuk mengurutkan.</li>
+  </ul>
+  <h3>Tombol pada setiap pelanggan</h3>
+  <ul>
+    <li><span class="ui">Detail</span>: membuka detail transaksi pelanggan (lihat <a href="#detail">bagian 7</a>).</li>
+    <li><span class="ui">Ubah Tahap</span>: langsung membuka formulir ubah tahap (lihat <a href="#tahap">bagian 8</a>).</li>
+    <li>Di ponsel juga tersedia <span class="ui">Catat Aktivitas</span> dan <span class="ui">Follow-Up</span> agar laporan dari lapangan cepat dicatat.</li>
+  </ul>
+  <p>Klik <span class="ui">Tambah Lead Baru</span> untuk mendaftarkan calon pelanggan baru.</p>
+  <div class="phones">
+    <figure>
+      <a href="img/m-customers.png" target="_blank"><img src="img/m-customers.png" alt="Buku Pelanggan di ponsel dengan tombol Catat Aktivitas dan Follow-Up" width="390" height="844" loading="lazy"></a>
+      <figcaption>Di ponsel, setiap pelanggan tampil sebagai kartu dengan tombol aksi cepat.</figcaption>
+    </figure>
+    <figure>
+      <a href="img/m-catat-aktivitas.png" target="_blank"><img src="img/m-catat-aktivitas.png" alt="Formulir catat aktivitas di ponsel" width="390" height="844" loading="lazy"></a>
+      <figcaption><em>Catat Aktivitas</em> langsung membuka panel aktivitas.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="lead-baru">
+  <h2>5. Membuat lead baru</h2>
+  <p>Buka dari <span class="ui">Tambah Lead Baru</span> di Buku Pelanggan Saya atau <span class="ui">Tambah transaksi</span> di halaman Transaksi. Lead baru otomatis menjadi tanggung jawab Anda, dan Supervisor tim Anda tercantum di formulir.</p>
+  <figure>
+    <a href="img/create.png" target="_blank"><img src="img/create.png" alt="Formulir Transaksi Baru" width="1280" height="1092" loading="lazy"></a>
+    <figcaption>Formulir Transaksi Baru: data transaksi di kiri, data pelanggan di kanan.</figcaption>
+  </figure>
+  <h3>Langkah</h3>
+  <ol class="steps">
+    <li><strong>Data Transaksi</strong>: pilih <span class="ui">Unit yang diminati</span> (boleh dikosongkan dulu, tetapi wajib saat SPK), <span class="ui">Sumber lead</span>, <span class="ui">Estimasi bulan closing</span> bila sudah diketahui, <span class="ui">Pembiayaan</span> (Cash/Kredit), dan <span class="ui">Keterangan</span>. Bila sumbernya Iklan Digital / Medsos, pilih juga kanal digitalnya.</li>
+    <li><strong>Pelanggan</strong>: pilih <span class="ui">Pelanggan Baru</span> untuk orang yang belum pernah terdaftar, atau <span class="ui">Pelanggan Lama</span> untuk mencari pelanggan yang sudah ada.</li>
+    <li>Untuk pelanggan baru, isi <span class="ui">Nama</span>, <span class="ui">Nomor telepon</span>, dan <span class="ui">Gender</span> (wajib). Alamat, tanggal lahir, pekerjaan, email, dan media sosial boleh dilengkapi kemudian.</li>
+    <li>Isi <strong>Area Transaksi (KTP/STNK)</strong> bila sudah diketahui.</li>
+    <li>Klik <span class="ui">Simpan transaksi</span>.</li>
+  </ol>
+  <h3>Peringatan nomor telepon sudah terdaftar</h3>
+  <p>Bila nomor telepon sudah dipakai pelanggan lain, aplikasi tidak menyimpan dan menampilkan peringatan. Klik <span class="ui">Cari sebagai Pelanggan Lama</span> untuk memeriksa pelanggan tersebut dan membuat transaksi baru di bawah pelanggan yang sudah ada. Ini mencegah data pelanggan ganda.</p>
+  <figure>
+    <a href="img/create-duplicate.png" target="_blank"><img src="img/create-duplicate.png" alt="Peringatan nomor telepon sudah terdaftar" width="490" height="330" loading="lazy" style="max-width:440px"></a>
+    <figcaption>Peringatan nomor telepon ganda.</figcaption>
+  </figure>
+  <div class="phones">
+    <figure>
+      <a href="img/m-create.png" target="_blank"><img src="img/m-create.png" alt="Formulir Transaksi Baru di ponsel" width="390" height="844" loading="lazy"></a>
+      <figcaption>Formulir yang sama di ponsel; bagian Pelanggan ada di bawahnya.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="transaksi">
+  <h2>6. Daftar Transaksi</h2>
+  <p>Halaman Transaksi menampilkan semua transaksi Anda. Satu pelanggan bisa memiliki lebih dari satu transaksi, misalnya saat membeli unit kedua.</p>
+  <figure>
+    <a href="img/transactions.png" target="_blank"><img src="img/transactions.png" alt="Halaman Transaksi dengan panel filter" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel filter di halaman Transaksi.</figcaption>
+  </figure>
+  <h3>Memfilter</h3>
+  <ul>
+    <li>Gunakan <span class="ui">Pencarian</span>, <span class="ui">Rentang progress</span> (tanggal), <span class="ui">Tahap</span>, <span class="ui">Sumber lead</span>, <span class="ui">Kanal digital</span>, <span class="ui">Kabupaten/Kota</span>, <span class="ui">Kecamatan</span>, dan <span class="ui">Nama pelanggan</span>.</li>
+    <li>Tombol <span class="ui">Semua</span>, <span class="ui">Aktif</span>, <span class="ui">Stagnan</span>, dan <span class="ui">Selesai</span> mempersempit daftar berdasarkan status.</li>
+    <li>Klik <span class="ui">Terapkan</span> untuk menjalankan filter, atau <span class="ui">Reset</span> untuk mengembalikan ke awal.</li>
+  </ul>
+  <h3>Membaca daftar</h3>
+  <figure>
+    <a href="img/transactions-list.png" target="_blank"><img src="img/transactions-list.png" alt="Tabel daftar transaksi" width="944" height="738" loading="lazy"></a>
+    <figcaption>Daftar transaksi. Geser tabel ke kanan untuk melihat kolom keterangan dan tombol aksi.</figcaption>
+  </figure>
+  <ul>
+    <li>Tombol <span class="ui">Detail</span> (ikon mata) di ujung kanan membuka detail transaksi.</li>
+    <li>Tombol <span class="ui">Ubah tahap</span> (ikon pensil) membuka formulir ubah tahap.</li>
+    <li>Pada transaksi berstatus DO, tombol <span class="ui">Konfirmasi Delivery</span> (ikon truk) dipakai saat kendaraan sudah dikirim.</li>
+    <li><span class="ui">Ekspor CSV</span> mengunduh daftar transaksi untuk diolah di spreadsheet. <span class="ui">Refresh</span> memuat ulang data terbaru.</li>
+  </ul>
+</section>
+
+<section id="detail">
+  <h2>7. Detail transaksi</h2>
+  <p>Jendela detail transaksi adalah tempat kerja utama Anda. Jendela ini terbuka dari Buku Pelanggan Saya, Transaksi, Beranda, maupun Kalender.</p>
+  <figure>
+    <a href="img/customer-detail.png" target="_blank"><img src="img/customer-detail.png" alt="Jendela detail transaksi dengan panel komentar coaching" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Detail transaksi: data di kiri, panel kerja di kanan, dan bilah ikon di sisi paling kanan.</figcaption>
+  </figure>
+  <h3>Bagian atas</h3>
+  <ul>
+    <li>Nama pelanggan dan unit, tahap saat ini, nama Sales dan Supervisor, serta lama transaksi berada di tahap ini.</li>
+    <li><span class="ui">Ubah tahap</span>: membuka formulir ubah tahap.</li>
+    <li>Ikon <strong>telepon</strong> dan <strong>WhatsApp</strong> langsung menghubungi pelanggan. Ikon tampak pudar dan tidak bisa diklik bila pelanggan menolak dihubungi lewat kanal tersebut.</li>
+  </ul>
+  <h3>Panel kiri: data pelanggan dan transaksi</h3>
+  <p>Kotak <strong>Pelanggan</strong> dan <strong>Transaksi</strong> berisi data seperti telepon, gender, pekerjaan, kendaraan, area, pembiayaan, sumber, estimasi nilai, dan estimasi closing. Klik salah satu nilai untuk mengubahnya langsung di tempat. <strong>Pergerakan tahap</strong> menampilkan riwayat perpindahan tahap beserta catatannya.</p>
+  <h3>Panel kanan: pilih lewat ikon</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Ikon</th><th>Kegunaan</th></tr>
+    <tr><td>Komentar</td><td>Percakapan coaching dengan Supervisor (lihat <a href="#coaching">bagian 9</a>).</td></tr>
+    <tr><td>Aktivitas</td><td>Mencatat hasil kontak dengan pelanggan.</td></tr>
+    <tr><td>Follow-up</td><td>Menjadwalkan kontak berikutnya.</td></tr>
+    <tr><td>Pelanggan</td><td>Kontak terakhir, PIC, transaksi baru, dan preferensi kontak.</td></tr>
+    <tr><td>Riwayat</td><td>Seluruh jejak transaksi pelanggan dalam satu linimasa.</td></tr>
+    <tr><td>Ubah tahap</td><td>Memindahkan transaksi ke tahap lain (lihat <a href="#tahap">bagian 8</a>).</td></tr>
+  </table></div>
+  <p>Tombol <kbd>»</kbd> di atas ikon melipat panel kanan agar data di kiri lebih lega.</p>
+
+  <h3>Mencatat aktivitas</h3>
+  <ol class="steps">
+    <li>Klik ikon <span class="ui">Aktivitas</span>.</li>
+    <li>Pilih <span class="ui">Kanal aktivitas</span>: Telepon langsung, Chat WhatsApp, Kunjungan rumah / kantor, atau Pertemuan showroom.</li>
+    <li>Tulis <span class="ui">Hasil komunikasi</span>, lalu klik <span class="ui">Catat aktivitas</span>.</li>
+  </ol>
+  <p>Aktivitas memperbarui <strong>kontak terakhir</strong> pelanggan tanpa mengubah tahap transaksi.</p>
+  <figure>
+    <a href="img/detail-aktivitas.png" target="_blank"><img src="img/detail-aktivitas.png" alt="Panel aktivitas pelanggan" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel Aktivitas: daftar aktivitas di atas, formulir di bawah.</figcaption>
+  </figure>
+
+  <h3>Menjadwalkan follow-up</h3>
+  <ol class="steps">
+    <li>Klik ikon <span class="ui">Follow-up</span>.</li>
+    <li>Isi <span class="ui">Waktu follow-up</span> (tanggal dan jam) serta <span class="ui">Rencana</span>, misalnya "Konfirmasi jadwal test drive".</li>
+    <li>Klik <span class="ui">Jadwalkan</span>. Rencana ini muncul di <a href="#kalender">Kalender</a> dan di Buku Pelanggan Saya.</li>
+  </ol>
+  <figure>
+    <a href="img/detail-followup.png" target="_blank"><img src="img/detail-followup.png" alt="Panel follow-up" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel Follow-up.</figcaption>
+  </figure>
+
+  <h3>Panel Pelanggan dan preferensi kontak</h3>
+  <p>Panel ini menampilkan tanggal terakhir dihubungi dan PIC Sales. Klik <span class="ui">Buat transaksi baru</span> bila pelanggan yang sama ingin membeli unit lain.</p>
+  <p>Di <strong>Preferensi kontak</strong>, catat kanal yang disukai pelanggan. Centang <span class="ui">Pelanggan menolak dihubungi pada semua kanal</span> bila pelanggan meminta tidak dihubungi lagi, lalu klik <span class="ui">Simpan preferensi kontak</span>. Tombol telepon dan WhatsApp akan dinonaktifkan sesuai pilihan ini.</p>
+  <figure>
+    <a href="img/detail-pelanggan.png" target="_blank"><img src="img/detail-pelanggan.png" alt="Panel pelanggan dengan preferensi kontak" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel Pelanggan.</figcaption>
+  </figure>
+
+  <h3>Riwayat</h3>
+  <p>Pilih transaksi di <span class="ui">Pilih transaksi</span> untuk melihat linimasa lengkapnya: aktivitas, komentar, balasan, dan perpindahan tahap secara berurutan.</p>
+  <figure>
+    <a href="img/detail-riwayat.png" target="_blank"><img src="img/detail-riwayat.png" alt="Panel riwayat pelanggan" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel Riwayat.</figcaption>
+  </figure>
+  <div class="phones">
+    <figure>
+      <a href="img/m-detail.png" target="_blank"><img src="img/m-detail.png" alt="Detail transaksi di ponsel" width="390" height="844" loading="lazy"></a>
+      <figcaption>Di ponsel, ikon panel tetap ada di sisi kanan.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="tahap">
+  <h2>8. Mengubah tahap pipeline</h2>
+  <p>Setiap transaksi bergerak melalui tahap berikut:</p>
+  <div class="stages" aria-label="Urutan tahap">
+    <span>Lead</span><i>→</i><span>Prospect</span><i>→</i><span>Hot Prospect</span><i>→</i><span>SPK</span><i>→</i><span>DO</span><i>→</i><span>Delivery</span><i>atau</i><span>Lost</span>
+  </div>
+  <figure>
+    <a href="img/detail-ubah-tahap.png" target="_blank"><img src="img/detail-ubah-tahap.png" alt="Formulir ubah tahap" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Formulir Ubah tahap di panel kanan.</figcaption>
+  </figure>
+  <h3>Langkah umum</h3>
+  <ol class="steps">
+    <li>Klik <span class="ui">Ubah tahap</span>.</li>
+    <li>Periksa <span class="ui">Estimasi bulan closing</span>. Ubah bila perlu, lalu klik <span class="ui">Simpan estimasi closing</span>. Kosongkan bila belum diketahui, tetapi ingat: transaksi tanpa estimasi tidak masuk forecast.</li>
+    <li>Pilih <span class="ui">Tahap baru</span>. Tanda ▲ berarti maju tahap, ▼ berarti mundur tahap.</li>
+    <li>Isi <span class="ui">Catatan</span>. Jika mundur tahap, catatan alasan wajib diisi.</li>
+    <li>Lengkapi isian tambahan yang muncul (lihat tabel di bawah), lalu klik <span class="ui">Simpan tahap</span>.</li>
+  </ol>
+  <h3>Syarat setiap tahap</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Tahap tujuan</th><th>Yang harus dilengkapi</th></tr>
+    <tr><td>Prospect, Hot Prospect</td><td>Gender dan alamat pelanggan.</td></tr>
+    <tr><td>SPK</td><td>Gender, alamat, pekerjaan, dan area pelanggan; unit kendaraan; centang <span class="ui">Konfirmasi booking fee</span>.</td></tr>
+    <tr><td>DO</td><td>Centang ketiga <span class="ui">Checklist DO</span>: PO, DP, dan Unit. DO hanya bisa dipilih dari tahap SPK.</td></tr>
+    <tr><td>Delivery</td><td>Konfirmasi bahwa kendaraan sudah terkirim (tombol <span class="ui">Konfirmasi Delivery</span>).</td></tr>
+    <tr><td>Lost</td><td>Pilih <span class="ui">Alasan lost</span>: membeli di kompetitor, harga/anggaran belum sesuai, leasing ditolak, tidak merespons follow-up, batal/menunda, atau alasan lainnya. Tambahkan catatan bila perlu.</td></tr>
+  </table></div>
+  <p>Data pelanggan yang belum lengkap dapat diisi langsung di formulir ubah tahap, atau kapan saja di panel kiri.</p>
+  <div class="phones">
+    <figure>
+      <a href="img/stage-spk-panel.png" target="_blank"><img src="img/stage-spk-panel.png" alt="Formulir ubah tahap ke SPK dengan konfirmasi booking fee" width="300" height="602" loading="lazy"></a>
+      <figcaption>Ke SPK: centang konfirmasi booking fee.</figcaption>
+    </figure>
+    <figure>
+      <a href="img/stage-lost-panel.png" target="_blank"><img src="img/stage-lost-panel.png" alt="Formulir ubah tahap ke Lost dengan alasan lost" width="300" height="602" loading="lazy"></a>
+      <figcaption>Ke Lost: alasan lost wajib dipilih.</figcaption>
+    </figure>
+  </div>
+  <figure>
+    <a href="img/stage-do.png" target="_blank"><img src="img/stage-do.png" alt="Formulir ubah tahap ke DO dengan checklist PO, DP, dan Unit" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Ke DO dari SPK: centang PO, DP, dan Unit.</figcaption>
+  </figure>
+  <div class="callout warn"><p><strong>Penting.</strong> DO, Delivery, dan Lost adalah tahap selesai. Setelah DO, transaksi hanya dapat dilanjutkan ke Delivery. Transaksi yang sudah Delivery atau Lost terkunci dan tidak dapat diubah lagi. Pembatalan DO hanya dapat dilakukan Admin, sebelum Delivery. Periksa kembali sebelum menyimpan.</p></div>
+</section>
+
+<section id="coaching">
+  <h2>9. Komentar coaching</h2>
+  <p>Setiap transaksi punya ruang percakapan antara Anda dan Supervisor. Gunakan untuk melaporkan perkembangan, kendala, atau meminta arahan. Komentar hanya dapat dilihat oleh Sales terkait, Supervisor terkait, dan Admin.</p>
+  <ol class="steps">
+    <li>Buka detail transaksi, lalu klik ikon <span class="ui">Komentar</span>.</li>
+    <li>Untuk menanggapi arahan Supervisor, klik <span class="ui">Balas</span> pada komentarnya.</li>
+    <li>Untuk komentar baru, tulis di <span class="ui">Komentar baru</span> lalu klik <span class="ui">Kirim komentar</span>.</li>
+  </ol>
+  <ul>
+    <li>Setiap komentar mencatat tahap transaksi saat komentar dikirim.</li>
+    <li>Komentar Anda masih dapat diperbaiki dalam <strong>5 menit</strong> setelah dikirim.</li>
+    <li>Komentar baru menghasilkan pemberitahuan di aplikasi dan email. Email tidak memuat isi komentar; buka aplikasi untuk membacanya.</li>
+  </ul>
+  <p>Percakapan ini juga dapat dibuka sebagai halaman penuh beserta linimasa transaksi:</p>
+  <figure>
+    <a href="img/coaching.png" target="_blank"><img src="img/coaching.png" alt="Halaman coaching transaksi" width="1280" height="1042" loading="lazy"></a>
+    <figcaption>Halaman Coaching transaksi.</figcaption>
+  </figure>
+</section>
+
+<section id="kalender">
+  <h2>10. Kalender</h2>
+  <p>Kalender menampilkan rencana follow-up dan aktivitas yang sudah Anda catat. Hari Sabtu dan Minggu diberi arsiran.</p>
+  <figure>
+    <a href="img/calendar.png" target="_blank"><img src="img/calendar.png" alt="Kalender tampilan bulanan" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Tampilan Bulanan. Lingkaran kosong adalah rencana; titik penuh adalah realisasi.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <tr><th>Tanda</th><th>Arti</th></tr>
+    <tr><td>Rencana</td><td>Follow-up yang sudah dijadwalkan dan belum dikerjakan.</td></tr>
+    <tr><td>Realisasi</td><td>Aktivitas yang sudah dicatat.</td></tr>
+    <tr><td>Terlambat</td><td>Rencana yang waktunya sudah lewat tetapi belum dicatat hasilnya.</td></tr>
+    <tr><td>Rencana selesai</td><td>Rencana yang hasilnya sudah dicatat.</td></tr>
+  </table></div>
+  <ul>
+    <li>Pilih <span class="ui">Bulanan</span> atau <span class="ui">Harian</span>. Klik tanggal untuk membuka tampilan harian.</li>
+    <li>Gunakan tombol panah untuk berpindah bulan/hari, dan <span class="ui">Hari ini</span> untuk kembali ke tanggal sekarang.</li>
+  </ul>
+  <h3>Mencatat hasil atau membatalkan follow-up</h3>
+  <ol class="steps">
+    <li>Klik sebuah rencana di kalender.</li>
+    <li>Pilih <span class="ui">Kanal aktivitas</span> dan tulis <span class="ui">Hasil komunikasi</span>.</li>
+    <li>Klik <span class="ui">Simpan &amp; selesaikan</span>. Rencana berubah menjadi selesai dan aktivitas tercatat.</li>
+    <li>Bila follow-up tidak jadi dilakukan, klik <span class="ui">Batalkan follow-up ini</span>.</li>
+  </ol>
+  <figure>
+    <a href="img/calendar-item.png" target="_blank"><img src="img/calendar-item.png" alt="Dialog catat hasil follow-up" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Dialog Catat hasil follow-up.</figcaption>
+  </figure>
+  <figure>
+    <a href="img/calendar-day.png" target="_blank"><img src="img/calendar-day.png" alt="Kalender tampilan harian" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Tampilan Harian dengan ringkasan kegiatan, realisasi, rencana, dan yang terlambat.</figcaption>
+  </figure>
+  <div class="phones">
+    <figure>
+      <a href="img/m-calendar.png" target="_blank"><img src="img/m-calendar.png" alt="Kalender di ponsel" width="390" height="844" loading="lazy"></a>
+      <figcaption>Di ponsel, kegiatan tampil sebagai titik; ketuk tanggal atau <em>Buka Harian</em> untuk rinciannya.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="notifikasi">
+  <h2>11. Notifikasi</h2>
+  <p>Ikon lonceng di pojok kanan atas menampilkan pemberitahuan terbaru, misalnya komentar coaching baru dari Supervisor. Klik sebuah pemberitahuan untuk membuka transaksinya, atau <span class="ui">Lihat semua notifikasi</span> untuk membuka halaman Notifikasi.</p>
+  <figure>
+    <a href="img/bell.png" target="_blank"><img src="img/bell.png" alt="Menu notifikasi dari ikon lonceng" width="640" height="520" loading="lazy" style="max-width:520px"></a>
+    <figcaption>Menu notifikasi.</figcaption>
+  </figure>
+  <div class="callout tip"><p>Halaman Notifikasi masih dalam pengembangan. Gunakan ikon lonceng dan bagian <em>Komentar belum dibaca</em> di Beranda untuk memantau pemberitahuan.</p></div>
+</section>
+
+<section id="tips">
+  <h2>12. Lead stagnan &amp; tips harian</h2>
+  <p>Transaksi aktif yang <strong>lebih dari 3 hari</strong> tidak memiliki aktivitas ditandai <strong>stagnan</strong>. Transaksi stagnan terlihat oleh Supervisor dan muncul di Beranda serta filter <span class="ui">Stagnan</span> di halaman Transaksi.</p>
+  <h3>Rutinitas yang disarankan</h3>
+  <ol class="steps">
+    <li><strong>Pagi</strong>: buka Beranda. Periksa transaksi stagnan, komentar belum dibaca, dan follow-up hari ini.</li>
+    <li><strong>Setelah menghubungi pelanggan</strong>: catat aktivitas saat itu juga, langsung dari ponsel.</li>
+    <li><strong>Sebelum menutup percakapan</strong>: jadwalkan follow-up berikutnya agar tidak lupa.</li>
+    <li><strong>Saat ada kemajuan</strong>: ubah tahap dan perbarui estimasi bulan closing.</li>
+    <li><strong>Saat ragu</strong>: tulis komentar coaching untuk meminta arahan Supervisor.</li>
+  </ol>
+</section>
+
+<section id="riwayat-versi">
+  <h2>Riwayat versi</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Versi</th><th>Tanggal</th><th>Versi aplikasi</th><th>Perubahan</th></tr>
+    <tr><td>1.0.0</td><td>16 November 2026</td><td>v1.2.2</td><td>Panduan pertama untuk Sales.</td></tr>
+  </table></div>
+</section>
+
+<footer>
+  <p>Manual Book AIna DealDrive · Versi 1.0.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Supervisor atau Admin dealer Anda.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>
