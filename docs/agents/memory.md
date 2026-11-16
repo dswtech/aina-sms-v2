@@ -3,11 +3,16 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.56 |
-| Diperbarui | 14 November 2026 |
+| Versi | v1.57 |
+| Diperbarui | 15 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 15 November 2026 — kuota Vercel dan monitoring harian
+
+- Proyek Vercel (Hobby) dijeda karena Fluid Provisioned Memory 515/360 GB-Hrs dan Active CPU 4j4m/4j; jeda berakhir sekitar 29 hari lagi. Dugaan utama dari kode: probe production-monitor tiap 15 menit membuat container tetap hidup; log Vercel Hobby hanya 1 jam sehingga belum terbukti dengan data.
+- Cron production-monitor diubah menjadi sekali sehari 00:07 UTC di branch chore/daily-production-monitor; lihat [runbook](../operations/vercel-deployment.md#pemantauan-dan-penanganan-gangguan). AINA_PRODUCTION_SETUP_ENABLED production sudah false sebelum perubahan ini, jadi tidak diubah.
 
 ## Pembaruan 14 November 2026 — rilis v1.2.0, v1.2.1, v1.2.2 dan cek domain rilis
 
