@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.59 |
+| Versi | v1.60 |
 | Diperbarui | 17 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 18 November 2026 — rilis otomatis ke VPS
+
+Workflow production-release kini men-deploy ke VPS lewat SSH, hanya saat GitHub Release stable dipublikasikan ([runbook](../operations/vps-deployment.md#deploy-otomatis-dari-github-release)); kode rilis Vercel dihapus karena akun Vercel diblokir. Key CI khusus dibatasi ke wrapper yang hanya menerima SHA. Jalur lengkap diuji dengan commit v1.2.2 (kode sama dengan production), `/up` dan `/login` 200. Secret `VPS_SSH_KEY` harus disimpan pemilik di GitHub sebelum rilis berikutnya; rilis nyata lewat workflow belum pernah dijalankan.
 
 ## Pembaruan 17 November 2026 — VPS production berjalan (fresh install)
 

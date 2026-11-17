@@ -27,14 +27,21 @@ Dari server sebagai user deploy:
 
 Skrip meng-clone repository, memasang dependency production, membangun aset, menautkan `.env` dan storage dari `shared`, menjalankan `artisan optimize`, mengalihkan symlink `current`, lalu me-reload php-fpm dan me-restart worker. Skrip tidak menjalankan migration. Setelah mengubah `.env`, jalankan `php artisan optimize` di `current` dan restart kedua unit.
 
-## Penyiapan awal yang diisi pemilik
+## Deploy otomatis dari GitHub Release
 
-1. Isi `APP_KEY` (salinan dari Vercel agar sesi dan data terenkripsi tetap valid), `MAIL_USERNAME`, `MAIL_PASSWORD` dan `MAIL_FROM_ADDRESS` langsung di server.
-2. Migrasi data dari Neon dengan otorisasi eksplisit: `pg_dump -Fc` dari koneksi langsung Neon, `pg_restore` ke database `aina`, bandingkan jumlah baris, lalu `php artisan migrate:status`.
-3. Aktifkan worker: `sudo systemctl enable --now aina-queue aina-scheduler`.
-4. Uji dengan `curl --resolve aiia.toyotabandung.web.id:443:<IP>` sebelum DNS dipindah.
-5. Cutover: turunkan TTL, ubah DNS di Exabytes ke IP VPS, jalankan `sudo certbot --nginx -d aiia.toyotabandung.web.id`, lalu `sudo certbot renew --dry-run`.
+Publikasi GitHub Release stable `vMAJOR.MINOR.PATCH` menjalankan workflow `production-release`: verifikasi tag dan CI main (`deploy/vercel/release.mjs verify`), SSH ke VPS, lalu `deploy/vps/ssh-deploy.sh` menjalankan `deploy.sh <sha>` di bawah `flock` (tidak ada dua deploy bersamaan), lalu `deploy/vercel/monitor.mjs` memeriksa `/up` dan `/login`. Merge ke main hanya menjalankan CI. Tanpa migration otomatis.
+
+Key deploy adalah key ed25519 khusus di `authorized_keys` user deploy dengan opsi `restrict,command="/var/www/aina/ssh-deploy.sh"`; wrapper hanya menerima 40 karakter hex. Private key disimpan pemilik sebagai GitHub Secret `VPS_SSH_KEY`; host key VPS dipin di workflow. Untuk mengganti key: buat pasangan baru, ganti baris `aina-ci-deploy` di `authorized_keys`, perbarui secret. Salin `ssh-deploy.sh` ke `/var/www/aina/` bila skrip berubah.
+
+## Penyiapan awal (fresh install, sudah dilakukan 17 November 2026)
+
+1. Pemilik mengisi `MAIL_USERNAME`, `MAIL_PASSWORD` dan `MAIL_FROM_ADDRESS` di `/var/www/aina/shared/.env` (diedit langsung dengan `nano` karena `sudoedit` menolak folder yang dimiliki user). `APP_KEY` dibuat di server dengan `php artisan key:generate --force`.
+2. `php artisan migrate --force` pada database `aina` yang kosong; tidak ada data dari Vercel/Neon.
+3. `sudo systemctl enable --now aina-queue aina-scheduler`.
+4. Admin pertama lewat `php artisan app:invite-first-admin`; pemilik menetapkan password sendiri dari email.
+5. DNS: record `A aiia` ke IP VPS di Exabytes, lalu `sudo certbot --nginx -d aiia.toyotabandung.web.id`; port 80/443/22 harus dibuka juga di firewall Lighthouse instance (bukan hanya template).
+6. SSH: `/etc/ssh/sshd_config.d/00-hardening.conf` mematikan login password dan root.
 
 ## Rollback
 
-Kembalikan DNS ke Vercel selama Vercel masih dipertahankan; data yang ditulis di VPS sesudah cutover tidak ikut kembali. Untuk kode, arahkan `current` ke rilis sebelumnya di `releases` lalu restart worker.
+Arahkan `current` ke rilis sebelumnya di `releases` lalu restart worker.
