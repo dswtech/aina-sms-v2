@@ -13,7 +13,7 @@ it('keeps local and CI runtime requirements aligned', function () {
 
     expect($composer['require']['php'])->toBe('^8.4.1')
         ->and(trim(file_get_contents($root.'/.nvmrc')))->toBe('24')
-        ->and($workflow)->toContain("php-version: '8.4'")
+        ->and($workflow)->toContain("php-version: '8.5'")
         ->and($workflow)->toContain("node-version-file: '.nvmrc'")
         ->not->toContain("node-version: '22'")
         ->and($corepackSetup)->not->toBeFalse()
