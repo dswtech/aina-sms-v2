@@ -9,9 +9,9 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
-## Pembaruan 17 November 2026 — persiapan VPS production
+## Pembaruan 17 November 2026 — VPS production berjalan (fresh install)
 
-Pemilik memutuskan memindahkan production dari Vercel ke VPS ([ADR 008](adr/ADR-008-vps-hosting.md), [runbook](../operations/vps-deployment.md)). Server Ubuntu 26.04 (2 vCPU, 2 GB) sudah dipasang Nginx, PHP 8.5-FPM (PPA ondrej belum mendukung 26.04), PostgreSQL lokal, Node 24, ufw, fail2ban, backup harian, dan rilis v1.2.2 ter-deploy. Belum ada: APP_KEY dan secret email di `.env` server (diisi pemilik), data dari Neon, DNS/TLS, dan unit queue/scheduler belum di-enable. `/up` 200; `/login` 500 sampai APP_KEY dan data ada. Suite tes pada PHP 8.5 belum dijalankan. Workflow production-release masih menarget Vercel.
+Pemilik memindahkan production dari Vercel ke VPS ([ADR 008](adr/ADR-008-vps-hosting.md), [runbook](../operations/vps-deployment.md)) sebagai instalasi baru: tanpa migrasi data dari Neon. Server Ubuntu 26.04 (2 vCPU, 2 GB) menjalankan Nginx, PHP 8.5-FPM (PPA ondrej belum mendukung 26.04), PostgreSQL lokal, Node 24, ufw, fail2ban, backup harian, rilis v1.2.2, queue worker dan scheduler. APP_KEY dibuat di server, migration dijalankan pada database kosong, undangan Admin pertama terkirim dan emailnya diterima pemilik. DNS aiia mengarah ke VPS (A record), HTTPS Certbot aktif, `/up` dan `/login` 200 dari luar setelah port 443 dibuka di firewall penyedia. Belum ada: konfirmasi aktivasi/login Admin, suite tes pada PHP 8.5, backup di luar server, hardening SSH, dan workflow production-release masih menarget Vercel.
 
 ## Pembaruan 17 November 2026 — istilah FOA menjadi PMA
 

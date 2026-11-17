@@ -15,6 +15,8 @@ Keputusan: [ADR 008](../agents/adr/ADR-008-vps-hosting.md). Tidak ada credential
 | Layout | `/var/www/aina/{releases,current,shared/.env,shared/storage}` |
 | Backup | `/usr/local/sbin/aina-backup` via `/etc/cron.d/aina-backup` 02:17, retensi 14 hari, ke `/var/backups/aina` |
 
+Setelah `certbot --nginx` berjalan, vhost aktif di `/etc/nginx/sites-available/aina` dikelola Certbot (blok 443 dan redirect ditambahkan) sehingga berbeda dari `deploy/vps/nginx.conf`, yang hanya templat awal HTTP. Port 443 juga harus dibuka di firewall/security group penyedia VPS, bukan hanya ufw.
+
 ## Deploy
 
 Dari server sebagai user deploy:
