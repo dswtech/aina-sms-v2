@@ -1,0 +1,22 @@
+# ADR 008 Hosting production pada VPS
+
+| Item | Keterangan |
+|---|---|
+| Status | Dipilih pemilik, 17 November 2026; cutover mengikuti runbook |
+| Mengubah | Bagian hosting ADR 005 (Vercel, Neon) dan pemicu rilis ADR 006 setelah cutover |
+
+## Keadaan
+
+Production berjalan pada Vercel Hobby dan Neon Free. Kuota Hobby habis (lihat memory 15 November 2026), worker queue dan scheduler belum pernah aktif, dan penyimpanan CSV privat persisten belum ada.
+
+## Keputusan
+
+Pemilik memindahkan production ke satu VPS Ubuntu yang dikelola sendiri, dipasang langsung tanpa Docker: Nginx dengan Certbot, PHP-FPM, PostgreSQL lokal (hanya 127.0.0.1), Node untuk build aset, serta dua unit systemd untuk queue worker dan scheduler. Domain tetap aiia.toyotabandung.web.id; DNS tetap di Exabytes. Rilis dibangun dari tag di server oleh skrip deploy dan tidak menjalankan migration (batas ADR 006 tetap berlaku). Backup harian pg_dump disimpan di server.
+
+Ubuntu 26.04 hanya menyediakan PHP 8.5 dan PPA ondrej belum mendukungnya, sehingga server memakai PHP 8.5 sementara CI dan Vercel memakai 8.4. Persyaratan composer ^8.4.1 terpenuhi; kompatibilitas pada 8.5 diuji dengan suite tes di server.
+
+## Konsekuensi
+
+Pemilik bertanggung jawab atas patch OS, backup, pemantauan dan titik kegagalan tunggal. Salinan backup di luar server, RPO dan RTO belum ditetapkan. Vercel dipertahankan sebagai jalur rollback DNS sampai pemilik menyatakan cutover stabil; workflow production-release tetap menarget Vercel sampai PR tersendiri mengubahnya.
+
+Runbook: [vps-deployment.md](../../operations/vps-deployment.md).

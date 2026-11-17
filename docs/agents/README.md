@@ -24,10 +24,12 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 | [../superpowers/plans/2026-11-08-financing-ui-preview.md](../superpowers/plans/2026-11-08-financing-ui-preview.md) | Preview frontend | Laporan pembiayaan, master leasing dan form transaksi dengan data sintetis serta batas tanpa backend. |
 | [../superpowers/plans/2026-11-08-production-monitoring.md](../superpowers/plans/2026-11-08-production-monitoring.md) | Rencana | Monitor HTTPS production, retry terbatas, notifikasi Actions dan batas cakupan. |
 | [adr/ADR-007-generated-usernames.md](adr/ADR-007-generated-usernames.md) | ADR | Username akun baru dibuat otomatis dari nama saat undangan dibuat, dengan generator murni dan tabel reservasi unik untuk mencegah race; akun lama tidak diubah. |
+| [adr/ADR-008-vps-hosting.md](adr/ADR-008-vps-hosting.md) | ADR | Production dipindah ke satu VPS Ubuntu (Nginx, PHP-FPM, PostgreSQL lokal, systemd worker); Vercel dipertahankan sementara sebagai rollback DNS. |
 | [adr/ADR-006-versioned-production-releases.md](adr/ADR-006-versioned-production-releases.md) | ADR | Rilis production hanya dari GitHub Release stable bernomor dengan commit main dan CI terverifikasi. |
 | [../superpowers/plans/2026-11-08-versioned-releases.md](../superpowers/plans/2026-11-08-versioned-releases.md) | Rencana | Pengujian dan penerapan workflow rilis bernomor serta penghentian auto-deploy main. |
 | [../superpowers/plans/2026-11-07-production-release.md](../superpowers/plans/2026-11-07-production-release.md) | Rencana production | Guard bootstrap production, migrasi terotorisasi, undangan Admin, domain final dan ledger rilis. |
 | [../operations/vercel-deployment.md](../operations/vercel-deployment.md) | Runbook deployment | Audit Vercel, Neon, Gmail SMTP, bootstrap Admin, worker, scheduler, monitoring dan gerbang rilis. |
+| [../operations/vps-deployment.md](../operations/vps-deployment.md) | Runbook deployment | Komponen VPS, skrip deploy, penyiapan awal oleh pemilik, cutover DNS dan rollback. |
 | [adr/ADR-005-vercel-neon-pilot.md](adr/ADR-005-vercel-neon-pilot.md) | ADR | Pilihan deployment awal Vercel, Neon dan Gmail SMTP serta konsekuensi operasional. |
 | [../operations/backup-restore.md](../operations/backup-restore.md) | Runbook dan bukti O03 | Prosedur backup, restore terisolasi, drill sintetis dan batas kesiapan operasional. |
 | [`implementation-g13-postgres-pilot.md`](implementation-g13-postgres-pilot.md) | Bukti G13 | Profil pilot, suite PostgreSQL, concurrency impor, dan batas benchmark kapasitas. |
