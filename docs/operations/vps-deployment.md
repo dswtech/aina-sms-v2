@@ -29,7 +29,7 @@ Skrip meng-clone repository, memasang dependency production, membangun aset, men
 
 ## Deploy otomatis dari GitHub Release
 
-Publikasi GitHub Release stable `vMAJOR.MINOR.PATCH` menjalankan workflow `production-release`: verifikasi tag dan CI main (`deploy/vercel/release.mjs verify`), SSH ke VPS, lalu `deploy/vps/ssh-deploy.sh` menjalankan `deploy.sh <sha>` di bawah `flock` (tidak ada dua deploy bersamaan), lalu `deploy/vercel/monitor.mjs` memeriksa `/up` dan `/login`. Merge ke main hanya menjalankan CI. Tanpa migration otomatis.
+Publikasi GitHub Release stable `vMAJOR.MINOR.PATCH` menjalankan workflow `production-release`: verifikasi tag dan CI main (`deploy/release/release.mjs verify`), SSH ke VPS, lalu `deploy/vps/ssh-deploy.sh` menjalankan `deploy.sh <sha>` di bawah `flock` (tidak ada dua deploy bersamaan), lalu `deploy/release/monitor.mjs` memeriksa `/up` dan `/login`. Merge ke main hanya menjalankan CI. Tanpa migration otomatis.
 
 Key deploy adalah key ed25519 khusus di `authorized_keys` user deploy dengan opsi `restrict,command="/var/www/aina/ssh-deploy.sh"`; wrapper hanya menerima 40 karakter hex. Private key disimpan pemilik sebagai GitHub Secret `VPS_SSH_KEY`; host key VPS dipin di workflow. Untuk mengganti key: buat pasangan baru, ganti baris `aina-ci-deploy` di `authorized_keys`, perbarui secret. Salin `ssh-deploy.sh` ke `/var/www/aina/` bila skrip berubah.
 
