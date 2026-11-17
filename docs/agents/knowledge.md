@@ -94,6 +94,7 @@ Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan A
 | Porsi | Persentase kontribusi suatu kategori terhadap total pada filter yang sama. |
 | Drilldown | Daftar transaksi sumber yang membentuk satu angka analisis. |
 | Area | Dimensi lokasi Customer yang memerlukan data lokasi terstruktur sebelum dianalisis. |
+| PMA | Primary Market Area; kecamatan wilayah pasar utama dealer, diatur Admin di Pengaturan Dealer → Area & PMA. DO di kecamatan lain atau Kota Lain masuk Area lain (non-PMA). Sebelum 17 November 2026 disebut FOA; identifier kode dan data (`dealer_foa_districts`, `is_foa`, audit `dealer.foa_updated`, route `area-foa`) tetap memakai `foa`. |
 | MSCP | Market Share Credit Portion; analisis porsi pembiayaan. Dipenuhi oleh porsi per leasing pada Analisis Pembiayaan; pemilik menutup kebutuhan ini pada 9 November 2026 dan tidak ada konsep MSCP terpisah. |
 
 ## Prinsip akses data

@@ -47,7 +47,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
               : nextY;
     const note =
         chart.kind === 'area'
-            ? 'Persentase dihitung dari seluruh DO sah. Area lain mencakup kecamatan non-FOA dan Kota Lain. Status FOA mengikuti snapshot saat DO.'
+            ? 'Persentase dihitung dari seluruh DO sah. Area lain mencakup kecamatan non-PMA dan Kota Lain. Status PMA mengikuti snapshot saat DO.'
             : chart.kind === 'financing'
               ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
               : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';

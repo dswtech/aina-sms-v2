@@ -102,7 +102,7 @@ const shared = {
         href: '/dealer-settings',
         icon: Landmark,
         children: [
-            { title: 'Area & FOA', href: '/dealer-settings' },
+            { title: 'Area & PMA', href: '/dealer-settings' },
             { title: 'Leasing', href: '/dealer-settings/leasing' },
             { title: 'Master Kendaraan', href: '/dealer-settings/vehicles' },
         ],
