@@ -13,7 +13,7 @@ Production berjalan pada Vercel Hobby dan Neon Free. Kuota Hobby habis (lihat me
 
 Pemilik memindahkan production ke satu VPS Ubuntu yang dikelola sendiri, dipasang langsung tanpa Docker: Nginx dengan Certbot, PHP-FPM, PostgreSQL lokal (hanya 127.0.0.1), Node untuk build aset, serta dua unit systemd untuk queue worker dan scheduler. Domain tetap aiia.toyotabandung.web.id; DNS tetap di Exabytes. Rilis dibangun dari commit di server oleh skrip deploy dan tidak menjalankan migration (batas ADR 006 tetap berlaku). Workflow production-release tetap dipicu hanya oleh GitHub Release stable (merge ke main tidak men-deploy); setelah verifikasi tag dan CI, workflow memanggil SSH ke VPS dengan key khusus yang dibatasi pada satu perintah yang hanya menerima SHA commit. Backup harian pg_dump disimpan di server.
 
-Ubuntu 26.04 hanya menyediakan PHP 8.5 dan PPA ondrej belum mendukungnya, sehingga server memakai PHP 8.5 sementara CI dan Vercel memakai 8.4. Persyaratan composer ^8.4.1 terpenuhi; kompatibilitas pada 8.5 diuji dengan suite tes di server.
+Ubuntu 26.04 hanya menyediakan PHP 8.5 dan PPA ondrej belum mendukungnya, sehingga server memakai PHP 8.5. CI (tests.yml) disamakan ke PHP 8.5 pada 18 November 2026 agar suite tes berjalan pada versi production. Persyaratan composer ^8.4.1 tetap, jadi 8.4 masih diizinkan tetapi tidak lagi diuji.
 
 ## Konsekuensi
 
