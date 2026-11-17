@@ -29,4 +29,4 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Check HTTPS health and login with bounded retry
-        run: node deploy/vercel/monitor.mjs
+        run: node deploy/release/monitor.mjs

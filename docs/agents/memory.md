@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.60 |
+| Versi | v1.61 |
 | Diperbarui | 17 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 18 November 2026 — v1.2.3 lewat VPS dan pembersihan Vercel
+
+Release v1.2.3 (commit `25f44b9`, tanpa migration) adalah rilis pertama lewat workflow SSH: semua langkah hijau, `current` di VPS menunjuk commit itu, `/up` dan `/login` 200. CI berjalan di PHP 8.5; app GitHub Vercel dan secret VERCEL_TOKEN sudah dicopot pemilik. Branch chore/remove-vercel-leftovers menghapus vercel.json, Dockerfile.vercel, .dockerignore dan skrip startup Vercel serta memindahkan skrip rilis ke deploy/release. Perintah artisan app:invite-preview-admin dan app:prepare-production (bergantung variabel Vercel) masih ada di kode; belum dihapus.
 
 ## Pembaruan 18 November 2026 — rilis otomatis ke VPS
 

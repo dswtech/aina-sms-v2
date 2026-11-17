@@ -17,6 +17,6 @@ Ubuntu 26.04 hanya menyediakan PHP 8.5 dan PPA ondrej belum mendukungnya, sehing
 
 ## Konsekuensi
 
-Pemilik bertanggung jawab atas patch OS, backup, pemantauan dan titik kegagalan tunggal. Salinan backup di luar server, RPO dan RTO belum ditetapkan. Akun Vercel diblokir sehingga Vercel tidak lagi menjadi jalur rollback; kode rilis Vercel dihapus dari workflow. Rollback kode dilakukan dengan mengarahkan `current` ke rilis sebelumnya.
+Pemilik bertanggung jawab atas patch OS, backup, pemantauan dan titik kegagalan tunggal. Salinan backup di luar server, RPO dan RTO belum ditetapkan. Akun Vercel diblokir sehingga Vercel tidak lagi menjadi jalur rollback; kode rilis Vercel dihapus dari workflow. Rollback kode dilakukan dengan mengarahkan `current` ke rilis sebelumnya. Setelah rilis v1.2.3 membuktikan jalur SSH, vercel.json, Dockerfile.vercel, .dockerignore dan skrip startup Vercel dihapus, dan skrip rilis dipindah dari deploy/vercel ke deploy/release.
 
 Runbook: [vps-deployment.md](../../operations/vps-deployment.md).

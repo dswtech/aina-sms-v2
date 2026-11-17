@@ -1,5 +1,7 @@
 # Deployment awal Vercel
 
+> **Diganti** oleh [deployment VPS](vps-deployment.md) ([ADR 008](../agents/adr/ADR-008-vps-hosting.md)) pada 18 November 2026. Dokumen ini disimpan sebagai riwayat; Dockerfile.vercel, vercel.json dan skrip startup Vercel sudah dihapus dari repository, sehingga perintah dan path di bawah tidak lagi berlaku.
+
 ## Status dan tujuan
 
 Panduan ini menyiapkan rilis awal Laravel pada Vercel dengan Neon dan Brevo SMTP (menggantikan percobaan Gmail). Pilihan pengguna dicatat di [PRD bagian 14](../agents/PRD.md#14-keputusan-terbuka) dan konteks hosting pada [ADR 005](../agents/adr/ADR-005-vercel-neon-pilot.md). Jalankan setiap perintah pada target dan versi aplikasi yang sudah disetujui.

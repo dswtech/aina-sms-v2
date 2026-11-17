@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { api, validateRelease } from '../../deploy/vercel/release.mjs';
+import { api, validateRelease } from '../../deploy/release/release.mjs';
 
 const sha = 'a'.repeat(40);
 const release = { action: 'published', release: { draft: false, prerelease: false, tag_name: 'v1.2.3' } };

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { monitorProduction } from '../../deploy/vercel/monitor.mjs';
+import { monitorProduction } from '../../deploy/release/monitor.mjs';
 
 function healthy(url) {
     return new Response(url.endsWith('/up') ? '<html>Application up</html>' : '<div data-page="{&quot;component&quot;:&quot;auth/login&quot;}"></div>', { headers: { 'content-type': 'text/html' } });

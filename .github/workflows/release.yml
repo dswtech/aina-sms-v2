@@ -37,7 +37,7 @@ jobs:
         id: verified
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node deploy/vercel/release.mjs verify
+        run: node deploy/release/release.mjs verify
 
       - name: Deploy the verified commit to the VPS
         env:
@@ -52,4 +52,4 @@ jobs:
           ssh -i ~/.ssh/aina_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes ubuntu@43.173.33.89 "$RELEASE_SHA"
 
       - name: Check production health
-        run: node deploy/vercel/monitor.mjs
+        run: node deploy/release/monitor.mjs
