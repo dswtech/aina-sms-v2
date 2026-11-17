@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.57 |
-| Diperbarui | 15 November 2026 |
+| Versi | v1.58 |
+| Diperbarui | 17 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 17 November 2026 — istilah FOA menjadi PMA
+
+Pemilik mengoreksi istilah: wilayah utama dealer disebut PMA (Primary Market Area), bukan FOA. Branch `refactor/foa-to-pma` mengganti semua teks UI (menu Area & PMA, Pengaturan Dealer, Mapping Area, catatan PNG) serta PRD ANL-10/bagian 8; arti di [knowledge](knowledge.md#analisis-penjualan). Identifier kode dan data tetap `foa` karena sudah tersimpan di snapshot DO, tabel dan audit production; tanpa migration.
 
 ## Pembaruan 15 November 2026 — kuota Vercel dan monitoring harian
 

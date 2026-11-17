@@ -60,7 +60,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                     }}
                 />
                 <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                    Berdasarkan DO sah, satu kali per transaksi. FOA mengikuti
+                    Berdasarkan DO sah, satu kali per transaksi. PMA mengikuti
                     kondisi yang dikunci saat DO.
                 </p>
             </FilterPanel>
@@ -75,7 +75,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                         hint: periodLabel,
                     },
                     {
-                        label: 'Dalam FOA',
+                        label: 'Dalam PMA',
                         value: result.foa,
                         hint:
                             percentage(result.foa, result.total) +
@@ -84,7 +84,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                     {
                         label: 'Area lain',
                         value: result.other,
-                        hint: 'Kecamatan non-FOA dan Kota Lain',
+                        hint: 'Kecamatan non-PMA dan Kota Lain',
                     },
                 ].map((metric) => (
                     <div key={metric.label} className="min-w-0">
@@ -268,7 +268,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                             </dl>
                         </div>
                         <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
-                            Area lain mencakup seluruh kecamatan non-FOA dan
+                            Area lain mencakup seluruh kecamatan non-PMA dan
                             Kota Lain. Area wajib lengkap sebelum DO. Persentase
                             dihitung dari seluruh DO sah.
                         </p>
@@ -286,7 +286,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                             </h2>
                             <p className="mt-1 text-xs text-muted-foreground">
                                 Pengelompokan mengikuti snapshot saat DO, bukan
-                                daftar FOA terbaru.
+                                daftar PMA terbaru.
                             </p>
                         </div>
                         <div className="md:hidden">
@@ -305,8 +305,8 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                                     </div>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         {row.category === 'foa'
-                                            ? 'FOA'
-                                            : 'Non-FOA'}{' '}
+                                            ? 'PMA'
+                                            : 'Non-PMA'}{' '}
                                         · {percentage(row.count, result.total)}
                                     </p>
                                 </div>
@@ -314,7 +314,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                         </div>
                         <table className="hidden w-full table-fixed text-sm md:table">
                             <caption className="sr-only">
-                                Rincian DO menurut kecamatan FOA dan area
+                                Rincian DO menurut kecamatan PMA dan area
                                 lainnya
                             </caption>
                             <thead className="border-y text-xs text-muted-foreground">
@@ -368,8 +368,8 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                                         </td>
                                         <td className="px-3 py-3">
                                             {row.category === 'foa'
-                                                ? 'FOA'
-                                                : 'Non-FOA'}
+                                                ? 'PMA'
+                                                : 'Non-PMA'}
                                         </td>
                                         <td className="px-3 py-3 text-right tabular-nums">
                                             {row.count}

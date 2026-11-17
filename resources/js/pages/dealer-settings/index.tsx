@@ -16,7 +16,7 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
     const errors = usePage().props.errors as Record<string, string>;
     const [selected, setSelected] = useState(() => new Set(foa));
     const [saving, setSaving] = useState(false);
-    // Regions with saved FOA start open; later edits never open or close a region by themselves.
+    // Regions with saved PMA start open; later edits never open or close a region by themselves.
     const [startOpen] = useState(
         () =>
             new Set(
@@ -36,14 +36,14 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
         });
 
     return (
-        <DealerSettingsPage title="Area & FOA">
+        <DealerSettingsPage title="Area & PMA">
             <Card>
                 <CardHeader>
-                    <CardTitle>Kecamatan FOA</CardTitle>
+                    <CardTitle>Kecamatan PMA</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        Tandai kecamatan yang menjadi FOA dealer. Bawaan
+                        Tandai kecamatan yang menjadi PMA dealer. Bawaan
                         sementara: seluruh Kabupaten Bandung Barat;{' '}
                         {selected.size} kecamatan dipilih.
                     </p>
@@ -107,7 +107,7 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
                             )
                         }
                     >
-                        {saving ? 'Menyimpan…' : 'Simpan FOA'}
+                        {saving ? 'Menyimpan…' : 'Simpan PMA'}
                     </Button>
                 </CardContent>
             </Card>
