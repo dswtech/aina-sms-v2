@@ -17,9 +17,11 @@ type PageProps = {
 export default function Profile({
     mustVerifyEmail,
     status,
+    usernameLocked = false,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    usernameLocked?: boolean;
 }) {
     const { auth } = usePage<PageProps>().props;
 
@@ -130,6 +132,86 @@ export default function Profile({
                         </>
                     )}
                 </Form>
+
+                <div className="space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Username"
+                        description="Nama untuk masuk ke akun Anda"
+                    />
+
+                    {usernameLocked ? (
+                        <div className="grid gap-1">
+                            <p
+                                className="font-medium"
+                                data-test="username-current"
+                            >
+                                {auth.user.username}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Username sudah pernah diganti dan tidak bisa
+                                diubah lagi.
+                            </p>
+                        </div>
+                    ) : (
+                        <Form
+                            {...ProfileController.updateUsername.form()}
+                            options={{ preserveScroll: true }}
+                            className="space-y-6"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="username">
+                                            Username
+                                        </Label>
+
+                                        <Input
+                                            id="username"
+                                            aria-invalid={!!errors.username}
+                                            aria-describedby={
+                                                errors.username
+                                                    ? 'username-error'
+                                                    : 'username-hint'
+                                            }
+                                            className="mt-1 block w-full"
+                                            defaultValue={auth.user.username}
+                                            name="username"
+                                            required
+                                            maxLength={12}
+                                            autoCapitalize="none"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                        />
+
+                                        <p
+                                            id="username-hint"
+                                            className="text-sm text-muted-foreground"
+                                        >
+                                            6–12 huruf atau angka, diawali
+                                            huruf. Username hanya bisa diganti
+                                            satu kali, dan nama lama tidak bisa
+                                            dipakai orang lain.
+                                        </p>
+
+                                        <InputError
+                                            id="username-error"
+                                            className="mt-2"
+                                            message={errors.username}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        disabled={processing}
+                                        data-test="update-username-button"
+                                    >
+                                        Simpan username
+                                    </Button>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </div>
             </div>
         </>
     );
