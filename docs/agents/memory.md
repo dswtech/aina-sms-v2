@@ -13,6 +13,10 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 
 Branch `feat/username-self-change` menerapkan [ADR 009](adr/ADR-009-user-chosen-username.md) (IAM-08): `PATCH settings/profile/username`, kolom `users.username_changed_at`, nama lama ditahan di `username_reservations`. Migrasi baru perlu `migrate` oleh operator saat rilis.
 
+## Pembaruan 18 November 2026 — riwayat notifikasi in-app 3 hari
+
+Sales dan Supervisor melihat riwayat notifikasi 3 hari di `/notifications` (CVS-11 sampai CVS-13 di PRD): perubahan tahap, komentar coaching, dan transaksi stagnan. Command `notifications:detect-stagnant` berjalan harian pukul 00:05 Jakarta lewat `aina-scheduler`. Desain dan rencana ada di [spec](../superpowers/specs/2026-11-18-in-app-notification-history-design.md) dan [rencana](../superpowers/plans/2026-11-18-in-app-notification-history.md); branch `feat/notification-history`.
+
 ## Pembaruan 18 November 2026 — v1.2.3 lewat VPS dan pembersihan Vercel
 
 Release v1.2.3 (commit `25f44b9`, tanpa migration) adalah rilis pertama lewat workflow SSH: semua langkah hijau, `current` di VPS menunjuk commit itu, `/up` dan `/login` 200. CI berjalan di PHP 8.5; app GitHub Vercel dan secret VERCEL_TOKEN sudah dicopot pemilik. Branch chore/remove-vercel-leftovers menghapus vercel.json, Dockerfile.vercel, .dockerignore dan skrip startup Vercel serta memindahkan skrip rilis ke deploy/release. Perintah artisan app:invite-preview-admin dan app:prepare-production (bergantung variabel Vercel) dihapus bersama config/deployment.php, tes-nya, dan fallback DATABASE_URL Neon di config/database.php pada branch chore/remove-vercel-artisan-commands; admin pertama tetap lewat app:invite-first-admin.

@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -73,6 +74,7 @@ class InvitationController extends Controller
         $props = [
             'state' => $state,
             'token' => $state === 'valid' ? $token : null,
+            'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ];
 
         if ($state === 'valid') {

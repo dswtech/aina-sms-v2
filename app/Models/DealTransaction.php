@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use App\Notifications\DealStageChanged;
+use App\Services\DealAudience;
 use App\Services\TransactionSnapshots;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -278,7 +281,7 @@ class DealTransaction extends Model
             $checklist = $toStage === PipelineStage::Do
                 ? ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true] : [];
 
-            return $this->stageHistories()->create([
+            $history = $this->stageHistories()->create([
                 'from_stage' => $fromStage,
                 'to_stage' => $toStage,
                 'actor_id' => $actor->id,
@@ -287,7 +290,18 @@ class DealTransaction extends Model
                 ...$checklist,
                 ...$snapshots,
             ]);
+            $this->notifyStageChanged($fromStage, $toStage, $actor);
+
+            return $history;
         });
+    }
+
+    /** Tells the sales team's supervisors, except the actor, that the stage changed. Call inside the stage-change transaction. */
+    public function notifyStageChanged(PipelineStage $from, PipelineStage $to, User $actor): void
+    {
+        $recipients = app(DealAudience::class)->supervisorsOf($this)->where('id', '!=', $actor->id);
+
+        Notification::sendNow($recipients, new DealStageChanged($this->id, $this->public_id, $from->value, $to->value), ['database']);
     }
 
     private function refreshLockedStage(): void

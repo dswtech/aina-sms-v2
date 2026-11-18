@@ -126,9 +126,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('dealer-settings/vehicle-models/{model}', [DealerSettingsController::class, 'updateVehicleModel'])->whereNumber('model')->name('dealer-settings.vehicle-models.update');
     });
 
-    Route::inertia('notifications', 'module-status', [
-        'module' => 'notifications',
-    ])->name('notifications.index');
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
 });
 
 require __DIR__.'/settings.php';

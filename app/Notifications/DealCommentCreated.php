@@ -39,6 +39,7 @@ class DealCommentCreated extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
+            'kind' => 'comment',
             'title' => 'Komentar baru pada transaksi',
             'message' => 'Ada komentar baru pada tahap '.PipelineStage::from($this->stage)->label().'.',
             'url' => route('transactions.coaching', $this->transactionPublicId, false),

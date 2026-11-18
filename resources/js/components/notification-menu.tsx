@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,65 +7,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { formatRelativeTime } from '@/lib/notifications';
+import { openNotification } from '@/lib/open-notification';
 import { index as notificationsIndex } from '@/routes/notifications';
-import { read as notificationsRead } from '@/routes/notifications';
 import { cn } from '@/lib/utils';
-import type { AppNotification } from '@/types';
-
-const relativeTime = new Intl.RelativeTimeFormat('id', { numeric: 'auto' });
-
-function formatRelativeTime(value: string | null): string {
-    if (!value) {
-        return '';
-    }
-
-    const timestamp = new Date(value).getTime();
-
-    if (Number.isNaN(timestamp)) {
-        return '';
-    }
-
-    const minutes = Math.round((Date.now() - timestamp) / 60000);
-
-    if (minutes < 1) {
-        return 'Baru saja';
-    }
-
-    if (minutes < 60) {
-        return relativeTime.format(-minutes, 'minute');
-    }
-
-    const hours = Math.round(minutes / 60);
-
-    if (hours < 24) {
-        return relativeTime.format(-hours, 'hour');
-    }
-
-    const days = Math.round(hours / 24);
-
-    return relativeTime.format(-days, 'day');
-}
 
 export function NotificationMenu() {
     const { notifications, notificationsUnreadCount } = usePage().props;
     const items = notifications ?? [];
     const unreadCount = notificationsUnreadCount ?? 0;
-
-    const openNotification = (notification: AppNotification) => {
-        router.patch(
-            notificationsRead(notification.id).url,
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    if (notification.data.url) {
-                        router.visit(notification.data.url);
-                    }
-                },
-            },
-        );
-    };
 
     return (
         <DropdownMenu>
