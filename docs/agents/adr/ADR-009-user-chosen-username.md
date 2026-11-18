@@ -15,6 +15,7 @@ Username otomatis sulit diingat, jadi setiap pengguna aktif boleh memilih userna
 - Nama lama ditahan selamanya di `username_reservations` (`UsernameReservations::hold()`), supaya pengguna lain tidak bisa mengambilnya dan CSV impor lama (`sales_username`) tidak diam-diam masuk ke Sales yang salah.
 - Nama baru ikut ditahan di `username_reservations` dalam transaksi yang sama, supaya undangan yang dibuat bersamaan tidak bisa memilih nama itu.
 - Perubahan berjalan dalam satu transaksi dengan kunci baris pengguna dan dicatat di audit log (`user.username_changed`, nama lama dan baru).
+- Penggantian wajib menyertakan password saat ini (`current_password`), karena perubahannya permanen dan tidak ada jalur Admin untuk membatalkannya; sesi yang dibajak tidak boleh bisa mengganti nama login. UI menampilkan dialog konfirmasi dengan nama yang akan disimpan, peringatan "hanya sekali", dan kolom password.
 - Endpoint: `PATCH settings/profile/username` (`profile.username.update`).
 
 ## Batas

@@ -17,7 +17,7 @@ class UsernameChangeTest extends TestCase
 
     private function change(User $user, string $username)
     {
-        return $this->actingAs($user)->patch(route('profile.username.update'), ['username' => $username]);
+        return $this->actingAs($user)->patch(route('profile.username.update'), ['username' => $username, 'current_password' => 'password']);
     }
 
     public function test_user_can_change_username_once(): void
@@ -36,6 +36,20 @@ class UsernameChangeTest extends TestCase
         $log = AuditLog::query()->where('action', 'user.username_changed')->sole();
         $this->assertSame('oldname1', $log->metadata['before']['username']);
         $this->assertSame('budisantoso', $log->metadata['after']['username']);
+    }
+
+    public function test_wrong_or_missing_password_is_rejected(): void
+    {
+        $user = User::factory()->create(['username' => 'oldname1']);
+
+        $this->actingAs($user)->patch(route('profile.username.update'), ['username' => 'newname01', 'current_password' => 'wrong'])
+            ->assertSessionHasErrors('current_password');
+        $this->actingAs($user)->patch(route('profile.username.update'), ['username' => 'newname01'])
+            ->assertSessionHasErrors('current_password');
+
+        $user->refresh();
+        $this->assertSame('oldname1', $user->username);
+        $this->assertNull($user->username_changed_at);
     }
 
     public function test_second_change_is_rejected(): void

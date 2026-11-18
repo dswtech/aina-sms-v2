@@ -42,6 +42,7 @@ Username dibuat otomatis oleh sistem (IAM-08, ADR-007) dan sering sulit diingat.
 2. Halaman Profil menampilkan input username bila `username_changed_at` null, selain itu teks biasa dengan keterangan "sudah diganti". Tampilkan aturan bentuk dan peringatan bahwa penggantian hanya sekali.
 3. Aksi ganti di `Settings\ProfileController` memakai form request sendiri. Validasi: bentuk, kata terlarang, nama baru berbeda dari yang lama, belum terpakai.
 4. Di satu transaksi dengan kunci baris pengguna: tolak bila `username_changed_at` sudah terisi, tahan nama lama via `UsernameReservations::hold()`, simpan nama baru dan `username_changed_at`, catat lewat `AuditRecorder`. Unique index `users.username` menjadi pengaman terakhir saat dua orang memilih nama yang sama.
+   Tambahan setelah review (18 November 2026, disetujui pemilik): request wajib memuat `current_password`, dan UI meminta konfirmasi lewat dialog (nama yang akan disimpan, peringatan sekali ganti, kolom password).
 5. Dokumen: ADR baru (ADR-009) yang menggantikan sebagian ADR-007, pembaruan IAM-08 di PRD, entri di `docs/agents/README.md`.
 
 ## Diserahkan ke pelaksana

@@ -23,6 +23,7 @@ class UsernameChangeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'current_password' => ['required', 'current_password'],
             'username' => [
                 'bail',
                 'required',
@@ -46,6 +47,8 @@ class UsernameChangeRequest extends FormRequest
     {
         return [
             'username.required' => 'Username wajib diisi.',
+            'current_password.required' => 'Password wajib diisi untuk mengonfirmasi.',
+            'current_password.current_password' => 'Password salah.',
             'username.regex' => 'Username harus 6–12 karakter, diawali huruf, dan hanya berisi huruf atau angka.',
         ];
     }

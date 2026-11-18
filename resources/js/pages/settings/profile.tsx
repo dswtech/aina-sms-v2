@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import UsernameChangeForm from '@/components/username-change-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -154,62 +155,9 @@ export default function Profile({
                             </p>
                         </div>
                     ) : (
-                        <Form
-                            {...ProfileController.updateUsername.form()}
-                            options={{ preserveScroll: true }}
-                            className="space-y-6"
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="username">
-                                            Username
-                                        </Label>
-
-                                        <Input
-                                            id="username"
-                                            aria-invalid={!!errors.username}
-                                            aria-describedby={
-                                                errors.username
-                                                    ? 'username-hint username-error'
-                                                    : 'username-hint'
-                                            }
-                                            className="mt-1 block w-full"
-                                            defaultValue={auth.user.username}
-                                            name="username"
-                                            required
-                                            maxLength={12}
-                                            autoCapitalize="none"
-                                            autoComplete="off"
-                                            spellCheck={false}
-                                        />
-
-                                        <p
-                                            id="username-hint"
-                                            className="text-sm text-muted-foreground"
-                                        >
-                                            6–12 huruf atau angka, diawali
-                                            huruf. Username hanya bisa diganti
-                                            satu kali, dan nama lama tidak bisa
-                                            dipakai orang lain.
-                                        </p>
-
-                                        <InputError
-                                            id="username-error"
-                                            className="mt-2"
-                                            message={errors.username}
-                                        />
-                                    </div>
-
-                                    <Button
-                                        disabled={processing}
-                                        data-test="update-username-button"
-                                    >
-                                        Simpan username
-                                    </Button>
-                                </>
-                            )}
-                        </Form>
+                        <UsernameChangeForm
+                            currentUsername={auth.user.username}
+                        />
                     )}
                 </div>
             </div>
