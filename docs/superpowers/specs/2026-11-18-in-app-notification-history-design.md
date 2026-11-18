@@ -1,6 +1,6 @@
 # Riwayat Notifikasi In-App (3 Hari) — Desain
 
-Status: menunggu persetujuan pengguna, 18 November 2026.
+Status: disetujui dan diimplementasikan, 18 November 2026.
 
 ## Maksud
 

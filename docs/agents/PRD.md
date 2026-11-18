@@ -231,6 +231,9 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | CVS-08 | **Komentar tidak dapat dihapus permanen melalui aplikasi.** Kebutuhan moderasi di masa depan harus menggunakan penandaan yang tetap meninggalkan audit. | M |
 | CVS-09 | **Komentar baru menghasilkan notifikasi in-app dan email kepada pihak conversation lainnya.** Email hanya memuat metadata aman dan tautan, bukan isi coaching. | M |
 | CVS-10 | **Lampiran komentar tidak disediakan pada MVP.** Dokumen transaksi akan dikelola oleh modul dokumen pada fase berikutnya. | W |
+| CVS-11 | **Sales dan Supervisor dapat melihat riwayat notifikasi in-app 3 hari terakhir, terbaca maupun belum.** Notifikasi hanya menampilkan transaksi yang masih dapat diakses penerima. | M |
+| CVS-12 | **Supervisor menerima notifikasi in-app saat Sales timnya mengubah tahap transaksi.** Isinya hanya tahap lama dan baru, tanpa data pelanggan. | M |
+| CVS-13 | **Sales menerima notifikasi per transaksi yang baru menjadi stagnan; Supervisor menerima satu ringkasan harian berisi jumlahnya.** | M |
 
 ### 7.6 CSV Import (`IMP`)
 
