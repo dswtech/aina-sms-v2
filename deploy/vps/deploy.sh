@@ -30,6 +30,9 @@ ln -sfn "$DIR" "$APP/current"
 sudo systemctl reload php8.5-fpm
 sudo systemctl restart aina-queue aina-scheduler
 
+# Tell users about the new version; a failure here must not fail the deploy.
+php artisan release:announce || echo "warning: release:announce failed; deploy continues" >&2
+
 # keep the 5 newest releases
 ls -1dt "$APP"/releases/*/ | tail -n +6 | xargs -r rm -rf
 
