@@ -156,6 +156,17 @@ it('shows valid invitation details and activates the account atomically', functi
     expect(User::query()->where('email', 'new.sales@example.test')->count())->toBe(1);
 });
 
+it('returns readable Indonesian password errors instead of raw translation keys', function () {
+    app()->setLocale('id');
+    $plainToken = Str::random(64);
+    Invitation::factory()->create(['token_hash' => hash('sha256', $plainToken)]);
+
+    $this->post(route('invitations.accept', $plainToken), [
+        'password' => 'abc',
+        'password_confirmation' => 'abc',
+    ])->assertSessionHasErrors(['password' => 'Password minimal 8 karakter.']);
+});
+
 it('rolls back activation when the assigned team is no longer active', function () {
     $dealer = Dealer::factory()->create();
     $team = Team::factory()->inactive()->create(['dealer_id' => $dealer->id]);
