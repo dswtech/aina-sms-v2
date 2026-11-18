@@ -234,6 +234,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | CVS-11 | **Sales dan Supervisor dapat melihat riwayat notifikasi in-app 3 hari terakhir, terbaca maupun belum.** Notifikasi hanya menampilkan transaksi yang masih dapat diakses penerima. | M |
 | CVS-12 | **Supervisor menerima notifikasi in-app saat Sales timnya mengubah tahap transaksi.** Isinya hanya tahap lama dan baru, tanpa data pelanggan. | M |
 | CVS-13 | **Sales menerima notifikasi per transaksi yang baru menjadi stagnan; Supervisor menerima satu ringkasan harian berisi jumlahnya.** | M |
+| CVS-14 | **Semua pengguna menerima notifikasi in-app saat versi baru dirilis dan dapat membuka halaman Riwayat Rilis.** Versi aplikasi yang berjalan tampil di menu pengguna; isi rilis berbahasa awam. | M |
 
 ### 7.6 CSV Import (`IMP`)
 
