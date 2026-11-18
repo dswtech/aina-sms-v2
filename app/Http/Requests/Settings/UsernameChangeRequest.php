@@ -14,7 +14,9 @@ class UsernameChangeRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge(['username' => Str::lower(trim((string) $this->input('username')))]);
+        if (is_string($this->input('username'))) {
+            $this->merge(['username' => Str::lower(trim($this->input('username')))]);
+        }
     }
 
     /** @return array<string, array<int, ValidationRule|Closure|string>> */
@@ -22,6 +24,7 @@ class UsernameChangeRequest extends FormRequest
     {
         return [
             'username' => [
+                'bail',
                 'required',
                 'string',
                 'regex:/^[a-z][a-z0-9]{5,11}$/',

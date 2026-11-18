@@ -13,6 +13,7 @@ Username otomatis sulit diingat, jadi setiap pengguna aktif boleh memilih userna
 - Bentuk sama dengan username otomatis: diawali huruf, 6–12 huruf kecil atau digit, tanpa kata terlarang (`UsernameGenerator::BANNED`). Input dinormalisasi (`trim`, huruf kecil) karena login memakai huruf kecil.
 - Keunikan diperiksa lewat `UsernameReservations::taken()`. Unique index `users.username` menjadi pengaman terakhir; bila dua akun memilih nama yang sama bersamaan, yang kalah mendapat error field `username`.
 - Nama lama ditahan selamanya di `username_reservations` (`UsernameReservations::hold()`), supaya pengguna lain tidak bisa mengambilnya dan CSV impor lama (`sales_username`) tidak diam-diam masuk ke Sales yang salah.
+- Nama baru ikut ditahan di `username_reservations` dalam transaksi yang sama, supaya undangan yang dibuat bersamaan tidak bisa memilih nama itu.
 - Perubahan berjalan dalam satu transaksi dengan kunci baris pengguna dan dicatat di audit log (`user.username_changed`, nama lama dan baru).
 - Endpoint: `PATCH settings/profile/username` (`profile.username.update`).
 

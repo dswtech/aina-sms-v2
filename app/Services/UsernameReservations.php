@@ -14,6 +14,8 @@ use LogicException;
 /**
  * Generates and holds usernames for new accounts. Call inside the transaction that creates
  * the invitation, so a rollback releases the hold together with the invitation row.
+ * Names retired by a self-service username change (ADR-009) are held here for good; release()
+ * must only be called for names that a pending invitation holds.
  */
 final class UsernameReservations
 {

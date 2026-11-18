@@ -1,6 +1,6 @@
 # Desain: pengguna mengganti username sendiri (satu kali)
 
-Status: menunggu persetujuan pemilik.
+Status: disetujui pemilik, 18 November 2026.
 
 ## Maksud
 

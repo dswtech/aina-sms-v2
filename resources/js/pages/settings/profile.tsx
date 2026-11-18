@@ -171,7 +171,7 @@ export default function Profile({
                                             aria-invalid={!!errors.username}
                                             aria-describedby={
                                                 errors.username
-                                                    ? 'username-error'
+                                                    ? 'username-hint username-error'
                                                     : 'username-hint'
                                             }
                                             className="mt-1 block w-full"

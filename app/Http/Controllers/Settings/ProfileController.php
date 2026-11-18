@@ -39,7 +39,7 @@ class ProfileController extends Controller
         $error = ValidationException::withMessages(['username' => __('Username ini sudah dipakai.')]);
 
         try {
-            DB::transaction(function () use ($request, $reservations): void {
+            DB::transaction(function () use ($request, $reservations, $error): void {
                 $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
 
                 if ($user->username_changed_at !== null) {
@@ -47,11 +47,17 @@ class ProfileController extends Controller
                 }
 
                 $old = $user->username;
-                if ($old !== null) {
-                    $reservations->hold($old);
+                $new = $request->validated('username');
+
+                // Ignoring hold()'s result is fine: false only means the old name is already held.
+                $reservations->hold($old);
+
+                // Hold the new name too, so an invitation created at the same moment cannot also pick it.
+                if (! $reservations->hold($new)) {
+                    throw $error;
                 }
 
-                $user->forceFill(['username' => $request->validated('username'), 'username_changed_at' => now()])->save();
+                $user->forceFill(['username' => $new, 'username_changed_at' => now()])->save();
 
                 AuditRecorder::record($user, 'user.username_changed', $user, ['username' => $old], ['username' => $user->username]);
             });

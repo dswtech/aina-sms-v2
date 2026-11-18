@@ -121,6 +121,53 @@ class UsernameChangeTest extends TestCase
         $this->assertTrue($raced);
 
         $this->assertNull($user->refresh()->username_changed_at);
+        $this->assertFalse(DB::table('username_reservations')->where('username', 'oldname1')->exists());
+        $this->assertSame(0, AuditLog::query()->where('action', 'user.username_changed')->count());
+    }
+
+    public function test_login_works_with_the_new_name_and_not_the_old_one(): void
+    {
+        $user = User::factory()->create(['username' => 'oldname1']);
+        $this->change($user, 'BudiSantoso')->assertSessionHasNoErrors();
+        $this->post('/logout');
+
+        $this->post('/login', ['username' => 'oldname1', 'password' => 'password']);
+        $this->assertGuest();
+
+        $this->post('/login', ['username' => 'BudiSantoso', 'password' => 'password']);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_array_input_is_a_validation_error_not_a_server_error(): void
+    {
+        $user = User::factory()->create(['username' => 'oldname1']);
+
+        $this->actingAs($user)->patch(route('profile.username.update'), ['username' => ['x']])
+            ->assertSessionHasErrors('username');
+    }
+
+    public function test_new_name_is_held_so_a_concurrent_invitation_cannot_take_it(): void
+    {
+        $user = User::factory()->create(['username' => 'oldname1']);
+
+        $this->change($user, 'newname01')->assertSessionHasNoErrors();
+
+        $this->assertTrue(DB::table('username_reservations')->where('username', 'newname01')->exists());
+    }
+
+    public function test_guests_cannot_change_a_username(): void
+    {
+        $this->patch(route('profile.username.update'), ['username' => 'newname01'])
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_inactive_users_cannot_change_a_username(): void
+    {
+        $user = User::factory()->create(['username' => 'oldname1', 'is_active' => false]);
+
+        $this->change($user, 'newname01');
+
+        $this->assertSame('oldname1', $user->refresh()->username);
     }
 
     public function test_profile_page_reports_username_lock(): void
