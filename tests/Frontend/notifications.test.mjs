@@ -19,6 +19,7 @@ test('kind label falls back to coaching comment for unknown or missing kinds', (
     assert.equal(kindLabel('stage_changed'), 'Perubahan tahap');
     assert.equal(kindLabel('stagnant'), 'Stagnan');
     assert.equal(kindLabel('stagnant_summary'), 'Stagnan');
+    assert.equal(kindLabel('release'), 'Rilis');
     assert.equal(kindLabel(undefined), 'Komentar coaching');
     assert.equal(kindLabel('aneh'), 'Komentar coaching');
 });

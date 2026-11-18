@@ -1,5 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, UserRound, BookOpen } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { History, LogOut, UserRound, BookOpen } from 'lucide-react';
 import type { ReactNode } from 'react';
 import ColorPicker from '@/components/color-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import { roleLabels } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { index as releases } from '@/routes/releases';
 import type { User } from '@/types';
 
 type Props = {
@@ -39,6 +40,7 @@ export function UserMenuContent({ user }: Props) {
     const getInitials = useInitials();
     const { appearance, updateAppearance } = useAppearance();
     const { fontSize, updateFontSize } = useFontSize();
+    const { appVersion } = usePage().props;
 
     const handleLogout = () => {
         cleanup();
@@ -76,6 +78,16 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <UserRound className="size-4" />
                         Profil
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="w-full cursor-pointer px-4 py-2"
+                        href={releases()}
+                        onClick={cleanup}
+                    >
+                        <History className="size-4" />
+                        Rilis log · v{appVersion}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem

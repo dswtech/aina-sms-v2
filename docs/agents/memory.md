@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 18 November 2026 — rilis log dan notifikasi rilis
+
+Semua pengguna menerima notifikasi saat versi baru berjalan dan bisa membuka `/rilis` (CVS-14 di PRD). Riwayat rilis ada di `config/releases.php`; `deploy.sh` menjalankan `release:announce`. Tanpa migration. Proses menulis entri ada di [release-log.md](../operations/release-log.md); desain di [spec](../superpowers/specs/2026-11-18-release-log-design.md) dan [rencana](../superpowers/plans/2026-11-18-release-log.md); branch `feat/release-log`.
+
 ## Pembaruan 18 November 2026 — ganti username sendiri satu kali
 
 Branch `feat/username-self-change` menerapkan [ADR 009](adr/ADR-009-user-chosen-username.md) (IAM-08): `PATCH settings/profile/username`, kolom `users.username_changed_at`, nama lama ditahan di `username_reservations`. Migrasi baru perlu `migrate` oleh operator saat rilis.

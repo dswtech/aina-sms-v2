@@ -41,6 +41,8 @@ export function kindLabel(kind: unknown): string {
         case 'stagnant':
         case 'stagnant_summary':
             return 'Stagnan';
+        case 'release':
+            return 'Rilis';
         default:
             return 'Komentar coaching';
     }
