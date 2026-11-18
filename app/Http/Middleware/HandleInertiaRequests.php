@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\VisibleCoachingNotifications;
+use App\Support\Releases;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,6 +44,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'appVersion' => Releases::current()['version'],
             'auth' => [
                 'user' => $user ? [
                     'public_id' => $user->public_id,

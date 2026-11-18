@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealerSettingsController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReleaseLogController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesCalendarController;
 use App\Http\Controllers\TargetController;
@@ -127,6 +128,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     });
 
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('rilis', ReleaseLogController::class)->name('releases.index');
 });
 
 require __DIR__.'/settings.php';
