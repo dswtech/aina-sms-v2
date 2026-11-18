@@ -20,7 +20,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 function historyNote(User $user, string $type, array $data, ?CarbonInterface $at = null, bool $read = false): string
 {
     $id = (string) Str::uuid();
-    $at ??= now();
+    $at = ($at ?? now())->copy()->utc();
     DB::table('notifications')->insert([
         'id' => $id, 'type' => $type, 'notifiable_type' => User::class, 'notifiable_id' => $user->id,
         'data' => json_encode($data), 'read_at' => $read ? $at : null, 'created_at' => $at, 'updated_at' => $at,
@@ -70,7 +70,8 @@ it('lists three days of read and unread notifications for sales', function () {
 });
 
 it('excludes notifications older than the three day window', function () {
-    $start = CarbonImmutable::parse('2026-11-15 00:00', 'Asia/Jakarta');
+    // 00:00 Jakarta is 17:00 UTC the day before; created_at is stored in UTC.
+    $start = CarbonImmutable::parse('2026-11-15 00:00', 'Asia/Jakarta')->utc();
     historyNote($this->supervisor, StagnantDealsSummary::class, $this->summaryData, $start);
     historyNote($this->supervisor, StagnantDealsSummary::class, $this->summaryData, $start->subSecond());
 
@@ -109,7 +110,7 @@ it('caps history at 200 and flags truncation', function () {
         $rows[] = [
             'id' => (string) Str::uuid(), 'type' => StagnantDealsSummary::class, 'notifiable_type' => User::class,
             'notifiable_id' => $this->supervisor->id, 'data' => json_encode($this->summaryData),
-            'read_at' => null, 'created_at' => now()->subMinutes($i), 'updated_at' => now(),
+            'read_at' => null, 'created_at' => now()->utc()->subMinutes($i), 'updated_at' => now()->utc(),
         ];
     }
     DB::table('notifications')->insert($rows);
@@ -132,4 +133,12 @@ it('shares only unread notifications of every kind with the bell and marks them 
     expect(DB::table('notifications')->where('id', $unread)->value('read_at'))->not->toBeNull();
     $this->actingAs($this->supervisor)->get(route('notifications.index'))
         ->assertInertia(fn (Assert $page) => $page->has('notifications', 0)->where('notificationsUnreadCount', 0)->has('history', 2));
+});
+
+it('limits the bell to the history window', function () {
+    historyNote($this->supervisor, StagnantDealsSummary::class, $this->summaryData, now()->subDays(5));
+    historyNote($this->supervisor, StagnantDealsSummary::class, $this->summaryData, now()->subHour());
+
+    $this->actingAs($this->supervisor)->get(route('notifications.index'))
+        ->assertInertia(fn (Assert $page) => $page->has('notifications', 1)->where('notificationsUnreadCount', 1)->has('history', 1));
 });

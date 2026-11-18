@@ -24,14 +24,15 @@ class VisibleCoachingNotifications
 
     private const SHARED_KEYS = ['title', 'message', 'url', 'comment_id', 'email_status', 'kind', 'count'];
 
-    /** @return Collection<int, DatabaseNotification> Unread notifications, newest first. */
+    /** @return Collection<int, DatabaseNotification> Unread notifications inside the history window, newest first. */
     public function forUser(User $actor): Collection
     {
         if (! $this->receivesNotifications($actor)) {
             return collect();
         }
 
-        return $this->visible($actor, $actor->unreadNotifications()->whereIn('type', self::TYPES)->latest()->get());
+        return $this->visible($actor, $actor->unreadNotifications()->whereIn('type', self::TYPES)
+            ->where('created_at', '>=', $this->windowStart())->latest()->get());
     }
 
     /** @return Collection<int, DatabaseNotification> Read and unread notifications of the last three Jakarta days, newest first. */
@@ -40,9 +41,9 @@ class VisibleCoachingNotifications
         if (! $this->receivesNotifications($actor)) {
             return collect();
         }
-        $since = CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays(3);
 
-        return $this->visible($actor, $actor->notifications()->whereIn('type', self::TYPES)->where('created_at', '>=', $since)->latest()->get());
+        return $this->visible($actor, $actor->notifications()->whereIn('type', self::TYPES)
+            ->where('created_at', '>=', $this->windowStart())->latest()->get());
     }
 
     /** @return array{id: string, data: array<string, mixed>, created_at: string|null, read_at: string|null} */
@@ -54,6 +55,12 @@ class VisibleCoachingNotifications
             'created_at' => $notification->created_at?->toISOString(),
             'read_at' => $notification->read_at?->toISOString(),
         ];
+    }
+
+    /** Start of the Jakarta day three days ago, in UTC because created_at is stored in UTC. */
+    private function windowStart(): CarbonImmutable
+    {
+        return CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays(3)->utc();
     }
 
     private function receivesNotifications(User $actor): bool
