@@ -553,6 +553,7 @@ class CustomerController extends Controller
                 'created_at' => $at,
                 'reverses_stage_history_id' => $original->id,
             ]);
+            $locked->notifyStageChanged(PipelineStage::Do, PipelineStage::Spk, $actor);
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'DO dibatalkan.']);
