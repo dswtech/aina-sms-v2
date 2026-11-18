@@ -12,8 +12,7 @@ type ModuleKey =
     | 'imports'
     | 'users'
     | 'teams'
-    | 'dealer-settings'
-    | 'notifications';
+    | 'dealer-settings';
 
 const modules: Record<
     ModuleKey,
@@ -72,12 +71,6 @@ const modules: Record<
         description:
             'Hanya konfigurasi publik dan non-rahasia yang akan tersedia pada halaman ini.',
         next: 'Identitas dealer dan konfigurasi operasional',
-    },
-    notifications: {
-        title: 'Notifikasi',
-        description:
-            'Notifikasi akan menunjukkan perubahan yang relevan tanpa membawa data sensitif ke role yang tidak berwenang.',
-        next: 'Pemberitahuan in-app yang dapat ditindaklanjuti',
     },
 };
 
