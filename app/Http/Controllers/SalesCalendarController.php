@@ -28,7 +28,9 @@ class SalesCalendarController extends Controller
             'view' => ['sometimes', 'in:month,day'],
             'date' => ['sometimes', 'date_format:Y-m-d'],
             'team' => ['sometimes', 'string', 'max:64'],
+            'cancelled' => ['sometimes', 'boolean'],
         ]);
+        $showCancelled = $request->boolean('cancelled');
         /** @var User $actor */
         $actor = $request->user();
         $now = CarbonImmutable::now(self::TZ);
@@ -78,13 +80,14 @@ class SalesCalendarController extends Controller
         $fromUtc = $from->utc();
         $untilUtc = $until->utc();
         $plans = FollowUp::query()->whereIn('assigned_to_id', $ownerIds)
-            ->where('status', '!=', 'cancelled')
+            ->when(! $showCancelled, fn ($query) => $query->where('status', '!=', 'cancelled'))
             ->where('scheduled_at', '>=', $fromUtc)->where('scheduled_at', '<', $untilUtc)
             ->with('customer:id,public_id,name')->get()
             ->map(fn (FollowUp $f) => [
                 ...$this->item('plan-'.$f->id, 'plan', 'plan', 'Rencana', $f->assigned_to_id, $f->scheduled_at, $f->customer, $f->plan_notes,
                     $f->status === 'pending' && $f->scheduled_at->lt($now)),
-                'status' => $f->status === 'completed' ? 'completed' : 'pending',
+                'status' => in_array($f->status, ['completed', 'cancelled'], true) ? $f->status : 'pending',
+                'cancel_reason' => $f->cancel_reason,
                 'follow_up_id' => $f->id,
             ]);
         $done = CustomerActivity::query()->whereIn('user_id', $ownerIds)
@@ -94,6 +97,7 @@ class SalesCalendarController extends Controller
             ->map(fn (CustomerActivity $a) => [
                 ...$this->item('done-'.$a->id, 'done', $a->type->value, $a->type->label(), $a->user_id, $a->occurred_at, $a->customer, $a->notes, false),
                 'status' => 'completed',
+                'cancel_reason' => null,
                 'follow_up_id' => null,
             ]);
 
@@ -104,6 +108,7 @@ class SalesCalendarController extends Controller
             'now' => $now->format('H:i'),
             'teams' => $teams,
             'team' => $selectedTeam,
+            'show_cancelled' => $showCancelled,
             'rows' => $rows,
             'items' => $plans->concat($done)->sortBy(['at', 'id'])->map(fn (array $item) => array_diff_key($item, ['at' => true]))->values()->all(),
         ]);

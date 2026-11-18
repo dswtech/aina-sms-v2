@@ -336,6 +336,55 @@ export function FollowUpPanel({
                     {post.saving ? 'Menyimpan…' : 'Jadwalkan'}
                 </Button>
             </form>
+            <section aria-label="Riwayat follow-up">
+                <h3 className="text-sm font-medium">Riwayat follow-up</h3>
+                {detail.customer.follow_up_history.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Belum ada follow-up yang selesai atau dibatalkan.
+                    </p>
+                ) : (
+                    <ul className="mt-2 divide-y">
+                        {detail.customer.follow_up_history.map((item) => {
+                            const cancelled = item.status === 'cancelled';
+
+                            return (
+                                <li
+                                    key={item.id}
+                                    className="flex items-start justify-between gap-2 py-2 text-sm [overflow-wrap:anywhere]"
+                                >
+                                    <div className="min-w-0">
+                                        <p
+                                            className={
+                                                cancelled
+                                                    ? 'text-muted-foreground line-through'
+                                                    : undefined
+                                            }
+                                        >
+                                            {item.plan_notes}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatDate(item.scheduled_at)}
+                                            {item.completed_at &&
+                                                ` · selesai ${formatDate(item.completed_at)}`}
+                                        </p>
+                                        {(item.result ||
+                                            item.cancel_reason) && (
+                                            <p className="text-xs text-muted-foreground">
+                                                {cancelled
+                                                    ? item.cancel_reason
+                                                    : item.result}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <span className="shrink-0 rounded-full border px-2 text-[11px] text-muted-foreground">
+                                        {cancelled ? 'Batal' : 'Selesai'}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </section>
         </div>
     );
 }

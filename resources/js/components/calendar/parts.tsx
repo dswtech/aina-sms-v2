@@ -29,6 +29,8 @@ const badgeVariant: Record<ItemVariant | 'mix', string> = {
     late: 'border-[1.5px] border-dashed border-destructive bg-destructive/10 text-destructive',
     mix: 'border-[1.5px] border-dashed border-primary bg-card pb-[3px] text-primary',
     completed: 'border-[1.5px] border-primary/40 bg-card text-primary/70',
+    cancelled:
+        'border-[1.5px] border-border bg-muted text-muted-foreground line-through',
 };
 
 /** Opens the "Catat hasil / Batalkan" dialog for a pending plan; null when the page offers no actions. */
@@ -132,6 +134,12 @@ function ItemLine({
                 {item.overdue && (
                     <div className="mt-1">
                         <LateTag />
+                    </div>
+                )}
+                {item.status === 'cancelled' && (
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                        Dibatalkan
+                        {item.cancel_reason && `: ${item.cancel_reason}`}
                     </div>
                 )}
                 {note && (
@@ -315,7 +323,13 @@ export function ItemsTrigger({
     );
 }
 
-export function Legend({ mix = false }: { mix?: boolean }) {
+export function Legend({
+    mix = false,
+    cancelled = false,
+}: {
+    mix?: boolean;
+    cancelled?: boolean;
+}) {
     return (
         <ul
             aria-label="Legenda"
@@ -355,6 +369,12 @@ export function Legend({ mix = false }: { mix?: boolean }) {
                 <Badge variant="completed" label="✓" />
                 Rencana selesai
             </li>
+            {cancelled && (
+                <li className="flex items-center gap-1.5">
+                    <Badge variant="cancelled" label="R" />
+                    Dibatalkan
+                </li>
+            )}
             <li className="flex items-center gap-1.5">
                 <span
                     aria-hidden="true"

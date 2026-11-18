@@ -16,6 +16,7 @@ import {
     type TeamColumn,
 } from '@/components/calendar/team-grid';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     FIRST_HOUR,
@@ -38,6 +39,7 @@ type Props = {
     now: string;
     teams: { id: string; name: string; count: number }[];
     team: string | null;
+    show_cancelled: boolean;
     rows: CalendarRow[] | null;
     items: CalendarItem[];
 };
@@ -49,6 +51,7 @@ export default function Calendar({
     now,
     teams,
     team,
+    show_cancelled: showCancelled,
     rows,
     items,
 }: Props) {
@@ -62,15 +65,17 @@ export default function Calendar({
             view: CalendarView;
             date: string;
             team: string | null;
+            cancelled: boolean;
         }>,
     ) {
-        const params = { view, date, team, ...next };
+        const params = { view, date, team, cancelled: showCancelled, ...next };
         router.get(
             '/kalender',
             {
                 view: params.view === 'day' ? 'day' : undefined,
                 date: params.date === today ? undefined : params.date,
                 team: params.team ?? undefined,
+                cancelled: params.cancelled ? 1 : undefined,
             },
             { preserveScroll: true, replace: true },
         );
@@ -182,7 +187,21 @@ export default function Calendar({
                                 </span>
                             )}
                         </div>
-                        <Legend mix={supervisor && view === 'month'} />
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                            <label className="flex cursor-pointer items-center text-[12.5px]">
+                                <Checkbox
+                                    checked={showCancelled}
+                                    onCheckedChange={(checked) =>
+                                        go({ cancelled: checked === true })
+                                    }
+                                />
+                                Tampilkan yang dibatalkan
+                            </label>
+                            <Legend
+                                mix={supervisor && view === 'month'}
+                                cancelled={showCancelled}
+                            />
+                        </div>
                     </div>
 
                     {supervisor && rows ? (

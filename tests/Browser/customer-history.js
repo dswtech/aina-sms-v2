@@ -36,7 +36,7 @@ async function customerHistory(page) {
         last_contact_at: null,
         assigned_sales: null,
         active_deal: deal(2, false),
-        next_follow_up: null,
+        next_follow_up: null, follow_up_history: [],
         stage_history: [],
         recent_activities: [],
     };
@@ -217,7 +217,7 @@ async function customerHistory(page) {
                         opt_out: false,
                         last_contact_at: null,
                         assigned_sales: null,
-                        next_follow_up: null,
+                        next_follow_up: null, follow_up_history: [],
                         name:
                             detailMatch[2] === '3'
                                 ? 'Pelanggan B QA'

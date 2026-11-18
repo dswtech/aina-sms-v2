@@ -12,12 +12,13 @@ export type CalendarItem = {
     customer_id: string | null;
     notes: string;
     overdue: boolean;
-    /** Plans are pending or completed; activities are always completed. */
-    status: 'pending' | 'completed';
+    /** Plans are pending, completed or (only when requested) cancelled; activities are always completed. */
+    status: 'pending' | 'completed' | 'cancelled';
+    cancel_reason: string | null;
     follow_up_id: number | null;
 };
 
-export type ItemVariant = 'real' | 'plan' | 'late' | 'completed';
+export type ItemVariant = 'real' | 'plan' | 'late' | 'completed' | 'cancelled';
 
 export const FIRST_HOUR = 7;
 export const LAST_HOUR = 21;
@@ -52,12 +53,20 @@ export function variantOf(item: CalendarItem): ItemVariant {
         return 'real';
     }
 
+    if (item.status === 'cancelled') {
+        return 'cancelled';
+    }
+
     return item.status === 'completed' ? 'completed' : 'plan';
 }
 
 export function kindLabel(item: CalendarItem): string {
     if (item.kind === 'done') {
         return `Realisasi · ${item.type_label}`;
+    }
+
+    if (item.status === 'cancelled') {
+        return 'Rencana · dibatalkan';
     }
 
     return item.status === 'completed' ? 'Rencana · selesai' : 'Rencana';
@@ -204,7 +213,10 @@ export type CellSummary = {
 
 export function summarize(items: CalendarItem[]): CellSummary {
     const realCount = items.filter((item) => item.kind === 'done').length;
-    const planCount = items.length - realCount;
+    const cancelledCount = items.filter(
+        (item) => item.status === 'cancelled',
+    ).length;
+    const planCount = items.length - realCount - cancelledCount;
     const lateCount = items.filter((item) => item.overdue).length;
     const many = items.length > 1;
 
@@ -220,7 +232,9 @@ export function summarize(items: CalendarItem[]): CellSummary {
               ? 'mix'
               : planCount
                 ? 'plan'
-                : 'real',
+                : realCount
+                  ? 'real'
+                  : 'cancelled',
         many,
         realCount,
         planCount,

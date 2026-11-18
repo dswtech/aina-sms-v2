@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\DealComment;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\FollowUp;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
@@ -337,6 +338,18 @@ class TransactionController extends Controller
                 'last_contact_at' => $customer?->last_contact_at?->toIso8601String(),
                 'assigned_sales' => $customer?->activeAssignment?->sales ? ['id' => $customer->activeAssignment->sales->id, 'name' => $customer->activeAssignment->sales->name] : null,
                 'next_follow_up' => $customer?->nextFollowUp ? ['id' => $customer->nextFollowUp->id, 'scheduled_at' => $customer->nextFollowUp->scheduled_at->toIso8601String(), 'plan_notes' => $customer->nextFollowUp->plan_notes] : null,
+                // shortcut: latest 20 only, no paging; add a "muat lainnya" endpoint if sales ask for older ones.
+                'follow_up_history' => $customer?->followUps()->where('status', '!=', 'pending')->with('completedActivity')
+                    ->latest('scheduled_at')->limit(20)->get()
+                    ->map(fn (FollowUp $f) => [
+                        'id' => $f->id,
+                        'status' => $f->status,
+                        'scheduled_at' => $f->scheduled_at->toIso8601String(),
+                        'plan_notes' => $f->plan_notes,
+                        'completed_at' => $f->completed_at?->toIso8601String(),
+                        'result' => $f->completedActivity ? $f->completedActivity->type->label().': '.$f->completedActivity->notes : null,
+                        'cancel_reason' => $f->cancel_reason,
+                    ])->all() ?? [],
                 'name' => $transaction->customer?->name, 'phone' => $transaction->customer?->phone,
                 'social_media_account' => $transaction->customer?->social_media_account,
                 'email' => $transaction->customer?->email, 'address' => $transaction->customer?->address,
