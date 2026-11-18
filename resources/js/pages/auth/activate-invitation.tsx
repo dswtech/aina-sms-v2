@@ -21,6 +21,7 @@ type Props = {
     state: InvitationState;
     token: string | null;
     invitation?: Invitation;
+    passwordRules: string;
 };
 
 const terminalCopy: Record<Exclude<InvitationState, 'valid'>, string> = {
@@ -34,6 +35,7 @@ export default function ActivateInvitation({
     state,
     token,
     invitation,
+    passwordRules,
 }: Props) {
     if (state !== 'valid' || token === null || invitation === undefined) {
         const unavailableCopy =
@@ -121,11 +123,12 @@ export default function ActivateInvitation({
                                     autoComplete="new-password"
                                     required
                                     autoFocus
-                                    passwordrules="minlength:8;"
+                                    passwordrules={passwordRules}
                                 />
                                 <p className="text-xs leading-5 text-muted-foreground">
-                                    Gunakan minimal 8 karakter. Password hanya
-                                    Anda yang mengetahuinya.
+                                    Gunakan minimal 8 karakter dengan angka dan
+                                    simbol. Password hanya Anda yang
+                                    mengetahuinya.
                                 </p>
                                 <InputError
                                     id="password-error"
@@ -150,7 +153,7 @@ export default function ActivateInvitation({
                                     name="password_confirmation"
                                     autoComplete="new-password"
                                     required
-                                    passwordrules="minlength:8;"
+                                    passwordrules={passwordRules}
                                 />
                                 <InputError
                                     id="password_confirmation-error"
