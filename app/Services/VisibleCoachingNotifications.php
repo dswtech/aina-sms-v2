@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\DealBecameStagnant;
 use App\Notifications\DealCommentCreated;
 use App\Notifications\DealStageChanged;
+use App\Notifications\ReleaseAnnounced;
 use App\Notifications\StagnantDealsSummary;
 use Carbon\CarbonImmutable;
 use Illuminate\Notifications\DatabaseNotification;
@@ -16,33 +17,26 @@ use Illuminate\Support\Collection;
 
 /**
  * Notifications the actor may see. Access is re-checked on every read, so a notification
- * disappears once the actor loses access to the deal it points at.
+ * disappears once the actor loses access to the deal it points at. Release announcements
+ * go to every role; coaching notifications only to Sales and Supervisor.
  */
 class VisibleCoachingNotifications
 {
-    private const TYPES = [DealCommentCreated::class, DealStageChanged::class, DealBecameStagnant::class, StagnantDealsSummary::class];
+    private const TYPES = [DealCommentCreated::class, DealStageChanged::class, DealBecameStagnant::class, StagnantDealsSummary::class, ReleaseAnnounced::class];
 
     private const SHARED_KEYS = ['title', 'message', 'url', 'comment_id', 'email_status', 'kind', 'count'];
 
     /** @return Collection<int, DatabaseNotification> Unread notifications inside the history window, newest first. */
     public function forUser(User $actor): Collection
     {
-        if (! $this->receivesNotifications($actor)) {
-            return collect();
-        }
-
-        return $this->visible($actor, $actor->unreadNotifications()->whereIn('type', self::TYPES)
+        return $this->visible($actor, $actor->unreadNotifications()->whereIn('type', $this->typesFor($actor))
             ->where('created_at', '>=', $this->windowStart())->latest()->get());
     }
 
     /** @return Collection<int, DatabaseNotification> Read and unread notifications of the last three Jakarta days, newest first. */
     public function historyFor(User $actor): Collection
     {
-        if (! $this->receivesNotifications($actor)) {
-            return collect();
-        }
-
-        return $this->visible($actor, $actor->notifications()->whereIn('type', self::TYPES)
+        return $this->visible($actor, $actor->notifications()->whereIn('type', $this->typesFor($actor))
             ->where('created_at', '>=', $this->windowStart())->latest()->get());
     }
 
@@ -63,9 +57,12 @@ class VisibleCoachingNotifications
         return CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays(3)->utc();
     }
 
-    private function receivesNotifications(User $actor): bool
+    /** @return list<class-string> */
+    private function typesFor(User $actor): array
     {
-        return in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true);
+        return in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)
+            ? self::TYPES
+            : [ReleaseAnnounced::class];
     }
 
     /**

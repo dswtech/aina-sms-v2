@@ -49,7 +49,6 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::patch('customers/{customer}/profile', [CustomerController::class, 'updateProfile'])->name('customers.profile.update');
         Route::patch('customers/{customer}/contact-preferences', [CustomerController::class, 'updateContactPreferences'])->name('customers.contact-preferences.update');
         Route::patch('transactions/{transaction}/stage', [CustomerController::class, 'updateStage'])->name('transactions.stage');
-        Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
         Route::post('transactions/{transaction}/comments', [DealCommentController::class, 'store'])->name('deals.comments.store');
         Route::patch('comments/{comment}', [DealCommentController::class, 'update'])->name('comments.update');
 
@@ -128,6 +127,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     });
 
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::get('rilis', ReleaseLogController::class)->name('releases.index');
 });
 
