@@ -9,6 +9,10 @@
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
 
+## Pembaruan 18 November 2026 — ganti username sendiri satu kali
+
+Branch `feat/username-self-change` menerapkan [ADR 009](adr/ADR-009-user-chosen-username.md) (IAM-08): `PATCH settings/profile/username`, kolom `users.username_changed_at`, nama lama ditahan di `username_reservations`. Migrasi baru perlu `migrate` oleh operator saat rilis.
+
 ## Pembaruan 18 November 2026 — riwayat notifikasi in-app 3 hari
 
 Sales dan Supervisor melihat riwayat notifikasi 3 hari di `/notifications` (CVS-11 sampai CVS-13 di PRD): perubahan tahap, komentar coaching, dan transaksi stagnan. Command `notifications:detect-stagnant` berjalan harian pukul 00:05 Jakarta lewat `aina-scheduler`. Desain dan rencana ada di [spec](../superpowers/specs/2026-11-18-in-app-notification-history-design.md) dan [rencana](../superpowers/plans/2026-11-18-in-app-notification-history.md); branch `feat/notification-history`.

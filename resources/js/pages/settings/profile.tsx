@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import UsernameChangeForm from '@/components/username-change-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,9 +18,11 @@ type PageProps = {
 export default function Profile({
     mustVerifyEmail,
     status,
+    usernameLocked = false,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    usernameLocked?: boolean;
 }) {
     const { auth } = usePage<PageProps>().props;
 
@@ -130,6 +133,33 @@ export default function Profile({
                         </>
                     )}
                 </Form>
+
+                <div className="space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Username"
+                        description="Nama untuk masuk ke akun Anda"
+                    />
+
+                    {usernameLocked ? (
+                        <div className="grid gap-1">
+                            <p
+                                className="font-medium"
+                                data-test="username-current"
+                            >
+                                {auth.user.username}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Username sudah pernah diganti dan tidak bisa
+                                diubah lagi.
+                            </p>
+                        </div>
+                    ) : (
+                        <UsernameChangeForm
+                            currentUsername={auth.user.username}
+                        />
+                    )}
+                </div>
             </div>
         </>
     );

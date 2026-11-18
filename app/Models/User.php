@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $public_id
  * @property string $name
  * @property string|null $username
+ * @property Carbon|null $username_changed_at
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -121,6 +122,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'username_changed_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',

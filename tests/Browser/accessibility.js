@@ -881,6 +881,72 @@ async function accessibility(page) {
             );
         }
     });
+    await test('profile username is editable once and then locked', async () => {
+        for (const locked of [false, true]) {
+            await load(
+                'settings/profile',
+                { mustVerifyEmail: false, usernameLocked: locked },
+                '/settings/profile',
+            );
+            const expected = locked ? 0 : 1;
+            assert(
+                (await page.getByLabel('Username', { exact: true }).count()) ===
+                    expected,
+                `Username input count is wrong when locked=${locked}`,
+            );
+            assert(
+                (await page
+                    .getByRole('button', {
+                        name: 'Simpan username',
+                        exact: true,
+                    })
+                    .count()) === expected,
+                `Username save button count is wrong when locked=${locked}`,
+            );
+            assert(
+                (await page
+                    .getByText(
+                        'Username sudah pernah diganti dan tidak bisa diubah lagi.',
+                    )
+                    .count()) === (locked ? 1 : 0),
+                `Locked notice is wrong when locked=${locked}`,
+            );
+        }
+        await load(
+            'settings/profile',
+            { mustVerifyEmail: false, usernameLocked: false },
+            '/settings/profile',
+        );
+        await page.getByLabel('Username', { exact: true }).fill(' NamaBaru1 ');
+        await page
+            .getByRole('button', { name: 'Simpan username', exact: true })
+            .click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByText('Ganti username menjadi “namabaru1”?').waitFor();
+        mutationErrors = { current_password: 'Password salah QA' };
+        await dialog
+            .getByLabel('Password', { exact: true })
+            .fill('qa-dummy-not-a-credential');
+        await dialog
+            .getByRole('button', { name: 'Ganti username', exact: true })
+            .click();
+        await dialog.getByText('Password salah QA', { exact: true }).waitFor();
+        const state = await dialog
+            .getByLabel('Password', { exact: true })
+            .evaluate((e) => ({
+                invalid: e.getAttribute('aria-invalid'),
+                message: document.getElementById(
+                    e.getAttribute('aria-describedby'),
+                )?.textContent,
+            }));
+        assert(
+            state.invalid === 'true' && state.message?.includes('salah'),
+            'Password error is not associated with its field',
+        );
+        mutationErrors = {};
+        await dialog.getByRole('button', { name: 'Batal', exact: true }).click();
+        await dialog.waitFor({ state: 'hidden' });
+    });
     await test('one main landmark and no page overflow at three widths', async () => {
         for (const width of [390, 768, 1440]) {
             await page.setViewportSize({ width, height: 900 });
