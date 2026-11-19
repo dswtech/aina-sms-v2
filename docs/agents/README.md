@@ -13,6 +13,9 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [adr/ADR-010-remove-delivery-stage.md](adr/ADR-010-remove-delivery-stage.md) | ADR | Tahap Delivery dihapus; data lama digabung ke DO, follow-up tertunda dibatalkan saat DO, dan Batalkan DO hanya di bulan Jakarta yang sama. |
+| [../superpowers/specs/2026-11-19-remove-delivery-stage-design.md](../superpowers/specs/2026-11-19-remove-delivery-stage-design.md) | Desain | Desain penghapusan tahap Delivery: migrasi data, aturan DO baru, dan halaman terdampak; disetujui 19 November 2026. |
+| [../superpowers/plans/2026-11-20-remove-delivery-stage.md](../superpowers/plans/2026-11-20-remove-delivery-stage.md) | Rencana | Enam task: migrasi data, aturan DO, backend, frontend, dokumen, verifikasi. |
 | [../superpowers/specs/2026-11-18-in-app-notification-history-design.md](../superpowers/specs/2026-11-18-in-app-notification-history-design.md) | Desain | Riwayat notifikasi in-app 3 hari untuk Supervisor dan Sales: perubahan tahap, komentar coaching, transaksi stagnan; halaman `/notifications` menggantikan placeholder; disetujui dan diimplementasikan. |
 | [../superpowers/plans/2026-11-18-in-app-notification-history.md](../superpowers/plans/2026-11-18-in-app-notification-history.md) | Rencana | Enam task: penerima dan kelas notifikasi, pemicu perubahan tahap, command stagnan harian, endpoint riwayat dengan otorisasi baca, halaman `/notifications`, lalu dokumen; dijalankan 18 November 2026. |
 | [../superpowers/specs/2026-11-13-toyota-vehicle-catalog-design.md](../superpowers/specs/2026-11-13-toyota-vehicle-catalog-design.md) | Desain singkat | Katalog bawaan 20 model Toyota dengan harga perkiraan OTR Bandung 2026 untuk demo, production berjalan (migration) dan install baru (`app:invite-first-admin`); disetujui 13 November 2026. |

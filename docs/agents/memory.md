@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.63 |
-| Diperbarui | 19 November 2026 |
+| Versi | v1.64 |
+| Diperbarui | 20 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 20 November 2026 — tahap Delivery dihapus
+
+- Branch `feat/remove-delivery-stage` menghapus tahap Delivery sesuai [ADR 010](adr/ADR-010-remove-delivery-stage.md). DO kini tahap akhir; [PIP-02 dan PIP-07](PRD.md#74-sales-pipeline-pip) diperbarui.
+- Migration `2026_11_20_100000_remove_delivery_stage` tidak bisa dibalik: transaksi Delivery menjadi DO, riwayat Delivery dihapus, dan follow-up tertunda pada transaksi DO dibatalkan. Production butuh backup dan perintah eksplisit pemilik sebelum `migrate`.
+- Batalkan DO hanya bisa dilakukan di bulan Jakarta yang sama dengan event DO aktif. Export CSV Analytics kehilangan kolom Delivery.
 
 ## Pembaruan 19 November 2026 — tanggal tahap sah dan Capaian Sales
 

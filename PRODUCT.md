@@ -31,7 +31,7 @@ Customer menjadi identitas hubungan jangka panjang yang terpisah dari transaksi,
 
 - Satu dealer dengan banyak tim dan hierarki Admin → Branch Manager → Supervisor → Sales.
 - Sales bekerja mobile-first; Supervisor dan Branch Manager juga menggunakan tablet atau desktop.
-- Tahap pipeline: Lead, Prospect, Hot Prospect, SPK, DO, Delivery, dan Lost.
+- Tahap pipeline: Lead, Prospect, Hot Prospect, SPK, DO, dan Lost.
 - Sistem digunakan online; tidak ada native app, PWA, atau offline sync pada MVP.
 - Semua waktu bisnis ditampilkan dalam zona Asia/Jakarta.
 

@@ -55,7 +55,7 @@ Prasyarat berupa PHP 8.4 dengan pdo_pgsql, dependency proyek, build frontend yan
 
 Launcher membuat cluster PostgreSQL baru di direktori sementara pada port loopback acak. Database sumber dan target bernama aina_restore_source dan aina_restore_target. Autentikasi trust hanya digunakan pada cluster sintetis loopback sementara. Worker PHP memverifikasi environment testing, driver, host, username dan nama database sebelum bekerja.
 
-Fixture memuat empat role, tim, assignment, pelanggan lintas dealer, transaksi Prospect/DO/Delivery, checklist DO, coaching dan audit. Arsip custom dipulihkan secara atomik ke database target kosong. Fingerprint SHA-256 seluruh baris tiap tabel dan nilai sequence dibandingkan sebelum smoke test. Login melalui kernel HTTP Laravel menguji akun hasil restore, kemudian halaman sesuai peran dan penolakan akses Branch Manager ke Pelanggan diperiksa. Worker gagal dengan exit code nonzero bila assertion gagal. Cluster dihentikan dan direktori sementara dibersihkan setelah proses selesai.
+Fixture memuat empat role, tim, assignment, pelanggan lintas dealer, transaksi Prospect/DO, checklist DO, coaching dan audit. Arsip custom dipulihkan secara atomik ke database target kosong. Fingerprint SHA-256 seluruh baris tiap tabel dan nilai sequence dibandingkan sebelum smoke test. Login melalui kernel HTTP Laravel menguji akun hasil restore, kemudian halaman sesuai peran dan penolakan akses Branch Manager ke Pelanggan diperiksa. Worker gagal dengan exit code nonzero bila assertion gagal. Cluster dihentikan dan direktori sementara dibersihkan setelah proses selesai.
 
 ## Hasil drill lokal pada 7 November 2026
 
