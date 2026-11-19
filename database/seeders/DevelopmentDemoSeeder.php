@@ -306,7 +306,7 @@ class DevelopmentDemoSeeder extends Seeder
         TransactionMasters::initializeVehicles($dealer->id);
         $vehicleModels = TransactionMasters::catalogNames();
 
-        $sources = ['walk_in', 'digital_ad', 'referral', 'exhibition', 'call'];
+        $sources = ['walk_in', 'digital_ad', 'referral', 'exhibition', 'repeat_order', 'database'];
 
         $activityNotes = [
             ActivityType::Call->value => [
