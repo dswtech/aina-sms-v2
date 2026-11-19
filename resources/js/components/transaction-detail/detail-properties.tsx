@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import {
     AtSign,
+    BadgeCheck,
     Briefcase,
     CalendarDays,
     Car,
@@ -9,6 +10,7 @@ import {
     CreditCard,
     Home,
     MapPin,
+    Palette,
     Phone,
     Store,
     User,
@@ -20,7 +22,9 @@ import {
     GENDERS,
     INSURANCES,
     OCCUPATIONS,
+    OWNERSHIPS,
     TENORS,
+    ownershipLabel,
 } from '@/lib/customer-profile';
 import { areaPatch, financingPatch } from '@/lib/transaction-detail';
 import {
@@ -51,6 +55,7 @@ const REQUIRED_AT = {
     occupation: 'SPK',
     area: 'SPK',
     vehicle: 'SPK',
+    ownership: 'DO',
 };
 const LOCKED_VEHICLE_STAGES = ['spk', 'do', 'delivery'];
 
@@ -430,6 +435,33 @@ export function DetailProperties({
                             getStep={vehicleStep}
                             onCommit={(chosen) =>
                                 commit({ vehicle_model: chosen[0] || null })
+                            }
+                        />
+                    </Row>
+                    <Row icon={Palette} label="Warna">
+                        <PropertyPicker
+                            label="Warna"
+                            display={detail.vehicle_color ?? 'Belum diisi'}
+                            disabled={!canEdit}
+                            getStep={textStep('Warna kendaraan')}
+                            onCommit={(chosen) =>
+                                commit({
+                                    vehicle_color: chosen[0]?.trim() || null,
+                                })
+                            }
+                        />
+                    </Row>
+                    <Row icon={BadgeCheck} label="Ownership">
+                        <PropertyPicker
+                            label="Ownership"
+                            display={
+                                ownershipLabel(detail.vehicle_ownership) ??
+                                hint('ownership', false)
+                            }
+                            disabled={!canEdit}
+                            getStep={optionStep('Ownership', OWNERSHIPS)}
+                            onCommit={(chosen) =>
+                                commit({ vehicle_ownership: chosen[0] })
                             }
                         />
                     </Row>

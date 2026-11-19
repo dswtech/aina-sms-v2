@@ -91,5 +91,5 @@ foreach (['Fin Do' => 'credit', 'Fin Cash' => 'cash'] as $label => $type) {
         'current_stage' => PipelineStage::Spk, 'region_code' => '32.17', 'district_code' => '32.17.08',
         'financing_type' => $type, 'leasing_id' => $type === 'credit' ? $leasingId : null,
     ]);
-    $deal->transitionTo(PipelineStage::Do, $fixtureAdmin, null, ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
+    $deal->transitionTo(PipelineStage::Do, $fixtureAdmin, null, ['vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
 }

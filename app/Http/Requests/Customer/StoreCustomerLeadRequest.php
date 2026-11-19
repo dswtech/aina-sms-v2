@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Customer;
 
 use App\Enums\UserRole;
+use App\Enums\VehicleOwnership;
 use App\Models\Customer;
 use App\Services\TransactionMasters;
 use App\Services\TransactionMetadata;
@@ -38,6 +39,8 @@ class StoreCustomerLeadRequest extends FormRequest
             ...Customer::profileRules(),
             'gender' => [Rule::requiredIf(! $this->filled('existing_customer_id')), 'nullable', Rule::in(['L', 'P'])],
             'vehicle_model' => ['nullable', 'string', 'max:255', TransactionMasters::vehicleRule((int) $this->user()?->dealer_id)],
+            'vehicle_color' => ['nullable', 'string', 'max:50'],
+            'vehicle_ownership' => ['nullable', Rule::enum(VehicleOwnership::class)],
             'expected_closing_month' => ['nullable', 'date_format:Y-m'],
             'estimated_value' => ['nullable', 'integer', 'min:0'],
             'source' => ['required', 'string', 'max:64'],

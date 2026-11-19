@@ -120,6 +120,8 @@ final class CreateLeadTransaction
                 'sales_id' => $sales->id,
                 'team_id' => $membership?->team_id,
                 'vehicle_model' => $validated['vehicle_model'] ?? null,
+                'vehicle_color' => $validated['vehicle_color'] ?? null,
+                'vehicle_ownership' => $validated['vehicle_ownership'] ?? null,
                 'estimated_value' => $validated['estimated_value'] ?? null,
                 'expected_closing_month' => isset($validated['expected_closing_month']) ? $validated['expected_closing_month'].'-01' : null,
                 'source' => $validated['source'],

@@ -72,7 +72,7 @@ it('notifies team supervisors when a DO is cancelled', function () {
     $deal = DealTransaction::create([
         'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $this->dealer->id, 'sales_id' => $this->sales->id,
-        'customer_id' => $this->customer->id, 'vehicle_model' => 'DO test',
+        'customer_id' => $this->customer->id, 'vehicle_model' => 'DO test', 'vehicle_ownership' => 'first_buyer',
         'current_stage' => PipelineStage::Spk,
     ]);
     $checklist = ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];

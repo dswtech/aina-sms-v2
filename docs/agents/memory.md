@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.64 |
+| Versi | v1.65 |
 | Diperbarui | 19 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 19 November 2026 — warna kendaraan dan Ownership
+
+Branch `feat/vehicle-color-ownership` (PRD PIP-08) menambah kolom `vehicle_color` (teks, maks 50) dan `vehicle_ownership` (`first_buyer`, `additional`, `trade_in`) pada transaksi lewat migration `2026_11_19_100000`. Diisi di Transaksi Baru, dialog SPK (warna bersama kendaraan), panel detail (baris Warna dan Ownership), dan dialog DO (Ownership wajib bila kosong). Kunci mulai DO memakai policy `update` yang sudah menolak tahap tertutup. Tampil di sel unit daftar (baris kedua), judul modal detail (model · warna), pencarian (warna), dan kolom CSV Warna/Ownership. Fixture test DO lama kini mengirim Ownership. Verifikasi: seluruh suite Pest, `check`, `types:check`, `test:frontend` lulus.
+
+Belum: impor CSV belum punya kolom warna/Ownership; warna di panel detail tidak bisa dikosongkan (picker teks menolak isian kosong); suite Browser belum dijalankan.
 
 ## Pembaruan 19 November 2026 — grafik di Analisis Sumber & Model
 
