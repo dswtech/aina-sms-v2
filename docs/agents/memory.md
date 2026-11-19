@@ -3,7 +3,7 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.64 |
+| Versi | v1.66 |
 | Diperbarui | 20 November 2026 |
 | Status | Aktif |
 
@@ -14,6 +14,16 @@ Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau AD
 - Branch `feat/remove-delivery-stage` menghapus tahap Delivery sesuai [ADR 010](adr/ADR-010-remove-delivery-stage.md). DO kini tahap akhir; [PIP-02 dan PIP-07](PRD.md#74-sales-pipeline-pip) diperbarui.
 - Migration `2026_11_20_100000_remove_delivery_stage` tidak bisa dibalik: transaksi Delivery menjadi DO, riwayat Delivery dihapus, dan follow-up tertunda pada transaksi DO dibatalkan. Production butuh backup dan perintah eksplisit pemilik sebelum `migrate`.
 - Batalkan DO hanya bisa dilakukan di bulan Jakarta yang sama dengan event DO aktif. Export CSV Analytics kehilangan kolom Delivery.
+
+## Pembaruan 19 November 2026 — warna kendaraan dan Ownership
+
+Branch `feat/vehicle-color-ownership` (PRD PIP-08) menambah kolom `vehicle_color` (teks, maks 50) dan `vehicle_ownership` (`first_buyer`, `additional`, `trade_in`) pada transaksi lewat migration `2026_11_19_100000`. Diisi di Transaksi Baru, dialog SPK (warna bersama kendaraan), panel detail (baris Warna dan Ownership), dan dialog DO (Ownership wajib bila kosong). Kunci mulai DO memakai policy `update` yang sudah menolak tahap tertutup. Tampil di sel unit daftar (baris kedua), judul modal detail (model · warna), pencarian (warna), dan kolom CSV Warna/Ownership. Fixture test DO lama kini mengirim Ownership. Verifikasi: seluruh suite Pest, `check`, `types:check`, `test:frontend` lulus.
+
+Belum: impor CSV belum punya kolom warna/Ownership; warna di panel detail tidak bisa dikosongkan (picker teks menolak isian kosong); suite Browser belum dijalankan.
+
+## Pembaruan 19 November 2026 — grafik di Analisis Sumber & Model
+
+Branch `feat/analytics-charts` (PRD ANL-02 sampai ANL-04) menambah grafik SVG tanpa dependency baru di `/analytics`: ringkasan tahap, diagram alur sumber → tahap terjauh, donut porsi, conversion per sumber, dan bar bertumpuk per model (9 teratas + Lainnya). Di mode Pencapaian, diagram alur dan conversion diganti bar kejadian tahap. Setiap baris sumber/model kini membawa `furthest` (lead/spk/do/delivery yang menjumlah ke total, hanya mode Akuisisi; `null` di Pencapaian). Tabel, kartu mobile, Drilldown, dan CSV tidak berubah; grafik disembunyikan saat cetak.
 
 ## Pembaruan 19 November 2026 — tanggal tahap sah dan Capaian Sales
 

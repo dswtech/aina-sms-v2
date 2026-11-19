@@ -1291,6 +1291,7 @@ async function accessibility(page) {
                             spk: 1,
                             do: 1,
                             conversion: 33,
+                            furthest: { lead: 2, spk: 0, do: 1 },
                         })),
                         models: three((id) => ({
                             model: `Model ${id}`,
@@ -1298,6 +1299,7 @@ async function accessibility(page) {
                             share: 33,
                             spk: 1,
                             do: 1,
+                            furthest: { lead: 2, spk: 0, do: 1 },
                         })),
                         drilldown: three((id) => ({
                             public_id: `qa-${id}`,

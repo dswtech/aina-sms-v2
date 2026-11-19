@@ -32,7 +32,7 @@ it('rejects DO without complete area at the domain boundary', function () {
     $deal = foundationDeal($this);
     $this->customer->update(['region_code' => null, 'district_code' => null]); // no kecamatan to default from
     expect(fn () => $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
-        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+        'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]))->toThrow(ValidationException::class);
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::Spk);
     $this->assertDatabaseCount('stage_histories', 0);
@@ -81,7 +81,7 @@ it('serializes metadata edits with DO and freezes snapshots until cancellation a
         'area' => ['region_code' => '32.17', 'district_code' => '32.17.08'],
         'financing' => ['type' => 'credit', 'leasing_id' => $leasing->id, 'tenor_months' => 36, 'insurance_type' => 'all_risk'],
     ])->assertRedirect()->assertSessionHasNoErrors();
-    $checklist = ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
+    $checklist = ['vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
     $original = $deal->transitionTo(PipelineStage::Do, $this->sales, options: $checklist);
     expect($original->area_snapshot['is_foa'])->toBeTrue()
         ->and($original->financing_snapshot['leasing_name'])->toBe('ACC');
@@ -116,7 +116,7 @@ it('accepts Kota Lain without district and clears irrelevant metadata without mo
         ->and($deal->leasing_id)->toBeNull()->and($deal->financing_other_name)->toBeNull()
         ->and($deal->progress_at->toIso8601String())->toBe($progress);
     $event = $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
-        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+        'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
     expect($event->area_snapshot['other_city'])->toBe('Jakarta')
         ->and($event->area_snapshot['is_foa'])->toBeFalse();

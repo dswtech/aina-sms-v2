@@ -51,6 +51,10 @@ async function analyticsExport(page) {
                         spk: 3,
                         do: 2,
                         conversion: mode === 'acquisition' ? 50 : null,
+                        furthest:
+                            mode === 'acquisition'
+                                ? { lead: 1, spk: 1, do: 1 }
+                                : null,
                     }));
                     const models = sources.map((row, i) => ({
                         ...row,

@@ -31,6 +31,9 @@ async function doWorkflow(page) {
         if (await stage.locator('option[value="delivery"]').count())
             throw new Error('Delivery is exposed as an ordinary stage change');
         const save = page.getByRole('button', { name: 'Simpan tahap', exact: true });
+        // Ownership is asked only while the transaction has none (a redo after cancel keeps it).
+        const ownership = page.locator('#stage-ownership');
+        if (await ownership.count()) await ownership.selectOption('first_buyer');
         await page.getByRole('checkbox', { name: 'PO', exact: true }).check();
         await page.getByRole('checkbox', { name: 'DP', exact: true }).check();
         if (await save.isEnabled())

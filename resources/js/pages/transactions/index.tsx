@@ -10,6 +10,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangeField } from '@/components/date-range-field';
+import { vehicleExtras } from '@/lib/customer-profile';
 import type { CustomerProfile } from '@/lib/customer-profile';
 import {
     type Area,
@@ -30,6 +31,8 @@ type Transaction = {
     customer_profile: CustomerProfile | null;
     sales: { name: string; username: string } | null;
     vehicle_model: string | null;
+    vehicle_color: string | null;
+    vehicle_ownership: string | null;
     source: string;
     source_channel: string | null;
     notes: string | null;
@@ -706,8 +709,15 @@ export default function TransactionsIndex({
                                                             ?.name ?? '-'}
                                                     </p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {transaction.vehicle_model ??
-                                                            'Belum dipilih'}{' '}
+                                                        {[
+                                                            transaction.vehicle_model ??
+                                                                'Belum dipilih',
+                                                            vehicleExtras(
+                                                                transaction,
+                                                            ),
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(' · ')}{' '}
                                                         ·{' '}
                                                         {transaction.sales
                                                             ?.name ?? '-'}
@@ -832,8 +842,19 @@ export default function TransactionsIndex({
                                                             </p>
                                                         </td>
                                                         <td className="p-2">
-                                                            {transaction.vehicle_model ??
-                                                                'Belum dipilih'}
+                                                            <p>
+                                                                {transaction.vehicle_model ??
+                                                                    'Belum dipilih'}
+                                                            </p>
+                                                            {vehicleExtras(
+                                                                transaction,
+                                                            ) && (
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {vehicleExtras(
+                                                                        transaction,
+                                                                    )}
+                                                                </p>
+                                                            )}
                                                         </td>
                                                         <td className="p-2">
                                                             <StageBadge

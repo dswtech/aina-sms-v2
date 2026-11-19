@@ -36,7 +36,7 @@ function rMove($t, DealTransaction $deal, PipelineStage $stage, string $when, ar
     $history->forceFill(['created_at' => $when])->save();
 }
 
-const DO_OK = ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
+const DO_OK = ['vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
 const BANDUNG_ANDIR = ['region_code' => '32.73', 'district_code' => '32.73.05'];
 
 it('counts Prospect cohort once per deal at its first Prospect month with current financing', function () {

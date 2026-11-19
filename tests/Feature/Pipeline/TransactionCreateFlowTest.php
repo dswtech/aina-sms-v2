@@ -22,6 +22,7 @@ it('renders the create page with masters, sources and no assignable Sales for Sa
         ->component('transactions/create')
         ->has('regions', 5)->has('districts', 106)->has('leasings', 8)
         ->where('sources.0.value', 'walk_in')
+        ->where('sources.4.value', 'repeat_order')->where('sources.5.value', 'database')->has('sources', 6)
         ->where('assignableSales', []));
     $this->actingAs(User::factory()->branchManager()->create(['dealer_id' => $this->dealer->id]))->get('/transactions/create')->assertForbidden();
 });

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import {
     draftFromProfile,
     missingProfileFields,
+    OWNERSHIPS,
     profilePayload,
     requiredProfileFields,
 } from '@/lib/customer-profile';
@@ -82,6 +83,8 @@ export function StageForm({
     const [notes, setNotes] = useState('');
     const [bookingFee, setBookingFee] = useState(false);
     const [vehicle, setVehicle] = useState('');
+    const [color, setColor] = useState('');
+    const [ownership, setOwnership] = useState('');
     const [profile, setProfile] = useState(draftFromProfile());
     const [doChecklist, setDoChecklist] = useState(emptyDoChecklist);
     const [lostReason, setLostReason] = useState('');
@@ -138,6 +141,8 @@ export function StageForm({
                 notes: notes || null,
                 booking_fee_confirmed: bookingFee,
                 vehicle_model: vehicle || undefined,
+                vehicle_color: (vehicle && color.trim()) || undefined,
+                vehicle_ownership: ownership || undefined,
                 customer: profilePayload(
                     profile,
                     requiredProfileFields(target),
@@ -289,6 +294,40 @@ export function StageForm({
                                 onChange={setVehicle}
                             />
                         </div>
+                        <Label htmlFor="stage-color" className="mt-3 block">
+                            Warna (opsional)
+                        </Label>
+                        <Input
+                            id="stage-color"
+                            maxLength={50}
+                            placeholder="mis. Putih Mutiara"
+                            value={color}
+                            onChange={(event) => setColor(event.target.value)}
+                            className="mt-2 min-h-11"
+                        />
+                    </div>
+                )}
+                {!action && toStage === 'do' && !detail.vehicle_ownership && (
+                    <div>
+                        <Label htmlFor="stage-ownership">
+                            Ownership (wajib untuk DO)
+                        </Label>
+                        <select
+                            id="stage-ownership"
+                            required
+                            value={ownership}
+                            onChange={(event) =>
+                                setOwnership(event.target.value)
+                            }
+                            className={selectClass}
+                        >
+                            <option value="">Pilih ownership</option>
+                            {OWNERSHIPS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 )}
                 {!action && toStage === 'spk' && (

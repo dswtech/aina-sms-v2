@@ -216,6 +216,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | PIP-05 | **Transaksi aktif tanpa aktivitas lebih dari tiga hari ditandai stagnant.** Status ini dihitung dari aktivitas terakhir, bukan disimpan sebagai status manual. | M |
 | PIP-06 | **Sales dan Supervisor dapat mencatat aktivitas follow-up tanpa mengubah tahap.** Aktivitas memperbarui waktu aktivitas terakhir dan muncul pada timeline. | M |
 | PIP-07 | **DO menutup transaksi dari pipeline aktif dan mencatat realisasi.** Sales terkait atau Supervisor berwenang hanya dapat menetapkan DO dari SPK setelah mengonfirmasi PO, DP, dan Unit. Histori DO menyimpan ketiga konfirmasi, waktu, dan pelaku. Hanya Admin dealer dapat membatalkan DO, dengan alasan wajib, dan hanya pada bulan Asia/Jakarta yang sama dengan kejadian DO aktif; DO bulan lalu terkunci. Pembatalan mengembalikan transaksi ke SPK, menambahkan histori koreksi yang merujuk kejadian DO asli, dan mengeluarkan kejadian itu dari realisasi. DO berikutnya memerlukan checklist baru. Setelah DO, perubahan tahap dikunci. | M |
+| PIP-08 | **Transaksi mencatat warna kendaraan dan Ownership unit.** Warna berupa teks bebas opsional; Ownership dipilih dari First Buyer, Additional, atau Trade In. Keduanya diisi bersama kendaraan dan dapat diubah sampai SPK; Ownership wajib saat DO dicatat, dan DO menutup keduanya dari pengubahan. | M |
 
 ### 7.5 Conversation & Coaching (`CVS`)
 

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { draftFromProfile } from '@/lib/customer-profile';
+import { OWNERSHIPS, draftFromProfile } from '@/lib/customer-profile';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -73,6 +73,8 @@ export default function TransactionCreate({
     >('idle');
     const [salesId, setSalesId] = useState('');
     const [model, setModel] = useState('');
+    const [color, setColor] = useState('');
+    const [ownership, setOwnership] = useState('');
     const [source, setSource] = useState(sources[0]?.value ?? 'walk_in');
     const [channel, setChannel] = useState('');
     const [closing, setClosing] = useState('');
@@ -168,6 +170,8 @@ export default function TransactionCreate({
                 occupation: existing ? null : profile.occupation || null,
                 sales_id: !existing && salesId ? Number(salesId) : null,
                 vehicle_model: model || null,
+                vehicle_color: color.trim() || null,
+                vehicle_ownership: ownership || null,
                 source,
                 source_channel:
                     source === 'digital_ad' ? channel || null : null,
@@ -278,6 +282,50 @@ export default function TransactionCreate({
                                     onChange={touch(setModel)}
                                 />
                             </Field>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <Field
+                                    id="color"
+                                    label="Warna (opsional)"
+                                    error={err('vehicle_color')}
+                                >
+                                    <Input
+                                        id="color"
+                                        className="min-h-11"
+                                        maxLength={50}
+                                        placeholder="mis. Putih Mutiara"
+                                        value={color}
+                                        onChange={(e) =>
+                                            touch(setColor)(e.target.value)
+                                        }
+                                    />
+                                </Field>
+                                <Field
+                                    id="ownership"
+                                    label="Ownership (opsional, wajib saat DO)"
+                                    error={err('vehicle_ownership')}
+                                >
+                                    <select
+                                        id="ownership"
+                                        className={selectClass}
+                                        value={ownership}
+                                        onChange={(e) =>
+                                            touch(setOwnership)(e.target.value)
+                                        }
+                                    >
+                                        <option value="">
+                                            Belum ditentukan
+                                        </option>
+                                        {OWNERSHIPS.map((o) => (
+                                            <option
+                                                key={o.value}
+                                                value={o.value}
+                                            >
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
+                            </div>
                             <Field
                                 id="source"
                                 label="Sumber lead"

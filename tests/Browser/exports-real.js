@@ -166,11 +166,11 @@ async function exportsReal(page) {
         const text = decode(file.buf);
         const rows = parseCsv(text, ';').filter((r) => !(r.length === 1 && r[0] === ''));
         const [header, ...body] = rows;
-        assert(header.length === 12 && header[0] === 'Tanggal Progress' && header[11] === 'Keterangan', `${state}: unexpected ';' header ${header}`);
+        assert(header.length === 14 && header[0] === 'Tanggal Progress' && header[3] === 'Warna' && header[4] === 'Ownership' && header[13] === 'Keterangan', `${state}: unexpected ';' header ${header}`);
         assert(!header.some((h) => forbidden.test(h)), `${state}: header exposes a forbidden column: ${header}`);
         assert(!leaksContact(rows), `${state}: CSV leaks phone/social data`);
         assert(!/\bNaN\b|undefined/.test(text), `${state}: CSV contains NaN/undefined`);
-        assert(body.every((r) => r.length === 12), `${state}: a row does not have 12 cells`);
+        assert(body.every((r) => r.length === 14), `${state}: a row does not have 14 cells`);
         // Formula safety: no cell may start with a formula trigger unless neutralised with a leading quote.
         for (const cell of rows.flat())
             assert(!/^[=+\-@\t\r]/.test(cell), `${state}: unsafe cell "${cell}"`);
@@ -189,7 +189,7 @@ async function exportsReal(page) {
 
     result = await exportList('?stage=do&date_from=&date_to=', 'stage export');
     assert(result.body.length === result.total && result.total > 0, `stage export has ${result.body.length} rows, list total ${result.total}`);
-    assert(result.body.every((r) => r[3] === 'DO'), 'stage export contains deals that never reached DO');
+    assert(result.body.every((r) => r[5] === 'DO'), 'stage export contains deals that never reached DO');
     checks.push(`CSV stage ${result.body.length}/${result.total}`);
 
     result = await exportList(`?search=EXPT${tag}&date_from=&date_to=`, 'formula export');
@@ -197,7 +197,7 @@ async function exportsReal(page) {
     const [hostile] = result.body;
     assert(hostile[1] === `'=2+2 EXPT${tag}`, `customer cell not neutralised: ${hostile[1]}`);
     assert(hostile[2] === "'+SUM EXPT", `model cell not neutralised: ${hostile[2]}`);
-    assert(hostile[11] === `'@notes EXPT${tag}`, `notes cell not neutralised: ${hostile[11]}`);
+    assert(hostile[13] === `'@notes EXPT${tag}`, `notes cell not neutralised: ${hostile[13]}`);
     checks.push('CSV formula safe');
 
     // Empty range: list says so, export has only the header, no NaN anywhere.

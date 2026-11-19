@@ -69,6 +69,8 @@ export type CustomerHistoryData = {
 export type TransactionDetailData = {
     public_id: string;
     vehicle_model: string | null;
+    vehicle_color: string | null;
+    vehicle_ownership: string | null;
     source: string;
     source_channel: string | null;
     notes: string | null;

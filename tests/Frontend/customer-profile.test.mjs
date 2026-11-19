@@ -5,6 +5,7 @@ import {
     missingProfileFields,
     profilePayload,
     requiredProfileFields,
+    vehicleExtras,
 } from '../../resources/js/lib/customer-profile.ts';
 
 test('required profile fields follow the stage', () => {
@@ -75,4 +76,13 @@ test('the stage payload carries only filled fields, with Kota Lain dropping the 
         profilePayload({ ...empty, region: '32.17', district: '32.17.08' }, ['area']),
         { area: { region_code: '32.17', district_code: '32.17.08', other_city: null } },
     );
+});
+
+test('vehicle extras join colour and ownership, skipping empty parts', () => {
+    assert.equal(
+        vehicleExtras({ vehicle_color: 'Putih', vehicle_ownership: 'trade_in' }),
+        'Putih · Trade In',
+    );
+    assert.equal(vehicleExtras({ vehicle_color: null, vehicle_ownership: 'first_buyer' }), 'First Buyer');
+    assert.equal(vehicleExtras({ vehicle_color: null, vehicle_ownership: null }), '');
 });

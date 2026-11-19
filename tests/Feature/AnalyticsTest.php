@@ -117,6 +117,30 @@ it('aggregates a month range for source and model, drilldown and CSV, excluding 
     expect($csv->streamedContent())->toContain('Nov')->not->toContain('Sept');
 });
 
+it('buckets acquisition deals by their furthest stage for the source flow chart', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
+    $make = fn (PipelineStage $stage) => DealTransaction::create(['dealer_id' => $dealer->id, 'customer_id' => $customer->id,
+        'sales_id' => $sales->id, 'vehicle_model' => 'Creta', 'source' => 'walk_in', 'current_stage' => $stage]);
+
+    $make(PipelineStage::Lead);
+    $make(PipelineStage::Prospect);
+    $make(PipelineStage::Spk);
+    // Reached DO without an SPK history row (e.g. an import): still counts once, as DO.
+    $make(PipelineStage::Do)->stageHistories()->create(['to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => now(),
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
+
+    $furthest = ['lead' => 2, 'spk' => 1, 'do' => 1];
+    $this->actingAs($admin)->get('/analytics?period='.now()->format('Y-m').'&mode=acquisition')->assertInertia(fn (Assert $p) => $p
+        ->where('analytics.sources.0.furthest', $furthest)
+        ->where('analytics.models.0.furthest', $furthest));
+    $this->get('/analytics?period='.now()->format('Y-m').'&mode=achievement')->assertInertia(fn (Assert $p) => $p
+        ->where('analytics.sources.0.furthest', null)
+        ->where('analytics.models.0.furthest', null));
+});
+
 it('rejects invalid analytics ranges', function () {
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin)->get('/analytics?period=2026-11&to=2026-10')->assertSessionHasErrors('to');

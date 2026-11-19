@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use App\Enums\VehicleOwnership;
 use App\Http\Requests\Customer\StoreCustomerLeadRequest;
 use App\Models\Customer;
 use App\Models\DealComment;
@@ -26,6 +27,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -50,6 +52,8 @@ class TransactionController extends Controller
                         TransactionMasters::vehicleRule($locked->dealer_id)($attribute, $value, $fail);
                     }
                 }],
+                'vehicle_color' => ['sometimes', 'nullable', 'string', 'max:50'],
+                'vehicle_ownership' => ['sometimes', 'nullable', Rule::enum(VehicleOwnership::class)],
                 'notes' => ['nullable', 'string', 'max:2000'],
                 'expected_closing_month' => ['nullable', 'date_format:Y-m'],
                 'estimated_value' => ['nullable', 'integer', 'min:0'],
@@ -64,7 +68,7 @@ class TransactionController extends Controller
             ], $validated);
             $metadata = TransactionMetadata::normalize($data, $locked->dealer_id, requireActiveLeasing: array_key_exists('financing', $validated), requireCreditDetails: array_key_exists('financing', $validated));
             $before = $locked->getAttributes();
-            $fields = array_intersect_key($validated, array_flip(['source', 'vehicle_model', 'notes', 'estimated_value', 'expected_closing_month']));
+            $fields = array_intersect_key($validated, array_flip(['source', 'vehicle_model', 'vehicle_color', 'vehicle_ownership', 'notes', 'estimated_value', 'expected_closing_month']));
             if (array_key_exists('expected_closing_month', $fields)) {
                 $fields['expected_closing_month'] = $fields['expected_closing_month'] !== null ? $fields['expected_closing_month'].'-01' : null;
             }
@@ -147,6 +151,7 @@ class TransactionController extends Controller
                     $customerQuery->whereLike('name', "%{$search}%")
                         ->orWhereLike('phone', "%{$search}%");
                 })->orWhereLike('vehicle_model', "%{$search}%")
+                    ->orWhereLike('vehicle_color', "%{$search}%")
                     ->orWhereLike('source', "%{$search}%");
             });
         }
@@ -233,14 +238,14 @@ class TransactionController extends Controller
             $out = fopen('php://output', 'w') ?: throw new \RuntimeException('Cannot open the response stream.');
             fwrite($out, "\xEF\xBB\xBF");
             $put = fn (array $row) => fputcsv($out, array_map(self::safeCell(...), $row), ';');
-            $put(['Tanggal Progress', 'Pelanggan', 'Unit yang diminati', 'Tahap', 'Sumber', 'Kanal', 'Kabupaten/Kota', 'Kecamatan', 'Sales', 'Supervisor', 'Aktivitas terakhir', 'Keterangan']);
+            $put(['Tanggal Progress', 'Pelanggan', 'Unit yang diminati', 'Warna', 'Ownership', 'Tahap', 'Sumber', 'Kanal', 'Kabupaten/Kota', 'Kecamatan', 'Sales', 'Supervisor', 'Aktivitas terakhir', 'Keterangan']);
             // lazy() keeps the progress ordering and bounded memory; each 200-row chunk gets its own label lookups.
             foreach ($query->lazy(200)->chunk(200) as $chunk) {
                 $rows = $chunk->values()->all();
                 [$regions, $districts, $supervisors] = $this->lookups($rows);
                 foreach ($rows as $t) {
                     $put([
-                        $t->progress_at?->setTimezone('Asia/Jakarta')->format('Y-m-d'), $t->customer?->name, $t->vehicle_model, $t->current_stage->label(),
+                        $t->progress_at?->setTimezone('Asia/Jakarta')->format('Y-m-d'), $t->customer?->name, $t->vehicle_model, $t->vehicle_color, $t->vehicle_ownership?->label(), $t->current_stage->label(),
                         $t->source, $t->source_channel, $regions[$t->region_code] ?? $t->other_city, $districts[$t->district_code] ?? null,
                         $t->sales?->name, collect($supervisors[$t->team_id] ?? [])->pluck('name')->implode(', '),
                         $t->last_activity_at?->setTimezone('Asia/Jakarta')->format('Y-m-d'), $t->notes,
@@ -256,7 +261,7 @@ class TransactionController extends Controller
         return is_string($value) && $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'".$value : $value;
     }
 
-    private const SOURCES = ['walk_in' => 'Walk-in Showroom', 'digital_ad' => 'Iklan Digital / Medsos', 'referral' => 'Referral Pelanggan', 'exhibition' => 'Pameran / Mall', 'call' => 'Telepon Masuk'];
+    private const SOURCES = ['walk_in' => 'Walk-in Showroom', 'digital_ad' => 'Iklan Digital / Medsos', 'referral' => 'Referral Pelanggan', 'exhibition' => 'Pameran / Mall', 'repeat_order' => 'Repeat Order', 'database' => 'Database'];
 
     /**
      * @param  array<string, string>  $regions
@@ -286,6 +291,8 @@ class TransactionController extends Controller
             ] : null,
             'supervisors' => $supervisors[$transaction->team_id] ?? [],
             'vehicle_model' => $transaction->vehicle_model,
+            'vehicle_color' => $transaction->vehicle_color,
+            'vehicle_ownership' => $transaction->vehicle_ownership?->value,
             'source' => $transaction->source,
             'source_channel' => $transaction->source_channel,
             'notes' => $transaction->notes,
