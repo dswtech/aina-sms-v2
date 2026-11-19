@@ -4,9 +4,12 @@ use App\Enums\PipelineStage;
 use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\FollowUp;
+use App\Models\StageHistory;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -97,4 +100,80 @@ it('limits DO and Delivery to authorized Sales and Supervisors', function () {
         $this->actingAs($unauthorized)->patchJson($path, $delivery)->assertForbidden();
     }
     $this->actingAs($supervisor)->patch($path, $delivery)->assertRedirect()->assertSessionHasNoErrors();
+});
+
+/** @return array{deal: DealTransaction, sales: User, admin: User} */
+function spkDealForDo(): array
+{
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    $deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
+        'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
+        'customer_id' => Customer::factory()->create(['dealer_id' => $dealer->id])->id,
+        'vehicle_model' => 'DO month test', 'vehicle_ownership' => 'first_buyer',
+        'current_stage' => PipelineStage::Spk,
+    ]);
+
+    return ['deal' => $deal, 'sales' => $sales, 'admin' => $admin];
+}
+
+function recordDo(DealTransaction $deal, User $actor): StageHistory
+{
+    return $deal->fresh()->transitionTo(PipelineStage::Do, $actor, null, ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
+}
+
+function followUpFor(DealTransaction $deal, User $sales, string $status): FollowUp
+{
+    return FollowUp::create([
+        'customer_id' => $deal->customer_id, 'deal_transaction_id' => $deal->id,
+        'assigned_to_id' => $sales->id, 'created_by_id' => $sales->id,
+        'scheduled_at' => now()->addDays(3), 'plan_notes' => 'Telepon', 'status' => $status,
+    ]);
+}
+
+it('cancels pending follow-ups when a deal reaches DO', function () {
+    ['deal' => $deal, 'sales' => $sales] = spkDealForDo();
+    $pending = followUpFor($deal, $sales, 'pending');
+    $completed = followUpFor($deal, $sales, 'completed');
+
+    recordDo($deal, $sales);
+
+    expect($pending->fresh()->status)->toBe('cancelled')
+        ->and($pending->fresh()->cancel_reason)->toBe('Transaksi DO')
+        ->and($completed->fresh()->status)->toBe('completed');
+});
+
+it('lets Admin cancel a DO only in the Jakarta month it was recorded', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-10-31 23:59', 'Asia/Jakarta'));
+    $event = recordDo($deal, $sales);
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-01 00:00', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeFalse();
+    $this->actingAs($admin)->postJson(route('transactions.cancel-do', $deal), ['reason' => 'Terlambat', 'do_event_id' => $event->id])->assertForbidden();
+});
+
+it('allows cancelling a DO recorded earlier in the same Jakarta month', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-11-01 00:00', 'Asia/Jakarta'));
+    recordDo($deal, $sales);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-30 23:59', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
+});
+
+it('uses the active DO event after a cancel and re-record', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-10-20 10:00', 'Asia/Jakarta'));
+    $first = recordDo($deal, $sales);
+    $this->travelTo(CarbonImmutable::parse('2026-10-21 10:00', 'Asia/Jakarta'));
+    $this->actingAs($admin)->post(route('transactions.cancel-do', $deal), ['reason' => 'Salah catat', 'do_event_id' => $first->id])->assertSessionHasNoErrors();
+    $this->travelTo(CarbonImmutable::parse('2026-11-02 10:00', 'Asia/Jakarta'));
+    recordDo($deal, $sales);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-15 10:00', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
 });
