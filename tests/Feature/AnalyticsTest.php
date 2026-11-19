@@ -6,6 +6,7 @@ use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -132,4 +133,31 @@ it('limits analytics and report ranges to 24 months', function () {
         $this->get(sprintf($pattern, '2025-01', '2026-12'))->assertSessionDoesntHaveErrors('to');
         $this->get(sprintf($pattern, '2025-01', '2027-01'))->assertSessionHasErrors('to');
     }
+});
+
+it('drops voided stage dates in achievement mode', function () {
+    $dealer = Dealer::factory()->create();
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $dealer->id]);
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $deal = DealTransaction::create([
+        'dealer_id' => $dealer->id,
+        'customer_id' => Customer::factory()->create(['dealer_id' => $dealer->id])->id,
+        'sales_id' => $sales->id,
+        'vehicle_model' => 'Creta',
+        'source' => 'walk_in',
+        'current_stage' => PipelineStage::HotProspect,
+    ]);
+    foreach ([[PipelineStage::Spk, '2026-11-20 10:00'], [PipelineStage::HotProspect, '2026-11-25 10:00']] as [$stage, $at]) {
+        StageHistory::create([
+            'deal_transaction_id' => $deal->id, 'to_stage' => $stage, 'actor_id' => $sales->id,
+            'created_at' => CarbonImmutable::parse($at, 'Asia/Jakarta')->utc(),
+        ]);
+    }
+
+    $analytics = fn (string $mode) => $this->actingAs($manager)
+        ->get(route('analytics.index', ['period' => '2026-11', 'mode' => $mode]));
+
+    $analytics('achievement')->assertInertia(fn (Assert $page) => $page
+        ->where('analytics.sources.0.spk', 0)
+        ->has('analytics.drilldown', 1));
 });
