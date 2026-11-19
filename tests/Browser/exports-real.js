@@ -189,7 +189,8 @@ async function exportsReal(page) {
 
     result = await exportList('?stage=do&date_from=&date_to=', 'stage export');
     assert(result.body.length === result.total && result.total > 0, `stage export has ${result.body.length} rows, list total ${result.total}`);
-    assert(result.body.every((r) => r[3] === 'DO'), 'stage export contains non-DO rows');
+    // The stage filter means "reached DO", so delivered deals belong in it too.
+    assert(result.body.every((r) => ['DO', 'Delivery'].includes(r[3])), 'stage export contains deals that never reached DO');
     checks.push(`CSV stage ${result.body.length}/${result.total}`);
 
     result = await exportList(`?search=EXPT${tag}&date_from=&date_to=`, 'formula export');
