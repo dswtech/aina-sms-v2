@@ -23,8 +23,8 @@ it('counts distinct Jakarta stage events without hydrating dashboard history mod
         'vehicle_model' => 'Synthetic model', 'current_stage' => $stage, 'expected_closing_month' => $closing,
     ]);
     $deal(PipelineStage::Prospect, '2026-11-18');
-    $deal(PipelineStage::Delivery);
-    $deal(PipelineStage::Delivery)->stageHistories()->create([
+    $deal(PipelineStage::Do);
+    $deal(PipelineStage::Do)->stageHistories()->create([
         'to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => '2026-10-31 16:59:59',
         'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
@@ -80,7 +80,7 @@ it('reconciles sales dashboard metrics to visible source transactions', function
         'sales_id' => $sales->id,
         'vehicle_model' => 'Stargazer',
         'estimated_value' => 350_000_000,
-        'current_stage' => PipelineStage::Delivery,
+        'current_stage' => PipelineStage::Do,
         'updated_at' => now(),
     ]);
 
@@ -113,7 +113,7 @@ it('does not expose another sales dashboard data', function () {
         'customer_id' => $customer->id,
         'sales_id' => $other->id,
         'vehicle_model' => 'Ioniq 5',
-        'current_stage' => PipelineStage::Delivery,
+        'current_stage' => PipelineStage::Do,
     ]);
 
     $this->actingAs($sales)

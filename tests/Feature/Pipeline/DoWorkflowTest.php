@@ -14,7 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('requires a fresh checklist and audits cancellation before delivery', function () {
+it('requires a fresh checklist and audits DO cancellation', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
     $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
@@ -36,7 +36,7 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
     }
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::Spk)
         ->and($deal->stageHistories()->count())->toBe(0);
-    $this->patchJson($stage, ['to_stage' => 'delivery', 'do_event_id' => 0])->assertForbidden();
+    $this->patchJson($stage, ['to_stage' => 'delivery'])->assertUnprocessable()->assertJsonValidationErrors('to_stage');
     $this->patch($stage, ['to_stage' => 'do', 'stage_event_id' => 0, ...$checklist])->assertRedirect()->assertSessionHasNoErrors();
     $original = $deal->stageHistories()->sole();
     expect($original->only(array_keys($checklist)))->toBe($checklist)
@@ -58,18 +58,17 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
         ->assertUnprocessable()->assertJsonValidationErrors('stage_event_id');
     $this->patch($stage, ['to_stage' => 'do', 'stage_event_id' => $correction->id, ...$checklist])->assertRedirect()->assertSessionHasNoErrors();
     $this->patchJson($stage, ['to_stage' => 'do', 'stage_event_id' => $correction->id, ...$checklist])->assertForbidden();
-    $current = $deal->currentDoEvent();
-    $this->patchJson($stage, ['to_stage' => 'delivery', 'do_event_id' => $original->id])
-        ->assertUnprocessable()->assertJsonValidationErrors('do_event_id');
     $this->actingAs($admin)->postJson($cancel, ['reason' => 'Permintaan lama', 'do_event_id' => $original->id])
         ->assertUnprocessable()->assertJsonValidationErrors('do_event_id');
-    $this->actingAs($sales)->patch($stage, ['to_stage' => 'delivery', 'do_event_id' => $current->id])->assertRedirect()->assertSessionHasNoErrors();
-    $this->actingAs($admin)->postJson($cancel, ['reason' => 'Terlambat'])->assertForbidden();
-    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Delivery)
-        ->and($deal->stageHistories()->count())->toBe(4);
+    // DO is the final stage now: no further move, and the retired Delivery value is rejected.
+    $this->actingAs($sales)->patchJson($stage, ['to_stage' => 'lost', 'lost_reason' => 'other'])->assertForbidden();
+    $this->patchJson($stage, ['to_stage' => 'delivery'])->assertUnprocessable()->assertJsonValidationErrors('to_stage');
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Do)
+        ->and($deal->stageHistories()->count())->toBe(3)
+        ->and($deal->fresh()->current_stage->isClosed())->toBeTrue();
 });
 
-it('limits DO and Delivery to authorized Sales and Supervisors', function () {
+it('limits DO to authorized Sales and Supervisors', function () {
     $dealer = Dealer::factory()->create();
     $team = Team::factory()->create(['dealer_id' => $dealer->id]);
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
@@ -95,11 +94,7 @@ it('limits DO and Delivery to authorized Sales and Supervisors', function () {
     }
     $this->actingAs($supervisor)->patch($path, $payload)->assertRedirect()->assertSessionHasNoErrors();
     $this->actingAs($foreignAdmin)->postJson(route('transactions.cancel-do', $deal), ['reason' => 'Asing'])->assertForbidden();
-    $delivery = ['to_stage' => 'delivery', 'do_event_id' => $deal->currentDoEvent()->id];
-    foreach ([$otherSupervisor, $admin] as $unauthorized) {
-        $this->actingAs($unauthorized)->patchJson($path, $delivery)->assertForbidden();
-    }
-    $this->actingAs($supervisor)->patch($path, $delivery)->assertRedirect()->assertSessionHasNoErrors();
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Do);
 });
 
 /** @return array{deal: DealTransaction, sales: User, admin: User} */

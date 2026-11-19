@@ -113,7 +113,7 @@ it('forbids stage changes on a closed transaction', function () {
 
     $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
     $customer->assignTo($sales);
-    $deal = makeDeal($dealer, $customer, $sales, PipelineStage::Delivery);
+    $deal = makeDeal($dealer, $customer, $sales, PipelineStage::Do);
 
     $this->actingAs($sales)
         ->patch(route('transactions.stage', $deal), [
@@ -122,7 +122,7 @@ it('forbids stage changes on a closed transaction', function () {
         ])
         ->assertForbidden();
 
-    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Delivery);
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Do);
 });
 
 it('lets a supervisor move the stage of a team member transaction', function () {

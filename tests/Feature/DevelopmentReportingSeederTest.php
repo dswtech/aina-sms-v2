@@ -37,7 +37,7 @@ it('adds repeatable local reporting examples without sending email or changing b
             ->and(DB::table('notifications')->where('type', DealCommentCreated::class)->count())->toBe($notifications)->toBeGreaterThan(0)
             ->and(DealComment::query()->whereNotNull('stage_at_creation')->count())->toBeGreaterThan(0)
             ->and(DealTransaction::query()->whereNotNull('expected_closing_month')->count())->toBeGreaterThan(0)
-            ->and(DealTransaction::query()->whereNotIn('current_stage', ['delivery', 'lost'])->whereNull('expected_closing_month')->count())->toBeGreaterThan(0)
+            ->and(DealTransaction::query()->whereNotIn('current_stage', ['do', 'lost'])->whereNull('expected_closing_month')->count())->toBeGreaterThan(0)
             ->and(DealTransaction::query()->whereDate('expected_closing_month', now('Asia/Jakarta')->startOfMonth()->addMonth()->toDateString())->count())->toBeGreaterThan(0)
             ->and(DealTransaction::query()->orderBy('id')->pluck('updated_at', 'id')->all())->toEqual($before)
             ->and(Customer::query()->count())->toBe(72)->and(DealTransaction::query()->count())->toBe(168);
@@ -59,7 +59,7 @@ it('preserves manual targets and estimates and excludes non-demo customers', fun
         $this->seed(DevelopmentDemoSeeder::class);
         $target = TeamTarget::query()->firstOrFail();
         $target->update(['target_units' => 987]);
-        $demo = DealTransaction::query()->whereNotIn('current_stage', ['delivery', 'lost'])->firstOrFail();
+        $demo = DealTransaction::query()->whereNotIn('current_stage', ['do', 'lost'])->firstOrFail();
         $demo->update(['expected_closing_month' => '2030-01-01']);
         $customer = Customer::factory()->create(['dealer_id' => $demo->dealer_id, 'notes' => 'Non-demo, jangan diubah']);
         $untouched = DealTransaction::create(['dealer_id' => $demo->dealer_id, 'team_id' => $demo->team_id,

@@ -41,7 +41,7 @@ class DealCommentCreated extends Notification
         return [
             'kind' => 'comment',
             'title' => 'Komentar baru pada transaksi',
-            'message' => 'Ada komentar baru pada tahap '.PipelineStage::from($this->stage)->label().'.',
+            'message' => 'Ada komentar baru pada tahap '.PipelineStage::labelOf($this->stage).'.',
             'url' => route('transactions.coaching', $this->transactionPublicId, false),
             'comment_id' => $this->commentId,
             'email_status' => 'pending',
@@ -52,7 +52,7 @@ class DealCommentCreated extends Notification
     {
         return (new MailMessage)
             ->subject('Komentar baru pada transaksi')
-            ->line('Ada komentar baru pada transaksi tahap '.PipelineStage::from($this->stage)->label().'.')
+            ->line('Ada komentar baru pada transaksi tahap '.PipelineStage::labelOf($this->stage).'.')
             ->action('Buka transaksi', route('transactions.coaching', $this->transactionPublicId))
             ->line('Masuk ke aplikasi untuk membaca komentar sesuai hak akses Anda.');
     }

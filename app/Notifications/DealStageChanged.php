@@ -27,7 +27,7 @@ class DealStageChanged extends Notification
         return [
             'kind' => 'stage_changed',
             'title' => 'Tahap transaksi berubah',
-            'message' => 'Transaksi pindah dari '.PipelineStage::from($this->fromStage)->label().' ke '.PipelineStage::from($this->toStage)->label().'.',
+            'message' => 'Transaksi pindah dari '.PipelineStage::labelOf($this->fromStage).' ke '.PipelineStage::labelOf($this->toStage).'.',
             'url' => route('transactions.coaching', $this->transactionPublicId, false),
             'deal_id' => $this->transactionId,
         ];

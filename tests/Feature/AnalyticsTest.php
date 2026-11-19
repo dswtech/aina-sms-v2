@@ -24,16 +24,13 @@ it('shows acquisition analysis by source and model with conversion', function ()
         'sales_id' => $sales->id,
         'vehicle_model' => 'Creta',
         'source' => 'walk_in',
-        'current_stage' => PipelineStage::Delivery,
+        'current_stage' => PipelineStage::Do,
         'created_at' => now(),
     ]);
-    foreach ([PipelineStage::Do, PipelineStage::Delivery] as $stage) {
-        $deal->stageHistories()->create([
-            'to_stage' => $stage, 'actor_id' => $sales->id, 'created_at' => now(),
-            'po_confirmed' => $stage === PipelineStage::Do, 'dp_confirmed' => $stage === PipelineStage::Do,
-            'unit_confirmed' => $stage === PipelineStage::Do,
-        ]);
-    }
+    $deal->stageHistories()->create([
+        'to_stage' => PipelineStage::Do, 'actor_id' => $sales->id, 'created_at' => now(),
+        'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
 
     $this->actingAs($admin)
         ->get(route('analytics.index', ['period' => now()->format('Y-m'), 'mode' => 'acquisition']))
@@ -42,7 +39,8 @@ it('shows acquisition analysis by source and model with conversion', function ()
             ->component('analytics/index')
             ->where('analytics.mode', 'acquisition')
             ->where('analytics.sources.0.source', 'walk_in')
-            ->where('analytics.sources.0.delivery', 1)
+            ->where('analytics.sources.0.do', 1)
+            ->missing('analytics.sources.0.delivery')
             ->where('analytics.sources.0.conversion', 100)
             ->where('analytics.models.0.model', 'Creta')
         );

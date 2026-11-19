@@ -79,3 +79,11 @@ it('marks new comment notifications with kind comment', function () {
 
     expect($payload['kind'])->toBe('comment');
 });
+
+it('still renders notifications queued for a stage that no longer exists', function () {
+    $mail = (new DealCommentCreated(1, 'trx-1', 1, 1, 'delivery'))->toMail($this->sales);
+    $stage = (new DealStageChanged(1, 'trx-1', 'do', 'delivery'))->toDatabase($this->sales);
+
+    expect($mail->introLines[0])->toContain('tahap Delivery')
+        ->and($stage['message'])->toBe('Transaksi pindah dari DO ke Delivery.');
+});

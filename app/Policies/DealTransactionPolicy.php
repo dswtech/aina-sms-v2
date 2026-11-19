@@ -33,13 +33,6 @@ class DealTransactionPolicy
             && $this->update($actor, $deal);
     }
 
-    public function confirmDelivery(User $actor, DealTransaction $deal): bool
-    {
-        return $deal->current_stage === PipelineStage::Do
-            && in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)
-            && $this->view($actor, $deal);
-    }
-
     public function cancelDo(User $actor, DealTransaction $deal): bool
     {
         // A DO is only reversible in its own Jakarta month, so closed months keep their realization.

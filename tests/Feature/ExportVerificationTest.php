@@ -46,36 +46,36 @@ it('reconciles every exported cell against an independent Jakarta ledger', funct
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
     $actor = User::factory()->role(UserRole::from($role))->create(['dealer_id' => $dealer->id]);
     TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $actor->id, 'role' => $actor->role, 'ended_at' => null]);
-    g10ExportDeal($dealer, $team, $sales, 'walk_in', 'Model A', '2026-10-31 17:00:00', [['spk', '2026-11-01 00:00:00'], ['spk', '2026-11-02 00:00:00'], ['do', '2026-11-30 16:59:59'], ['delivery', '2026-11-30 17:00:00']]);
+    g10ExportDeal($dealer, $team, $sales, 'walk_in', 'Model A', '2026-10-31 17:00:00', [['spk', '2026-11-01 00:00:00'], ['spk', '2026-11-02 00:00:00'], ['do', '2026-11-30 16:59:59']]);
     g10ExportDeal($dealer, $team, $sales, 'walk_in', 'Model A', '2026-11-30 16:59:59', [['do', '2026-11-30 16:59:59']]);
-    g10ExportDeal($dealer, $team, $sales, 'old', 'Model B', '2026-10-01 00:00:00', [['delivery', '2026-10-31 17:00:00']]);
-    g10ExportDeal($dealer, $team, $sales, 'excluded_prior', 'Excluded prior', '2026-10-31 16:59:59', [['delivery', '2026-10-31 16:59:59']]);
-    g10ExportDeal($dealer, $team, $sales, 'excluded_next', 'Excluded next', '2026-11-30 17:00:00', [['delivery', '2026-11-30 17:00:00']]);
+    g10ExportDeal($dealer, $team, $sales, 'old', 'Model B', '2026-10-01 00:00:00', [['do', '2026-10-31 17:00:00']]);
+    g10ExportDeal($dealer, $team, $sales, 'excluded_prior', 'Excluded prior', '2026-10-31 16:59:59', [['do', '2026-10-31 16:59:59']]);
+    g10ExportDeal($dealer, $team, $sales, 'excluded_next', 'Excluded next', '2026-11-30 17:00:00', [['do', '2026-11-30 17:00:00']]);
     $other = Team::factory()->create(['dealer_id' => $dealer->id]);
-    g10ExportDeal($dealer, $other, $sales, 'other_team', 'Model C', '2026-11-05 00:00:00', [['do', '2026-11-05 00:00:00'], ['delivery', '2026-11-05 00:00:00']]);
+    g10ExportDeal($dealer, $other, $sales, 'other_team', 'Model C', '2026-11-05 00:00:00', [['do', '2026-11-05 00:00:00']]);
     $foreign = Dealer::factory()->create();
-    g10ExportDeal($foreign, Team::factory()->create(['dealer_id' => $foreign->id]), User::factory()->sales()->create(['dealer_id' => $foreign->id]), 'FOREIGN', 'Foreign model', '2026-11-05 00:00:00', [['delivery', '2026-11-05 00:00:00']]);
+    g10ExportDeal($foreign, Team::factory()->create(['dealer_id' => $foreign->id]), User::factory()->sales()->create(['dealer_id' => $foreign->id]), 'FOREIGN', 'Foreign model', '2026-11-05 00:00:00', [['do', '2026-11-05 00:00:00']]);
     $supervisor = $role === 'supervisor';
     $achievement = $mode === 'achievement';
     $share = $achievement ? ($supervisor ? '66.7' : '50') : ($supervisor ? '100' : '66.7');
     $minorShare = $achievement ? ($supervisor ? '33.3' : '25') : '33.3';
     $expected = [
         ['Analisis Sumber'],
-        ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)'],
-        ['walk_in', '2', $share, '1', '2', $achievement ? '0' : '1', $achievement ? '' : '100'],
+        ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Conversion (%)'],
+        ['walk_in', '2', $share, '1', '2', $achievement ? '' : '100'],
     ];
     if ($achievement) {
-        $expected[] = ['old', '1', $minorShare, '0', '0', '1', ''];
+        $expected[] = ['old', '1', $minorShare, '0', '1', ''];
     }
     if (! $supervisor) {
-        $expected[] = ['other_team', '1', $minorShare, '0', '1', '1', $achievement ? '' : '100'];
+        $expected[] = ['other_team', '1', $minorShare, '0', '1', $achievement ? '' : '100'];
     }
-    array_push($expected, [null], ['Analisis Model'], ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery'], ['Model A', '2', $share, '1', '2', $achievement ? '0' : '1']);
+    array_push($expected, [null], ['Analisis Model'], ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO'], ['Model A', '2', $share, '1', '2']);
     if ($achievement) {
-        $expected[] = ['Model B', '1', $minorShare, '0', '0', '1'];
+        $expected[] = ['Model B', '1', $minorShare, '0', '1'];
     }
     if (! $supervisor) {
-        $expected[] = ['Model C', '1', $minorShare, '0', '1', '1'];
+        $expected[] = ['Model C', '1', $minorShare, '0', '1'];
     }
     $response = $this->actingAs($actor)->get(route('analytics.csv', ['period' => '2026-11', 'mode' => $mode, 'dimension' => 'source', 'value' => 'walk_in']))
         ->assertOk()->assertDownload("analisis-2026-11-{$mode}.csv");
@@ -100,8 +100,8 @@ it('exports empty aggregate sections without contacts', function () {
     $admin = User::factory()->admin()->create(['dealer_id' => Dealer::factory()->create()->id]);
     $response = $this->actingAs($admin)->get('/analytics/export.csv?period=2026-11&mode=achievement')->assertOk();
     expect(g10ParseCsv($response->streamedContent()))->toBe([
-        ['Analisis Sumber'], ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)'],
-        [null], ['Analisis Model'], ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery'],
+        ['Analisis Sumber'], ['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Conversion (%)'],
+        [null], ['Analisis Model'], ['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO'],
     ]);
 });
 

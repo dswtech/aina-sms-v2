@@ -42,7 +42,7 @@ class AnalyticsController extends Controller
             fwrite($handle, "\xEF\xBB\xBF");
             $put = fn (array $row) => fputcsv($handle, $row, ';');
             $put(['Analisis Sumber']);
-            $put(['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery', 'Conversion (%)']);
+            $put(['Sumber', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Conversion (%)']);
             foreach ($data['sources'] as $row) {
                 $put([
                     $this->csvLabel($row['source']),
@@ -50,14 +50,13 @@ class AnalyticsController extends Controller
                     $row['share'],
                     $row['spk'],
                     $row['do'],
-                    $row['delivery'],
                     $row['conversion'] ?? '',
                 ]);
             }
 
             $put([]);
             $put(['Analisis Model']);
-            $put(['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO', 'Delivery']);
+            $put(['Model', 'Jumlah', 'Porsi (%)', 'SPK', 'DO']);
             foreach ($data['models'] as $row) {
                 $put([
                     $this->csvLabel($row['model']),
@@ -65,7 +64,6 @@ class AnalyticsController extends Controller
                     $row['share'],
                     $row['spk'],
                     $row['do'],
-                    $row['delivery'],
                 ]);
             }
 
@@ -99,7 +97,7 @@ class AnalyticsController extends Controller
             ->visibleInReportsTo($actor)
             ->select(['id', 'public_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'created_at'])
             ->with('sales:id,name');
-        foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
+        foreach ([PipelineStage::Spk, PipelineStage::Do] as $stage) {
             $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
                 if ($achievement) {
                     $inPeriod($history->scopes(['effectiveFor' => [$stage]]));
@@ -179,11 +177,11 @@ class AnalyticsController extends Controller
 
     /**
      * @param  Collection<int, DealTransaction>  $deals
-     * @return array{spk: int, do: int, delivery: int}
+     * @return array{spk: int, do: int}
      */
     private function stageCounts(Collection $deals, bool $achievement): array
     {
-        $counts = ['spk' => 0, 'do' => 0, 'delivery' => 0];
+        $counts = ['spk' => 0, 'do' => 0];
         foreach ($deals as $deal) {
             $row = $deal->getAttributes();
             foreach ($counts as $stage => $count) {

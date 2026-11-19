@@ -44,10 +44,10 @@ beforeEach(function () {
     }
     $this->delivered = DealTransaction::create([
         'dealer_id' => $this->dealer->id, 'team_id' => $this->team->id, 'customer_id' => $this->customer->id,
-        'sales_id' => $this->sales->id, 'vehicle_model' => 'Model A', 'source' => 'walk_in', 'current_stage' => 'delivery',
+        'sales_id' => $this->sales->id, 'vehicle_model' => 'Model A', 'source' => 'walk_in', 'current_stage' => 'do',
     ]);
     $this->delivered->forceFill(['created_at' => '2026-10-31 16:59:59'])->save();
-    foreach (['spk', 'spk', 'do', 'delivery', 'delivery'] as $stage) {
+    foreach (['spk', 'spk', 'do'] as $stage) {
         $this->delivered->stageHistories()->create([
             'to_stage' => $stage, 'actor_id' => $this->sales->id, 'created_at' => '2026-11-04 00:00:00',
             'po_confirmed' => $stage === 'do', 'dp_confirmed' => $stage === 'do', 'unit_confirmed' => $stage === 'do',
@@ -59,7 +59,7 @@ beforeEach(function () {
         $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
         $deal = DealTransaction::create([
             'dealer_id' => $dealer->id, 'team_id' => $team->id, 'customer_id' => $customer->id,
-            'sales_id' => $sales->id, 'vehicle_model' => $marker, 'source' => $marker, 'current_stage' => 'delivery',
+            'sales_id' => $sales->id, 'vehicle_model' => $marker, 'source' => $marker, 'current_stage' => 'do',
         ]);
         $deal->stageHistories()->create([
             'to_stage' => 'do', 'actor_id' => $sales->id, 'created_at' => '2026-11-05 00:00:00',
@@ -77,7 +77,7 @@ it('reconciles team and personal forecast metrics and ranks exactly five authori
         ->where('dashboard.targetUnits', 10)->where('dashboard.realizationUnits', 2)
         ->where('dashboard.forecastUnits', 4.1)->where('dashboard.forecastValue', 1260)
         ->where('dashboard.gapUnits', 8)->where('dashboard.forecastGapUnits', 5.9)
-        ->where('dashboard.stageCounts', ['lead' => 1, 'prospect' => 1, 'hot_prospect' => 2, 'spk' => 1, 'do' => 2, 'delivery' => 1, 'lost' => 0])
+        ->where('dashboard.stageCounts', ['lead' => 1, 'prospect' => 1, 'hot_prospect' => 2, 'spk' => 1, 'do' => 2, 'lost' => 0])
         ->has('dashboard.performance', 2)->has('dashboard.teams', 1)
         ->where('dashboard.performance', function ($rows) {
             $a = collect($rows)->firstWhere('id', $this->sales->id);
@@ -99,14 +99,14 @@ it('reconciles multiple source and model groups and drilldowns to the independen
         ->where('analytics.sources', function ($rows) use ($achievement) {
             $rows = collect($rows)->keyBy('source');
 
-            return $rows['walk_in'] == ['source' => 'walk_in', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0, 'conversion' => $achievement ? null : 33.3]
-                && $rows['referral'] == ['source' => 'referral', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0, 'conversion' => $achievement ? null : 0];
+            return $rows['walk_in'] == ['source' => 'walk_in', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'conversion' => $achievement ? null : 33.3]
+                && $rows['referral'] == ['source' => 'referral', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'conversion' => $achievement ? null : 0];
         })
         ->where('analytics.models', function ($rows) use ($achievement) {
             $rows = collect($rows)->keyBy('model');
 
-            return $rows['Model A'] == ['model' => 'Model A', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0]
-                && $rows['Model B'] == ['model' => 'Model B', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0];
+            return $rows['Model A'] == ['model' => 'Model A', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1]
+                && $rows['Model B'] == ['model' => 'Model B', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0];
         }));
     foreach (['source' => 'walk_in', 'model' => 'Model A'] as $dimension => $value) {
         $ids = collect(array_slice($this->deals, 0, 3))->pluck('public_id');

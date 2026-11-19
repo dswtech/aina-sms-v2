@@ -247,13 +247,7 @@ class DealTransaction extends Model
             if ($toStage === PipelineStage::Do && $fromStage !== PipelineStage::Spk) {
                 throw new InvalidArgumentException('DO hanya dapat dicatat dari tahap SPK.');
             }
-            if ($toStage === PipelineStage::Delivery && $fromStage !== PipelineStage::Do) {
-                throw new InvalidArgumentException('Delivery hanya dapat dikonfirmasi dari tahap DO.');
-            }
-            if ($toStage === PipelineStage::Delivery && ! $this->currentDoEvent()?->hasDoChecklist()) {
-                throw new InvalidArgumentException('Delivery memerlukan riwayat DO dengan checklist lengkap.');
-            }
-            if ($fromStage->isClosed() && $toStage !== PipelineStage::Delivery) {
+            if ($fromStage->isClosed()) {
                 throw new InvalidArgumentException('Tahap transaksi yang selesai terkunci.');
             }
             if ($fromStage === $toStage) {
@@ -298,7 +292,7 @@ class DealTransaction extends Model
             $this->save();
 
             // A closed deal needs no more contact plans; completed ones stay as history.
-            if (in_array($toStage, [PipelineStage::Lost, PipelineStage::Do, PipelineStage::Delivery], true)) {
+            if (in_array($toStage, [PipelineStage::Lost, PipelineStage::Do], true)) {
                 $this->followUps()->where('status', 'pending')->update([
                     'status' => 'cancelled',
                     'cancel_reason' => 'Transaksi '.$toStage->label(),

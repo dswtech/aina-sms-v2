@@ -55,7 +55,7 @@ it('measures real Laravel endpoints on a synthetic PostgreSQL workload', functio
         with roster as (select user_id, team_id, row_number() over (order by user_id) as slot from team_memberships where role = 'sales'),
         samples as (
             select id, dealer_id,
-                (array['lead','prospect','hot_prospect','spk','do','delivery','lost'])[1 + id % 7] as stage,
+                (array['lead','prospect','hot_prospect','spk','do','lost'])[1 + id % 6] as stage,
                 timestamptz '2025-12-01 00:00:00+07' + (id % 12) * interval '1 month' + (id % 23) * interval '1 day' as acquired_at
             from customers
         )
@@ -76,9 +76,6 @@ it('measures real Laravel endpoints on a synthetic PostgreSQL workload', functio
         select id, current_stage, sales_id, created_at + interval '3 days',
             current_stage = 'do', current_stage = 'do', current_stage = 'do'
         from deal_transactions where current_stage <> 'lead'
-        union all
-        select id, 'do', sales_id, created_at + interval '2 days', true, true, true
-        from deal_transactions where current_stage = 'delivery'
         SQL);
     DB::statement('analyze');
     $this->assertDatabaseCount('deal_transactions', $transactions);

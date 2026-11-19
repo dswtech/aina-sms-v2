@@ -17,7 +17,7 @@ it('renders the stage achievement report for a supervisor', function () {
         ->where('report.to', '2026-11')
         ->has('report.rows')
         ->where('report.totals.lead', 0)
-        ->where('report.stages', ['lead', 'prospect', 'hot_prospect', 'spk', 'do', 'delivery']));
+        ->where('report.stages', ['lead', 'prospect', 'hot_prospect', 'spk', 'do']));
 });
 
 it('forbids Sales from the stage achievement report', function () {

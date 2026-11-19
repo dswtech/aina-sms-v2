@@ -50,7 +50,7 @@ if ($mode === 'seed') {
             TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => $user->role]);
         }
     }
-    foreach ([PipelineStage::Prospect, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
+    foreach ([PipelineStage::Prospect, PipelineStage::Do] as $stage) {
         $customer = Customer::factory()->create(['dealer_id' => $dealer->id, 'created_by_id' => $users['sales']->id, 'name' => 'RESTORE OWN CUSTOMER '.$stage->value]);
         $customer->assignTo($users['sales'], $users['supervisor']);
         $deal = DealTransaction::create([
@@ -62,12 +62,6 @@ if ($mode === 'seed') {
                 'from_stage' => PipelineStage::Spk, 'to_stage' => PipelineStage::Do,
                 'actor_id' => $users['sales']->id, 'created_at' => now()->subMinute(),
                 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
-            ]);
-        }
-        if ($stage === PipelineStage::Delivery) {
-            $deal->stageHistories()->create([
-                'from_stage' => PipelineStage::Do, 'to_stage' => PipelineStage::Delivery,
-                'actor_id' => $users['sales']->id, 'created_at' => now(),
             ]);
         }
         DealComment::create([
