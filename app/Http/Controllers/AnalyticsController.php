@@ -178,21 +178,27 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Furthest-stage buckets (acquisition only) partition the group, so they feed the source flow chart.
+     *
      * @param  Collection<int, DealTransaction>  $deals
-     * @return array{spk: int, do: int, delivery: int}
+     * @return array{spk: int, do: int, delivery: int, furthest: array{lead: int, spk: int, do: int, delivery: int}|null}
      */
     private function stageCounts(Collection $deals, bool $achievement): array
     {
         $counts = ['spk' => 0, 'do' => 0, 'delivery' => 0];
+        $furthest = ['lead' => 0, 'spk' => 0, 'do' => 0, 'delivery' => 0];
         foreach ($deals as $deal) {
             $row = $deal->getAttributes();
+            $top = 'lead';
             foreach ($counts as $stage => $count) {
                 if ($row['reached_'.$stage] || (! $achievement && $stage !== PipelineStage::Do->value && $row['current_stage'] === $stage)) {
                     $counts[$stage] = $count + 1;
+                    $top = $stage;
                 }
             }
+            $furthest[$top]++;
         }
 
-        return $counts;
+        return [...$counts, 'furthest' => $achievement ? null : $furthest];
     }
 }

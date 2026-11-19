@@ -99,14 +99,14 @@ it('reconciles multiple source and model groups and drilldowns to the independen
         ->where('analytics.sources', function ($rows) use ($achievement) {
             $rows = collect($rows)->keyBy('source');
 
-            return $rows['walk_in'] == ['source' => 'walk_in', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0, 'conversion' => $achievement ? null : 33.3]
-                && $rows['referral'] == ['source' => 'referral', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0, 'conversion' => $achievement ? null : 0];
+            return $rows['walk_in'] == ['source' => 'walk_in', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0, 'conversion' => $achievement ? null : 33.3, 'furthest' => $achievement ? null : ['lead' => 2, 'spk' => 0, 'do' => 1, 'delivery' => 0]]
+                && $rows['referral'] == ['source' => 'referral', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0, 'conversion' => $achievement ? null : 0, 'furthest' => $achievement ? null : ['lead' => 2, 'spk' => 1, 'do' => 0, 'delivery' => 0]];
         })
         ->where('analytics.models', function ($rows) use ($achievement) {
             $rows = collect($rows)->keyBy('model');
 
-            return $rows['Model A'] == ['model' => 'Model A', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0]
-                && $rows['Model B'] == ['model' => 'Model B', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0];
+            return $rows['Model A'] == ['model' => 'Model A', 'total' => $achievement ? 4 : 3, 'share' => $achievement ? 57.1 : 50, 'spk' => $achievement ? 1 : 0, 'do' => $achievement ? 2 : 1, 'delivery' => $achievement ? 1 : 0, 'furthest' => $achievement ? null : ['lead' => 2, 'spk' => 0, 'do' => 1, 'delivery' => 0]]
+                && $rows['Model B'] == ['model' => 'Model B', 'total' => 3, 'share' => $achievement ? 42.9 : 50, 'spk' => 1, 'do' => 0, 'delivery' => 0, 'furthest' => $achievement ? null : ['lead' => 2, 'spk' => 1, 'do' => 0, 'delivery' => 0]];
         }));
     foreach (['source' => 'walk_in', 'model' => 'Model A'] as $dimension => $value) {
         $ids = collect(array_slice($this->deals, 0, 3))->pluck('public_id');

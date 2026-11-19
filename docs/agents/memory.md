@@ -3,11 +3,15 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.63 |
+| Versi | v1.64 |
 | Diperbarui | 19 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 19 November 2026 — grafik di Analisis Sumber & Model
+
+Branch `feat/analytics-charts` (PRD ANL-02 sampai ANL-04) menambah grafik SVG tanpa dependency baru di `/analytics`: ringkasan tahap, diagram alur sumber → tahap terjauh, donut porsi, conversion per sumber, dan bar bertumpuk per model (9 teratas + Lainnya). Di mode Pencapaian, diagram alur dan conversion diganti bar kejadian tahap. Setiap baris sumber/model kini membawa `furthest` (lead/spk/do/delivery yang menjumlah ke total, hanya mode Akuisisi; `null` di Pencapaian). Tabel, kartu mobile, Drilldown, dan CSV tidak berubah; grafik disembunyikan saat cetak.
 
 ## Pembaruan 19 November 2026 — tanggal tahap sah dan Capaian Sales
 
