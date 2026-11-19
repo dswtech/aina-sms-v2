@@ -157,6 +157,7 @@ class TeamPerformance
                 'stageCounts' => $metrics['stage_counts'], 'forecastStages' => $metrics['forecast_stages'], 'stagnantCount' => $stagnantCount,
                 'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDoHistoryCount' => $metrics['missing_do_history_count'],
                 'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
+                'stageAchievement' => $actor->role === UserRole::Supervisor ? app(StageAchievements::class)->bySales($actor, $window) : null,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
                     ? $this->metrics($dealsByTeam->get('', collect()), null, $historical) : null,
             ],

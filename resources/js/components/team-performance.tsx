@@ -1,3 +1,4 @@
+import type { StageAchievementData } from '@/components/stage-achievement-table';
 import type { TargetPlan } from '@/components/target-plan-editor';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
@@ -79,6 +80,7 @@ export type ReportingProps = {
         performance: PerformanceRow[];
         teams: PerformanceRow[];
         unassignedTeam: Metrics | null;
+        stageAchievement?: StageAchievementData | null;
         priorities: {
             stagnant: Priority[];
             closing: Priority[];
@@ -581,25 +583,25 @@ export function PriorityLists({
                             {priorities[key].map((item) => (
                                 <li
                                     key={item.id ?? item.public_id}
-                                    className="striped-row p-5"
+                                    className="striped-row flex items-center gap-3 px-4 py-2"
                                 >
                                     <Link
                                         href={item.url}
-                                        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                        className="inline-flex min-h-11 min-w-0 flex-1 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
                                     >
-                                        {item.title ?? item.vehicle_model}
+                                        <span className="truncate">
+                                            {item.title ?? item.vehicle_model}
+                                        </span>
                                     </Link>
                                     {item.stage && (
-                                        <div className="mt-2">
-                                            <StageBadge stage={item.stage}>
-                                                {stageLabel(item.stage)}
-                                            </StageBadge>
-                                        </div>
+                                        <StageBadge stage={item.stage}>
+                                            {stageLabel(item.stage)}
+                                        </StageBadge>
                                     )}
                                     {item.sales_name && (
-                                        <p className="mt-2 text-xs text-muted-foreground">
+                                        <span className="shrink-0 text-xs text-muted-foreground">
                                             {item.sales_name}
-                                        </p>
+                                        </span>
                                     )}
                                 </li>
                             ))}

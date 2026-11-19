@@ -38,6 +38,20 @@ class DashboardTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_only_supervisors_receive_stage_achievements(): void
+    {
+        $this->actingAs(User::factory()->supervisor()->create())->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('dashboard.stageAchievement.rows')
+                ->has('dashboard.stageAchievement.stages', 6)
+                ->has('dashboard.stageAchievement.totals'));
+
+        foreach (['sales', 'branchManager', 'admin'] as $role) {
+            $this->actingAs(User::factory()->{$role}()->create())->get(route('dashboard'))
+                ->assertInertia(fn (Assert $page) => $page->where('dashboard.stageAchievement', null));
+        }
+    }
+
     public function test_authenticated_user_props_use_a_safe_allowlist(): void
     {
         $user = User::factory()->create();

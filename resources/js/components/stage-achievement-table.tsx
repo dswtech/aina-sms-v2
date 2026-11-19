@@ -8,8 +8,10 @@ export type StageAchievementData = {
 
 export function StageAchievementTable({
     data,
+    caption,
 }: {
     data: StageAchievementData;
+    caption?: string;
 }) {
     return (
         <section
@@ -21,7 +23,7 @@ export function StageAchievementTable({
                     id="stage-achievement-title"
                     className="text-base font-semibold"
                 >
-                    Capaian per tahap
+                    Capaian per tahap{caption && ` · ${caption}`}
                 </h2>
             </div>
             <div className="overflow-x-auto">
