@@ -68,9 +68,15 @@ async function transactionDetailWorkspace(page) {
     );
     assert(clipped === 0, `${clipped} property values are truncated`);
     await page.setViewportSize({ width: 768, height: 1024 });
-    const narrowDeal = await box(dealCard);
-    const narrowTimeline = await box(timeline);
-    assert(narrowTimeline.y >= narrowDeal.y + narrowDeal.height - 1, 'Timeline does not stack under Transaksi on a tablet');
+    // The panel re-measures after a resize; poll until the stacked layout settles instead of reading once.
+    let stacked = false;
+    for (let attempt = 0; attempt < 20 && !stacked; attempt++) {
+        const narrowDeal = await box(dealCard);
+        const narrowTimeline = await box(timeline);
+        stacked = narrowTimeline.y >= narrowDeal.y + narrowDeal.height - 1;
+        if (!stacked) await page.waitForTimeout(100);
+    }
+    assert(stacked, 'Timeline does not stack under Transaksi on a tablet');
     const narrowCustomer = await box(customerCard);
     assert(narrowCustomer.width <= 460, 'Pelanggan card should be one narrow column on a tablet');
     await page.setViewportSize({ width: 1440, height: 900 });
