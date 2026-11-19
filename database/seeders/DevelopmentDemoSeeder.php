@@ -384,6 +384,8 @@ class DevelopmentDemoSeeder extends Seeder
                 'sales_id' => $sales->id,
                 'team_id' => $context['team_id'],
                 'vehicle_model' => $vehicleModels[$index % count($vehicleModels)],
+                'vehicle_color' => ['Putih', 'Hitam', 'Silver', 'Merah'][$index % 4],
+                'vehicle_ownership' => ['first_buyer', 'additional', 'trade_in'][$index % 3],
                 'estimated_value' => $estimatedValue,
                 'source' => $sources[$index % count($sources)],
                 'source_channel' => $sources[$index % count($sources)] === 'digital_ad' ? 'instagram' : null,

@@ -22,6 +22,24 @@ export const INSURANCES = [
     { value: 'combination', label: 'Kombinasi' },
 ];
 
+export const OWNERSHIPS = [
+    { value: 'first_buyer', label: 'First Buyer' },
+    { value: 'additional', label: 'Additional' },
+    { value: 'trade_in', label: 'Trade In' },
+];
+
+export const ownershipLabel = (value: string | null | undefined) =>
+    OWNERSHIPS.find((o) => o.value === value)?.label ?? null;
+
+/** "Putih · First Buyer": the second line under a vehicle; empty parts are skipped. */
+export const vehicleExtras = (t: {
+    vehicle_color?: string | null;
+    vehicle_ownership?: string | null;
+}) =>
+    [t.vehicle_color, ownershipLabel(t.vehicle_ownership)]
+        .filter(Boolean)
+        .join(' · ');
+
 export type ProfileField =
     | 'gender'
     | 'address'

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
+use App\Enums\VehicleOwnership;
 use App\Notifications\DealStageChanged;
 use App\Services\DealAudience;
 use App\Services\TransactionSnapshots;
@@ -28,6 +29,8 @@ use InvalidArgumentException;
  * @property int $sales_id
  * @property int|null $team_id
  * @property string $vehicle_model
+ * @property string|null $vehicle_color
+ * @property VehicleOwnership|null $vehicle_ownership
  * @property CarbonInterface|null $expected_closing_month
  * @property int|null $estimated_value
  * @property string $source
@@ -48,6 +51,8 @@ use InvalidArgumentException;
     'sales_id',
     'team_id',
     'vehicle_model',
+    'vehicle_color',
+    'vehicle_ownership',
     'estimated_value',
     'expected_closing_month',
     'source',
@@ -233,6 +238,10 @@ class DealTransaction extends Model
             throw new InvalidArgumentException('Kendaraan wajib diisi untuk tahap SPK.');
         }
 
+        if ($toStage === PipelineStage::Do && blank($options['vehicle_ownership'] ?? $this->vehicle_ownership)) {
+            throw new InvalidArgumentException('Ownership wajib diisi untuk tahap DO.');
+        }
+
         if ($toStage === PipelineStage::Lost && empty($options['lost_reason'])) {
             throw new InvalidArgumentException('Alasan lost wajib diisi.');
         }
@@ -273,6 +282,9 @@ class DealTransaction extends Model
             if ($this->region_code === null && $this->other_city === null && $customer->hasArea()) {
                 $this->fill($customer->only(['region_code', 'district_code', 'other_city']));
             }
+            if ($toStage === PipelineStage::Do && filled($options['vehicle_ownership'] ?? null)) {
+                $this->vehicle_ownership = $options['vehicle_ownership'];
+            }
             $snapshots = $toStage === PipelineStage::Do ? TransactionSnapshots::capture($this) : [];
             // One instant for the deal and its history row, so progress_at equals the event time.
             $at = now();
@@ -286,6 +298,7 @@ class DealTransaction extends Model
 
             if ($toStage === PipelineStage::Spk && filled($options['vehicle_model'] ?? null)) {
                 $this->vehicle_model = $options['vehicle_model'];
+                $this->vehicle_color = $options['vehicle_color'] ?? $this->vehicle_color;
             }
 
             if ($toStage === PipelineStage::Lost && ! empty($options['lost_reason'])) {
@@ -399,6 +412,7 @@ class DealTransaction extends Model
             'expected_closing_month' => 'date',
             'current_stage' => PipelineStage::class,
             'lost_reason' => LostReason::class,
+            'vehicle_ownership' => VehicleOwnership::class,
             'booking_fee_confirmed_at' => 'datetime',
             'last_activity_at' => 'datetime',
             'progress_at' => 'datetime',

@@ -19,7 +19,7 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
     $deal = DealTransaction::create([
         'region_code' => '32.17', 'district_code' => '32.17.08',
         'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
-        'customer_id' => $customer->id, 'vehicle_model' => 'DO test',
+        'customer_id' => $customer->id, 'vehicle_model' => 'DO test', 'vehicle_ownership' => 'first_buyer',
         'current_stage' => PipelineStage::Spk,
     ]);
     $stage = route('transactions.stage', $deal);
@@ -81,7 +81,7 @@ it('limits DO and Delivery to authorized Sales and Supervisors', function () {
         'vehicle_model' => 'DO scope test',
     ]);
     $path = route('transactions.stage', $deal);
-    $payload = ['to_stage' => 'do', 'stage_event_id' => 0, 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
+    $payload = ['to_stage' => 'do', 'stage_event_id' => 0, 'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true];
     $this->actingAs($supervisor)->patchJson($path, $payload)->assertUnprocessable();
     $deal->update(['current_stage' => PipelineStage::Spk]);
     $otherSupervisor = User::factory()->supervisor()->create(['dealer_id' => $dealer->id]);

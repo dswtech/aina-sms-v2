@@ -25,7 +25,7 @@ $request = Request::create('/transactions/'.$publicId.($metadata ? '' : '/stage'
     'area' => ['region_code' => 'other', 'other_city' => 'Jakarta'],
     'financing' => ['type' => 'cash'],
 ] : [
-    'to_stage' => 'do', 'stage_event_id' => 0, 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    'to_stage' => 'do', 'stage_event_id' => 0, 'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
 ], server: ['HTTP_ACCEPT' => 'application/json']);
 $response = $app->make(HttpKernel::class)->handle($request);
 echo $response->getStatusCode();
