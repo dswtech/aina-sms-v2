@@ -200,6 +200,8 @@ class DealTransaction extends Model
      */
     public function scopeReachedStage(Builder $query, ?PipelineStage $stage, ?CarbonInterface $start, ?CarbonInterface $end): void
     {
+        $start = $start?->toImmutable()->utc();
+        $end = $end?->toImmutable()->utc();
         $inRange = fn (Builder $q, string $column) => $q
             ->when($start, fn (Builder $q) => $q->where($column, '>=', $start))
             ->when($end, fn (Builder $q) => $q->where($column, '<', $end));

@@ -142,3 +142,15 @@ it('matches any stage when stage is null', function () {
     expect(reached($deal, null, '2026-11-08', '2026-11-09'))->toBeTrue()
         ->and(reached($deal, null, '2026-11-09', '2026-11-10'))->toBeFalse();
 });
+
+it('treats a Jakarta-zoned bound the same as its UTC equivalent', function () {
+    $deal = stageDateDeal();
+    stageRow($deal, PipelineStage::Lead, 'raw', ['created_at' => CarbonImmutable::parse('2026-11-04 17:00:00', 'UTC')]);
+    $jakarta = CarbonImmutable::parse('2026-11-05 00:00:00', 'Asia/Jakarta');
+
+    $count = fn ($start) => DealTransaction::query()->whereKey($deal->id)->reachedStage(PipelineStage::Lead, $start, null)->count();
+
+    expect($count($jakarta))->toBe(1)
+        ->and($count($jakarta->utc()))->toBe(1)
+        ->and($count($jakarta->addSecond()))->toBe(0);
+});
