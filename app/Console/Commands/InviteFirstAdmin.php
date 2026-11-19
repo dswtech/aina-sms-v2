@@ -42,9 +42,9 @@ class InviteFirstAdmin extends Command
             'dealer' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'username' => ['required', 'regex:/^[a-zA-Z0-9]{1,12}$/'],
+            'username' => ['required', 'string'],
         ])->fails()) {
-            $this->error('Supply a dealer name, owner name, valid email, and username of 1–12 letters or digits.');
+            $this->error('Supply a dealer name, owner name, valid email, and username.');
 
             return self::FAILURE;
         }

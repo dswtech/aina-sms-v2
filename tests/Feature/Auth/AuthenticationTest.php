@@ -34,12 +34,39 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_not_authenticate_with_invalid_password()
     {
+        $this->useProductionLocale();
         $user = User::factory()->create();
 
         $this->post(route('login.store'), [
             'username' => $user->username,
             'password' => 'wrong-password',
-        ]);
+        ])->assertSessionHasErrors(['username' => 'Username atau password salah.']);
+
+        $this->assertGuest();
+    }
+
+    public function test_auth_messages_have_indonesian_text(): void
+    {
+        // A missing lang file shows the raw key (e.g. "auth.failed") to users.
+        $this->useProductionLocale();
+        foreach (['auth.failed', 'auth.throttle', 'passwords.reset', 'passwords.token', 'passwords.user', 'validation.current_password'] as $key) {
+            $this->assertNotSame($key, __($key), "Missing Indonesian text for {$key}");
+        }
+    }
+
+    /** Production runs locale and fallback "id"; local .env may say "en", which hides missing keys. */
+    private function useProductionLocale(): void
+    {
+        app()->setLocale('id');
+        app('translator')->setFallback('id');
+    }
+
+    public function test_array_username_is_rejected_without_server_error(): void
+    {
+        $this->post(route('login.store'), [
+            'username' => ['admin'],
+            'password' => 'password',
+        ])->assertSessionHasErrors('username');
 
         $this->assertGuest();
     }

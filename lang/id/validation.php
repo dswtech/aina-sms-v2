@@ -7,6 +7,7 @@ return [
     'array' => ':attribute harus berupa daftar.',
     'boolean' => ':attribute harus benar atau salah.',
     'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'current_password' => 'Password saat ini salah.',
     'date' => ':attribute bukan tanggal yang valid.',
     'date_format' => ':attribute tidak sesuai format :format.',
     'email' => ':attribute harus berupa alamat email yang valid.',
@@ -41,6 +42,8 @@ return [
     'uuid' => ':attribute harus berupa UUID yang valid.',
 
     'attributes' => [
+        'username' => 'Username',
+        'current_password' => 'Password saat ini',
         'password' => 'Password',
         'password_confirmation' => 'Ulangi password',
         'email' => 'Email',

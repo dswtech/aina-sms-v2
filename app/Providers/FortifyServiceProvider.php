@@ -99,7 +99,9 @@ class FortifyServiceProvider extends ServiceProvider
     {
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            // Runs before validation, so a crafted array username must not reach Str::lower.
+            $username = $request->input(Fortify::username());
+            $throttleKey = Str::transliterate(Str::lower(is_string($username) ? $username : '').'|'.$request->ip());
 
             // The second limit stops one IP from trying many usernames; 60 keeps a shared office IP usable.
             return [
