@@ -4,6 +4,18 @@ import { Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
+import {
+    ChartPanel,
+    ConversionBars,
+    eventSegments,
+    furthestSegments,
+    ShareDonut,
+    SourceFlow,
+    sourcePalette,
+    StageBars,
+    StageSummary,
+} from '@/components/analytics-charts';
+import type { ChartRow, StageBuckets } from '@/components/analytics-charts';
 import { Button } from '@/components/ui/button';
 import { MonthRangeFields } from '@/components/month-range-fields';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
@@ -27,6 +39,7 @@ type SourceRow = {
     do: number;
     delivery: number;
     conversion: number | null;
+    furthest: StageBuckets | null;
 };
 
 type ModelRow = {
@@ -36,6 +49,7 @@ type ModelRow = {
     spk: number;
     do: number;
     delivery: number;
+    furthest: StageBuckets | null;
 };
 
 type DrilldownRow = {
@@ -80,6 +94,51 @@ function formatCategory(value: string): string {
     return value
         .replaceAll('_', ' ')
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+const TOP_MODELS = 9;
+
+function sourceChartRows(rows: SourceRow[]): ChartRow[] {
+    return rows.map((row, index) => ({
+        ...row,
+        key: row.source,
+        label: formatCategory(row.source),
+        color: sourcePalette[index] ?? 'var(--muted-foreground)',
+    }));
+}
+
+// Top models plus one "Lainnya" row keep the chart readable; the table still lists every model.
+function modelChartRows(rows: ModelRow[]): ChartRow[] {
+    const chartRows = rows.map((row) => ({
+        ...row,
+        key: row.model,
+        label: row.model,
+        color: '',
+    }));
+    const rest = chartRows.slice(TOP_MODELS);
+    if (rest.length < 2) return chartRows;
+    const add = (key: keyof StageBuckets) =>
+        rest.reduce((sum, row) => sum + (row.furthest?.[key] ?? 0), 0);
+    return [
+        ...chartRows.slice(0, TOP_MODELS),
+        {
+            key: '__lainnya',
+            label: `Lainnya (${rest.length} model)`,
+            color: '',
+            total: rest.reduce((sum, row) => sum + row.total, 0),
+            spk: rest.reduce((sum, row) => sum + row.spk, 0),
+            do: rest.reduce((sum, row) => sum + row.do, 0),
+            delivery: rest.reduce((sum, row) => sum + row.delivery, 0),
+            furthest: rest[0].furthest
+                ? {
+                      lead: add('lead'),
+                      spk: add('spk'),
+                      do: add('do'),
+                      delivery: add('delivery'),
+                  }
+                : null,
+        },
+    ];
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
@@ -175,6 +234,9 @@ export default function AnalyticsIndex({ analytics }: Props) {
     const exportUrl = `/analytics/export.csv?${exportQuery.toString()}`;
     const hasSelection =
         analytics.dimension !== null && analytics.value !== null;
+    const acquisition = analytics.mode === 'acquisition';
+    const sourceRows = sourceChartRows(analytics.sources);
+    const modelRows = modelChartRows(analytics.models);
 
     return (
         <>
@@ -309,6 +371,10 @@ export default function AnalyticsIndex({ analytics }: Props) {
                     </div>
                 )}
 
+                {sourceRows.length > 0 && (
+                    <StageSummary rows={sourceRows} acquisition={acquisition} />
+                )}
+
                 <aside className="mt-6 rounded-xl border bg-secondary p-5 text-sm leading-6 sm:p-6 print:border print:bg-white">
                     <h2 className="font-semibold">Cara membaca angka</h2>
                     {analytics.mode === 'acquisition' ? (
@@ -360,6 +426,59 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 SPK, DO, serta Delivery.
                             </p>
                         </div>
+
+                        {sourceRows.length > 0 && (
+                            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+                                {acquisition ? (
+                                    <ChartPanel
+                                        id="source-flow-title"
+                                        title="Alur lead: sumber → tahap terjauh"
+                                        description="Lebar pita = jumlah lead. Arahkan kursor ke pita untuk melihat angkanya."
+                                    >
+                                        <SourceFlow rows={sourceRows} />
+                                    </ChartPanel>
+                                ) : (
+                                    <ChartPanel
+                                        id="source-events-title"
+                                        title="Kejadian tahap per sumber"
+                                        description="SPK, DO, dan Delivery yang terjadi pada periode ini, dari kohort mana pun."
+                                    >
+                                        <StageBars
+                                            rows={sourceRows}
+                                            segments={eventSegments}
+                                            unit="kejadian"
+                                            width={600}
+                                        />
+                                    </ChartPanel>
+                                )}
+                                <ChartPanel
+                                    id="source-share-title"
+                                    title="Porsi sumber"
+                                    description={
+                                        acquisition
+                                            ? 'Dari total lead periode ini.'
+                                            : 'Dari transaksi yang punya kejadian tahap.'
+                                    }
+                                >
+                                    <ShareDonut
+                                        rows={sourceRows}
+                                        unit={
+                                            acquisition ? 'lead' : 'transaksi'
+                                        }
+                                    />
+                                </ChartPanel>
+                                {acquisition && (
+                                    <ChartPanel
+                                        id="source-conversion-title"
+                                        title="Conversion per sumber (DO ÷ lead)"
+                                        description="Garis putus-putus = rata-rata semua sumber."
+                                        className="lg:col-span-2"
+                                    >
+                                        <ConversionBars rows={sourceRows} />
+                                    </ChartPanel>
+                                )}
+                            </div>
+                        )}
 
                         <div className="mt-5 space-y-3 lg:hidden print:hidden">
                             {analytics.sources.length === 0 ? (
@@ -439,6 +558,29 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 untuk filter yang sama.
                             </p>
                         </div>
+
+                        {modelRows.length > 0 && (
+                            <ChartPanel
+                                id="model-stage-title"
+                                title={
+                                    acquisition
+                                        ? 'Lead per model, menurut tahap terjauh'
+                                        : 'Kejadian tahap per model'
+                                }
+                                description={`${analytics.models.length > TOP_MODELS + 1 ? `${TOP_MODELS} model teratas, sisanya digabung. ` : ''}Tabel di bawah memuat semua model.`}
+                                className="mt-5"
+                            >
+                                <StageBars
+                                    rows={modelRows}
+                                    segments={
+                                        acquisition
+                                            ? furthestSegments
+                                            : eventSegments
+                                    }
+                                    unit={acquisition ? 'lead' : 'kejadian'}
+                                />
+                            </ChartPanel>
+                        )}
 
                         <div className="mt-5 space-y-3 lg:hidden print:hidden">
                             {analytics.models.length === 0 ? (
