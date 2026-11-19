@@ -42,6 +42,16 @@ Key deploy adalah key ed25519 khusus di `authorized_keys` user deploy dengan ops
 5. DNS: record `A aiia` ke IP VPS di Exabytes, lalu `sudo certbot --nginx -d aiia.toyotabandung.web.id`; port 80/443/22 harus dibuka juga di firewall Lighthouse instance (bukan hanya template).
 6. SSH: `/etc/ssh/sshd_config.d/00-hardening.conf` mematikan login password dan root.
 
+## Domain pengirim email (18 November 2026)
+
+Email keluar lewat Brevo SMTP (`smtp-relay.brevo.com:587`) dengan pengirim `AIna DealDrive <noreply@notifi.toyotabandung.web.id>` (`MAIL_FROM_ADDRESS` di `/var/www/aina/shared/.env`). Subdomain `notifi` dipakai khusus untuk email supaya reputasi kirim terpisah dari domain utama.
+
+- Brevo: domain `notifi.toyotabandung.web.id` berstatus Authenticated, sender `noreply@notifi.toyotabandung.web.id` Verified. Branded subdomain (link tracking) tidak diaktifkan.
+- DNS di Exabytes (TTL 300): TXT `notifi` (`brevo-code:...`), CNAME `brevo1._domainkey.notifi` dan `brevo2._domainkey.notifi` (ke `b1`/`b2.notifi-toyotabandung-web-id.dkim.brevo.com`), TXT `_dmarc.notifi` (`v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com`). Jangan hapus record ini; tanpa DKIM email ditolak atau masuk spam.
+- Terbukti dengan email undangan ke Gmail: SPF, DKIM dan DMARC semuanya PASS.
+- `noreply@` tidak punya mailbox, jadi balasan tidak diterima. DMARC masih `p=none`; naikkan ke `quarantine` setelah laporan bersih beberapa minggu.
+- Mengubah pengirim: edit `MAIL_FROM_ADDRESS`, jalankan `php artisan optimize` di `current`, lalu `php artisan queue:restart` agar worker memakai config baru.
+
 ## Rollback
 
 Arahkan `current` ke rilis sebelumnya di `releases` lalu restart worker.
