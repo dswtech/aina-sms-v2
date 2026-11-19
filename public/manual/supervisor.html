@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual Supervisor AIna DealDrive</title>
+<meta name="description" content="Panduan penggunaan aplikasi AIna DealDrive untuk Supervisor.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="manual.css">
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Daftar isi">
+  <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
+  <p class="ver">Manual Supervisor · Versi 1.1.0</p>
+  <h2>Supervisor</h2>
+  <ol>
+    <li><a href="#akun">1. Masuk &amp; akun</a></li>
+    <li><a href="#navigasi">2. Navigasi aplikasi</a></li>
+    <li><a href="#beranda">3. Beranda</a></li>
+    <li><a href="#pelanggan">4. Pelanggan Tim</a></li>
+    <li><a href="#transaksi">5. Transaksi tim</a></li>
+    <li><a href="#lead-baru">6. Membuat lead untuk Sales</a></li>
+    <li><a href="#pic">7. Mengganti PIC Sales</a></li>
+    <li><a href="#coaching">8. Memberi coaching</a></li>
+    <li><a href="#tahap">9. Tahap, DO, dan Delivery</a></li>
+    <li><a href="#kalender">10. Kalender tim</a></li>
+    <li><a href="#target">11. Target &amp; Forecast</a></li>
+    <li><a href="#rencana-target">12. Rencana Target Bulanan</a></li>
+    <li><a href="#analisis">13. Analisis</a></li>
+    <li><a href="#import">14. Import Data</a></li>
+    <li><a href="#notifikasi">15. Notifikasi</a></li>
+    <li><a href="#rutinitas">16. Rutinitas harian</a></li>
+  </ol>
+  <h2>Lainnya</h2>
+  <ol>
+    <li><a href="index.html#riwayat-versi">Riwayat versi</a></li>
+    <li><a href="index.html">Manual peran lain</a></li>
+  </ol>
+</nav>
+
+<main>
+<a class="back" href="index.html">← Semua manual</a>
+<header class="doc">
+  <h1>Manual Supervisor</h1>
+  <p>Panduan memantau pipeline tim, memberi coaching, dan mengelola target di AIna DealDrive.</p>
+  <ul class="meta">
+    <li>Versi 1.1.0</li>
+    <li>19 November 2026</li>
+    <li>Berlaku untuk aplikasi v1.4.0</li>
+    <li>Peran: Supervisor</li>
+  </ul>
+</header>
+
+<section id="cakupan">
+  <h2>Cakupan akses Supervisor</h2>
+  <p>Supervisor hanya melihat dan mengelola <strong>tim yang ditugaskan kepadanya</strong>: Sales anggota tim, pelanggan mereka, transaksi, target, dan analisis tim. Data tim Supervisor lain tidak terlihat. Penempatan Sales ke tim dan perpindahan antartim diatur oleh Admin dealer.</p>
+  <p>Banyak layar sama dengan layar Sales, misalnya detail transaksi dan ubah tahap. Bagian itu tidak diulang di sini; ikuti tautan ke <a href="sales.html">Manual Sales</a>.</p>
+</section>
+
+<section id="akun">
+  <h2>1. Masuk &amp; akun</h2>
+  <p>Cara aktivasi, masuk, lupa password, ganti username, dan ganti password sama untuk semua peran. Lihat <a href="sales.html#masuk">Manual Sales, bab 1</a>.</p>
+  <div class="callout tip"><p><strong>Syarat password:</strong> minimal 8 karakter dan harus memuat paling sedikit satu angka dan satu simbol.</p></div>
+</section>
+
+<section id="navigasi">
+  <h2>2. Navigasi aplikasi</h2>
+  <p>Menu Supervisor di sisi kiri layar:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Menu</th><th>Fungsi</th></tr>
+    <tr><td>Beranda</td><td>Target, realisasi, forecast, pipeline, dan prioritas tindak lanjut tim.</td></tr>
+    <tr><td>Pelanggan Tim</td><td>Semua pelanggan milik Sales di tim Anda.</td></tr>
+    <tr><td>Transaksi</td><td>Seluruh transaksi tim, dengan filter, ekspor CSV, dan tambah transaksi.</td></tr>
+    <tr><td>Kalender</td><td>Rencana dan realisasi kegiatan setiap Sales di tim.</td></tr>
+    <tr><td>Target</td><td><span class="ui">Target &amp; Forecast</span> untuk membaca angka, dan <span class="ui">Rencana Target Bulanan</span> untuk mengisi target.</td></tr>
+    <tr><td>Analisis</td><td><span class="ui">Sumber &amp; Model</span>, <span class="ui">Pembiayaan</span>, dan <span class="ui">Mapping Area</span>.</td></tr>
+    <tr><td>Import Data</td><td>Mengunggah lead dari file CSV ke tim Anda.</td></tr>
+    <tr><td>Notifikasi</td><td>Riwayat pemberitahuan 3 hari terakhir.</td></tr>
+  </table></div>
+  <p>Menu pengguna di pojok kanan atas sama seperti untuk Sales: Profil, tema, ukuran tulisan, warna, <span class="ui">Rilis log</span>, dan Keluar.</p>
+</section>
+
+<section id="beranda">
+  <h2>3. Beranda</h2>
+  <p>Beranda adalah <strong>Dashboard penjualan</strong> tim Anda untuk satu bulan. Pilih bulan di <span class="ui">Periode laporan</span> lalu klik <span class="ui">Tampilkan</span>.</p>
+  <figure>
+    <a href="img/spv/dashboard.png" target="_blank"><img src="img/spv/dashboard.png" alt="Dashboard penjualan Supervisor" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Dashboard penjualan Supervisor.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <tr><th>Angka</th><th>Arti</th></tr>
+    <tr><td>Target management</td><td>Target tim dari management untuk bulan ini, dalam unit.</td></tr>
+    <tr><td>Realisasi</td><td>Jumlah transaksi yang mencapai DO pada bulan ini.</td></tr>
+    <tr><td>Forecast (estimasi)</td><td>Realisasi ditambah transaksi aktif yang berbobot. Lihat <a href="#target">bab 11</a>.</td></tr>
+    <tr><td>Gap ke realisasi / ke forecast</td><td>Target dikurangi realisasi atau forecast. Nilai negatif berarti target terlampaui.</td></tr>
+  </table></div>
+  <p>Di bawah angka utama terdapat:</p>
+  <ul>
+    <li><strong>Kinerja per tim</strong> dan <strong>Kinerja per Sales</strong>: realisasi dan forecast dibandingkan target. Klik <span class="ui">Lihat rincian angka</span> untuk tabelnya.</li>
+    <li><strong>Pipeline per tahap</strong>: jumlah transaksi pada setiap tahap untuk periode terpilih.</li>
+    <li><strong>Kontributor forecast teratas</strong>: transaksi dengan nilai rupiah berbobot terbesar.</li>
+    <li><strong>Prioritas tindak lanjut</strong>: transaksi stagnan, komentar belum dibaca, dan peluang closing periode ini. Klik sebuah item untuk membuka transaksinya.</li>
+  </ul>
+  <div class="callout warn"><p>Bila muncul pesan "transaksi aktif belum memiliki estimasi bulan closing", transaksi tersebut belum masuk forecast. Minta Sales terkait mengisi estimasi bulan closing.</p></div>
+</section>
+
+<section id="pelanggan">
+  <h2>4. Pelanggan Tim</h2>
+  <p>Halaman ini memuat semua pelanggan milik Sales di tim Anda, dengan kolom <span class="ui">PIC</span> yang menunjukkan Sales penanggung jawabnya. Filter, pencarian, dan tombol <span class="ui">Detail</span> serta <span class="ui">Ubah Tahap</span> bekerja sama seperti di <a href="sales.html#pelanggan">Buku Pelanggan Saya</a> milik Sales.</p>
+  <figure>
+    <a href="img/spv/customers.png" target="_blank"><img src="img/spv/customers.png" alt="Halaman Pelanggan Tim" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Pelanggan Tim, dengan kolom PIC.</figcaption>
+  </figure>
+</section>
+
+<section id="transaksi">
+  <h2>5. Transaksi tim</h2>
+  <p>Halaman <span class="ui">Transaksi</span> menampilkan seluruh transaksi tim. Kolom <span class="ui">Sales / Supervisor</span> menunjukkan penanggung jawabnya.</p>
+  <figure>
+    <a href="img/spv/transactions.png" target="_blank"><img src="img/spv/transactions.png" alt="Daftar transaksi tim dengan filter" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Daftar transaksi tim.</figcaption>
+  </figure>
+  <ul>
+    <li>Pilih <span class="ui">Sales</span> untuk melihat transaksi satu orang saja.</li>
+    <li>Pilih tab <span class="ui">Stagnan</span> untuk melihat transaksi tanpa aktivitas lebih dari 3 hari.</li>
+    <li>Filter lainnya (tahap, sumber lead, kanal digital, wilayah, rentang progress) sama seperti di <a href="sales.html#transaksi">Manual Sales, bab 6</a>. Klik <span class="ui">Terapkan</span> setelah memilih, atau <span class="ui">Reset</span> untuk menghapus filter.</li>
+    <li>Klik <span class="ui">Ekspor CSV</span> untuk mengunduh daftar sesuai filter yang aktif.</li>
+  </ul>
+</section>
+
+<section id="lead-baru">
+  <h2>6. Membuat lead untuk Sales</h2>
+  <p>Supervisor dapat mencatat lead atas nama Sales di timnya, misalnya lead dari pameran atau telepon ke kantor. Langkahnya sama dengan <a href="sales.html#lead-baru">Manual Sales, bab 5</a>, dengan satu tambahan:</p>
+  <ol class="steps">
+    <li>Klik <span class="ui">Tambah transaksi</span> di halaman Transaksi, atau <span class="ui">Tambah Lead Baru</span> di Pelanggan Tim.</li>
+    <li>Pada <span class="ui">Sales penanggung jawab</span>, klik <span class="ui">Pilih Sales</span> dan pilih Sales aktif di tim Anda. Kolom ini wajib.</li>
+    <li>Isi data transaksi dan pelanggan, lalu klik <span class="ui">Simpan transaksi</span>.</li>
+  </ol>
+  <figure>
+    <a href="img/spv/create.png" target="_blank"><img src="img/spv/create.png" alt="Formulir transaksi baru dengan pilihan Sales penanggung jawab" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Formulir Transaksi Baru untuk Supervisor.</figcaption>
+  </figure>
+  <p>Lead menjadi tanggung jawab Sales yang dipilih. Anda tetap tercatat sebagai pembuatnya.</p>
+</section>
+
+<section id="pic">
+  <h2>7. Mengganti PIC Sales</h2>
+  <p>Bila tanggung jawab pelanggan perlu dipindahkan, misalnya karena Sales cuti panjang atau beban kerja tidak seimbang, ganti PIC-nya ke Sales lain <strong>di tim Anda</strong>.</p>
+  <ol class="steps">
+    <li>Buka detail transaksi pelanggan tersebut.</li>
+    <li>Klik ikon <span class="ui">Pelanggan</span> di panel kanan.</li>
+    <li>Pada <span class="ui">Ganti PIC Sales</span>, pilih Sales baru, lalu klik <span class="ui">Ganti PIC</span>.</li>
+  </ol>
+  <figure>
+    <a href="img/spv/detail-pic.png" target="_blank"><img src="img/spv/detail-pic.png" alt="Panel Pelanggan dengan pilihan Ganti PIC Sales" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Panel Pelanggan di detail transaksi.</figcaption>
+  </figure>
+  <p>Sales baru langsung mendapat akses ke pelanggan itu. Riwayat penugasan lama tetap tersimpan. Pemindahan ke Sales di tim lain harus dilakukan Admin dealer.</p>
+</section>
+
+<section id="coaching">
+  <h2>8. Memberi coaching</h2>
+  <p>Coaching adalah arahan Anda yang dicatat langsung pada transaksi, sehingga Sales dan Anda membaca konteks yang sama. Komentar hanya dapat dilihat oleh Sales terkait, Supervisor terkait, dan Admin.</p>
+  <ol class="steps">
+    <li>Buka detail transaksi, lalu klik ikon <span class="ui">Komentar</span>.</li>
+    <li>Tulis arahan di <span class="ui">Komentar baru</span>, lalu klik <span class="ui">Kirim komentar</span>.</li>
+    <li>Untuk menanggapi balasan Sales, klik <span class="ui">Balas</span> pada komentarnya.</li>
+  </ol>
+  <figure>
+    <a href="img/spv/coaching.png" target="_blank"><img src="img/spv/coaching.png" alt="Halaman coaching transaksi dengan timeline dan komentar" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Halaman Coaching transaksi: timeline aktivitas, perubahan tahap, komentar, dan balasan.</figcaption>
+  </figure>
+  <ul>
+    <li>Setiap komentar mencatat tahap transaksi saat dikirim (<em>Saat dikirim: …</em>).</li>
+    <li>Komentar masih dapat diperbaiki dalam <strong>5 menit</strong> setelah dikirim.</li>
+    <li>Sales menerima pemberitahuan di aplikasi dan email. Email tidak memuat isi komentar.</li>
+  </ul>
+  <div class="callout tip"><p>Tulis arahan yang spesifik dan dapat dikerjakan, misalnya "Tawarkan simulasi kredit tenor 4 tahun sebelum Jumat", bukan "Tolong di-follow up".</p></div>
+</section>
+
+<section id="tahap">
+  <h2>9. Tahap, DO, dan Delivery</h2>
+  <p>Supervisor dapat mencatat aktivitas, menjadwalkan follow-up, mengubah tahap, mencatat DO, dan mengonfirmasi Delivery untuk transaksi timnya. Syarat setiap tahap sama untuk Sales dan Supervisor; lihat <a href="sales.html#detail">Manual Sales, bab 7</a> dan <a href="sales.html#tahap">bab 8</a>.</p>
+  <ul>
+    <li>DO hanya dapat dicatat dari SPK setelah PO, DP, dan Unit dikonfirmasi.</li>
+    <li>Pembatalan DO hanya dapat dilakukan Admin dealer, sebelum Delivery, dengan alasan.</li>
+    <li>Setelah Delivery, tahap transaksi terkunci.</li>
+  </ul>
+</section>
+
+<section id="kalender">
+  <h2>10. Kalender tim</h2>
+  <p>Kalender Supervisor menampilkan satu baris untuk setiap Sales aktif di tim Anda, sehingga Anda dapat melihat siapa yang punya rencana, siapa yang sudah mencatat aktivitas, dan siapa yang terlambat.</p>
+  <figure>
+    <a href="img/spv/calendar.png" target="_blank"><img src="img/spv/calendar.png" alt="Kalender tim tampilan bulanan, satu baris per Sales" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Kalender tim tampilan Bulanan.</figcaption>
+  </figure>
+  <ul>
+    <li>Arti tanda (Rencana, Realisasi, Campuran, Terlambat, Rencana selesai, Dibatalkan) sama seperti di <a href="sales.html#kalender">Manual Sales, bab 10</a>.</li>
+    <li>Klik tanggal di header untuk membuka tampilan <span class="ui">Harian</span> berisi rincian setiap kegiatan.</li>
+    <li>Bila Anda membawahi lebih dari satu tim, pilih tim yang ingin dilihat.</li>
+    <li>Centang <span class="ui">Tampilkan yang dibatalkan</span> untuk ikut melihat rencana yang dibatalkan beserta alasannya.</li>
+  </ul>
+</section>
+
+<section id="target">
+  <h2>11. Target &amp; Forecast</h2>
+  <p>Buka <span class="ui">Target</span> → <span class="ui">Target &amp; Forecast</span> untuk melihat dari mana angka forecast berasal dan posisi setiap Sales terhadap targetnya.</p>
+  <figure>
+    <a href="img/spv/targets.png" target="_blank"><img src="img/spv/targets.png" alt="Halaman Target tim dan Sales dengan asal forecast" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Halaman Target tim dan Sales.</figcaption>
+  </figure>
+  <h3>Cara forecast dihitung</h3>
+  <p><strong>Forecast = Realisasi + pipeline berbobot.</strong> Pipeline berbobot berasal dari transaksi aktif yang estimasi bulan closing-nya jatuh pada periode ini, dikalikan bobot tahapnya:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Tahap</th><th>Bobot</th></tr>
+    <tr><td>Lead</td><td>10%</td></tr>
+    <tr><td>Prospect</td><td>25%</td></tr>
+    <tr><td>Hot Prospect</td><td>50%</td></tr>
+    <tr><td>SPK</td><td>75%</td></tr>
+    <tr><td>Tanpa estimasi closing</td><td>Tidak dihitung</td></tr>
+  </table></div>
+  <p>Contoh: 4 transaksi SPK × 75% = 3 unit berbobot. Forecast adalah estimasi dari kondisi pipeline saat ini, bukan kepastian penjualan. Forecast untuk bulan yang sudah lewat tidak tersedia.</p>
+  <h3>Membaca tabel</h3>
+  <ul>
+    <li><strong>Target dan kinerja tim</strong>: target management, benchmark tim, total alokasi Sales, pencapaian, dan gap.</li>
+    <li><strong>Target dan kinerja Sales</strong>: target personal, realisasi, forecast, dan gap setiap Sales. Klik nama Sales untuk rincian forecast per tahap.</li>
+  </ul>
+  <div class="callout tip"><p>Gap ke forecast yang besar berarti pipeline tidak cukup untuk mengejar target. Dorong Sales menambah lead atau menaikkan tahap transaksi yang sudah ada.</p></div>
+</section>
+
+<section id="rencana-target">
+  <h2>12. Rencana Target Bulanan</h2>
+  <p>Target bulanan disusun dalam tiga langkah: <strong>target management → benchmark tim → alokasi personal Sales</strong>.</p>
+  <figure>
+    <a href="img/spv/target-plans.png" target="_blank"><img src="img/spv/target-plans.png" alt="Formulir Rencana target bulanan" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Formulir Rencana target bulanan.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Buka <span class="ui">Target</span> → <span class="ui">Rencana Target Bulanan</span>. Pilih bulan di <span class="ui">Periode laporan</span>, lalu klik <span class="ui">Tampilkan</span>.</li>
+    <li>Pilih tim di <span class="ui">Tim penerima target</span>.</li>
+    <li>Isi <span class="ui">Target management (unit)</span>, yaitu target dari management.</li>
+    <li>Isi <span class="ui">Markup SPV (%)</span> bila Anda ingin target internal tim lebih tinggi. <span class="ui">Benchmark tim</span> dihitung otomatis.</li>
+    <li>Klik <span class="ui">Bagi rata</span> untuk membagi benchmark sama rata ke Sales aktif, lalu sesuaikan angka setiap Sales bila perlu. Angka desimal (maksimal 4 angka, koma atau titik) diterima.</li>
+    <li>Pastikan <span class="ui">Total alokasi</span> minimal 100% dari benchmark, lalu klik <span class="ui">Simpan rencana target</span>.</li>
+  </ol>
+  <ul>
+    <li>Perubahan belum tersimpan sebelum Anda menekan Simpan.</li>
+    <li>Sales yang keluar dari tim tetap menyimpan target lamanya. Sales baru ditandai <em>Anggota baru</em>; tentukan targetnya sesuai kesiapan. Aplikasi menyarankan angka prorata dari sisa hari kerja.</li>
+    <li>Target yang belum diisi dibedakan dari target nol.</li>
+    <li>Sales hanya melihat target personalnya, bukan target management atau markup.</li>
+  </ul>
+</section>
+
+<section id="analisis">
+  <h2>13. Analisis</h2>
+  <p>Menu <span class="ui">Analisis</span> berisi tiga laporan. Semuanya mengikuti cakupan tim Anda dan memakai <span class="ui">Rentang bulan</span> (Dari bulan – Sampai bulan).</p>
+
+  <h3>Sumber &amp; Model</h3>
+  <p>Membandingkan sumber lead dan model kendaraan: jumlah, porsi, SPK, DO, Delivery, dan conversion (DO dibagi jumlah lead).</p>
+  <ul>
+    <li><span class="ui">Mode tanggal</span> <strong>Akuisisi</strong> memakai tanggal lead dibuat. <strong>Pencapaian</strong> memakai tanggal kejadian tahap.</li>
+    <li>Klik <span class="ui">Drilldown</span> pada sebuah baris untuk melihat transaksi pembentuk angkanya.</li>
+    <li><span class="ui">Unduh CSV</span> untuk data mentah, atau <span class="ui">Save as PDF / browser print</span> untuk dicetak.</li>
+  </ul>
+  <figure>
+    <a href="img/spv/analytics.png" target="_blank"><img src="img/spv/analytics.png" alt="Analisis Sumber dan Model" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Analisis Sumber &amp; Model.</figcaption>
+  </figure>
+
+  <h3>Pembiayaan</h3>
+  <p>Komposisi Cash, Kredit, dan Belum ditentukan, serta leasing tujuan untuk transaksi Kredit. Pilih <span class="ui">Dasar laporan</span>: <strong>Prospek</strong> (bulan pertama masuk Prospect) atau <strong>Realisasi DO</strong> (bulan DO, dengan pembiayaan yang dikunci saat DO).</p>
+  <figure>
+    <a href="img/spv/financing.png" target="_blank"><img src="img/spv/financing.png" alt="Laporan Pembiayaan" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Laporan Pembiayaan.</figcaption>
+  </figure>
+
+  <h3>Mapping Area</h3>
+  <p>Sebaran DO menurut kecamatan PMA dan area lain. Pengelompokan mengikuti kondisi saat DO, bukan daftar PMA terbaru.</p>
+  <figure>
+    <a href="img/spv/mapping-area.png" target="_blank"><img src="img/spv/mapping-area.png" alt="Laporan Mapping Area" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Laporan Mapping Area.</figcaption>
+  </figure>
+</section>
+
+<section id="import">
+  <h2>14. Import Data</h2>
+  <p>Gunakan Import Data untuk memasukkan banyak lead sekaligus dari file CSV, misalnya daftar pengunjung pameran. Lead hanya dapat diimpor ke Sales di tim Anda.</p>
+  <figure>
+    <a href="img/spv/imports.png" target="_blank"><img src="img/spv/imports.png" alt="Halaman Import Data" width="1280" height="800" loading="lazy"></a>
+    <figcaption>Halaman Import Data.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Klik <span class="ui">Unduh template</span> dan isi file CSV tersebut. Jangan mengubah nama kolom.</li>
+    <li>Kolom wajib: <code>name</code>, <code>phone</code>, <code>vehicle_model</code>, <code>source</code>, <code>sales_username</code>, dan <code>gender</code>. Isi <code>sales_username</code> dengan username Sales penanggung jawab.</li>
+    <li>Pada <span class="ui">Unggah CSV</span>, pilih file (maksimal 2 MB), lalu klik <span class="ui">Preview</span>.</li>
+    <li>Periksa preview. Setiap baris berstatus <strong>Valid</strong> atau <strong>Ditolak</strong> beserta alasannya.</li>
+    <li>Klik <span class="ui">Import … baris valid</span>. Hanya baris valid yang disimpan.</li>
+  </ol>
+  <p>Hasil setiap impor tercatat di <span class="ui">Riwayat batch</span>: nama file, status, jumlah total dan ditolak, pelaku, dan waktu.</p>
+  <div class="callout warn"><p>Bila muncul pesan "Hasil impor belum dapat dipastikan", periksa Riwayat batch terlebih dahulu sebelum menekan Import lagi, agar data tidak masuk dua kali.</p></div>
+</section>
+
+<section id="notifikasi">
+  <h2>15. Notifikasi</h2>
+  <p>Ikon lonceng dan halaman Notifikasi bekerja sama seperti untuk Sales (<a href="sales.html#notifikasi">Manual Sales, bab 11</a>): riwayat 3 hari terakhir, baik yang sudah maupun belum dibaca. Supervisor menerima notifikasi untuk:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Label</th><th>Kapan muncul</th></tr>
+    <tr><td>Komentar coaching</td><td>Sales menulis komentar atau balasan di transaksi timnya.</td></tr>
+    <tr><td>Perubahan tahap</td><td>Sales di tim Anda mengubah tahap transaksi. Isinya hanya tahap lama dan tahap baru.</td></tr>
+    <tr><td>Stagnan</td><td>Satu ringkasan per hari berisi jumlah transaksi tim yang baru menjadi stagnan. Klik untuk membuka daftar Stagnan di halaman Transaksi.</td></tr>
+    <tr><td>Rilis</td><td>Aplikasi diperbarui ke versi baru. Isi perubahannya ada di halaman Riwayat Rilis.</td></tr>
+  </table></div>
+</section>
+
+<section id="rutinitas">
+  <h2>16. Rutinitas harian</h2>
+  <ol class="steps">
+    <li><strong>Pagi</strong>: buka Beranda. Periksa Prioritas tindak lanjut: transaksi stagnan, komentar belum dibaca, dan peluang closing.</li>
+    <li><strong>Untuk transaksi stagnan</strong>: tulis coaching yang spesifik, atau ganti PIC bila Sales tidak dapat menanganinya.</li>
+    <li><strong>Siang</strong>: buka Kalender tim. Pastikan setiap Sales punya rencana follow-up dan tidak ada yang terlambat menumpuk.</li>
+    <li><strong>Mingguan</strong>: buka Target &amp; Forecast. Bandingkan gap ke forecast setiap Sales, lalu atur prioritas coaching.</li>
+    <li><strong>Awal bulan</strong>: isi Rencana Target Bulanan sebelum Sales mulai bekerja.</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Manual Book AIna DealDrive · Versi 1.1.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Admin dealer Anda.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>
