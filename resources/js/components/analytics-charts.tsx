@@ -42,6 +42,23 @@ export const sourcePalette = [
     'var(--chart-5)',
 ];
 
+export const OTHER_ROW_KEY = '__lainnya';
+
+type Select = ((row: ChartRow) => void) | undefined;
+
+// Mouse/touch shortcut to Drilldown; keyboard users reach the same rows through the tables' Drilldown buttons.
+function clickable(row: ChartRow, onSelect: Select) {
+    return onSelect && row.key !== OTHER_ROW_KEY
+        ? {
+              onClick: () => onSelect(row),
+              className: 'cursor-pointer hover:opacity-80',
+          }
+        : {};
+}
+
+const hint = (row: ChartRow, onSelect: Select) =>
+    onSelect && row.key !== OTHER_ROW_KEY ? ' · klik untuk drilldown' : '';
+
 function shorten(value: string, max = 20) {
     return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
@@ -184,7 +201,13 @@ function spreadLabels(centres: number[], minGap = 18): number[] {
     });
 }
 
-export function SourceFlow({ rows }: { rows: ChartRow[] }) {
+export function SourceFlow({
+    rows,
+    onSelect,
+}: {
+    rows: ChartRow[];
+    onSelect?: (row: ChartRow) => void;
+}) {
     const width = 720;
     const height = 340;
     const gap = 10;
@@ -256,14 +279,19 @@ export function SourceFlow({ rows }: { rows: ChartRow[] }) {
                                 stroke={link.source.row.color}
                                 strokeWidth={Math.max(link.h, 1)}
                                 strokeOpacity={0.4}
-                                className="transition-[stroke-opacity] hover:[stroke-opacity:0.75]"
+                                className={`transition-[stroke-opacity] hover:[stroke-opacity:0.75] ${onSelect ? 'cursor-pointer' : ''}`}
+                                onClick={
+                                    onSelect &&
+                                    (() => onSelect(link.source.row))
+                                }
                             >
-                                <title>{`${link.source.row.label} → ${link.target.outcome.label}: ${link.value} lead`}</title>
+                                <title>{`${link.source.row.label} → ${link.target.outcome.label}: ${link.value} lead${hint(link.source.row, onSelect)}`}</title>
                             </path>
                         ),
                 )}
                 {left.map((node, index) => (
-                    <g key={node.row.key}>
+                    <g key={node.row.key} {...clickable(node.row, onSelect)}>
+                        <title>{`${node.row.label}: ${node.row.total} lead${hint(node.row, onSelect)}`}</title>
                         <rect
                             x={leftX}
                             y={node.y}
@@ -324,7 +352,15 @@ export function SourceFlow({ rows }: { rows: ChartRow[] }) {
     );
 }
 
-export function ShareDonut({ rows, unit }: { rows: ChartRow[]; unit: string }) {
+export function ShareDonut({
+    rows,
+    unit,
+    onSelect,
+}: {
+    rows: ChartRow[];
+    unit: string;
+    onSelect?: (row: ChartRow) => void;
+}) {
     const total = rows.reduce((sum, row) => sum + row.total, 0);
     const radius = 80;
     const circumference = 2 * Math.PI * radius;
@@ -360,8 +396,9 @@ export function ShareDonut({ rows, unit }: { rows: ChartRow[]; unit: string }) {
                                 strokeDasharray={`${Math.max(length - (rows.length > 1 ? 2 : 0), 0)} ${circumference}`}
                                 strokeDashoffset={-offset}
                                 transform="rotate(-90 100 100)"
+                                {...clickable(row, onSelect)}
                             >
-                                <title>{`${row.label}: ${row.total} ${unit} (${pct(row.total, total)})`}</title>
+                                <title>{`${row.label}: ${row.total} ${unit} (${pct(row.total, total)})${hint(row, onSelect)}`}</title>
                             </circle>
                         );
                     })}
@@ -396,7 +433,20 @@ export function ShareDonut({ rows, unit }: { rows: ChartRow[]; unit: string }) {
                             style={{ background: row.color }}
                             aria-hidden="true"
                         />
-                        <dt className="min-w-0 flex-1 truncate">{row.label}</dt>
+                        <dt className="min-w-0 flex-1 truncate">
+                            {onSelect ? (
+                                <button
+                                    type="button"
+                                    className="max-w-full truncate rounded-sm text-left underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                                    aria-label={`Drilldown ${row.label}`}
+                                    onClick={() => onSelect(row)}
+                                >
+                                    {row.label}
+                                </button>
+                            ) : (
+                                row.label
+                            )}
+                        </dt>
                         <dd className="font-medium tabular-nums">
                             {pct(row.total, total)}
                         </dd>
@@ -407,7 +457,13 @@ export function ShareDonut({ rows, unit }: { rows: ChartRow[]; unit: string }) {
     );
 }
 
-export function ConversionBars({ rows }: { rows: ChartRow[] }) {
+export function ConversionBars({
+    rows,
+    onSelect,
+}: {
+    rows: ChartRow[];
+    onSelect?: (row: ChartRow) => void;
+}) {
     const width = 860;
     const left = 170;
     const right = 130;
@@ -465,7 +521,14 @@ export function ConversionBars({ rows }: { rows: ChartRow[] }) {
                     const value = (row.do / Math.max(row.total, 1)) * 100;
                     const y = index * rowHeight;
                     return (
-                        <g key={row.key}>
+                        <g key={row.key} {...clickable(row, onSelect)}>
+                            <rect
+                                x={0}
+                                y={y}
+                                width={width}
+                                height={rowHeight}
+                                fill="transparent"
+                            />
                             <text
                                 x={left - 12}
                                 y={y + 25}
@@ -483,7 +546,7 @@ export function ConversionBars({ rows }: { rows: ChartRow[] }) {
                                 rx={4}
                                 fill={row.color}
                             >
-                                <title>{`${row.label}: ${pct(row.do, row.total)} (${row.do} DO dari ${row.total} lead)`}</title>
+                                <title>{`${row.label}: ${pct(row.do, row.total)} (${row.do} DO dari ${row.total} lead)${hint(row, onSelect)}`}</title>
                             </rect>
                             <text
                                 x={x(value) + 8}
@@ -576,11 +639,13 @@ export function StageBars({
     segments,
     unit,
     width = 860,
+    onSelect,
 }: {
     rows: ChartRow[];
     segments: StageSegment[];
     unit: string;
     width?: number;
+    onSelect?: (row: ChartRow) => void;
 }) {
     const left = 170;
     const right = 110;
@@ -616,7 +681,14 @@ export function StageBars({
                         const y = index * rowHeight;
                         let x = left;
                         return (
-                            <g key={row.key}>
+                            <g key={row.key} {...clickable(row, onSelect)}>
+                                <rect
+                                    x={0}
+                                    y={y}
+                                    width={width}
+                                    height={rowHeight}
+                                    fill="transparent"
+                                />
                                 <text
                                     x={left - 12}
                                     y={y + 23}
@@ -640,7 +712,7 @@ export function StageBars({
                                                 height={22}
                                                 fill={segment.color}
                                             >
-                                                <title>{`${row.label} · ${segment.label}: ${value}`}</title>
+                                                <title>{`${row.label} · ${segment.label}: ${value}${hint(row, onSelect)}`}</title>
                                             </rect>
                                         )
                                     );
