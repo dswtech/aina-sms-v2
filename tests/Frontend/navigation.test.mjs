@@ -13,7 +13,7 @@ test('analytics contains source/model and financing children for authorized role
         );
         assert.deepEqual(
             group.children.map((item) => item.title),
-            ['Sumber & Model', 'Pembiayaan', 'Mapping Area'],
+            ['Sumber & Model', 'Pembiayaan', 'Mapping Area', 'Capaian Sales'],
         );
     }
     assert.equal(
@@ -33,15 +33,18 @@ test('exactly one analytics child is active despite report filters', () => {
         '/analytics/financing?from=2026-10&to=2026-11&mode=do',
         '/analytics/mapping-area',
         '/analytics/mapping-area?from=2026-10&to=2026-11',
+        '/analytics/stage-achievement?from=2026-10&to=2026-11',
     ]) {
         assert.equal(isNavigationItemActive(group, url), true);
         assert.deepEqual(
             group.children.map((item) => isNavigationItemActive(item, url)),
             url.includes('/analytics/financing')
-                ? [false, true, false]
+                ? [false, true, false, false]
                 : url.includes('/analytics/mapping-area')
-                  ? [false, false, true]
-                  : [true, false, false],
+                  ? [false, false, true, false]
+                  : url.includes('/analytics/stage-achievement')
+                    ? [false, false, false, true]
+                    : [true, false, false, false],
         );
     }
     assert.equal(isNavigationItemActive(group, '/customers'), false);
@@ -60,7 +63,7 @@ test('mobile more menu keeps nested analytics reachable even with a primary anal
             getMobileNavigation(role).more.find(
                 (item) => item.key === 'analytics',
             ).children.length,
-            3,
+            4,
         );
     }
 });

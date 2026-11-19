@@ -94,6 +94,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('analytics/export.csv', [AnalyticsController::class, 'csv'])->name('analytics.csv');
         Route::get('analytics/financing', [ReportController::class, 'financing'])->name('analytics.financing');
         Route::get('analytics/mapping-area', [ReportController::class, 'mappingArea'])->name('analytics.mapping-area');
+        Route::get('analytics/stage-achievement', [ReportController::class, 'stageAchievement'])->name('analytics.stage-achievement');
     });
 
     Route::middleware('role:supervisor,admin')->group(function () {

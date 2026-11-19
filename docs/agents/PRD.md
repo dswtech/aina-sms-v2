@@ -251,7 +251,7 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | ID | Kebutuhan | Prioritas |
 |---|---|---|
 | DSH-01 | **Dashboard Supervisor menampilkan target, realisasi, forecast, gap, dan jumlah transaksi per tahap untuk timnya.** Semua angka mengikuti periode yang sama. | M |
-| DSH-02 | **Dashboard menampilkan kinerja per Sales tanpa membuka data tim lain.** Urutan dapat membantu coaching tetapi bukan satu-satunya ukuran evaluasi. | M |
+| DSH-02 | **Dashboard menampilkan kinerja per Sales tanpa membuka data tim lain.** Urutan dapat membantu coaching tetapi bukan satu-satunya ukuran evaluasi. Capaian per tahap per Sales (berdasarkan tanggal tahap sah) ditampilkan di Analisis > Capaian Sales dan di Beranda Supervisor. | M |
 | DSH-03 | **Dashboard menampilkan daftar tindakan yang membutuhkan perhatian.** Minimal mencakup stagnant lead, komentar belum dibaca, dan transaksi berpeluang closing. | M |
 | DSH-04 | **Branch Manager melihat agregat seluruh tim dan dapat membandingkan tim.** Tampilan tidak membuka conversation atau kontak pelanggan. | M |
 | DSH-05 | **Admin dapat memeriksa dashboard untuk dukungan dan audit.** Akses Admin tidak mengubah angka atau kepemilikan transaksi. | S |

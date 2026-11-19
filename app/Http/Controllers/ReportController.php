@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\StageAchievements;
 use App\Services\TransactionReports;
 use App\Support\ReportingPeriod;
 use Illuminate\Http\Request;
@@ -41,5 +42,14 @@ class ReportController extends Controller
         [$actor, $from, $to] = $this->range($request);
 
         return Inertia::render('analytics/mapping-area', ['report' => $reports->mappingArea($actor, $from, $to)]);
+    }
+
+    public function stageAchievement(Request $request, StageAchievements $achievements): Response
+    {
+        [$actor, $from, $to] = $this->range($request);
+
+        return Inertia::render('analytics/stage-achievement', [
+            'report' => [...$achievements->bySales($actor, new ReportingPeriod($from, $to)), 'from' => $from, 'to' => $to],
+        ]);
     }
 }
