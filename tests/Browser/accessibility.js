@@ -56,7 +56,7 @@ async function accessibility(page) {
                 },
             ],
         },
-        next_follow_up: null,
+        next_follow_up: null, follow_up_history: [],
         stage_history: Array.from({ length: 15 }, () => ({
             from_stage: null,
             from_stage_label: null,
@@ -184,7 +184,7 @@ async function accessibility(page) {
             opt_out: false,
             last_contact_at: null,
             assigned_sales: { id: 1, name: user.name },
-            next_follow_up: null,
+            next_follow_up: null, follow_up_history: [],
             area: {
                 region_code: null,
                 region_name: null,

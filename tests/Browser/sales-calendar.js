@@ -17,7 +17,7 @@ async (page) => {
     const item = (userId, date, time, plan, overdue = false) => {
         const [type, label] = plan ? ['plan', 'Rencana'] : types[n % types.length];
         n++;
-        return { id: `${plan ? 'plan' : 'done'}-${n}`, kind: plan ? 'plan' : 'done', type, type_label: label, user_id: userId, date, time, customer: `Pelanggan ${n}`, customer_id: `cust-${n}`, notes: `Catatan kegiatan nomor ${n} untuk uji tooltip kalender.`, overdue, status: plan ? 'pending' : 'completed', follow_up_id: plan ? n : null };
+        return { id: `${plan ? 'plan' : 'done'}-${n}`, kind: plan ? 'plan' : 'done', type, type_label: label, user_id: userId, date, time, customer: `Pelanggan ${n}`, customer_id: `cust-${n}`, notes: `Catatan kegiatan nomor ${n} untuk uji tooltip kalender.`, overdue, status: plan ? 'pending' : 'completed', cancel_reason: null, follow_up_id: plan ? n : null };
     };
     const monthItems = [];
     for (const row of rows) {
@@ -41,7 +41,7 @@ async (page) => {
         return { ...initial, component: 'calendar/index', url: url.pathname + url.search, props: { ...initial.props, auth: { user: users[role] }, errors: {}, sidebarOpen: true, notifications: [], notificationsUnreadCount: 0,
             view, date, today: '2026-11-14', now: '11:20',
             teams: role === 'supervisor' ? [{ id: 'team-a', name: 'Tim A', count: 4 }, { id: 'team-b', name: 'Tim B', count: 4 }] : [],
-            team: null, rows: role === 'supervisor' ? rows : null,
+            team: null, show_cancelled: url.searchParams.get('cancelled') === '1', rows: role === 'supervisor' ? rows : null,
             items: own(view === 'day' ? dayItems.filter((i) => i.date === date) : monthItems) } };
     };
     await page.route('**/*', async (route) => {

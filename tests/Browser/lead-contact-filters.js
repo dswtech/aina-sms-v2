@@ -138,7 +138,7 @@ async function leadContactFilters(page) {
                         username: 'qa-sales',
                     },
                     active_deal: null,
-                    next_follow_up: null,
+                    next_follow_up: null, follow_up_history: [],
                     stage_history: [],
                     recent_activities: [],
                 };

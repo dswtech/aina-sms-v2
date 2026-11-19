@@ -24,6 +24,7 @@ const cardVariant = {
     plan: 'border-[1.5px] border-dashed border-primary',
     late: 'border-[1.5px] border-dashed border-destructive bg-destructive/10',
     completed: 'border border-primary/40 opacity-80',
+    cancelled: 'border border-border bg-muted/50 text-muted-foreground',
 };
 
 /**
@@ -131,9 +132,26 @@ export function DayAgenda({
                                                             <LateTag />
                                                         )}
                                                     </div>
-                                                    <div className="mt-0.5 text-sm font-semibold">
+                                                    <div
+                                                        className={cn(
+                                                            'mt-0.5 text-sm font-semibold',
+                                                            item.status ===
+                                                                'cancelled' &&
+                                                                'line-through',
+                                                        )}
+                                                    >
                                                         {item.customer}
                                                     </div>
+                                                    {item.status ===
+                                                        'cancelled' &&
+                                                        item.cancel_reason && (
+                                                            <p className="mt-0.5 text-xs">
+                                                                Dibatalkan:{' '}
+                                                                {
+                                                                    item.cancel_reason
+                                                                }
+                                                            </p>
+                                                        )}
                                                     {item.notes && (
                                                         <p className="mt-0.5 text-[13px] leading-normal whitespace-pre-line">
                                                             {item.notes}

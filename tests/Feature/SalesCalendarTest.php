@@ -69,12 +69,29 @@ it('shows a sales person only their own plans and real activities within the Jak
         ->where('items.0', [
             'id' => 'plan-1', 'kind' => 'plan', 'type' => 'plan', 'type_label' => 'Rencana', 'user_id' => $f['a']->id,
             'date' => '2026-11-10', 'time' => '09:00', 'customer' => 'Budi', 'customer_id' => $budi->public_id, 'notes' => 'Kirim simulasi', 'overdue' => true,
-            'status' => 'pending', 'follow_up_id' => 1,
+            'status' => 'pending', 'cancel_reason' => null, 'follow_up_id' => 1,
         ])
         ->where('items.1.kind', 'done')->where('items.1.type', 'visit')->where('items.1.type_label', 'Kunjungan')
         ->where('items.1.date', '2026-11-12')->where('items.1.time', '10:00')->where('items.1.overdue', false)
         ->where('items.2.notes', 'Test drive')->where('items.2.overdue', false)
         ->where('items.3.date', '2026-11-30')->where('items.3.time', '23:30'));
+});
+
+it('hides cancelled plans unless asked, then returns them with their reason', function () {
+    $f = calendarFixture();
+    $budi = calendarCustomer($f['a'], 'Budi');
+    $budi->scheduleFollowUp($f['a'], $f['a'], CarbonImmutable::parse('2026-11-20 03:30:00', 'UTC'), 'Test drive')
+        ->update(['status' => 'cancelled', 'cancel_reason' => 'Transaksi Lost']);
+    $budi->scheduleFollowUp($f['a'], $f['a'], CarbonImmutable::parse('2026-11-21 03:30:00', 'UTC'), 'Aktif');
+
+    $this->actingAs($f['a'])->get('/kalender')->assertInertia(fn (Assert $p) => $p
+        ->where('show_cancelled', false)
+        ->where('items', fn ($items) => collect($items)->pluck('notes')->all() === ['Aktif']));
+
+    $this->actingAs($f['a'])->get('/kalender?cancelled=1')->assertInertia(fn (Assert $p) => $p
+        ->where('show_cancelled', true)
+        ->has('items', 2)
+        ->where('items.0.status', 'cancelled')->where('items.0.cancel_reason', 'Transaksi Lost')->where('items.0.overdue', false));
 });
 
 it('limits the day view to one Jakarta calendar day', function () {

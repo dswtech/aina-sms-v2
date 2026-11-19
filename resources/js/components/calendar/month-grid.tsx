@@ -19,6 +19,7 @@ const dotVariant: Record<ItemVariant, string> = {
     plan: 'rounded-full border-2 border-primary bg-card',
     late: 'rounded-[2px] border-2 border-destructive bg-destructive/10',
     completed: 'rounded-full border-2 border-primary/40 bg-card',
+    cancelled: 'rounded-full border-2 border-border bg-muted',
 };
 
 function Dot({ item, small }: { item: CalendarItem; small?: boolean }) {

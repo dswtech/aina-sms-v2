@@ -101,6 +101,20 @@ it('shows completed plans as done and hides cancelled ones in the calendar', fun
         ->where('items.1.kind', 'done')->where('items.1.type', ActivityType::Call->value));
 });
 
+it('lists completed and cancelled follow-ups, newest first, in the transaction detail', function () {
+    $this->actingAs($this->sales)->post("/customers/{$this->customer->public_id}/activities", ['type' => 'call', 'notes' => 'Beres', 'follow_up_id' => $this->followUp->id]);
+    $this->customer->scheduleFollowUp($this->sales, $this->sales, now()->addDay(), 'Batal')
+        ->update(['status' => 'cancelled', 'cancel_reason' => 'Transaksi Lost']);
+    $this->customer->scheduleFollowUp($this->sales, $this->sales, now()->addDays(2), 'Masih tertunda');
+
+    $this->getJson(route('transactions.show', $this->deal))->assertOk()
+        ->assertJsonCount(2, 'customer.follow_up_history')
+        ->assertJsonPath('customer.follow_up_history.0.status', 'cancelled')
+        ->assertJsonPath('customer.follow_up_history.0.cancel_reason', 'Transaksi Lost')
+        ->assertJsonPath('customer.follow_up_history.1.status', 'completed')
+        ->assertJsonPath('customer.follow_up_history.1.result', ActivityType::Call->label().': Beres');
+});
+
 it('exposes the follow-up id to the activity form', function () {
     $this->actingAs($this->sales)->getJson(route('transactions.show', $this->deal))
         ->assertOk()->assertJsonPath('customer.next_follow_up.id', $this->followUp->id);

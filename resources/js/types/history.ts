@@ -87,6 +87,15 @@ export type TransactionDetailData = {
             scheduled_at: string;
             plan_notes: string;
         } | null;
+        follow_up_history: {
+            id: number;
+            status: 'completed' | 'cancelled';
+            scheduled_at: string;
+            plan_notes: string;
+            completed_at: string | null;
+            result: string | null;
+            cancel_reason: string | null;
+        }[];
         name: string;
         phone: string;
         social_media_account: string | null;
