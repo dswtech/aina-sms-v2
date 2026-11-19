@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.62 |
-| Diperbarui | 17 November 2026 |
+| Versi | v1.63 |
+| Diperbarui | 19 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 19 November 2026 — tanggal tahap sah dan Capaian Sales
+
+Branch `feat/stage-date-achievement` ([spec](../superpowers/specs/2026-11-19-stage-date-achievement-design.md); PRD CRM-06, DSH-02, ANL-05) menerapkan aturan tanggal tahap sah: tanggal tahap yang gugur karena transaksi mundur ke tahap lebih awal tidak dihitung, berlaku surut. Hasilnya: filter Transaksi "Rentang tanggal tahap"; halaman Analisis > Capaian Sales (`/analytics/stage-achievement`); mode Pencapaian mengabaikan tahap yang gugur; Beranda Supervisor menampilkan tabel capaian per tahap dan daftar prioritas ringkas. Tanpa migration. Verifikasi: `composer test` (pint, PHPStan, seluruh suite Pest), `pnpm run check`, `types:check`, `test:frontend` dan build lulus.
+
+Belum selesai: PostgreSQL belum dicoba (tes memakai SQLite), jadi cek `/transactions` dan `/analytics/stage-achievement` di staging; suite Browser belum dijalankan; tautan notifikasi stagnan `/transactions?tab=stagnant` masih memakai rentang bulan berjalan bawaan (sudah ada sebelumnya, tindak lanjut).
 
 ## Pembaruan 18 November 2026 — rilis log dan notifikasi rilis
 
