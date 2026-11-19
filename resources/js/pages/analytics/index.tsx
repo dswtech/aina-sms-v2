@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
 import { Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import {
@@ -9,6 +10,7 @@ import {
     ConversionBars,
     eventSegments,
     furthestSegments,
+    OTHER_ROW_KEY,
     ShareDonut,
     SourceFlow,
     sourcePalette,
@@ -122,7 +124,7 @@ function modelChartRows(rows: ModelRow[]): ChartRow[] {
     return [
         ...chartRows.slice(0, TOP_MODELS),
         {
-            key: '__lainnya',
+            key: OTHER_ROW_KEY,
             label: `Lainnya (${rest.length} model)`,
             color: '',
             total: rest.reduce((sum, row) => sum + row.total, 0),
@@ -171,7 +173,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
 
     function visitAnalytics(
         changes: Partial<AnalyticsQuery>,
-        restoreFocus = false,
+        focusAfter?: RefObject<HTMLElement | null>,
     ) {
         const next = {
             period: analytics.period,
@@ -201,7 +203,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                 onFinish: () => setIsLoading(false),
                 onSuccess: () => {
                     setFailure(null);
-                    if (restoreFocus) headingRef.current?.focus();
+                    focusAfter?.current?.focus();
                 },
                 onError: () =>
                     setFailure({
@@ -225,6 +227,11 @@ export default function AnalyticsIndex({ analytics }: Props) {
     function openDrilldown(dimension: AnalyticsDimension, value: string) {
         visitAnalytics({ dimension, value });
     }
+
+    // Chart clicks land far from the Drilldown list, so move focus (and the view) there.
+    const drilldownRef = useRef<HTMLHeadingElement>(null);
+    const drilldownFrom = (dimension: AnalyticsDimension) => (row: ChartRow) =>
+        visitAnalytics({ dimension, value: row.key }, drilldownRef);
 
     const exportQuery = new URLSearchParams({
         period: analytics.period,
@@ -363,7 +370,9 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 type="button"
                                 variant="outline"
                                 disabled={isLoading}
-                                onClick={() => visitAnalytics(retryQuery, true)}
+                                onClick={() =>
+                                    visitAnalytics(retryQuery, headingRef)
+                                }
                             >
                                 Coba lagi
                             </Button>
@@ -435,7 +444,10 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                         title="Alur lead: sumber → tahap terjauh"
                                         description="Lebar pita = jumlah lead. Arahkan kursor ke pita untuk melihat angkanya."
                                     >
-                                        <SourceFlow rows={sourceRows} />
+                                        <SourceFlow
+                                            rows={sourceRows}
+                                            onSelect={drilldownFrom('source')}
+                                        />
                                     </ChartPanel>
                                 ) : (
                                     <ChartPanel
@@ -448,6 +460,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                             segments={eventSegments}
                                             unit="kejadian"
                                             width={600}
+                                            onSelect={drilldownFrom('source')}
                                         />
                                     </ChartPanel>
                                 )}
@@ -465,6 +478,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                         unit={
                                             acquisition ? 'lead' : 'transaksi'
                                         }
+                                        onSelect={drilldownFrom('source')}
                                     />
                                 </ChartPanel>
                                 {acquisition && (
@@ -474,7 +488,10 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                         description="Garis putus-putus = rata-rata semua sumber."
                                         className="lg:col-span-2"
                                     >
-                                        <ConversionBars rows={sourceRows} />
+                                        <ConversionBars
+                                            rows={sourceRows}
+                                            onSelect={drilldownFrom('source')}
+                                        />
                                     </ChartPanel>
                                 )}
                             </div>
@@ -578,6 +595,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                             : eventSegments
                                     }
                                     unit={acquisition ? 'lead' : 'kejadian'}
+                                    onSelect={drilldownFrom('model')}
                                 />
                             </ChartPanel>
                         )}
@@ -642,7 +660,13 @@ export default function AnalyticsIndex({ analytics }: Props) {
 
                     <section className="pt-12 print:hidden">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-xl font-semibold">Drilldown</h2>
+                            <h2
+                                ref={drilldownRef}
+                                tabIndex={-1}
+                                className="scroll-mt-24 text-xl font-semibold"
+                            >
+                                Drilldown
+                            </h2>
                             {hasSelection && (
                                 <Badge variant="secondary">
                                     {analytics.dimension === 'source'
