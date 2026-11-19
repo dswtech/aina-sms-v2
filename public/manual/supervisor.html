@@ -12,7 +12,7 @@
 <div class="layout">
 <nav class="toc" aria-label="Daftar isi">
   <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
-  <p class="ver">Manual Supervisor · Versi 1.1.1</p>
+  <p class="ver">Manual Supervisor · Versi 1.2.0</p>
   <h2>Supervisor</h2>
   <ol>
     <li><a href="#akun">1. Masuk &amp; akun</a></li>
@@ -45,9 +45,9 @@
   <h1>Manual Supervisor</h1>
   <p>Panduan memantau pipeline tim, memberi coaching, dan mengelola target di AIna DealDrive.</p>
   <ul class="meta">
-    <li>Versi 1.1.1</li>
-    <li>19 November 2026</li>
-    <li>Berlaku untuk aplikasi v1.4.0</li>
+    <li>Versi 1.2.0</li>
+    <li>20 November 2026</li>
+    <li>Berlaku untuk aplikasi v1.4.0 dan pembaruan sesudahnya</li>
     <li>Peran: Supervisor</li>
   </ul>
 </header>
@@ -74,7 +74,7 @@
     <tr><td>Transaksi</td><td>Seluruh transaksi tim, dengan filter, ekspor CSV, dan tambah transaksi.</td></tr>
     <tr><td>Kalender</td><td>Rencana dan realisasi kegiatan setiap Sales di tim.</td></tr>
     <tr><td>Target</td><td><span class="ui">Target &amp; Forecast</span> untuk membaca angka, dan <span class="ui">Rencana Target Bulanan</span> untuk mengisi target.</td></tr>
-    <tr><td>Analisis</td><td><span class="ui">Sumber &amp; Model</span>, <span class="ui">Pembiayaan</span>, dan <span class="ui">Mapping Area</span>.</td></tr>
+    <tr><td>Analisis</td><td><span class="ui">Sumber &amp; Model</span>, <span class="ui">Pembiayaan</span>, <span class="ui">Mapping Area</span>, dan <span class="ui">Capaian Sales</span>.</td></tr>
     <tr><td>Import Data</td><td>Mengunggah lead dari file CSV ke tim Anda.</td></tr>
     <tr><td>Notifikasi</td><td>Riwayat pemberitahuan 3 hari terakhir.</td></tr>
   </table></div>
@@ -99,6 +99,7 @@
   <ul>
     <li><strong>Kinerja per tim</strong> dan <strong>Kinerja per Sales</strong>: realisasi dan forecast dibandingkan target. Klik <span class="ui">Lihat rincian angka</span> untuk tabelnya.</li>
     <li><strong>Pipeline per tahap</strong>: jumlah transaksi pada setiap tahap untuk periode terpilih.</li>
+    <li><strong>Capaian per tahap</strong>: tabel jumlah transaksi yang dicapai setiap Sales pada setiap tahap bulan ini, berdasarkan tanggal tahap sah. Lihat <a href="#analisis">bab 13</a>.</li>
     <li><strong>Kontributor forecast teratas</strong>: transaksi dengan nilai rupiah berbobot terbesar.</li>
     <li><strong>Prioritas tindak lanjut</strong>: transaksi stagnan, komentar belum dibaca, dan peluang closing periode ini. Klik sebuah item untuk membuka transaksinya.</li>
   </ul>
@@ -124,7 +125,7 @@
   <ul>
     <li>Pilih <span class="ui">Sales</span> untuk melihat transaksi satu orang saja.</li>
     <li>Pilih tab <span class="ui">Stagnan</span> untuk melihat transaksi tanpa aktivitas lebih dari 3 hari.</li>
-    <li>Filter lainnya (tahap, sumber lead, kanal digital, wilayah, rentang progress) sama seperti di <a href="sales.html#transaksi">Manual Sales, bab 6</a>. Klik <span class="ui">Terapkan</span> setelah memilih, atau <span class="ui">Reset</span> untuk menghapus filter.</li>
+    <li>Filter lainnya (tahap, sumber lead, kanal digital, wilayah, rentang tanggal tahap) sama seperti di <a href="sales.html#transaksi">Manual Sales, bab 6</a>. Klik <span class="ui">Terapkan</span> setelah memilih, atau <span class="ui">Reset</span> untuk menghapus filter.</li>
     <li>Klik <span class="ui">Ekspor CSV</span> untuk mengunduh daftar sesuai filter yang aktif.</li>
   </ul>
 </section>
@@ -255,13 +256,14 @@
 
 <section id="analisis">
   <h2>13. Analisis</h2>
-  <p>Menu <span class="ui">Analisis</span> berisi tiga laporan. Semuanya mengikuti cakupan tim Anda dan memakai <span class="ui">Rentang bulan</span> (Dari bulan – Sampai bulan).</p>
+  <p>Menu <span class="ui">Analisis</span> berisi empat laporan. Semuanya mengikuti cakupan tim Anda dan memakai <span class="ui">Rentang bulan</span> (Dari bulan – Sampai bulan).</p>
 
   <h3>Sumber &amp; Model</h3>
   <p>Membandingkan sumber lead dan model kendaraan: jumlah, porsi, SPK, DO, Delivery, dan conversion (DO dibagi jumlah lead).</p>
   <ul>
-    <li><span class="ui">Mode tanggal</span> <strong>Akuisisi</strong> memakai tanggal lead dibuat. <strong>Pencapaian</strong> memakai tanggal kejadian tahap.</li>
-    <li>Klik <span class="ui">Drilldown</span> pada sebuah baris untuk melihat transaksi pembentuk angkanya.</li>
+    <li><span class="ui">Mode tanggal</span> <strong>Akuisisi</strong> memakai tanggal lead dibuat. <strong>Pencapaian</strong> memakai tanggal tahap sah: tanggal tahap yang gugur karena transaksi mundur tidak dihitung, termasuk untuk bulan sebelumnya.</li>
+    <li>Di atas tabel ada grafik: ringkasan per tahap, alur dari sumber ke tahap terjauh, porsi sumber (donat), conversion per sumber, dan tahap per model (9 model teratas plus Lainnya). Pada mode Pencapaian, grafik alur dan conversion diganti grafik batang kejadian tahap.</li>
+    <li>Klik <span class="ui">Drilldown</span> pada sebuah baris, atau klik bagian grafik (simpul atau pita alur, batang, irisan donat, atau baris legendanya), untuk melihat transaksi pembentuk angkanya. Baris Lainnya tidak dapat diklik.</li>
     <li><span class="ui">Unduh CSV</span> untuk data mentah, atau <span class="ui">Save as PDF / browser print</span> untuk dicetak.</li>
   </ul>
   <figure>
@@ -282,6 +284,9 @@
     <a href="img/spv/mapping-area.png" target="_blank"><img src="img/spv/mapping-area.png" alt="Laporan Mapping Area" width="1280" height="800" loading="lazy"></a>
     <figcaption>Laporan Mapping Area.</figcaption>
   </figure>
+
+  <h3>Capaian Sales</h3>
+  <p>Tabel jumlah transaksi per tahap yang dicapai setiap Sales di tim Anda, berdasarkan tanggal tahap sah, untuk <span class="ui">Rentang bulan</span> yang dipilih. Tabel yang sama untuk bulan berjalan tampil di Beranda. Gunakan untuk melihat siapa yang sudah menghasilkan Prospect, SPK, atau DO pada periode tersebut, bukan hanya posisi tahap saat ini.</p>
 </section>
 
 <section id="import">
@@ -309,7 +314,7 @@
     <tr><th>Label</th><th>Kapan muncul</th></tr>
     <tr><td>Komentar coaching</td><td>Sales menulis komentar atau balasan di transaksi timnya.</td></tr>
     <tr><td>Perubahan tahap</td><td>Sales di tim Anda mengubah tahap transaksi. Isinya hanya tahap lama dan tahap baru.</td></tr>
-    <tr><td>Stagnan</td><td>Satu ringkasan per hari berisi jumlah transaksi tim yang baru menjadi stagnan. Klik untuk membuka daftar Stagnan di halaman Transaksi.</td></tr>
+    <tr><td>Stagnan</td><td>Satu ringkasan per hari berisi jumlah transaksi tim yang baru menjadi stagnan. Klik untuk membuka daftar Stagnan di halaman Transaksi, berisi semua transaksi tim yang sedang stagnan (tidak hanya bulan ini).</td></tr>
     <tr><td>Rilis</td><td>Aplikasi diperbarui ke versi baru. Isi perubahannya ada di halaman Riwayat Rilis.</td></tr>
   </table></div>
 </section>
@@ -326,7 +331,7 @@
 </section>
 
 <footer>
-  <p>Manual Book AIna DealDrive · Versi 1.1.1 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Admin dealer Anda.</p>
+  <p>Manual Book AIna DealDrive · Versi 1.2.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Admin dealer Anda.</p>
 </footer>
 </main>
 </div>

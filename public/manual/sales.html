@@ -12,7 +12,7 @@
 <div class="layout">
 <nav class="toc" aria-label="Daftar isi">
   <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
-  <p class="ver">Manual Sales · Versi 1.1.1</p>
+  <p class="ver">Manual Sales · Versi 1.2.0</p>
   <h2>Sales</h2>
   <ol>
     <li><a href="#masuk">1. Masuk &amp; akun</a></li>
@@ -41,9 +41,9 @@
   <h1>Manual Sales</h1>
   <p>Panduan langkah demi langkah memakai aplikasi AIna DealDrive.</p>
   <ul class="meta">
-    <li>Versi 1.1.1</li>
-    <li>19 November 2026</li>
-    <li>Berlaku untuk aplikasi v1.4.0</li>
+    <li>Versi 1.2.0</li>
+    <li>20 November 2026</li>
+    <li>Berlaku untuk aplikasi v1.4.0 dan pembaruan sesudahnya</li>
     <li>Peran: Sales</li>
   </ul>
 </header>
@@ -204,7 +204,7 @@
   </figure>
   <h3>Langkah</h3>
   <ol class="steps">
-    <li><strong>Data Transaksi</strong>: pilih <span class="ui">Unit yang diminati</span> (boleh dikosongkan dulu, tetapi wajib saat SPK), <span class="ui">Sumber lead</span>, <span class="ui">Estimasi bulan closing</span> bila sudah diketahui, <span class="ui">Pembiayaan</span> (Cash/Kredit), dan <span class="ui">Keterangan</span>. Bila sumbernya Iklan Digital / Medsos, pilih juga kanal digitalnya.</li>
+    <li><strong>Data Transaksi</strong>: pilih <span class="ui">Unit yang diminati</span> (boleh dikosongkan dulu, tetapi wajib saat SPK), <span class="ui">Warna</span> (opsional, teks bebas, misalnya Putih Mutiara), <span class="ui">Ownership</span> (First Buyer, Additional, atau Trade In; opsional, tetapi wajib saat DO), <span class="ui">Sumber lead</span> (Walk-in Showroom, Iklan Digital / Medsos, Referral Pelanggan, Pameran / Mall, Repeat Order, atau Database), <span class="ui">Estimasi bulan closing</span> bila sudah diketahui, <span class="ui">Pembiayaan</span> (Cash/Kredit), dan <span class="ui">Keterangan</span>. Bila sumbernya Iklan Digital / Medsos, pilih juga kanal digitalnya.</li>
     <li><strong>Pelanggan</strong>: pilih <span class="ui">Pelanggan Baru</span> untuk orang yang belum pernah terdaftar, atau <span class="ui">Pelanggan Lama</span> untuk mencari pelanggan yang sudah ada.</li>
     <li>Untuk pelanggan baru, isi <span class="ui">Nama</span>, <span class="ui">Nomor telepon</span>, dan <span class="ui">Gender</span> (wajib). Alamat, tanggal lahir, pekerjaan, email, dan media sosial boleh dilengkapi kemudian.</li>
     <li>Isi <strong>Area Transaksi (KTP/STNK)</strong> bila sudah diketahui.</li>
@@ -233,7 +233,8 @@
   </figure>
   <h3>Memfilter</h3>
   <ul>
-    <li>Gunakan <span class="ui">Pencarian</span>, <span class="ui">Rentang progress</span> (tanggal), <span class="ui">Tahap</span>, <span class="ui">Sumber lead</span>, <span class="ui">Kanal digital</span>, <span class="ui">Kabupaten/Kota</span>, <span class="ui">Kecamatan</span>, dan <span class="ui">Nama pelanggan</span>.</li>
+    <li>Gunakan <span class="ui">Pencarian</span> (nama, unit, atau warna), <span class="ui">Rentang tanggal tahap</span>, <span class="ui">Tahap</span>, <span class="ui">Sumber lead</span>, <span class="ui">Kanal digital</span>, <span class="ui">Kabupaten/Kota</span>, <span class="ui">Kecamatan</span>, dan <span class="ui">Nama pelanggan</span>.</li>
+    <li><span class="ui">Rentang tanggal tahap</span> memakai tanggal transaksi masuk ke sebuah tahap. Bila dipadukan dengan <span class="ui">Tahap</span>, daftar menampilkan transaksi yang <strong>pernah mencapai</strong> tahap itu dalam rentang tersebut, walaupun sekarang sudah maju ke tahap berikutnya. Tanggal tahap gugur bila transaksi kemudian mundur ke tahap yang lebih awal, dan DO yang dibatalkan tidak dihitung.</li>
     <li>Tombol <span class="ui">Semua</span>, <span class="ui">Aktif</span>, <span class="ui">Stagnan</span>, dan <span class="ui">Selesai</span> mempersempit daftar berdasarkan status.</li>
     <li>Klik <span class="ui">Terapkan</span> untuk menjalankan filter, atau <span class="ui">Reset</span> untuk mengembalikan ke awal.</li>
   </ul>
@@ -246,7 +247,8 @@
     <li>Tombol <span class="ui">Detail</span> (ikon mata) di ujung kanan membuka detail transaksi.</li>
     <li>Tombol <span class="ui">Ubah tahap</span> (ikon pensil) membuka formulir ubah tahap.</li>
     <li>Pada transaksi berstatus DO, tombol <span class="ui">Konfirmasi Delivery</span> (ikon truk) dipakai saat kendaraan sudah dikirim.</li>
-    <li><span class="ui">Ekspor CSV</span> mengunduh daftar transaksi untuk diolah di spreadsheet. <span class="ui">Refresh</span> memuat ulang data terbaru.</li>
+    <li>Kolom unit menampilkan juga <strong>Warna</strong> dan <strong>Ownership</strong> kendaraan bila sudah diisi.</li>
+    <li><span class="ui">Ekspor CSV</span> mengunduh daftar transaksi untuk diolah di spreadsheet, termasuk kolom Warna dan Ownership. <span class="ui">Refresh</span> memuat ulang data terbaru.</li>
   </ul>
 </section>
 
@@ -345,12 +347,12 @@
   <div class="table-wrap"><table>
     <tr><th>Tahap tujuan</th><th>Yang harus dilengkapi</th></tr>
     <tr><td>Prospect, Hot Prospect</td><td>Gender dan alamat pelanggan.</td></tr>
-    <tr><td>SPK</td><td>Gender, alamat, pekerjaan, dan area pelanggan; unit kendaraan; centang <span class="ui">Konfirmasi booking fee</span>.</td></tr>
-    <tr><td>DO</td><td>Centang ketiga <span class="ui">Checklist DO</span>: PO, DP, dan Unit. DO hanya bisa dipilih dari tahap SPK.</td></tr>
+    <tr><td>SPK</td><td>Gender, alamat, pekerjaan, dan area pelanggan; unit kendaraan (warna boleh diisi sekalian); centang <span class="ui">Konfirmasi booking fee</span>.</td></tr>
+    <tr><td>DO</td><td>Centang ketiga <span class="ui">Checklist DO</span>: PO, DP, dan Unit. Pilih <span class="ui">Ownership</span> bila belum diisi. DO hanya bisa dipilih dari tahap SPK.</td></tr>
     <tr><td>Delivery</td><td>Konfirmasi bahwa kendaraan sudah terkirim (tombol <span class="ui">Konfirmasi Delivery</span>).</td></tr>
     <tr><td>Lost</td><td>Pilih <span class="ui">Alasan lost</span>: membeli di kompetitor, harga/anggaran belum sesuai, leasing ditolak, tidak merespons follow-up, batal/menunda, atau alasan lainnya. Tambahkan catatan bila perlu.</td></tr>
   </table></div>
-  <p>Data pelanggan yang belum lengkap dapat diisi langsung di formulir ubah tahap, atau kapan saja di panel kiri.</p>
+  <p>Data pelanggan yang belum lengkap dapat diisi langsung di formulir ubah tahap, atau kapan saja di panel kiri. Warna dan Ownership dapat diubah di panel kiri sampai tahap SPK; sejak DO keduanya terkunci.</p>
   <div class="phones">
     <figure>
       <a href="img/stage-spk-panel.png" target="_blank"><img src="img/stage-spk-panel.png" alt="Formulir ubah tahap ke SPK dengan konfirmasi booking fee" width="300" height="602" loading="lazy"></a>
@@ -463,7 +465,7 @@
 </section>
 
 <footer>
-  <p>Manual Book AIna DealDrive · Versi 1.1.1 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Supervisor atau Admin dealer Anda.</p>
+  <p>Manual Book AIna DealDrive · Versi 1.2.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Supervisor atau Admin dealer Anda.</p>
 </footer>
 </main>
 </div>
