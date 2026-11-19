@@ -45,6 +45,16 @@ export function StageAchievementTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y">
+                        {data.rows.length === 0 && (
+                            <tr>
+                                <td
+                                    colSpan={data.stages.length + 1}
+                                    className="px-5 py-6 text-center text-muted-foreground"
+                                >
+                                    Belum ada Sales.
+                                </td>
+                            </tr>
+                        )}
                         {data.rows.map((row) => (
                             <tr key={row.id}>
                                 <th

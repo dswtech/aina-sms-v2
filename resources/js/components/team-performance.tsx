@@ -589,7 +589,12 @@ export function PriorityLists({
                                         href={item.url}
                                         className="inline-flex min-h-11 min-w-0 flex-1 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
                                     >
-                                        <span className="truncate">
+                                        <span
+                                            className="truncate"
+                                            title={
+                                                item.title ?? item.vehicle_model
+                                            }
+                                        >
                                             {item.title ?? item.vehicle_model}
                                         </span>
                                     </Link>

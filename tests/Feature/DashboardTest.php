@@ -52,6 +52,12 @@ class DashboardTest extends TestCase
         }
     }
 
+    public function test_stage_achievements_are_only_computed_for_the_dashboard(): void
+    {
+        $this->actingAs(User::factory()->supervisor()->create())->get(route('targets.index'))
+            ->assertInertia(fn (Assert $page) => $page->missing('dashboard.stageAchievement'));
+    }
+
     public function test_authenticated_user_props_use_a_safe_allowlist(): void
     {
         $user = User::factory()->create();

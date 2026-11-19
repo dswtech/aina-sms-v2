@@ -102,7 +102,7 @@ class AnalyticsController extends Controller
         foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
             $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
                 if ($achievement) {
-                    $inPeriod($history->effectiveFor($stage));
+                    $inPeriod($history->scopes(['effectiveFor' => [$stage]]));
 
                     return;
                 }

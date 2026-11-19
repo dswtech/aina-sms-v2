@@ -34,8 +34,8 @@ class StageAchievements
             $users->whereIn('id', TeamMembership::query()->whereIn('team_id', Team::query()->visibleTo($actor)->select('id'))
                 ->whereNull('ended_at')->where('role', UserRole::Sales)->select('user_id'));
         }
-        $rows = User::query()->whereIn('id', array_keys($counts))->orWhereIn('id', $users->select('id'))->orderBy('name')->get(['id', 'name'])
-            ->map(fn (User $user): array => ['id' => $user->id, 'name' => $user->name, 'counts' => $counts[$user->id] ?? $empty])->all();
+        $rows = array_values(User::query()->whereIn('id', array_keys($counts))->orWhereIn('id', $users->select('id'))->orderBy('name')->get(['id', 'name'])
+            ->map(fn (User $user): array => ['id' => $user->id, 'name' => $user->name, 'counts' => $counts[$user->id] ?? $empty])->all());
         $totals = $empty;
         foreach ($rows as $row) {
             foreach ($keys as $key) {
