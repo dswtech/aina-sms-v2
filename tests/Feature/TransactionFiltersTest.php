@@ -5,6 +5,8 @@ use App\Models\Dealer;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\User;
+use App\Notifications\StagnantDealsSummary;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('filters progress dates inclusively in Jakarta and combines source with actor scope', function () {
@@ -104,4 +106,16 @@ it('lists every deal that ever reached a stage when the range is empty', functio
     $this->actingAs($sales);
 
     expect(filterModels('stage=spk&date_from=&date_to='))->toBe(['Pernah SPK']);
+});
+
+it('lists stagnant deals from earlier months when following the stagnant notification link', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-19 10:00', 'Asia/Jakarta'));
+    $sales = User::factory()->sales()->create();
+    $deal = filterDeal($sales, 'Old stagnant', 'prospect', [['prospect', '2026-09-10']]);
+    $deal->forceFill(['created_at' => '2026-09-10 03:00:00', 'last_activity_at' => '2026-09-10 03:00:00'])->save();
+
+    $this->actingAs($sales)->get('/transactions?tab=stagnant')->assertInertia(fn (Assert $p) => $p->has('transactions.data', 0));
+    $url = (new StagnantDealsSummary(1))->toDatabase($sales)['url'];
+    $this->get($url)->assertInertia(fn (Assert $p) => $p
+        ->has('transactions.data', 1)->where('transactions.data.0.vehicle_model', 'Old stagnant'));
 });

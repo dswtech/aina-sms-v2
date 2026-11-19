@@ -59,3 +59,5 @@ Thumbs.db
 Desktop.ini
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# Brainstorming mockups and agent plan workspaces
+.superpowers/
