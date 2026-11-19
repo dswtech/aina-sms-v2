@@ -256,7 +256,7 @@ class TransactionController extends Controller
         return is_string($value) && $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'".$value : $value;
     }
 
-    private const SOURCES = ['walk_in' => 'Walk-in Showroom', 'digital_ad' => 'Iklan Digital / Medsos', 'referral' => 'Referral Pelanggan', 'exhibition' => 'Pameran / Mall', 'call' => 'Telepon Masuk', 'repeat_order' => 'Repeat Order', 'database' => 'Database'];
+    private const SOURCES = ['walk_in' => 'Walk-in Showroom', 'digital_ad' => 'Iklan Digital / Medsos', 'referral' => 'Referral Pelanggan', 'exhibition' => 'Pameran / Mall', 'repeat_order' => 'Repeat Order', 'database' => 'Database'];
 
     /**
      * @param  array<string, string>  $regions
