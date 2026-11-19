@@ -362,6 +362,10 @@ class CustomerController extends Controller
         if (! empty($validated['deal_transaction_id'])) {
             abort_if($deal === null, 403);
             $this->authorize('view', $deal);
+            // A closed deal has no next step; nothing would ever clear the plan.
+            if ($deal->current_stage->isClosed()) {
+                throw ValidationException::withMessages(['deal_transaction_id' => 'Transaksi sudah selesai, follow-up tidak dapat dijadwalkan.']);
+            }
         }
 
         $scheduledAt = Carbon::parse($validated['scheduled_at']);
