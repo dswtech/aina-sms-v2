@@ -20,7 +20,13 @@ import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { index as releases } from '@/routes/releases';
-import type { User } from '@/types';
+import type { User, UserRole } from '@/types';
+
+// Static manual pages in public/manual; roles without their own manual get the role picker.
+const manualHref: Partial<Record<UserRole, string>> = {
+    sales: '/manual/sales.html',
+    supervisor: '/manual/supervisor.html',
+};
 
 type Props = {
     user: User;
@@ -90,13 +96,17 @@ export function UserMenuContent({ user }: Props) {
                         Rilis log · v{appVersion}
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                    disabled
-                    className="px-4 py-2"
-                    title="Dokumentasi belum tersedia"
-                >
-                    <BookOpen className="size-4" />
-                    Dokumentasi
+                <DropdownMenuItem asChild>
+                    <a
+                        className="w-full cursor-pointer px-4 py-2"
+                        href={manualHref[user.role] ?? '/manual/'}
+                        target="_blank"
+                        rel="noopener"
+                        onClick={cleanup}
+                    >
+                        <BookOpen className="size-4" />
+                        Manual
+                    </a>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
