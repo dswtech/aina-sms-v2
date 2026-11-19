@@ -28,7 +28,7 @@ const modules: Record<
         title: 'Transaksi',
         description:
             'Pipeline dan detail transaksi akan menggunakan akses server sesuai role yang sedang masuk.',
-        next: 'Pipeline Lead sampai Delivery atau Lost',
+        next: 'Pipeline Lead sampai DO atau Lost',
     },
     targets: {
         title: 'Target',

@@ -112,9 +112,9 @@ export default function Dashboard({
                     )}
                     {!!d.missingDoHistoryCount && (
                         <p role="status">
-                            {d.missingDoHistoryCount} transaksi DO atau Delivery
-                            tidak memiliki riwayat DO yang sah dan belum
-                            dihitung sebagai realisasi.
+                            {d.missingDoHistoryCount} transaksi DO tidak
+                            memiliki riwayat DO yang sah dan belum dihitung
+                            sebagai realisasi.
                         </p>
                     )}
                     {canManage && (

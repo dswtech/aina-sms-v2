@@ -1,5 +1,5 @@
 // Tahap 4 acceptance flow over the real UI and the isolated Laravel fixture (g11.* users, password "password").
-// No mocks: Pelanggan Baru + transaksi -> Prospect -> SPK -> DO -> reports -> master changes -> cancel -> edit -> redo -> Delivery,
+// No mocks: Pelanggan Baru + transaksi -> Prospect -> SPK -> DO -> reports -> master changes -> cancel -> edit -> redo (DO is final),
 // then progress-vs-activity and the repeat-customer path. Assertions use before/after deltas because the fixture has seeded data.
 // eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
 async function acceptanceFlow(page) {
@@ -381,15 +381,12 @@ async function acceptanceFlow(page) {
         );
         checks.push('redo uses new snapshot');
 
-        // ---- 9. Delivery does not change totals ----
+        // ---- 9. DO is final: no Delivery step is offered ----
         await login('g11.spv');
-        await fulfil('Konfirmasi Delivery');
         row = await findRow(model);
-        assert(row.current_stage === 'delivery', `Delivery left stage ${row.current_stage}`);
-        await login('g11.admin');
-        same(areaSig(await mapping()), areaSig(M2), 'Mapping Area changed after Delivery');
-        same(finSig(await financing('do')), finSig(FDo2), 'Financing DO changed after Delivery');
-        checks.push('delivery keeps totals');
+        assert(row.current_stage === 'do' && !('can_confirm_delivery' in row), 'Delivery is still offered after DO');
+        assert(!(await rowButton('Konfirmasi Delivery').count()), 'Konfirmasi Delivery button is still shown');
+        checks.push('DO is final');
 
         // ---- 10. repeat customer: preselected, identity untouched ----
         await login('g11.sales');

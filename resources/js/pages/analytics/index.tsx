@@ -25,7 +25,6 @@ type SourceRow = {
     share: number;
     spk: number;
     do: number;
-    delivery: number;
     conversion: number | null;
 };
 
@@ -35,7 +34,6 @@ type ModelRow = {
     share: number;
     spk: number;
     do: number;
-    delivery: number;
 };
 
 type DrilldownRow = {
@@ -356,8 +354,8 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 Analisis Sumber
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                Kontribusi sumber lead dan progresnya menuju
-                                SPK, DO, serta Delivery.
+                                Kontribusi sumber lead dan progresnya menuju SPK
+                                serta DO.
                             </p>
                         </div>
 
@@ -388,10 +386,6 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                                 value={row.spk}
                                             />
                                             <Metric label="DO" value={row.do} />
-                                            <Metric
-                                                label="Delivery"
-                                                value={row.delivery}
-                                            />
                                             {analytics.mode ===
                                                 'acquisition' && (
                                                 <Metric
@@ -467,10 +461,6 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                                 value={row.spk}
                                             />
                                             <Metric label="DO" value={row.do} />
-                                            <Metric
-                                                label="Delivery"
-                                                value={row.delivery}
-                                            />
                                         </dl>
                                         <Button
                                             type="button"
@@ -550,7 +540,7 @@ function SourceTable({
     mode: AnalyticsMode;
     onDrilldown: (value: string) => void;
 }) {
-    const columnCount = mode === 'acquisition' ? 8 : 7;
+    const columnCount = mode === 'acquisition' ? 7 : 6;
 
     return (
         <div className="mt-5 hidden overflow-hidden rounded-xl border lg:block print:block">
@@ -562,7 +552,6 @@ function SourceTable({
                         <th className="px-4 py-3 text-right">Porsi</th>
                         <th className="px-4 py-3 text-right">SPK</th>
                         <th className="px-4 py-3 text-right">DO</th>
-                        <th className="px-4 py-3 text-right">Delivery</th>
                         {mode === 'acquisition' && (
                             <th className="px-4 py-3 text-right">Conversion</th>
                         )}
@@ -599,9 +588,6 @@ function SourceTable({
                                 </td>
                                 <td className="px-4 py-3 text-right tabular-nums">
                                     {row.do}
-                                </td>
-                                <td className="px-4 py-3 text-right tabular-nums">
-                                    {row.delivery}
                                 </td>
                                 {mode === 'acquisition' && (
                                     <td className="px-4 py-3 text-right tabular-nums">
@@ -644,7 +630,6 @@ function ModelTable({
                         <th className="px-4 py-3 text-right">Porsi</th>
                         <th className="px-4 py-3 text-right">SPK</th>
                         <th className="px-4 py-3 text-right">DO</th>
-                        <th className="px-4 py-3 text-right">Delivery</th>
                         <th className="px-4 py-3 text-right print:hidden">
                             Aksi
                         </th>
@@ -654,7 +639,7 @@ function ModelTable({
                     {rows.length === 0 ? (
                         <tr>
                             <td
-                                colSpan={7}
+                                colSpan={6}
                                 className="px-4 py-10 text-center text-muted-foreground"
                             >
                                 Belum ada transaksi berdasarkan model untuk
@@ -678,9 +663,6 @@ function ModelTable({
                                 </td>
                                 <td className="px-4 py-3 text-right tabular-nums">
                                     {row.do}
-                                </td>
-                                <td className="px-4 py-3 text-right tabular-nums">
-                                    {row.delivery}
                                 </td>
                                 <td className="table-actions px-4 py-3 text-right print:hidden">
                                     <Button
