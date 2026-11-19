@@ -74,6 +74,43 @@ class StageHistory extends Model
     }
 
     /**
+     * Rows that give the deal a valid date for the stage: not a correction, a realized DO for DO,
+     * and an open stage not voided by a later move back below it.
+     *
+     * @param  Builder<StageHistory>  $query
+     */
+    public function scopeEffectiveFor(Builder $query, PipelineStage $stage): void
+    {
+        $query->whereNull($query->qualifyColumn('reverses_stage_history_id'));
+        if ($stage === PipelineStage::Do) {
+            $query->realizedDo();
+
+            return;
+        }
+        $query->where($query->qualifyColumn('to_stage'), $stage);
+
+        $rank = $stage->openRank();
+        $lower = array_map(fn (PipelineStage $s) => $s->value, array_values(array_filter(
+            PipelineStage::cases(),
+            fn (PipelineStage $s) => $rank !== null && $s->openRank() !== null && $s->openRank() < $rank,
+        )));
+        if ($lower === []) {
+            return;
+        }
+
+        $query->whereNotExists(function ($later) use ($query, $lower): void {
+            $created = $query->qualifyColumn('created_at');
+            $later->selectRaw('1')->from('stage_histories as later')
+                ->whereColumn('later.deal_transaction_id', $query->qualifyColumn('deal_transaction_id'))
+                ->whereNull('later.reverses_stage_history_id')
+                ->whereIn('later.to_stage', $lower)
+                ->where(fn ($after) => $after->whereColumn('later.created_at', '>', $created)
+                    ->orWhere(fn ($tie) => $tie->whereColumn('later.created_at', $created)
+                        ->whereColumn('later.id', '>', $query->qualifyColumn('id'))));
+        });
+    }
+
+    /**
      * @return BelongsTo<DealTransaction, $this>
      */
     public function dealTransaction(): BelongsTo

@@ -193,6 +193,32 @@ class DealTransaction extends Model
     }
 
     /**
+     * Deals with a valid date for the stage (any stage when null) in [start, end); null bounds are open.
+     * A deal with no stage history counts as reaching its current stage at created_at.
+     *
+     * @param  Builder<DealTransaction>  $query
+     */
+    public function scopeReachedStage(Builder $query, ?PipelineStage $stage, ?CarbonInterface $start, ?CarbonInterface $end): void
+    {
+        $inRange = fn (Builder $q, string $column) => $q
+            ->when($start, fn (Builder $q) => $q->where($column, '>=', $start))
+            ->when($end, fn (Builder $q) => $q->where($column, '<', $end));
+
+        $query->where(function (Builder $query) use ($stage, $inRange): void {
+            foreach ($stage ? [$stage] : PipelineStage::cases() as $each) {
+                $query->orWhereHas('stageHistories', fn (Builder $history) => $inRange(
+                    $history->effectiveFor($each), $history->qualifyColumn('created_at'),
+                ));
+            }
+            $query->orWhere(fn (Builder $fallback) => $inRange(
+                $fallback->doesntHave('stageHistories')
+                    ->when($stage, fn (Builder $q) => $q->where($q->qualifyColumn('current_stage'), $stage)),
+                $fallback->qualifyColumn('created_at'),
+            ));
+        });
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      */
     public function transitionTo(PipelineStage $toStage, User $actor, ?string $notes = null, array $options = []): StageHistory
