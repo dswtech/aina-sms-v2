@@ -21,7 +21,7 @@ class StagnantDealsSummary extends Notification
             'kind' => 'stagnant_summary',
             'title' => 'Transaksi stagnan baru',
             'message' => $this->count.' transaksi baru menjadi stagnan.',
-            'url' => route('transactions.index', ['tab' => 'stagnant'], false),
+            'url' => route('transactions.index', ['tab' => 'stagnant', 'date_from' => '', 'date_to' => ''], false),
             'count' => $this->count,
         ];
     }

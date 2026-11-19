@@ -64,7 +64,7 @@ it('builds metadata-only database payloads', function () {
     ]);
     expect($summary)->toMatchArray([
         'kind' => 'stagnant_summary', 'title' => 'Transaksi stagnan baru', 'message' => '3 transaksi baru menjadi stagnan.',
-        'url' => route('transactions.index', ['tab' => 'stagnant'], false), 'count' => 3,
+        'url' => route('transactions.index', ['tab' => 'stagnant', 'date_from' => '', 'date_to' => ''], false), 'count' => 3,
     ]);
     foreach ([$stage, $stagnant, $summary] as $payload) {
         expect(json_encode($payload))->not->toContain('NAMA-PELANGGAN-RAHASIA')->and($payload)->not->toHaveKey('email_status');
