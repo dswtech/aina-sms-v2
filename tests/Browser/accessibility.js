@@ -1629,7 +1629,7 @@ async function accessibility(page) {
                 );
             }
             const range = await page
-                .getByRole('group', { name: 'Rentang progress', exact: true })
+                .getByRole('group', { name: 'Rentang tanggal tahap', exact: true })
                 .boundingBox();
             assert(
                 Math.abs(range.height - expected) <= 0.5,

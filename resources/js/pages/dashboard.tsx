@@ -5,6 +5,8 @@ import {
     ReportingHeader,
     type ReportingProps,
 } from '@/components/team-performance';
+import { StageAchievementTable } from '@/components/stage-achievement-table';
+import { formatMonth } from '@/lib/calendar';
 import {
     ForecastContributors,
     PerformanceChart,
@@ -185,6 +187,12 @@ export default function Dashboard({
                         />
                     </div>
                 </div>
+                {d.stageAchievement && (
+                    <StageAchievementTable
+                        data={d.stageAchievement}
+                        caption={formatMonth(d.period)}
+                    />
+                )}
                 {role !== 'branch_manager' && (
                     <section
                         aria-label="Prioritas tindak lanjut"

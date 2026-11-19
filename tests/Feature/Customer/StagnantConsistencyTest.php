@@ -72,7 +72,7 @@ it('reconciles customer filters counts transaction badges and dashboard prioriti
             ->has('customers.data', 2)
             ->where('customers.data.0.active_deal.is_stagnant', true)
             ->where('customers.data.1.active_deal.is_stagnant', true));
-    $this->get('/transactions?tab=stagnant')->assertOk()
+    $this->get('/transactions?date_from=&date_to=&tab=stagnant')->assertOk()
         ->assertInertia(fn (Assert $page) => $page->has('transactions.data', 2)
             ->where('transactions.data.0.is_stagnant', true)->where('transactions.data.1.is_stagnant', true));
     $this->get('/dashboard?period=2026-11')->assertOk()
@@ -83,7 +83,7 @@ it('reconciles customer filters counts transaction badges and dashboard prioriti
     $old->customer->logActivity($this->sales, ActivityType::Call, 'Terhubung hari ini', $old);
     expect($old->fresh()->is_stagnant)->toBeFalse();
     $this->get('/customers?tab=stagnant')->assertInertia(fn (Assert $page) => $page->where('counts.stagnant', 1)->has('customers.data', 1));
-    $this->get('/transactions?tab=stagnant')->assertInertia(fn (Assert $page) => $page->has('transactions.data', 1));
+    $this->get('/transactions?date_from=&date_to=&tab=stagnant')->assertInertia(fn (Assert $page) => $page->has('transactions.data', 1));
     $this->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $page) => $page->where('dashboard.stagnantCount', 1)->has('dashboard.priorities.stagnant', 1));
 });
 

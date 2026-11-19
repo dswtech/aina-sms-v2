@@ -76,6 +76,7 @@ const shared = {
             { title: 'Sumber & Model', href: '/analytics' },
             { title: 'Pembiayaan', href: '/analytics/financing' },
             { title: 'Mapping Area', href: '/analytics/mapping-area' },
+            { title: 'Capaian Sales', href: '/analytics/stage-achievement' },
         ],
     },
     imports: {

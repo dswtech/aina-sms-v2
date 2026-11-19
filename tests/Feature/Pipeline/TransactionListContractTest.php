@@ -19,7 +19,7 @@ function listDeal(Dealer $dealer, User $sales, string $model, string $progress, 
     unset($extra['customer']);
     $deal = DealTransaction::create(['dealer_id' => $dealer->id, 'customer_id' => $customer->id, 'sales_id' => $sales->id,
         'vehicle_model' => $model, 'source' => 'walk_in', 'current_stage' => 'lead', ...$extra]);
-    $deal->forceFill(['progress_at' => $progress])->save();
+    $deal->forceFill(['created_at' => $progress, 'progress_at' => $progress])->save();
 
     return $deal;
 }

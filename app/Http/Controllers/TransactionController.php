@@ -125,12 +125,8 @@ class TransactionController extends Controller
         }
 
         $query = DealTransaction::query()->visibleTo($actor);
-        if (! empty($validated['date_from'])) {
-            $query->where('progress_at', '>=', CarbonImmutable::parse($validated['date_from'], 'Asia/Jakarta')->startOfDay()->utc());
-        }
-        if (! empty($validated['date_to'])) {
-            $query->where('progress_at', '<', CarbonImmutable::parse($validated['date_to'], 'Asia/Jakarta')->startOfDay()->addDay()->utc());
-        }
+        $start = ! empty($validated['date_from']) ? CarbonImmutable::parse($validated['date_from'], 'Asia/Jakarta')->startOfDay()->utc() : null;
+        $end = ! empty($validated['date_to']) ? CarbonImmutable::parse($validated['date_to'], 'Asia/Jakarta')->startOfDay()->addDay()->utc() : null;
         foreach (['source', 'source_channel', 'region_code', 'district_code'] as $column) {
             if (isset($validated[$column]) && $validated[$column] !== '') {
                 $query->where($column, $validated[$column]);
@@ -155,8 +151,9 @@ class TransactionController extends Controller
             });
         }
 
-        if ($stage !== '' && in_array($stage, array_column(PipelineStage::cases(), 'value'), true)) {
-            $query->where('current_stage', $stage);
+        $stageEnum = PipelineStage::tryFrom($stage);
+        if ($stageEnum !== null || $start !== null || $end !== null) {
+            $query->reachedStage($stageEnum, $start, $end);
         }
 
         if ($salesId !== null) {

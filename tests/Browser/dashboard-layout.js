@@ -214,6 +214,27 @@ async function dashboardLayout(page) {
                                         weighted_value: 168000000,
                                     },
                                 ],
+                    stageAchievement:
+                        role === 'supervisor'
+                            ? {
+                                  stages: [
+                                      'lead',
+                                      'prospect',
+                                      'hot_prospect',
+                                      'spk',
+                                      'do',
+                                      'delivery',
+                                  ],
+                                  rows: [
+                                      {
+                                          id: 1,
+                                          name: 'Bima Saputra',
+                                          counts: { lead: 2, prospect: 1 },
+                                      },
+                                  ],
+                                  totals: { lead: 2, prospect: 1 },
+                              }
+                            : null,
                     priorities:
                         role === 'branch_manager' || empty
                             ? { stagnant: [], closing: [], unread: [] }
@@ -320,6 +341,14 @@ async function dashboardLayout(page) {
                     assert(
                         (await team.count()) === (role === 'sales' ? 0 : 1),
                         'Team visibility: ' + role,
+                    );
+                    assert(
+                        (await page
+                            .getByRole('region', {
+                                name: /^Capaian per tahap/,
+                            })
+                            .count()) === (role === 'supervisor' ? 1 : 0),
+                        'Stage achievement visibility: ' + role,
                     );
                     assert(
                         (await page

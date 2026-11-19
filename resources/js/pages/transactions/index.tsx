@@ -415,7 +415,7 @@ export default function TransactionsIndex({
                         </div>
                         <DateRangeField
                             id="transaction-date"
-                            label="Rentang progress"
+                            label="Rentang tanggal tahap"
                             className="sm:col-span-2"
                             from={dateFrom}
                             to={dateTo}

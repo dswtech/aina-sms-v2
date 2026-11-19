@@ -67,12 +67,15 @@ for ($i = 1; $i <= 16; $i++) {
 
 User::factory()->admin()->create(['dealer_id' => $sales->dealer_id, 'username' => 'g11.admin']);
 foreach (['Ship', 'Cancel'] as $scenario) {
-    DealTransaction::create([
+    $deal = DealTransaction::create([
         'dealer_id' => $sales->dealer_id, 'team_id' => $team->id, 'sales_id' => $sales->id,
         'customer_id' => $reportCustomer->id, 'vehicle_model' => "G11 DO {$scenario}", 'source' => 'walk_in',
         'current_stage' => PipelineStage::Spk,
         'region_code' => '32.17', 'district_code' => '32.17.08',
     ]);
+    // Real deals reach SPK through history; the list filters on those stage dates, so a cancelled DO falls back to this SPK.
+    $deal->stageHistories()->create(['to_stage' => PipelineStage::Lead, 'actor_id' => $sales->id, 'created_at' => now()]);
+    $deal->stageHistories()->create(['from_stage' => PipelineStage::Lead, 'to_stage' => PipelineStage::Spk, 'actor_id' => $sales->id, 'created_at' => now()]);
 }
 
 // Transactions/financing/area fixtures. Names avoid the "G11 DO ..." prefix mutated by do-workflow.js.

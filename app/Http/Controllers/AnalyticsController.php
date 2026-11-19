@@ -101,23 +101,22 @@ class AnalyticsController extends Controller
             ->with('sales:id,name');
         foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery] as $stage) {
             $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
+                if ($achievement) {
+                    $inPeriod($history->scopes(['effectiveFor' => [$stage]]));
+
+                    return;
+                }
                 $history->whereNull('reverses_stage_history_id');
                 if ($stage === PipelineStage::Do) {
                     $history->scopes(['realizedDo']);
                 } else {
                     $history->where('to_stage', $stage);
                 }
-                if ($achievement) {
-                    $inPeriod($history);
-                }
             }]);
         }
 
         if ($achievement) {
-            $query->whereHas('stageHistories', function (Builder $history) use ($inPeriod): void {
-                $history->reportableAchievement();
-                $inPeriod($history);
-            });
+            $query->reachedStage(null, $start, $end);
         } else {
             $query->where('created_at', '>=', $start)->where('created_at', '<', $end);
         }
