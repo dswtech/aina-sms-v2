@@ -59,8 +59,7 @@ function g03Ledger(): array
         $active->stageHistories()->create(['to_stage' => 'spk', 'actor_id' => $f['sales']->id, 'created_at' => $at]);
     }
     $last = g03Deal($f, 'walk_in', '2026-11-30 16:59:59', '2026-11-30 16:59:59');
-    $last->update(['current_stage' => PipelineStage::Delivery]);
-    $last->stageHistories()->create(['to_stage' => 'delivery', 'actor_id' => $f['sales']->id, 'created_at' => '2026-11-30 17:00:00']);
+    $last->update(['current_stage' => PipelineStage::Do]);
     g03Deal($f, 'next_month', '2026-11-30 17:00:00', '2026-11-30 17:00:00');
     g03Deal($f, 'prior_month', '2026-10-31 16:59:59', '2026-10-31 16:59:59');
     g03Deal($other, 'other_team', '2026-11-05 00:00:00', '2026-11-06 00:00:00');
@@ -77,7 +76,7 @@ it('reconciles unique Jakarta DO events between dashboard and achievement analys
     $expected = $role === 'supervisor' ? 3 : 4;
     $this->actingAs($actor)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.realizationUnits', $expected)->where('dashboard.stageCounts.do', $expected)
-        ->where('dashboard.stageCounts.delivery', 0));
+        ->missing('dashboard.stageCounts.delivery'));
     $this->get('/analytics?period=2026-11&mode=achievement')->assertInertia(fn (Assert $p) => $p
         ->where('analytics.sources', fn ($rows): bool => collect($rows)->sum('do') === $expected)
         ->where('analytics.models.0.do', $expected)
@@ -107,7 +106,7 @@ it('omits a cancelled DO and counts its replacement only in the new Jakarta mont
     $this->get('/analytics?period=2026-12&mode=achievement')
         ->assertInertia(fn (Assert $p) => $p
             ->where('analytics.sources.0.do', 1)->where('analytics.sources.0.spk', 0)
-            ->where('analytics.sources.0.delivery', 0));
+            ->missing('analytics.sources.0.delivery'));
 });
 
 it('excludes DO history without a complete checklist', function () {
@@ -131,7 +130,7 @@ it('uses the Jakarta acquisition cohort and distinct stage progress with a clear
         ->assertInertia(fn (Assert $p) => $p
             ->has('analytics.sources', 1)->where('analytics.sources.0.source', 'walk_in')
             ->where('analytics.sources.0.total', 2)->where('analytics.sources.0.spk', 1)
-            ->where('analytics.sources.0.do', 2)->where('analytics.sources.0.delivery', 1)
+            ->where('analytics.sources.0.do', 2)
             ->where('analytics.sources.0.share', 100)->where('analytics.sources.0.conversion', 100)
             ->has('analytics.drilldown', 2)->where('analytics.drilldown', fn ($rows): bool => collect($rows)->pluck('public_id')->sort()->values()->all() === collect([$ledger['active']->public_id, $ledger['last']->public_id])->sort()->values()->all()));
 });
@@ -197,6 +196,6 @@ it('reconciles filtered CSV to screen totals and never accepts caller supplied d
     $csv = $response->streamedContent();
     $rows = array_map(fn (string $row): array => str_getcsv($row, ';', escape: ''), explode("\n", trim(ltrim($csv, "\xEF\xBB\xBF"))));
     $source = collect($rows)->first(fn (array $row): bool => $row[0] === 'walk_in');
-    expect($source)->toBe(['walk_in', '2', '100', '1', '2', '1', '100'])
+    expect($source)->toBe(['walk_in', '2', '100', '1', '2', '100'])
         ->and($csv)->not->toContain('foreign_dealer', 'other_team', 'JANGAN_KIRIM_CATATAN', $f['customer']->phone);
 });

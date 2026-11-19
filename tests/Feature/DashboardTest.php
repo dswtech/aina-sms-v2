@@ -43,7 +43,7 @@ class DashboardTest extends TestCase
         $this->actingAs(User::factory()->supervisor()->create())->get(route('dashboard'))
             ->assertInertia(fn (Assert $page) => $page
                 ->has('dashboard.stageAchievement.rows')
-                ->has('dashboard.stageAchievement.stages', 6)
+                ->has('dashboard.stageAchievement.stages', 5)
                 ->has('dashboard.stageAchievement.totals'));
 
         foreach (['sales', 'branchManager', 'admin'] as $role) {

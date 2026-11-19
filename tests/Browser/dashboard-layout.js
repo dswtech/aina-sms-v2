@@ -152,7 +152,6 @@ async function dashboardLayout(page) {
                                 hot_prospect: 1,
                                 spk: 1,
                                 do: 1,
-                                delivery: 3,
                                 lost: 0,
                             }
                           : {
@@ -161,7 +160,6 @@ async function dashboardLayout(page) {
                                 hot_prospect: 6,
                                 spk: 4,
                                 do: 3,
-                                delivery: 13,
                                 lost: 2,
                             },
                     stagnantCount: 2,
@@ -223,7 +221,6 @@ async function dashboardLayout(page) {
                                       'hot_prospect',
                                       'spk',
                                       'do',
-                                      'delivery',
                                   ],
                                   rows: [
                                       {

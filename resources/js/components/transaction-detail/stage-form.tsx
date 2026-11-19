@@ -19,7 +19,7 @@ import {
 import { stageDirection } from '@/lib/transaction-detail';
 import type { TransactionDetailData } from '@/types/history';
 
-export type StageAction = 'delivery' | 'cancel' | null;
+export type StageAction = 'cancel' | null;
 
 type Option = { value: string; label: string };
 
@@ -42,7 +42,6 @@ const selectClass =
     'native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3';
 
 const titles = {
-    delivery: 'Konfirmasi Delivery',
     cancel: 'Batalkan DO',
     stage: 'Ubah tahap',
 };
@@ -60,7 +59,6 @@ export function StageForm({
 }: Props) {
     const choices = stages.filter(
         (item) =>
-            item.value !== 'delivery' &&
             item.value !== detail.current_stage &&
             (item.value !== 'do' || detail.can_record_do),
     );
@@ -139,7 +137,6 @@ export function StageForm({
             `${url}/stage`,
             {
                 to_stage: target,
-                do_event_id: detail.do_event_id,
                 stage_event_id: detail.stage_event_id,
                 notes: notes || null,
                 booking_fee_confirmed: bookingFee,
@@ -229,11 +226,6 @@ export function StageForm({
                             )}
                         </div>
                     </>
-                )}
-                {action === 'delivery' && (
-                    <p className="text-sm text-muted-foreground">
-                        Konfirmasi bahwa kendaraan sudah terkirim.
-                    </p>
                 )}
                 {action === 'cancel' ? (
                     <div className="space-y-1">

@@ -131,7 +131,6 @@ export type TransactionDetailData = {
     can_assign_customer: boolean;
     can_update: boolean;
     can_record_do: boolean;
-    can_confirm_delivery: boolean;
     can_cancel_do: boolean;
     do_event_id: number | null;
     stage_event_id: number | null;

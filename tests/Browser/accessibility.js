@@ -211,7 +211,6 @@ async function accessibility(page) {
         can_assign_customer: false,
         can_update: true,
         can_record_do: false,
-        can_confirm_delivery: false,
         can_cancel_do: false,
         do_event_id: null,
         stage_event_id: null,
@@ -963,14 +962,13 @@ async function accessibility(page) {
             );
         }
     });
-    await test('all seven transaction stages have distinct readable badge colors', async () => {
+    await test('all six transaction stages have distinct readable badge colors', async () => {
         const stages = [
             ['lead', 'Lead'],
             ['prospect', 'Prospect'],
             ['hot_prospect', 'Hot Prospect'],
             ['spk', 'SPK'],
             ['do', 'DO'],
-            ['delivery', 'Delivery'],
             ['lost', 'Lost'],
         ];
         await page.setViewportSize({ width: 390, height: 844 });
@@ -982,7 +980,7 @@ async function accessibility(page) {
                 ...customer.active_deal,
                 current_stage: stage,
                 stage_label: label,
-                is_closed: ['delivery', 'lost'].includes(stage),
+                is_closed: ['do', 'lost'].includes(stage),
             },
         }));
         await load('customers/index', {
@@ -1071,8 +1069,8 @@ async function accessibility(page) {
                     }
                 }
                 assert(
-                    new Set(backgrounds).size === 7,
-                    'Stages do not have seven distinct badge colors',
+                    new Set(backgrounds).size === 6,
+                    'Stages do not have six distinct badge colors',
                 );
                 if (width === 1440)
                     await page.screenshot({
@@ -1292,9 +1290,8 @@ async function accessibility(page) {
                             share: 33,
                             spk: 1,
                             do: 1,
-                            delivery: 1,
                             conversion: 33,
-                            furthest: { lead: 2, spk: 0, do: 0, delivery: 1 },
+                            furthest: { lead: 2, spk: 0, do: 1 },
                         })),
                         models: three((id) => ({
                             model: `Model ${id}`,
@@ -1302,8 +1299,7 @@ async function accessibility(page) {
                             share: 33,
                             spk: 1,
                             do: 1,
-                            delivery: 1,
-                            furthest: { lead: 2, spk: 0, do: 0, delivery: 1 },
+                            furthest: { lead: 2, spk: 0, do: 1 },
                         })),
                         drilldown: three((id) => ({
                             public_id: `qa-${id}`,
@@ -1755,8 +1751,7 @@ async function accessibility(page) {
             prospect: 1,
             hot_prospect: 0,
             spk: 0,
-            do: 0,
-            delivery: 1,
+            do: 1,
             lost: 0,
         },
         stagnantCount: 1,

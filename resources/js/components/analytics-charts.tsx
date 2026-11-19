@@ -4,7 +4,6 @@ export type StageBuckets = {
     lead: number;
     spk: number;
     do: number;
-    delivery: number;
 };
 
 export type ChartRow = {
@@ -14,7 +13,6 @@ export type ChartRow = {
     total: number;
     spk: number;
     do: number;
-    delivery: number;
     furthest: StageBuckets | null;
 };
 
@@ -29,8 +27,7 @@ const pct = (part: number, whole: number) =>
 export const stageColors = {
     lead: 'color-mix(in oklab, var(--muted-foreground) 18%, var(--card))',
     spk: 'color-mix(in oklab, var(--primary) 42%, var(--card))',
-    do: 'color-mix(in oklab, var(--primary) 70%, var(--card))',
-    delivery: 'var(--primary)',
+    do: 'var(--primary)',
 };
 
 export const sourcePalette = [
@@ -118,7 +115,7 @@ export function StageSummary({
     rows: ChartRow[];
     acquisition: boolean;
 }) {
-    const sum = (key: 'total' | 'spk' | 'do' | 'delivery') =>
+    const sum = (key: 'total' | 'spk' | 'do') =>
         rows.reduce((total, row) => total + row[key], 0);
     const total = sum('total');
     const steps = [
@@ -129,11 +126,6 @@ export function StageSummary({
         },
         { label: 'SPK', value: sum('spk'), color: stageColors.spk },
         { label: 'DO', value: sum('do'), color: stageColors.do },
-        {
-            label: 'Delivery',
-            value: sum('delivery'),
-            color: stageColors.delivery,
-        },
     ];
 
     return (
@@ -148,7 +140,7 @@ export function StageSummary({
                         : 'Jumlah kejadian tahap pada periode ini.'}
                 </p>
             </div>
-            <dl className="mt-3 grid grid-cols-2 gap-0.5 overflow-hidden rounded-xl border bg-border md:grid-cols-4">
+            <dl className="mt-3 grid grid-cols-2 gap-0.5 overflow-hidden rounded-xl border bg-border md:grid-cols-3">
                 {steps.map((step, index) => (
                     <div key={step.label} className="min-w-0 bg-secondary p-4">
                         <div className="flex items-start justify-between gap-2">
@@ -186,8 +178,7 @@ export function StageSummary({
 }
 
 const outcomes = [
-    { key: 'delivery', label: 'Delivery' },
-    { key: 'do', label: 'Berhenti di DO' },
+    { key: 'do', label: 'DO' },
     { key: 'spk', label: 'Berhenti di SPK' },
     { key: 'lead', label: 'Belum SPK' },
 ] as const;
@@ -598,14 +589,8 @@ export type StageSegment = {
 
 export const furthestSegments: StageSegment[] = [
     {
-        key: 'delivery',
-        label: 'Delivery',
-        color: stageColors.delivery,
-        value: (row) => row.furthest?.delivery ?? 0,
-    },
-    {
         key: 'do',
-        label: 'DO (belum delivery)',
+        label: 'DO',
         color: stageColors.do,
         value: (row) => row.furthest?.do ?? 0,
     },
@@ -626,12 +611,6 @@ export const furthestSegments: StageSegment[] = [
 export const eventSegments: StageSegment[] = [
     { key: 'spk', label: 'SPK', color: stageColors.spk, value: (r) => r.spk },
     { key: 'do', label: 'DO', color: stageColors.do, value: (r) => r.do },
-    {
-        key: 'delivery',
-        label: 'Delivery',
-        color: stageColors.delivery,
-        value: (r) => r.delivery,
-    },
 ];
 
 export function StageBars({

@@ -31,7 +31,7 @@ Hierarki kewenangan: `Admin → Branch Manager → Supervisor → Sales`.
 | Hot Prospect | Prospect dengan minat dan langkah berikutnya yang konkret, misalnya test drive atau pembahasan pembelian. |
 | SPK | Surat Pemesanan Kendaraan; komitmen pemesanan yang memenuhi bukti dan ketentuan dealer. |
 | DO | Tahap yang menandai realisasi penjualan setelah PO, DP, dan Unit dikonfirmasi. |
-| Delivery | Konfirmasi bahwa kendaraan sudah terkirim setelah transaksi mencapai DO. |
+| Delivery | Tahap lama setelah DO untuk konfirmasi pengiriman; dihapus, DO kini tahap akhir ([ADR 010](adr/ADR-010-remove-delivery-stage.md)). |
 | Lost | Peluang penjualan berakhir tanpa transaksi dan wajib memiliki alasan yang dapat dievaluasi. |
 | Stagnant lead | Lead yang tidak memiliki aktivitas dalam ambang waktu yang ditetapkan produk. |
 | Pipeline | Urutan tahap yang menunjukkan perjalanan calon pelanggan menuju penjualan atau lost. |

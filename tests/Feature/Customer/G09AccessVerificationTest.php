@@ -145,12 +145,11 @@ it('never deletes comments or revisions through HTTP for any dealer role', funct
     expect($comment->fresh()->body)->toBe('Koreksi')->and($comment->revisions()->count())->toBe(1);
 })->with(['sales', 'supervisor', 'admin', 'branch_manager']);
 
-it('retains inactive-team history for admin while rejecting new transactions and ordinary Delivery edits', function () {
+it('retains inactive-team history for admin while rejecting new transactions and ordinary DO edits', function () {
     $this->deal->update(['current_stage' => PipelineStage::Spk]);
     $this->deal->transitionTo(PipelineStage::Do, $this->sales, options: [
         'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
-    $this->deal->transitionTo(PipelineStage::Delivery, $this->sales);
     $history = $this->deal->stageHistories()->get()->toJson();
     $this->team->update(['is_active' => false]);
     $admin = User::factory()->admin()->create(['dealer_id' => $this->dealer->id]);
@@ -160,6 +159,6 @@ it('retains inactive-team history for admin while rejecting new transactions and
         $this->actingAs($actor)->patchJson(route('transactions.stage', $this->deal), ['to_stage' => 'prospect'])->assertForbidden();
     }
     expect(DealTransaction::count())->toBe(1)
-        ->and($this->deal->fresh()->current_stage)->toBe(PipelineStage::Delivery)
+        ->and($this->deal->fresh()->current_stage)->toBe(PipelineStage::Do)
         ->and($this->deal->stageHistories()->get()->toJson())->toBe($history);
 });

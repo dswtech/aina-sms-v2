@@ -4,14 +4,17 @@ use App\Enums\PipelineStage;
 use App\Models\Customer;
 use App\Models\Dealer;
 use App\Models\DealTransaction;
+use App\Models\FollowUp;
+use App\Models\StageHistory;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('requires a fresh checklist and audits cancellation before delivery', function () {
+it('requires a fresh checklist and audits DO cancellation', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
     $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
@@ -33,7 +36,7 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
     }
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::Spk)
         ->and($deal->stageHistories()->count())->toBe(0);
-    $this->patchJson($stage, ['to_stage' => 'delivery', 'do_event_id' => 0])->assertForbidden();
+    $this->patchJson($stage, ['to_stage' => 'delivery'])->assertUnprocessable()->assertJsonValidationErrors('to_stage');
     $this->patch($stage, ['to_stage' => 'do', 'stage_event_id' => 0, ...$checklist])->assertRedirect()->assertSessionHasNoErrors();
     $original = $deal->stageHistories()->sole();
     expect($original->only(array_keys($checklist)))->toBe($checklist)
@@ -55,18 +58,17 @@ it('requires a fresh checklist and audits cancellation before delivery', functio
         ->assertUnprocessable()->assertJsonValidationErrors('stage_event_id');
     $this->patch($stage, ['to_stage' => 'do', 'stage_event_id' => $correction->id, ...$checklist])->assertRedirect()->assertSessionHasNoErrors();
     $this->patchJson($stage, ['to_stage' => 'do', 'stage_event_id' => $correction->id, ...$checklist])->assertForbidden();
-    $current = $deal->currentDoEvent();
-    $this->patchJson($stage, ['to_stage' => 'delivery', 'do_event_id' => $original->id])
-        ->assertUnprocessable()->assertJsonValidationErrors('do_event_id');
     $this->actingAs($admin)->postJson($cancel, ['reason' => 'Permintaan lama', 'do_event_id' => $original->id])
         ->assertUnprocessable()->assertJsonValidationErrors('do_event_id');
-    $this->actingAs($sales)->patch($stage, ['to_stage' => 'delivery', 'do_event_id' => $current->id])->assertRedirect()->assertSessionHasNoErrors();
-    $this->actingAs($admin)->postJson($cancel, ['reason' => 'Terlambat'])->assertForbidden();
-    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Delivery)
-        ->and($deal->stageHistories()->count())->toBe(4);
+    // DO is the final stage now: no further move, and the retired Delivery value is rejected.
+    $this->actingAs($sales)->patchJson($stage, ['to_stage' => 'lost', 'lost_reason' => 'other'])->assertForbidden();
+    $this->patchJson($stage, ['to_stage' => 'delivery'])->assertUnprocessable()->assertJsonValidationErrors('to_stage');
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Do)
+        ->and($deal->stageHistories()->count())->toBe(3)
+        ->and($deal->fresh()->current_stage->isClosed())->toBeTrue();
 });
 
-it('limits DO and Delivery to authorized Sales and Supervisors', function () {
+it('limits DO to authorized Sales and Supervisors', function () {
     $dealer = Dealer::factory()->create();
     $team = Team::factory()->create(['dealer_id' => $dealer->id]);
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
@@ -92,9 +94,81 @@ it('limits DO and Delivery to authorized Sales and Supervisors', function () {
     }
     $this->actingAs($supervisor)->patch($path, $payload)->assertRedirect()->assertSessionHasNoErrors();
     $this->actingAs($foreignAdmin)->postJson(route('transactions.cancel-do', $deal), ['reason' => 'Asing'])->assertForbidden();
-    $delivery = ['to_stage' => 'delivery', 'do_event_id' => $deal->currentDoEvent()->id];
-    foreach ([$otherSupervisor, $admin] as $unauthorized) {
-        $this->actingAs($unauthorized)->patchJson($path, $delivery)->assertForbidden();
-    }
-    $this->actingAs($supervisor)->patch($path, $delivery)->assertRedirect()->assertSessionHasNoErrors();
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Do);
+});
+
+/** @return array{deal: DealTransaction, sales: User, admin: User} */
+function spkDealForDo(): array
+{
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $admin = User::factory()->admin()->create(['dealer_id' => $dealer->id]);
+    $deal = DealTransaction::create([
+        'region_code' => '32.17', 'district_code' => '32.17.08',
+        'dealer_id' => $dealer->id, 'sales_id' => $sales->id,
+        'customer_id' => Customer::factory()->create(['dealer_id' => $dealer->id])->id,
+        'vehicle_model' => 'DO month test', 'vehicle_ownership' => 'first_buyer',
+        'current_stage' => PipelineStage::Spk,
+    ]);
+
+    return ['deal' => $deal, 'sales' => $sales, 'admin' => $admin];
+}
+
+function recordDo(DealTransaction $deal, User $actor): StageHistory
+{
+    return $deal->fresh()->transitionTo(PipelineStage::Do, $actor, null, ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true]);
+}
+
+function followUpFor(DealTransaction $deal, User $sales, string $status): FollowUp
+{
+    return FollowUp::create([
+        'customer_id' => $deal->customer_id, 'deal_transaction_id' => $deal->id,
+        'assigned_to_id' => $sales->id, 'created_by_id' => $sales->id,
+        'scheduled_at' => now()->addDays(3), 'plan_notes' => 'Telepon', 'status' => $status,
+    ]);
+}
+
+it('cancels pending follow-ups when a deal reaches DO', function () {
+    ['deal' => $deal, 'sales' => $sales] = spkDealForDo();
+    $pending = followUpFor($deal, $sales, 'pending');
+    $completed = followUpFor($deal, $sales, 'completed');
+
+    recordDo($deal, $sales);
+
+    expect($pending->fresh()->status)->toBe('cancelled')
+        ->and($pending->fresh()->cancel_reason)->toBe('Transaksi DO')
+        ->and($completed->fresh()->status)->toBe('completed');
+});
+
+it('lets Admin cancel a DO only in the Jakarta month it was recorded', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-10-31 23:59', 'Asia/Jakarta'));
+    $event = recordDo($deal, $sales);
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-01 00:00', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeFalse();
+    $this->actingAs($admin)->postJson(route('transactions.cancel-do', $deal), ['reason' => 'Terlambat', 'do_event_id' => $event->id])->assertForbidden();
+});
+
+it('allows cancelling a DO recorded earlier in the same Jakarta month', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-11-01 00:00', 'Asia/Jakarta'));
+    recordDo($deal, $sales);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-30 23:59', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
+});
+
+it('uses the active DO event after a cancel and re-record', function () {
+    ['deal' => $deal, 'sales' => $sales, 'admin' => $admin] = spkDealForDo();
+    $this->travelTo(CarbonImmutable::parse('2026-10-20 10:00', 'Asia/Jakarta'));
+    $first = recordDo($deal, $sales);
+    $this->travelTo(CarbonImmutable::parse('2026-10-21 10:00', 'Asia/Jakarta'));
+    $this->actingAs($admin)->post(route('transactions.cancel-do', $deal), ['reason' => 'Salah catat', 'do_event_id' => $first->id])->assertSessionHasNoErrors();
+    $this->travelTo(CarbonImmutable::parse('2026-11-02 10:00', 'Asia/Jakarta'));
+    recordDo($deal, $sales);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-15 10:00', 'Asia/Jakarta'));
+    expect($admin->can('cancelDo', $deal->fresh()))->toBeTrue();
 });

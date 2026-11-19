@@ -9,7 +9,6 @@ enum PipelineStage: string
     case HotProspect = 'hot_prospect';
     case Spk = 'spk';
     case Do = 'do';
-    case Delivery = 'delivery';
     case Lost = 'lost';
 
     public function label(): string
@@ -20,12 +19,17 @@ enum PipelineStage: string
             self::HotProspect => 'Hot Prospect',
             self::Spk => 'SPK',
             self::Do => 'DO',
-            self::Delivery => 'Delivery',
             self::Lost => 'Lost',
         };
     }
 
-    /** Position among the open pipeline stages; null for DO, Delivery and Lost. */
+    /** Label for a stored stage value, including retired ones such as 'delivery' (ADR-010). */
+    public static function labelOf(string $value): string
+    {
+        return self::tryFrom($value)?->label() ?? ucfirst($value);
+    }
+
+    /** Position among the open pipeline stages; null for DO and Lost. */
     public function openRank(): ?int
     {
         return match ($this) {
@@ -50,6 +54,6 @@ enum PipelineStage: string
     /** @return list<string> */
     public static function closedValues(): array
     {
-        return [self::Do->value, self::Delivery->value, self::Lost->value];
+        return [self::Do->value, self::Lost->value];
     }
 }

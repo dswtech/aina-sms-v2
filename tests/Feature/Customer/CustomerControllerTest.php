@@ -261,3 +261,22 @@ it('gives Buku Pelanggan what the shared detail modal needs for the stage form',
             ->has('leasings')
         );
 });
+
+it('refuses a follow-up on a closed transaction but still allows one without a transaction', function (PipelineStage $stage) {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    $customer = Customer::factory()->create(['dealer_id' => $dealer->id]);
+    $customer->assignTo($sales);
+    $deal = DealTransaction::create([
+        'dealer_id' => $dealer->id, 'customer_id' => $customer->id, 'sales_id' => $sales->id,
+        'vehicle_model' => 'Avanza', 'current_stage' => $stage,
+    ]);
+    $plan = ['scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'), 'plan_notes' => 'Telepon ulang'];
+
+    $this->actingAs($sales)->post(route('customers.follow-ups.store', $customer), [...$plan, 'deal_transaction_id' => $deal->id])
+        ->assertSessionHasErrors(['deal_transaction_id' => 'Transaksi sudah selesai, follow-up tidak dapat dijadwalkan.']);
+    expect($customer->followUps()->count())->toBe(0);
+
+    $this->post(route('customers.follow-ups.store', $customer), $plan)->assertSessionHasNoErrors();
+    expect($customer->followUps()->sole()->deal_transaction_id)->toBeNull();
+})->with([PipelineStage::Do, PipelineStage::Lost]);

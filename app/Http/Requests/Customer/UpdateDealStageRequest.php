@@ -32,7 +32,6 @@ class UpdateDealStageRequest extends FormRequest
             'po_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
             'dp_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
             'unit_confirmed' => ['nullable', 'boolean', 'accepted_if:to_stage,do'],
-            'do_event_id' => ['nullable', 'integer', 'required_if:to_stage,delivery'],
             'stage_event_id' => ['nullable', 'integer', 'min:0', 'required_if:to_stage,do'],
             'lost_reason' => [
                 'nullable',

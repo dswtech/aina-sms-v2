@@ -33,17 +33,12 @@ class DealTransactionPolicy
             && $this->update($actor, $deal);
     }
 
-    public function confirmDelivery(User $actor, DealTransaction $deal): bool
-    {
-        return $deal->current_stage === PipelineStage::Do
-            && in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)
-            && $this->view($actor, $deal);
-    }
-
     public function cancelDo(User $actor, DealTransaction $deal): bool
     {
+        // A DO is only reversible in its own Jakarta month, so closed months keep their realization.
         return $deal->current_stage === PipelineStage::Do
             && $actor->role === UserRole::Admin
-            && $this->view($actor, $deal);
+            && $this->view($actor, $deal)
+            && $deal->currentDoEvent()?->created_at->setTimezone('Asia/Jakarta')->format('Y-m') === now('Asia/Jakarta')->format('Y-m');
     }
 }

@@ -163,7 +163,7 @@ async function targetRoleMetrics(page) {
                         missingClosingMonthCount: 0,
                         missingDoHistoryCount: 0,
                         stageCounts: {
-                            delivery: isSales ? 1 : 2,
+                            do: isSales ? 1 : 2,
                             hot_prospect: isSales ? 1 : 2,
                         },
                         stagnantCount: 0,

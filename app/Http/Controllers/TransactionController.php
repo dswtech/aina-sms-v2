@@ -58,7 +58,7 @@ class TransactionController extends Controller
                 'expected_closing_month' => ['nullable', 'date_format:Y-m'],
                 'estimated_value' => ['nullable', 'integer', 'min:0'],
             ]);
-            if (array_key_exists('vehicle_model', $validated) && blank($validated['vehicle_model']) && in_array($locked->current_stage, [PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery], true)) {
+            if (array_key_exists('vehicle_model', $validated) && blank($validated['vehicle_model']) && in_array($locked->current_stage, [PipelineStage::Spk, PipelineStage::Do], true)) {
                 throw ValidationException::withMessages(['vehicle_model' => 'Kendaraan tidak boleh dikosongkan setelah tahap SPK.']);
             }
             $data = array_replace([
@@ -272,9 +272,8 @@ class TransactionController extends Controller
      */
     private function row(DealTransaction $transaction, User $actor, array $regions, array $districts, array $supervisors, array $leasingNames = []): array
     {
-        $confirmDelivery = $actor->can('confirmDelivery', $transaction);
         $cancelDo = $actor->can('cancelDo', $transaction);
-        $doEvent = ($confirmDelivery || $cancelDo) ? $transaction->currentDoEvent() : null;
+        $doEvent = $cancelDo ? $transaction->currentDoEvent() : null;
 
         return [
             'id' => $transaction->id,
@@ -316,7 +315,6 @@ class TransactionController extends Controller
             'can_update' => ! $transaction->current_stage->isClosed() && $actor->can('update', $transaction),
             'can_record_do' => $transaction->current_stage === PipelineStage::Spk && $actor->can('recordDo', $transaction),
             'stage_event_id' => $transaction->current_stage === PipelineStage::Spk ? $transaction->stageEventId() : null,
-            'can_confirm_delivery' => $confirmDelivery && $doEvent?->hasDoChecklist(),
             'can_cancel_do' => $cancelDo && $doEvent !== null,
             'do_event_id' => $doEvent?->id,
         ];
@@ -365,7 +363,7 @@ class TransactionController extends Controller
                     'other_city' => $transaction->customer?->other_city,
                 ],
             ],
-            // Area and financing are editable until DO; DO/Delivery lock them, a cancelled DO returns to SPK.
+            // Area and financing are editable until DO; DO locks them, a cancelled DO returns to SPK.
             'can_edit_metadata' => $actor->can('update', $transaction),
             'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
             'days_in_stage' => $transaction->current_stage->isClosed() ? null : $this->daysInStage($transaction),

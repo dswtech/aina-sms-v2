@@ -97,20 +97,20 @@ it('reconciles forecast to closing month and DO events at Jakarta boundaries', f
     g02Deal($f);
     g02Deal($f, ['expected_closing_month' => '2026-12-01']);
     g02Deal($f, ['expected_closing_month' => null]);
-    $delivered = g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
+    $realized = g02Deal($f, ['current_stage' => PipelineStage::Do]);
     foreach (['2026-10-31 17:00:00', '2026-11-02 00:00:00'] as $at) {
-        $delivered->stageHistories()->create([
+        $realized->stageHistories()->create([
             'from_stage' => 'spk', 'to_stage' => 'do', 'actor_id' => $f['sales']->id, 'created_at' => $at,
             'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
         ]);
     }
-    $delivered->update(['updated_at' => '2026-12-10 00:00:00']);
-    $outside = g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
+    $realized->update(['updated_at' => '2026-12-10 00:00:00']);
+    $outside = g02Deal($f, ['current_stage' => PipelineStage::Do]);
     $outside->stageHistories()->create([
         'to_stage' => 'do', 'actor_id' => $f['sales']->id, 'created_at' => '2026-10-31 16:59:59',
         'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
-    g02Deal($f, ['current_stage' => PipelineStage::Delivery]);
+    g02Deal($f, ['current_stage' => PipelineStage::Do]);
     $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.realizationUnits', 1)->where('dashboard.forecastUnits', 1.5)
         ->where('dashboard.missingClosingMonthCount', 1)->where('dashboard.missingDoHistoryCount', 1)
@@ -130,7 +130,7 @@ it('allows closing month changes only for an authorized active transaction', fun
     expect($deal->fresh()->expected_closing_month)->toBeNull();
     $other = g02Fixture();
     $this->actingAs($other['sales'])->patch('/transactions/'.$deal->public_id.'/closing-month', ['expected_closing_month' => '2026-12'])->assertForbidden();
-    $deal->update(['current_stage' => PipelineStage::Delivery]);
+    $deal->update(['current_stage' => PipelineStage::Do]);
     $this->actingAs($f['sales'])->patch('/transactions/'.$deal->public_id.'/closing-month', ['expected_closing_month' => '2026-12'])->assertForbidden();
 });
 
@@ -167,7 +167,7 @@ it('counts stagnant deals in SQL within the branch manager reporting scope', fun
         'created_at' => $beforeCutoff,
     ])->save();
     g02Deal($f, ['last_activity_at' => $atCutoff])->forceFill(['created_at' => $beforeCutoff])->save();
-    g02Deal($f, ['current_stage' => PipelineStage::Delivery, 'last_activity_at' => $beforeCutoff]);
+    g02Deal($f, ['current_stage' => PipelineStage::Do, 'last_activity_at' => $beforeCutoff]);
     g02Deal(g02Fixture(), ['last_activity_at' => $beforeCutoff]);
     $manager = User::factory()->branchManager()->create(['dealer_id' => $f['dealer']->id]);
 

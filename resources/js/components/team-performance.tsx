@@ -101,7 +101,6 @@ export function stageLabel(stage: string) {
                 hot_prospect: 'Hot Prospect',
                 spk: 'SPK',
                 do: 'DO',
-                delivery: 'Delivery',
                 lost: 'Lost',
             } as Record<string, string>
         )[stage] ?? stage

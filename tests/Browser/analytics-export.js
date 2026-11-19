@@ -50,11 +50,10 @@ async function analyticsExport(page) {
                         share: 50,
                         spk: 3,
                         do: 2,
-                        delivery: 1,
                         conversion: mode === 'acquisition' ? 50 : null,
                         furthest:
                             mode === 'acquisition'
-                                ? { lead: 1, spk: 1, do: 1, delivery: 1 }
+                                ? { lead: 1, spk: 1, do: 1 }
                                 : null,
                     }));
                     const models = sources.map((row, i) => ({
@@ -181,16 +180,15 @@ async function analyticsExport(page) {
                                 .locator('td')
                                 .allTextContents();
                             assert(
-                                values[3].trim() === '2' &&
-                                    values[4].trim() === '1',
-                                'Print must show separate DO and Delivery totals',
+                                values[3].trim() === '2' && values.length === (section === 'sumber' && mode === 'acquisition' ? 6 : 5),
+                                'Print must show the DO total without a Delivery column',
                             );
                             if (
                                 section === 'sumber' &&
                                 mode === 'acquisition'
                             ) {
                                 assert(
-                                    values[5].replace(/\s/g, '') === '50%',
+                                    values[4].replace(/\s/g, '') === '50%',
                                     'Print conversion must use DO / total',
                                 );
                             }

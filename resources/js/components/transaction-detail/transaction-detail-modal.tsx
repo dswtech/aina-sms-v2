@@ -58,7 +58,7 @@ type Props = {
     lostReasons: { value: string; label: string }[];
     vehicleOptions: VehicleOption[];
     assignableSales: { id: number; name: string }[];
-    /** Opens straight into the stage form (Ubah tahap, Konfirmasi Delivery, Batalkan DO). */
+    /** Opens straight into the stage form (Ubah tahap, Batalkan DO). */
     intent?: { action: StageAction; mode?: Mode } | null;
     /** Lets a page send focus back to the control that opened the modal. */
     onCloseAutoFocus?: (event: Event) => void;
@@ -219,13 +219,7 @@ function DetailView({
     // A finished deal (DO) is locked: the stage list would only offer moves the server rejects.
     const formAction: StageAction =
         stageAction ??
-        (detail.can_update
-            ? null
-            : detail.can_confirm_delivery
-              ? 'delivery'
-              : detail.can_cancel_do
-                ? 'cancel'
-                : null);
+        (detail.can_update ? null : detail.can_cancel_do ? 'cancel' : null);
 
     const openStage = (action: StageAction) => {
         setStageAction(action);
@@ -236,10 +230,7 @@ function DetailView({
         setStageAction(null);
         pickMode('comments');
     };
-    const canStage =
-        detail.can_update ||
-        detail.can_confirm_delivery ||
-        detail.can_cancel_do;
+    const canStage = detail.can_update || detail.can_cancel_do;
     // Branch Managers get no timeline or history, and no customer writes.
     const hasCustomer = detail.customer.public_id !== null;
     const canHistory = hasCustomer && detail.stages !== null;
@@ -315,17 +306,6 @@ function DetailView({
                         >
                             <ArrowRightLeft aria-hidden className="size-4" />
                             Ubah tahap
-                        </Button>
-                    )}
-                    {detail.can_confirm_delivery && (
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="min-h-9"
-                            onClick={() => openStage('delivery')}
-                        >
-                            Konfirmasi Delivery
                         </Button>
                     )}
                     {detail.can_cancel_do && (

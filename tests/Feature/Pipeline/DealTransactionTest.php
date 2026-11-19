@@ -49,8 +49,8 @@ it('calculates stagnant status when active deal has no activity for more than 3 
 
     expect($activeDeal->is_stagnant)->toBeTrue();
 
-    // Closed deals (Delivery / Lost) should never be flagged stagnant
-    $activeDeal->current_stage = PipelineStage::Delivery;
+    // Closed deals (DO / Lost) should never be flagged stagnant
+    $activeDeal->current_stage = PipelineStage::Do;
     expect($activeDeal->is_stagnant)->toBeFalse();
 
     $activeDeal->current_stage = PipelineStage::Lost;

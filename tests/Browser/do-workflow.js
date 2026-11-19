@@ -52,18 +52,9 @@ async function doWorkflow(page) {
     await page.setViewportSize({ width: 390, height: 844 });
     await login('g11.spv');
     await recordDo('Ship');
-    await page
-        .getByRole('button', { name: 'Konfirmasi Delivery', exact: true })
-        .click();
-    const delivery = page
-        .getByRole('dialog')
-        .getByRole('form', { name: 'Konfirmasi Delivery' });
-    await delivery
-        .getByRole('button', { name: 'Konfirmasi Delivery', exact: true })
-        .click();
-    await delivery.waitFor({ state: 'hidden' });
-    await page.reload();
-    await expectStage('Delivery');
+    // DO is the final stage: nothing after it, Delivery included.
+    if (await page.getByRole('button', { name: /Delivery/ }).count())
+        throw new Error('Delivery is still offered after DO');
     await recordDo('Cancel');
 
     await login('g11.admin');
@@ -84,13 +75,14 @@ async function doWorkflow(page) {
     await page.reload();
     await expectStage('SPK');
     await visit('Ship');
-    await expectStage('Delivery');
+    await expectStage('DO');
+    // A DO recorded this Jakarta month stays reversible for Admin.
     if (
-        await page
+        !(await page
             .getByRole('button', { name: 'Batalkan DO', exact: true })
-            .count()
+            .count())
     )
-        throw new Error('Cancellation is exposed after Delivery');
+        throw new Error('Same-month DO cannot be cancelled');
 
-    return { doChecklist: true, delivery: true, cancellation: true };
+    return { doChecklist: true, noDelivery: true, cancellation: true };
 }

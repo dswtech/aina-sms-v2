@@ -38,8 +38,6 @@ class TeamPerformance
             ->withExists([
                 'stageHistories as realized_in_period' => fn ($query) => $query->realizedDo()
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
-                'stageHistories as delivered_in_period' => fn ($query) => $query->where('to_stage', PipelineStage::Delivery)
-                    ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as current_stage_in_period' => fn ($query) => $query->whereColumn('stage_histories.to_stage', 'deal_transactions.current_stage')
                     ->whereNull('reverses_stage_history_id')
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
@@ -188,10 +186,7 @@ class TeamPerformance
             if ($row['realized_in_period']) {
                 $stageCounts[PipelineStage::Do->value]++;
             }
-            if ($row['delivered_in_period']) {
-                $stageCounts[PipelineStage::Delivery->value]++;
-            }
-            if ($stage === PipelineStage::Do || $stage === PipelineStage::Delivery) {
+            if ($stage === PipelineStage::Do) {
                 $missingDoHistory += (int) ! $row['has_do_history'];
 
                 continue;

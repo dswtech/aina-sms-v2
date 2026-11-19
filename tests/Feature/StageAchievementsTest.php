@@ -45,7 +45,7 @@ it('counts each deal once per stage it effectively reached in the period', funct
     achievementDeal($f, 'do', [['lead', '2026-11-02'], ['prospect', '2026-11-03'], ['hot_prospect', '2026-11-04'], ['spk', '2026-11-05'], ['do', '2026-11-06', ACHIEVEMENT_CHECKLIST]]);
 
     $result = app(StageAchievements::class)->bySales($f['supervisor'], new ReportingPeriod('2026-11'));
-    $expected = ['lead' => 1, 'prospect' => 1, 'hot_prospect' => 1, 'spk' => 1, 'do' => 1, 'delivery' => 0];
+    $expected = ['lead' => 1, 'prospect' => 1, 'hot_prospect' => 1, 'spk' => 1, 'do' => 1];
 
     expect($result['stages'])->toBe(array_keys($expected))
         ->and($result['rows'])->toBe([['id' => $f['sales']->id, 'name' => $f['sales']->name, 'counts' => $expected]])
@@ -81,7 +81,7 @@ it('matches the transaction list for the same filter', function () {
     achievementDeal($f, 'lead', [['lead', '2026-11-02']]);
     achievementDeal($f, 'spk', [['lead', '2026-10-30'], ['spk', '2026-11-05']]);
     achievementDeal($f, 'do', [['lead', '2026-11-02'], ['spk', '2026-11-03'], ['do', '2026-11-30', ACHIEVEMENT_CHECKLIST]]);
-    achievementDeal($f, 'delivery', [['lead', '2026-11-02'], ['do', '2026-11-04', ACHIEVEMENT_CHECKLIST], ['delivery', '2026-12-01']]);
+    achievementDeal($f, 'do', [['lead', '2026-11-02'], ['do', '2026-11-04', ACHIEVEMENT_CHECKLIST]]);
 
     $result = app(StageAchievements::class)->bySales($f['supervisor'], new ReportingPeriod('2026-11'));
     $this->actingAs($f['supervisor']);

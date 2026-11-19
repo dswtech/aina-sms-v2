@@ -44,7 +44,7 @@ it('uses the same strict Jakarta calendar cutoff in the accessor and query', fun
     'null activity old creation' => [null, '2026-11-01 16:59:59', PipelineStage::Lead, true],
     'null activity exact creation cutoff' => [null, '2026-11-01 17:00:00', PipelineStage::Lead, false],
     'null activity new creation' => [null, '2026-11-04 17:00:00', PipelineStage::Lead, false],
-    'Delivery never stagnant' => ['2026-10-01 00:00:00', '2026-10-01 00:00:00', PipelineStage::Delivery, false],
+    'DO never stagnant' => ['2026-10-01 00:00:00', '2026-10-01 00:00:00', PipelineStage::Do, false],
     'Lost never stagnant' => [null, '2026-10-01 00:00:00', PipelineStage::Lost, false],
 ]);
 
@@ -62,7 +62,7 @@ it('reconciles customer filters counts transaction badges and dashboard prioriti
     $old = stagnantFixture($this->sales, '2026-11-01 16:59:59', '2026-10-01 00:00:00');
     $legacy = stagnantFixture($this->sales, null, '2026-11-01 16:59:59');
     stagnantFixture($this->sales, '2026-11-01 17:00:00', '2026-10-01 00:00:00');
-    stagnantFixture($this->sales, '2026-10-01 00:00:00', '2026-10-01 00:00:00', PipelineStage::Delivery);
+    stagnantFixture($this->sales, '2026-10-01 00:00:00', '2026-10-01 00:00:00', PipelineStage::Do);
     stagnantFixture($this->sales, null, '2026-10-01 00:00:00', PipelineStage::Lost);
     $foreignSales = User::factory()->sales()->create(['dealer_id' => $this->dealer->id]);
     stagnantFixture($foreignSales, '2026-10-01 00:00:00', '2026-10-01 00:00:00');

@@ -12,7 +12,7 @@ use App\Support\ReportingPeriod;
 
 class StageAchievements
 {
-    private const STAGES = [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect, PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery];
+    private const STAGES = [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect, PipelineStage::Spk, PipelineStage::Do];
 
     /** @return array{stages: list<string>, rows: list<array{id: int, name: string, counts: array<string, int>}>, totals: array<string, int>} */
     public function bySales(User $actor, ReportingPeriod $window): array

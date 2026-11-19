@@ -279,7 +279,7 @@ class Customer extends Model
 
     /**
      * Fails with per-field Indonesian errors when the profile lacks what the target stage requires.
-     * Gender and address are due from Prospect, area and occupation from SPK (DO/Delivery only follow SPK).
+     * Gender and address are due from Prospect, area and occupation from SPK (DO only follows SPK).
      */
     public function assertProfileFor(PipelineStage $stage): void
     {

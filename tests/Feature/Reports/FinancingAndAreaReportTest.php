@@ -71,7 +71,7 @@ it('counts Prospect cohort once per deal at its first Prospect month with curren
         ->where('report.total', 7)->where('report.cash', 3));
 });
 
-it('reads DO financing from the snapshot, drops cancelled DO and ignores Delivery', function () {
+it('reads DO financing from the snapshot, drops cancelled DO', function () {
     $acc = ($this->leasing)('acc');
     $deal = rDeal($this, [...BANDUNG_ANDIR, 'current_stage' => PipelineStage::Spk, 'financing_type' => 'credit', 'leasing_id' => $acc]);
     rMove($this, $deal, PipelineStage::Do, '2026-11-10 03:00:00', DO_OK);
@@ -82,9 +82,6 @@ it('reads DO financing from the snapshot, drops cancelled DO and ignores Deliver
     $deal->forceFill(['financing_type' => 'cash', 'leasing_id' => null])->save();
     expect($row()['total'])->toBe(1)->and($row()['credit'])->toBe(1)
         ->and(collect($row()['leasing'])->firstWhere('name', 'ACC')['count'])->toBe(1);
-
-    rMove($this, $deal->fresh(), PipelineStage::Delivery, '2026-11-20 03:00:00');
-    expect($row()['total'])->toBe(1);
 
     $other = rDeal($this, [...BANDUNG_ANDIR, 'current_stage' => PipelineStage::Spk, 'financing_type' => 'cash']);
     rMove($this, $other, PipelineStage::Do, '2026-11-11 03:00:00', DO_OK);

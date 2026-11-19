@@ -169,7 +169,7 @@ async function transactionsFinancingRoles(page) {
     await saved.waitFor();
     checked.push('detail edit saved');
 
-    // Locked DO: edit button must not be offered for a delivered/DO deal with snapshot.
+    // Locked DO: edit button must not be offered for a DO deal with snapshot.
     await page.goto(`${origin}/transactions?search=${encodeURIComponent('G11 Fin Do')}`);
     await page.getByRole('button', { name: 'Detail', exact: true }).filter({ visible: true }).first().click();
     await page.getByRole('heading', { name: 'Detail transaksi' }).waitFor();

@@ -1,6 +1,6 @@
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Eye, Pencil, RefreshCw, Search, Truck, Undo2 } from 'lucide-react';
+import { Eye, Pencil, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
 import { useEffect, useRef, useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
@@ -54,7 +54,6 @@ type Transaction = {
     created_at: string;
     can_update: boolean;
     can_record_do: boolean;
-    can_confirm_delivery: boolean;
     can_cancel_do: boolean;
     do_event_id: number | null;
     stage_event_id: number | null;
@@ -290,13 +289,6 @@ export default function TransactionsIndex({
                         'text-amber-600',
                         <Pencil className="size-4" />,
                         open(null),
-                    )}
-                {transaction.can_confirm_delivery &&
-                    iconButton(
-                        'Konfirmasi Delivery',
-                        'text-green-600',
-                        <Truck className="size-4" />,
-                        open('delivery'),
                     )}
                 {transaction.can_cancel_do &&
                     iconButton(

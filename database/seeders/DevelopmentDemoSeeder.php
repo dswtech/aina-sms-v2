@@ -296,8 +296,7 @@ class DevelopmentDemoSeeder extends Seeder
             array_fill(0, 26, PipelineStage::Prospect),
             array_fill(0, 22, PipelineStage::HotProspect),
             array_fill(0, 18, PipelineStage::Spk),
-            array_fill(0, 14, PipelineStage::Do),
-            array_fill(0, 30, PipelineStage::Delivery),
+            array_fill(0, 44, PipelineStage::Do),
             array_fill(0, 24, PipelineStage::Lost),
         );
 
@@ -357,7 +356,7 @@ class DevelopmentDemoSeeder extends Seeder
                 : now()->subDays(mt_rand(20, 180))->subMinutes(mt_rand(0, 1440));
 
             $finalAt = match (true) {
-                in_array($stage, [PipelineStage::Do, PipelineStage::Delivery], true) => $this->randomThisMonth(),
+                $stage === PipelineStage::Do => $this->randomThisMonth(),
                 $stage === PipelineStage::Lost => $this->clamp($createdAt->copy()->addDays(mt_rand(4, 25)), $createdAt, now()),
                 $index % 9 === 4 => now()->subDays(mt_rand(4, 12)),
                 default => now()->subHours(mt_rand(1, 96)),
@@ -369,7 +368,7 @@ class DevelopmentDemoSeeder extends Seeder
 
             $estimatedValue = mt_rand(150, 500) * 1_000_000;
 
-            $bookingFeeConfirmedAt = in_array($stage, [PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery], true)
+            $bookingFeeConfirmedAt = in_array($stage, [PipelineStage::Spk, PipelineStage::Do], true)
                 ? $this->clamp($createdAt->copy()->addDays(3), $createdAt, $finalAt)
                 : null;
 
@@ -452,7 +451,6 @@ class DevelopmentDemoSeeder extends Seeder
             PipelineStage::HotProspect->value => [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect],
             PipelineStage::Spk->value => [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect, PipelineStage::Spk],
             PipelineStage::Do->value => [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect, PipelineStage::Spk, PipelineStage::Do],
-            PipelineStage::Delivery->value => [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::HotProspect, PipelineStage::Spk, PipelineStage::Do, PipelineStage::Delivery],
             PipelineStage::Lost->value => [PipelineStage::Lead, PipelineStage::Prospect, PipelineStage::Lost],
         ];
 
@@ -466,7 +464,6 @@ class DevelopmentDemoSeeder extends Seeder
             PipelineStage::HotProspect->value => 'Sudah test drive dan meminta simulasi kredit.',
             PipelineStage::Spk->value => 'Booking fee diterima, SPK dibuat.',
             PipelineStage::Do->value => 'PO, DP, dan Unit dikonfirmasi.',
-            PipelineStage::Delivery->value => 'Pengiriman unit dikonfirmasi.',
             PipelineStage::Lost->value => 'Peluang ditutup karena alasan yang tercatat.',
         ];
 
@@ -479,13 +476,6 @@ class DevelopmentDemoSeeder extends Seeder
 
             if ($at->gt($finalAt)) {
                 $at = $finalAt->copy();
-            }
-
-            if ($toStage === PipelineStage::Do && $stage === PipelineStage::Delivery) {
-                $monthStart = $finalAt->copy()->setTimezone('Asia/Jakarta')->startOfMonth()->utc();
-                if ($at->lt($monthStart)) {
-                    $at = $monthStart;
-                }
             }
 
             $actor = $toStage === PipelineStage::Spk && $supervisor !== null

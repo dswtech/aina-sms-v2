@@ -20,7 +20,7 @@ beforeEach(function () {
     $this->deal = DealTransaction::create([
         'dealer_id' => $this->dealer->id, 'customer_id' => $this->customer->id,
         'sales_id' => $this->sales->id, 'vehicle_model' => 'Model lama',
-        'current_stage' => PipelineStage::Delivery,
+        'current_stage' => PipelineStage::Do,
     ]);
     $this->url = '/customers/'.$this->customer->public_id.'/history';
 });

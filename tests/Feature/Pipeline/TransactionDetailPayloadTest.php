@@ -99,3 +99,9 @@ it('hides the feed from Sales who cannot see the transaction', function () {
 
     $this->actingAs($stranger)->getJson("{$this->url}/feed?kind=comments")->assertForbidden();
 });
+
+it('no longer offers a Delivery confirmation for a DO deal', function () {
+    $this->deal->forceFill(['current_stage' => PipelineStage::Do])->saveQuietly();
+
+    $this->actingAs($this->sales)->getJson($this->url)->assertOk()->assertJsonMissingPath('can_confirm_delivery');
+});

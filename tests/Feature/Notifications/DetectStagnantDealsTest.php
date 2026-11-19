@@ -74,7 +74,7 @@ it('skips deals that have been stagnant for longer than the history window', fun
 });
 
 it('skips closed and active deals', function () {
-    foreach ([PipelineStage::Do, PipelineStage::Delivery, PipelineStage::Lost] as $stage) {
+    foreach ([PipelineStage::Do, PipelineStage::Lost] as $stage) {
         stagnantDeal($this, $this->sales, '2026-11-14 10:00', $stage);
     }
     stagnantDeal($this, $this->sales, '2026-11-17 10:00');

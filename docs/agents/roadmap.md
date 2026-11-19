@@ -76,14 +76,14 @@ Customer dan transaksi dikerjakan lebih awal karena seluruh aktivitas, coaching,
 
 **Cakupan pipeline:**
 
-- lead/transaksi dengan tahap Lead, Prospect, Hot Prospect, SPK, DO, Delivery, dan Lost;
+- lead/transaksi dengan tahap Lead, Prospect, Hot Prospect, SPK, DO, dan Lost (Delivery dihapus, ADR 010);
 - riwayat tahap append-only, aktivitas follow-up, alasan Lost, stagnant, pencarian, dan filter;
 - detail menggunakan dialog besar di desktop dan full-screen sheet/dialog di mobile;
 - satu Customer dapat mempunyai beberapa transaksi tanpa menggandakan identitas.
 
 **Test wajib:** normalisasi nomor telepon dan kandidat duplikat, relasi satu Customer ke banyak transaksi, assignment/reassignment, pembatasan data per Sales/tim, opt-out, transisi tahap, Lost wajib beralasan, stagnant, serta alur utama pada tiga viewport.
 
-**Gerbang keluar:** Sales dapat menemukan pelanggan, menghubungi, mencatat hasil, menjadwalkan langkah berikutnya, mencatat realisasi DO, dan mengonfirmasi Delivery tanpa kebocoran data. Jalur Lost dan pembatalan DO berwenang diuji terpisah.
+**Gerbang keluar:** Sales dapat menemukan pelanggan, menghubungi, mencatat hasil, menjadwalkan langkah berikutnya, dan mencatat realisasi DO tanpa kebocoran data. Jalur Lost dan pembatalan DO berwenang diuji terpisah.
 
 ## Fase 3 — Pekerjaan harian, coaching, dan notifikasi
 
@@ -124,7 +124,7 @@ Customer dan transaksi dikerjakan lebih awal karena seluruh aktivitas, coaching,
 **Cakupan MVP:**
 
 - Analisis Sumber untuk jumlah, porsi, perjalanan tahap, dan conversion;
-- Analisis Model untuk jumlah dan porsi SPK, DO, dan Delivery;
+- Analisis Model untuk jumlah dan porsi SPK dan DO;
 - mode tanggal Akuisisi dan Pencapaian dengan arti yang berbeda;
 - drilldown ke daftar transaksi yang mempertahankan filter;
 - CSV dan PDF agregat;

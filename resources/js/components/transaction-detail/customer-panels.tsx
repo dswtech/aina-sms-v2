@@ -273,6 +273,8 @@ export function FollowUpPanel({
     const [date, setDate] = useState('');
     const [notes, setNotes] = useState('');
     const next = detail.customer.next_follow_up;
+    // Mirrors PipelineStage::isClosed(); the server refuses plans on DO and Lost deals.
+    const closed = ['do', 'lost'].includes(detail.current_stage);
     const post = usePost(
         'post',
         `/customers/${detail.customer.public_id}/follow-ups`,
@@ -292,50 +294,56 @@ export function FollowUpPanel({
                     <p>Belum ada jadwal.</p>
                 )}
             </div>
-            <form
-                className="space-y-2 rounded-lg border p-3"
-                aria-label="Jadwalkan follow-up"
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    post.send(
-                        {
-                            scheduled_at: date,
-                            plan_notes: notes,
-                            deal_transaction_id: detail.deal_id,
-                        },
-                        () => {
-                            setDate('');
-                            setNotes('');
-                        },
-                    );
-                }}
-            >
-                <Label htmlFor="detail-fu-date">Waktu follow-up</Label>
-                <Input
-                    id="detail-fu-date"
-                    type="datetime-local"
-                    required
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
-                    className="min-h-11"
-                />
-                <Label htmlFor="detail-fu-notes">Rencana</Label>
-                <Input
-                    id="detail-fu-notes"
-                    required
-                    maxLength={2000}
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    className="min-h-11"
-                />
-                <Message error={post.error} />
-                <Button
-                    type="submit"
-                    disabled={post.saving || !date || !notes.trim()}
+            {closed ? (
+                <p className="rounded-lg border p-3 text-sm text-muted-foreground">
+                    Transaksi sudah selesai, follow-up tidak dapat dijadwalkan.
+                </p>
+            ) : (
+                <form
+                    className="space-y-2 rounded-lg border p-3"
+                    aria-label="Jadwalkan follow-up"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        post.send(
+                            {
+                                scheduled_at: date,
+                                plan_notes: notes,
+                                deal_transaction_id: detail.deal_id,
+                            },
+                            () => {
+                                setDate('');
+                                setNotes('');
+                            },
+                        );
+                    }}
                 >
-                    {post.saving ? 'Menyimpan…' : 'Jadwalkan'}
-                </Button>
-            </form>
+                    <Label htmlFor="detail-fu-date">Waktu follow-up</Label>
+                    <Input
+                        id="detail-fu-date"
+                        type="datetime-local"
+                        required
+                        value={date}
+                        onChange={(event) => setDate(event.target.value)}
+                        className="min-h-11"
+                    />
+                    <Label htmlFor="detail-fu-notes">Rencana</Label>
+                    <Input
+                        id="detail-fu-notes"
+                        required
+                        maxLength={2000}
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                        className="min-h-11"
+                    />
+                    <Message error={post.error} />
+                    <Button
+                        type="submit"
+                        disabled={post.saving || !date || !notes.trim()}
+                    >
+                        {post.saving ? 'Menyimpan…' : 'Jadwalkan'}
+                    </Button>
+                </form>
+            )}
             <section aria-label="Riwayat follow-up">
                 <h3 className="text-sm font-medium">Riwayat follow-up</h3>
                 {detail.customer.follow_up_history.length === 0 ? (

@@ -57,7 +57,7 @@ const REQUIRED_AT = {
     vehicle: 'SPK',
     ownership: 'DO',
 };
-const LOCKED_VEHICLE_STAGES = ['spk', 'do', 'delivery'];
+const LOCKED_VEHICLE_STAGES = ['spk', 'do'];
 
 // Keeps this panel's validation errors apart from the page's own forms.
 const ERROR_BAG = 'transactionDetail';

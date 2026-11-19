@@ -103,7 +103,7 @@ export function combinePages<T extends { key: string }>(pages: T[][]): T[] {
 
 const OPEN_STAGES = ['lead', 'prospect', 'hot_prospect', 'spk'];
 
-/** Direction between two open stages; null when either is DO, Delivery or Lost, or they are equal. */
+/** Direction between two open stages; null when either is DO or Lost, or they are equal. */
 export function stageDirection(from: string, to: string) {
     const a = OPEN_STAGES.indexOf(from);
     const b = OPEN_STAGES.indexOf(to);

@@ -100,9 +100,6 @@ it('serializes metadata edits with DO and freezes snapshots until cancellation a
     expect($redo->area_snapshot['is_foa'])->toBeFalse()
         ->and($redo->financing_snapshot['is_monitored'])->toBeFalse()
         ->and($deal->stageHistories()->realizedDo()->count())->toBe(1);
-    $delivery = $deal->transitionTo(PipelineStage::Delivery, $this->sales);
-    expect($delivery->area_snapshot)->toBeNull()
-        ->and($redo->fresh()->area_snapshot)->toBe($redo->area_snapshot);
 });
 
 it('accepts Kota Lain without district and clears irrelevant metadata without moving progress', function () {

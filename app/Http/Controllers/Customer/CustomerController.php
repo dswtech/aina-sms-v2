@@ -70,7 +70,7 @@ class CustomerController extends Controller
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             })->count(),
             'purchased' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             })->count(),
             'inactive' => (clone $baseQuery)->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
@@ -79,12 +79,12 @@ class CustomerController extends Controller
                     ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
             })->count(),
             'repeat_order' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             })->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             })->count(),
             'referral' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             })->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             })->where('opt_out', false)->count(),
@@ -117,7 +117,7 @@ class CustomerController extends Controller
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             }),
             'purchased' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             }),
             'inactive' => $query->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
@@ -126,12 +126,12 @@ class CustomerController extends Controller
                     ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
             }),
             'repeat_order' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             })->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             }),
             'referral' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->whereIn('current_stage', [PipelineStage::Do->value, PipelineStage::Delivery->value]);
+                $q->where('current_stage', PipelineStage::Do->value);
             })->whereDoesntHave('transactions', function (Builder $q): void {
                 $q->whereNotIn('current_stage', PipelineStage::closedValues());
             })->where('opt_out', false),
@@ -362,6 +362,10 @@ class CustomerController extends Controller
         if (! empty($validated['deal_transaction_id'])) {
             abort_if($deal === null, 403);
             $this->authorize('view', $deal);
+            // A closed deal has no next step; nothing would ever clear the plan.
+            if ($deal->current_stage->isClosed()) {
+                throw ValidationException::withMessages(['deal_transaction_id' => 'Transaksi sudah selesai, follow-up tidak dapat dijadwalkan.']);
+            }
         }
 
         $scheduledAt = Carbon::parse($validated['scheduled_at']);
@@ -503,13 +507,9 @@ class CustomerController extends Controller
             $locked = DealTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
             $this->authorize(match ($toStage) {
                 PipelineStage::Do => 'recordDo',
-                PipelineStage::Delivery => 'confirmDelivery',
                 default => 'update',
             }, $locked);
 
-            if ($toStage === PipelineStage::Delivery) {
-                $this->assertCurrentDoEvent($locked, (int) $validated['do_event_id']);
-            }
             if ($toStage === PipelineStage::Do && $locked->stageEventId() !== (int) $validated['stage_event_id']) {
                 throw ValidationException::withMessages(['stage_event_id' => 'Riwayat tahap berubah. Muat ulang transaksi sebelum mencatat DO.']);
             }

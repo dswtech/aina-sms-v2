@@ -43,7 +43,7 @@ Jika transaksi dikelompokkan per tahap, kontribusi setiap tahap adalah **jumlah 
 | Hot Prospect | 50% | 0,50 unit |
 | SPK | 75% | 0,75 unit |
 
-DO dihitung sebagai realisasi. DO, Delivery, dan Lost berada di luar pipeline berbobot. Konfirmasi pengiriman pada tahap Delivery tetap memakai bulan realisasi DO.
+DO dihitung sebagai realisasi. DO dan Lost berada di luar pipeline berbobot.
 
 ## 4. Simulasi satu bulan: target 25 unit
 
@@ -113,7 +113,7 @@ Angka target management sebelum markup hanya boleh dibaca SPV dan BM. Contoh dal
 
 - Transaksi aktif hanya ikut jika estimasi bulan closing sesuai dengan bulan yang dipilih.
 - Transaksi tanpa estimasi bulan closing belum masuk forecast; kelengkapan data perlu diperiksa.
-- Perubahan tahap atau estimasi closing dapat mengubah forecast meskipun belum ada Delivery baru.
+- Perubahan tahap atau estimasi closing dapat mengubah forecast meskipun belum ada DO baru.
 - Forecast bulan berjalan dan mendatang memakai kondisi pipeline terkini.
 - Forecast bulan lampau belum tersedia dalam aplikasi karena snapshot historis belum disimpan.
 - Pembaruan Sales yang terlambat dapat membuat perkiraan kurang mencerminkan keadaan lapangan.

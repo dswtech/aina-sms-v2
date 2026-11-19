@@ -238,15 +238,7 @@ export function PipelineChart({
 }: {
     counts: DashboardData['stageCounts'];
 }) {
-    const stages = [
-        'lead',
-        'prospect',
-        'hot_prospect',
-        'spk',
-        'do',
-        'delivery',
-        'lost',
-    ];
+    const stages = ['lead', 'prospect', 'hot_prospect', 'spk', 'do', 'lost'];
     const maximum = chartMaximum(stages.map((stage) => counts[stage] ?? 0));
     const empty = stages.every((stage) => !counts[stage]);
     return (
@@ -293,8 +285,7 @@ export function PipelineChart({
             )}
             <p className="mt-5 text-xs leading-5 text-muted-foreground">
                 Tahap aktif mengikuti estimasi closing atau kejadian pada
-                periode ini. DO mencatat realisasi, sedangkan Delivery mencatat
-                konfirmasi pengiriman.
+                periode ini. DO mencatat realisasi.
             </p>
         </section>
     );

@@ -96,7 +96,7 @@ it('captures the server stage for roots and replies and preserves it after stage
     $reply = $this->deal->comments()->whereNotNull('parent_id')->sole();
     expect($reply->stage_at_creation)->toBe(PipelineStage::HotProspect);
     $this->actingAs($this->sales)->patch(route('comments.update', $root), [
-        'body' => 'Koreksi', 'stage_at_creation' => 'delivery', 'parent_id' => $reply->id,
+        'body' => 'Koreksi', 'stage_at_creation' => 'do', 'parent_id' => $reply->id,
     ])->assertRedirect();
     expect($root->fresh()->stage_at_creation)->toBe(PipelineStage::Prospect)
         ->and($root->fresh()->parent_id)->toBeNull()
