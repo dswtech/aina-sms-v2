@@ -124,7 +124,7 @@ it('offers filter masters: all supervisors to Admin, only themself to a Supervis
     $spv = User::factory()->supervisor()->create(['dealer_id' => $dealer->id]);
 
     $this->actingAs($admin)->get('/transactions')->assertInertia(fn (Assert $p) => $p
-        ->has('supervisorOptions', 2)->has('regions', 5)->has('districts', 106)->has('leasings', 8));
+        ->has('supervisorOptions', 2)->has('regions', 8)->has('districts', 185)->has('leasings', 8));
     $this->actingAs($spv)->get('/transactions')->assertInertia(fn (Assert $p) => $p
         ->where('supervisorOptions', [['id' => $spv->id, 'name' => $spv->name]])->where('supervisorLocked', true));
     $this->actingAs(User::factory()->sales()->create(['dealer_id' => $dealer->id]))->get('/transactions')

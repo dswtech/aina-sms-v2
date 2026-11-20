@@ -4,27 +4,249 @@ import { ChartExportMenu } from '@/components/chart-export-menu';
 import { FilterPanel } from '@/components/filter-panel';
 import { MonthRangeFields } from '@/components/month-range-fields';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
-import { chartRowColor, makeAreaChartExport } from '@/lib/chart-export';
+import { chartRowColor, makeAreaChartExports } from '@/lib/chart-export';
+import type { AreaReportData, ChartExportData } from '@/lib/chart-export';
 
-const percentage = (count: number, total: number) =>
-    `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(total ? (count / total) * 100 : 0)}%`;
+export type { AreaReportData };
 
-export type AreaReportData = {
-    from: string;
-    to: string;
-    total: number;
-    foa: number;
-    other: number;
-    unverified: number;
-    rows: {
-        id: string;
-        name: string;
-        districtName: string;
-        regionName: string;
-        category: 'foa' | 'other';
-        count: number;
-    }[];
-};
+const muted = '#526175';
+const percent = (value: number) =>
+    `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value)}%`;
+const shortMonth = new Intl.DateTimeFormat('id-ID', {
+    month: 'short',
+    year: '2-digit',
+    timeZone: 'UTC',
+});
+const monthLabel = (month: string) =>
+    shortMonth.format(new Date(`${month}-01T00:00:00Z`));
+
+function CardHeading({
+    id,
+    title,
+    hint,
+    chart,
+}: {
+    id: string;
+    title: string;
+    hint: string;
+    chart: ChartExportData;
+}) {
+    return (
+        <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+                <h3 id={id} className="font-semibold">
+                    {title}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {hint}
+                </p>
+            </div>
+            <ChartExportMenu chart={chart} />
+        </div>
+    );
+}
+
+/** Donut of the first two rows, then the monthly share (rows after the third). */
+function ShareCard({
+    id,
+    chart,
+    trendLabel,
+}: {
+    id: string;
+    chart: ChartExportData;
+    trendLabel: string;
+}) {
+    const [inside, outside] = chart.rows;
+    const months = chart.rows.slice(3);
+    const circumference = 2 * Math.PI * 40;
+    const insideLength = chart.total
+        ? (inside.count / chart.total) * circumference
+        : 0;
+    return (
+        <section
+            aria-labelledby={id}
+            className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
+        >
+            <CardHeading
+                id={id}
+                title={chart.title}
+                hint={`${chart.total} DO`}
+                chart={chart}
+            />
+            <div className="mt-5 flex flex-wrap items-center gap-6">
+                <svg
+                    viewBox="0 0 100 100"
+                    role="img"
+                    aria-label={`${inside.label} ${percent(inside.percentage)}, ${outside.label} ${percent(outside.percentage)}`}
+                    className="size-36 shrink-0"
+                >
+                    <g
+                        transform="rotate(-90 50 50)"
+                        fill="none"
+                        strokeWidth="16"
+                    >
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            stroke={chartRowColor(chart.kind, 'outside')}
+                            strokeOpacity={chart.total ? 1 : 0.2}
+                        />
+                        {insideLength > 0 && (
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                stroke={chartRowColor(chart.kind, inside.id)}
+                                strokeDasharray={`${insideLength} ${circumference}`}
+                            />
+                        )}
+                    </g>
+                    <text
+                        x="50"
+                        y="56"
+                        textAnchor="middle"
+                        className="fill-foreground text-[17px] font-semibold"
+                    >
+                        {percent(inside.percentage)}
+                    </text>
+                </svg>
+                <dl className="space-y-3 text-sm">
+                    {[inside, outside].map((row) => (
+                        <div key={row.id} className="flex items-center gap-3">
+                            <span
+                                aria-hidden="true"
+                                className="size-2.5 shrink-0 rounded-sm"
+                                style={{
+                                    background: chartRowColor(
+                                        chart.kind,
+                                        row.id,
+                                    ),
+                                }}
+                            />
+                            <dt>{row.label}</dt>
+                            <dd className="font-medium tabular-nums">
+                                {row.count}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+            </div>
+            <p className="mt-6 text-xs text-muted-foreground">{trendLabel}</p>
+            {/* Up to 24 months: fixed-width columns scroll instead of overlapping. */}
+            <div className="mt-2 overflow-x-auto">
+                <ol className="flex min-w-full gap-2">
+                    {months.map((row) => (
+                        <li
+                            key={row.id}
+                            className="flex w-12 min-w-12 flex-1 flex-col items-center text-xs text-muted-foreground"
+                        >
+                            <div className="flex h-32 w-full flex-col items-center justify-end gap-1 border-b">
+                                <span className="tabular-nums">
+                                    {row.base ? percent(row.percentage) : '–'}
+                                </span>
+                                <span
+                                    aria-hidden="true"
+                                    className="w-full max-w-8 rounded-t"
+                                    style={{
+                                        height: `${Math.max(row.percentage, 1) * 0.8}px`,
+                                        background: chartRowColor(
+                                            chart.kind,
+                                            row.id,
+                                        ),
+                                    }}
+                                />
+                            </div>
+                            <span aria-hidden="true" className="mt-1">
+                                {monthLabel(row.id.slice('month-'.length))}
+                            </span>
+                            <span className="sr-only">
+                                {row.label}: {row.count} dari {row.base} DO
+                            </span>
+                        </li>
+                    ))}
+                </ol>
+            </div>
+        </section>
+    );
+}
+
+/** Horizontal bars; zero rows that still count (FOA or PMA) are marked red, muted rows grey. */
+function ListCard({
+    id,
+    chart,
+    hint,
+    limit,
+}: {
+    id: string;
+    chart: ChartExportData;
+    hint: string;
+    limit?: number;
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const main = chart.rows.filter((row) => row.id !== 'other');
+    const rest = chart.rows.filter((row) => row.id === 'other');
+    const shown = limit && !expanded ? main.slice(0, limit) : main;
+    const maximum = Math.max(1, ...chart.rows.map((row) => row.count));
+    return (
+        <section
+            aria-labelledby={id}
+            className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
+        >
+            <CardHeading
+                id={id}
+                title={chart.title}
+                hint={hint}
+                chart={chart}
+            />
+            <ul className="mt-5 space-y-2.5">
+                {[...shown, ...rest].map((row) => {
+                    const empty = !row.muted && row.count === 0;
+                    return (
+                        <li
+                            key={row.id}
+                            className={`grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_2.5rem] items-center gap-3 text-sm ${row.id === 'other' ? 'border-t pt-2.5' : ''}`}
+                        >
+                            <span
+                                className={`truncate ${empty ? 'text-destructive' : ''}`}
+                                title={row.label}
+                            >
+                                {row.label}
+                            </span>
+                            <span
+                                aria-hidden="true"
+                                className="h-4 rounded-r"
+                                style={{
+                                    width: `${(row.count / maximum) * 100}%`,
+                                    background: row.muted
+                                        ? muted
+                                        : chartRowColor(chart.kind, row.id),
+                                }}
+                            />
+                            <span
+                                className={`text-right tabular-nums ${empty ? 'text-destructive' : ''}`}
+                            >
+                                {row.count}
+                            </span>
+                        </li>
+                    );
+                })}
+            </ul>
+            {limit !== undefined && main.length > limit && (
+                <button
+                    type="button"
+                    className="mt-4 min-h-11 rounded-md border px-3 text-sm"
+                    aria-expanded={expanded}
+                    onClick={() => setExpanded((value) => !value)}
+                >
+                    {expanded
+                        ? 'Tampilkan lebih sedikit'
+                        : `Lihat semua ${main.length} kecamatan`}
+                </button>
+            )}
+        </section>
+    );
+}
 
 export function AreaReport({ result }: { result: AreaReportData }) {
     const [from, setFrom] = useState(result.from);
@@ -37,10 +259,12 @@ export function AreaReport({ result }: { result: AreaReportData }) {
             replace: true,
         });
     const periodLabel = formatMonthRange(applied.from, applied.to);
-    const chart = makeAreaChartExport(
+    const charts = makeAreaChartExports(
         { ...applied, periodLabel, mode: 'do', synthetic: false },
         result,
     );
+    const foaShare = charts.foa.rows[0].percentage;
+    const pmaShare = charts.pma.rows[0].percentage;
     return (
         <div className="space-y-6">
             <FilterPanel
@@ -60,45 +284,57 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                     }}
                 />
                 <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                    Berdasarkan DO sah, satu kali per transaksi. PMA mengikuti
-                    kondisi yang dikunci saat DO.
+                    Berdasarkan DO sah, satu kali per transaksi. FOA dan PMA
+                    mengikuti kondisi yang dikunci saat DO.
                 </p>
             </FilterPanel>
             <section
                 aria-label="Ringkasan Mapping Area"
-                className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-3 sm:gap-x-10 lg:grid-cols-3"
+                className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-3 sm:gap-x-10"
             >
-                {[
-                    {
-                        label: 'Total DO',
-                        value: result.total,
-                        hint: periodLabel,
-                    },
-                    {
-                        label: 'Dalam PMA',
-                        value: result.foa,
-                        hint:
-                            percentage(result.foa, result.total) +
-                            ' dari seluruh DO',
-                    },
-                    {
-                        label: 'Area lain',
-                        value: result.other,
-                        hint: 'Kecamatan non-PMA dan Kota Lain',
-                    },
-                ].map((metric) => (
-                    <div key={metric.label} className="min-w-0">
-                        <p className="text-sm text-muted-foreground">
-                            {metric.label}
-                        </p>
-                        <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
-                            {metric.value}
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                            {metric.hint}
-                        </p>
+                <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">Total DO</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+                        {result.total}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {periodLabel}
+                    </p>
+                </div>
+                <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">Porsi FOA</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+                        {percent(foaShare)}
+                    </p>
+                    <div
+                        role="meter"
+                        aria-label="Porsi FOA menuju 100%"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={foaShare}
+                        className="mt-2 h-1.5 rounded-full bg-muted"
+                    >
+                        <div
+                            className="h-1.5 rounded-full"
+                            style={{
+                                width: `${foaShare}%`,
+                                background: chartRowColor('area-foa', 'foa'),
+                            }}
+                        />
                     </div>
-                ))}
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {result.foa} DO · ukuran penilaian dealer
+                    </p>
+                </div>
+                <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">Porsi PMA</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+                        {percent(pmaShare)}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {result.foa + result.pmaOutsideFoa} DO, termasuk FOA
+                    </p>
+                </div>
             </section>
             {!result.total ? (
                 <section className="rounded-xl border px-6 py-14 text-center">
@@ -113,282 +349,61 @@ export function AreaReport({ result }: { result: AreaReportData }) {
             ) : (
                 <>
                     <section
-                        aria-labelledby="mapping-chart-title"
-                        className="rounded-xl border bg-card p-5 sm:p-6"
+                        aria-labelledby="mapping-foa"
+                        className="space-y-3"
                     >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <h2
-                                    id="mapping-chart-title"
-                                    className="font-semibold"
-                                >
-                                    Penjualan berdasarkan area
-                                </h2>
-                                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                    {periodLabel} · Realisasi DO ·{' '}
-                                    {result.total} transaksi
-                                </p>
-                            </div>
-                            <ChartExportMenu chart={chart} />
-                        </div>
-                        <div className="grid items-center gap-8 py-7 lg:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.2fr)]">
-                            <div className="flex justify-center">
-                                <svg
-                                    viewBox="0 0 200 200"
-                                    role="img"
-                                    aria-label={result.rows
-                                        .map(
-                                            (row) =>
-                                                `${row.name}: ${row.count} DO, ${percentage(row.count, result.total)}`,
-                                        )
-                                        .join('. ')}
-                                    className="h-auto w-full max-w-80"
-                                >
-                                    {result.rows.map((row, index) => {
-                                        if (!row.count) return null;
-                                        const start =
-                                            -Math.PI / 2 +
-                                            (result.rows
-                                                .slice(0, index)
-                                                .reduce(
-                                                    (sum, item) =>
-                                                        sum + item.count,
-                                                    0,
-                                                ) /
-                                                result.total) *
-                                                Math.PI *
-                                                2;
-                                        const sweep =
-                                            (row.count / result.total) *
-                                            Math.PI *
-                                            2;
-                                        const end = start + sweep;
-                                        const middle = start + sweep / 2;
-                                        const x = 100 + Math.cos(middle) * 57;
-                                        const y = 100 + Math.sin(middle) * 57;
-                                        const showName =
-                                            row.count / result.total >= 0.15;
-                                        const label =
-                                            row.category === 'foa'
-                                                ? row.districtName
-                                                : 'Area lain';
-                                        return (
-                                            <g key={row.id}>
-                                                {row.count === result.total ? (
-                                                    <circle
-                                                        cx="100"
-                                                        cy="100"
-                                                        r="96"
-                                                        fill={chartRowColor(
-                                                            'area',
-                                                            row.id,
-                                                        )}
-                                                    />
-                                                ) : (
-                                                    <path
-                                                        d={`M 100 100 L ${100 + 96 * Math.cos(start)} ${100 + 96 * Math.sin(start)} A 96 96 0 ${sweep > Math.PI ? 1 : 0} 1 ${100 + 96 * Math.cos(end)} ${100 + 96 * Math.sin(end)} Z`}
-                                                        fill={chartRowColor(
-                                                            'area',
-                                                            row.id,
-                                                        )}
-                                                        stroke="white"
-                                                        strokeWidth="1"
-                                                    />
-                                                )}
-                                                {row.count / result.total >=
-                                                    0.04 && (
-                                                    <text
-                                                        x={x}
-                                                        y={y}
-                                                        textAnchor="middle"
-                                                        fill="white"
-                                                        fontSize="8"
-                                                        fontWeight="600"
-                                                    >
-                                                        {showName && (
-                                                            <tspan
-                                                                x={x}
-                                                                dy="-3"
-                                                            >
-                                                                {label}
-                                                            </tspan>
-                                                        )}
-                                                        <tspan
-                                                            x={x}
-                                                            dy={
-                                                                showName
-                                                                    ? '11'
-                                                                    : '3'
-                                                            }
-                                                        >
-                                                            {percentage(
-                                                                row.count,
-                                                                result.total,
-                                                            )}
-                                                        </tspan>
-                                                    </text>
-                                                )}
-                                            </g>
-                                        );
-                                    })}
-                                </svg>
-                            </div>
-                            <dl className="space-y-4">
-                                {result.rows.map((row) => (
-                                    <div
-                                        key={row.id}
-                                        className="flex items-start gap-3 text-sm"
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            className="mt-1.5 size-2.5 shrink-0 rounded-sm"
-                                            style={{
-                                                background: chartRowColor(
-                                                    'area',
-                                                    row.id,
-                                                ),
-                                            }}
-                                        />
-                                        <dt className="min-w-0 flex-1 leading-6 wrap-break-word">
-                                            {row.name}
-                                        </dt>
-                                        <dd className="flex shrink-0 gap-3 leading-6 tabular-nums">
-                                            <span className="font-medium">
-                                                {row.count}
-                                            </span>
-                                            <span className="w-14 text-right text-muted-foreground">
-                                                {percentage(
-                                                    row.count,
-                                                    result.total,
-                                                )}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        </div>
-                        <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
-                            Area lain mencakup seluruh kecamatan non-PMA dan
-                            Kota Lain. Area wajib lengkap sebelum DO. Persentase
-                            dihitung dari seluruh DO sah.
-                        </p>
-                    </section>
-                    <section
-                        aria-labelledby="mapping-detail-title"
-                        className="overflow-hidden rounded-xl border bg-card"
-                    >
-                        <div className="px-5 py-4">
+                        <div>
                             <h2
-                                id="mapping-detail-title"
-                                className="font-semibold"
+                                id="mapping-foa"
+                                className="text-lg font-semibold"
                             >
-                                Rincian penjualan
+                                FOA
                             </h2>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Pengelompokan mengikuti snapshot saat DO, bukan
-                                daftar PMA terbaru.
+                            <p className="text-sm text-muted-foreground">
+                                Kecamatan FOA dealer, ukuran penilaian dealer.
                             </p>
                         </div>
-                        <div className="md:hidden">
-                            {result.rows.map((row) => (
-                                <div
-                                    key={row.id}
-                                    className="striped-row px-5 py-4"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <p className="min-w-0 text-sm leading-6 font-medium">
-                                            {row.name}
-                                        </p>
-                                        <span className="shrink-0 text-sm font-semibold tabular-nums">
-                                            {row.count} DO
-                                        </span>
-                                    </div>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        {row.category === 'foa'
-                                            ? 'PMA'
-                                            : 'Non-PMA'}{' '}
-                                        · {percentage(row.count, result.total)}
-                                    </p>
-                                </div>
-                            ))}
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <ShareCard
+                                id="mapping-foa-share"
+                                chart={charts.foa}
+                                trendLabel="Porsi FOA per bulan"
+                            />
+                            <ListCard
+                                id="mapping-foa-districts"
+                                chart={charts.foaDistricts}
+                                hint="Kecamatan lain mencakup Kota Lain."
+                                limit={8}
+                            />
                         </div>
-                        <table className="hidden w-full table-fixed text-sm md:table">
-                            <caption className="sr-only">
-                                Rincian DO menurut kecamatan PMA dan area
-                                lainnya
-                            </caption>
-                            <thead className="border-y text-xs text-muted-foreground">
-                                <tr>
-                                    <th
-                                        scope="col"
-                                        className="w-[28%] px-5 py-3 text-left font-medium"
-                                    >
-                                        Kecamatan
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="w-[30%] px-3 py-3 text-left font-medium"
-                                    >
-                                        Kabupaten/Kota
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-3 text-left font-medium"
-                                    >
-                                        Kelompok
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-3 text-right font-medium"
-                                    >
-                                        DO
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-5 py-3 text-right font-medium"
-                                    >
-                                        Porsi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {result.rows.map((row) => (
-                                    <tr key={row.id} className="striped-row">
-                                        <th
-                                            scope="row"
-                                            className="px-5 py-3 text-left font-normal wrap-break-word"
-                                        >
-                                            {row.districtName || row.name}
-                                        </th>
-                                        <td className="px-3 py-3 wrap-break-word">
-                                            {row.regionName ||
-                                                (row.category === 'other'
-                                                    ? 'Gabungan'
-                                                    : '—')}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {row.category === 'foa'
-                                                ? 'PMA'
-                                                : 'Non-PMA'}
-                                        </td>
-                                        <td className="px-3 py-3 text-right tabular-nums">
-                                            {row.count}
-                                        </td>
-                                        <td className="px-5 py-3 text-right tabular-nums">
-                                            {percentage(
-                                                row.count,
-                                                result.total,
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="flex justify-between border-t px-5 py-4 text-sm font-semibold">
-                            <span>Total DO sah</span>
-                            <span className="tabular-nums">
-                                {result.total} DO · 100%
-                            </span>
+                    </section>
+                    <section
+                        aria-labelledby="mapping-pma"
+                        className="space-y-3"
+                    >
+                        <div>
+                            <h2
+                                id="mapping-pma"
+                                className="text-lg font-semibold"
+                            >
+                                PMA
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Kab/kota yang masih digarap dealer, termasuk
+                                FOA.
+                            </p>
+                        </div>
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <ShareCard
+                                id="mapping-pma-share"
+                                chart={charts.pma}
+                                trendLabel="Porsi PMA per bulan"
+                            />
+                            <ListCard
+                                id="mapping-pma-regions"
+                                chart={charts.pmaRegions}
+                                hint="Kab/kota PMA dulu, lalu luar PMA."
+                            />
                         </div>
                     </section>
                 </>

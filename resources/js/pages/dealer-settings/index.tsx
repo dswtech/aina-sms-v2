@@ -10,13 +10,82 @@ type Props = {
     regions: { code: string; name: string }[];
     districts: { code: string; region_code: string; name: string }[];
     foa: string[];
+    pma: string[];
 };
 
-export default function DealerSettings({ regions, districts, foa }: Props) {
+function PmaCard({ regions, pma }: Pick<Props, 'regions' | 'pma'>) {
+    const errors = usePage().props.errors as Record<string, string>;
+    const [selected, setSelected] = useState(() => new Set(pma));
+    const [saving, setSaving] = useState(false);
+    const changed =
+        selected.size !== pma.length || pma.some((code) => !selected.has(code));
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Kab/kota PMA</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                    Tandai kab/kota yang masih digarap dealer; {selected.size}{' '}
+                    kab/kota dipilih.
+                </p>
+                <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {regions.map((region) => (
+                        <label
+                            key={region.code}
+                            className="flex min-h-11 items-center gap-2 text-sm"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={selected.has(region.code)}
+                                onChange={() =>
+                                    setSelected((current) => {
+                                        const next = new Set(current);
+                                        if (!next.delete(region.code))
+                                            next.add(region.code);
+                                        return next;
+                                    })
+                                }
+                            />
+                            {region.name}
+                        </label>
+                    ))}
+                </div>
+                <InputError message={errors?.regions} />
+                <Button
+                    type="button"
+                    className="min-h-11"
+                    disabled={!changed || saving}
+                    onClick={() =>
+                        router.patch(
+                            '/dealer-settings/area-pma',
+                            { regions: [...selected].sort() },
+                            {
+                                preserveScroll: true,
+                                onStart: () => setSaving(true),
+                                onFinish: () => setSaving(false),
+                            },
+                        )
+                    }
+                >
+                    {saving ? 'Menyimpan…' : 'Simpan PMA'}
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+export default function DealerSettings({
+    regions,
+    districts,
+    foa,
+    pma,
+}: Props) {
     const errors = usePage().props.errors as Record<string, string>;
     const [selected, setSelected] = useState(() => new Set(foa));
     const [saving, setSaving] = useState(false);
-    // Regions with saved PMA start open; later edits never open or close a region by themselves.
+    // Regions with saved FOA start open; later edits never open or close a region by themselves.
     const [startOpen] = useState(
         () =>
             new Set(
@@ -37,15 +106,16 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
 
     return (
         <DealerSettingsPage title="Area & PMA">
+            <PmaCard regions={regions} pma={pma} />
             <Card>
                 <CardHeader>
-                    <CardTitle>Kecamatan PMA</CardTitle>
+                    <CardTitle>Kecamatan FOA</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        Tandai kecamatan yang menjadi PMA dealer. Bawaan
-                        sementara: seluruh Kabupaten Bandung Barat;{' '}
-                        {selected.size} kecamatan dipilih.
+                        Tandai kecamatan FOA dealer. Bawaan sementara: seluruh
+                        Kabupaten Bandung Barat; {selected.size} kecamatan
+                        dipilih.
                     </p>
                     {regions.map((region) => {
                         const items = districts.filter(
@@ -107,7 +177,7 @@ export default function DealerSettings({ regions, districts, foa }: Props) {
                             )
                         }
                     >
-                        {saving ? 'Menyimpan…' : 'Simpan PMA'}
+                        {saving ? 'Menyimpan…' : 'Simpan FOA'}
                     </Button>
                 </CardContent>
             </Card>

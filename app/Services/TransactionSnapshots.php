@@ -27,6 +27,7 @@ final class TransactionSnapshots
                 'district_code' => $deal->district_code, 'district_name' => $district?->name,
                 'other_city' => $deal->other_city,
                 'is_foa' => $district !== null && DB::table('dealer_foa_districts')->where('dealer_id', $deal->dealer_id)->where('district_code', $deal->district_code)->exists(),
+                'is_pma' => $region !== null && DB::table('dealer_pma_regions')->where('dealer_id', $deal->dealer_id)->where('region_code', $deal->region_code)->exists(),
             ],
             'financing_snapshot' => [
                 'type' => $deal->financing_type, 'leasing_id' => $deal->leasing_id,

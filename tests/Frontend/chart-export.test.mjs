@@ -5,55 +5,86 @@ import {
     chartCsv,
     chartFilename,
     wrapChartLabel,
-    makeAreaChartExport,
+    makeAreaChartExports,
     chartRowColor,
     layoutDonutLegend,
 } from '../../resources/js/lib/chart-export.ts';
 
-test('area exports use all DO as denominator and dynamic donut legends preserve long categories', () => {
-    const rows = Array.from({ length: 10 }, (_, i) => ({
-        id: `32.17.${String(i + 1).padStart(2, '0')}`,
-        name: `Kecamatan Contoh ${i} · Kabupaten Bandung Barat dengan nama panjang`,
-        count: 1,
-    }));
-    const report = makeAreaChartExport(
-        {
-            from: '2026-10',
-            to: '2026-11',
-            periodLabel: 'Oktober 2026 – November 2026',
-            mode: 'prospect',
-            synthetic: true,
-        },
-        { total: 10, rows },
+const areaMeta = {
+    from: '2026-09',
+    to: '2026-10',
+    periodLabel: 'September 2026 – Oktober 2026',
+    mode: 'prospect',
+    synthetic: false,
+};
+const areaReport = {
+    from: '2026-09',
+    to: '2026-10',
+    total: 120,
+    foa: 78,
+    pmaOutsideFoa: 30,
+    outsidePma: 12,
+    unverified: 0,
+    districts: [
+        { id: '32.17.06', name: 'Ngamprah', regionName: 'Kabupaten Bandung Barat', count: 78 },
+        { id: '32.17.15', name: 'Gununghalu', regionName: 'Kabupaten Bandung Barat', count: 0 },
+        { id: 'other', name: 'Kecamatan lain', regionName: '', count: 42 },
+    ],
+    regions: [
+        { id: '32.17', name: 'Kabupaten Bandung Barat', isPma: true, count: 82 },
+        { id: '32.77', name: 'Kota Cimahi', isPma: true, count: 26 },
+        { id: '32.11', name: 'Kabupaten Sumedang', isPma: false, count: 4 },
+        { id: 'other', name: 'Kota Lain', isPma: false, count: 8 },
+    ],
+    months: [
+        { month: '2026-09', total: 50, foa: 30, pma: 45 },
+        { month: '2026-10', total: 70, foa: 48, pma: 63 },
+    ],
+};
+
+test('area exports split FOA and PMA cards with monthly shares on their own base', () => {
+    const { foa, foaDistricts, pma, pmaRegions } = makeAreaChartExports(areaMeta, areaReport);
+    assert.equal(foa.mode, 'do');
+    assert.equal(foa.donut, 2);
+    assert.deepEqual(
+        foa.rows.slice(0, 3).map(({ label, count, percentage }) => [label, count, percentage]),
+        [['FOA', 78, 65], ['Di luar FOA', 42, 35], ['PMA di luar FOA', 30, 25]],
     );
-    assert.equal(report.mode, 'do');
-    assert.equal(report.rows[0].percentage, 10);
-    assert.equal(
-        chartFilename(report, 'png'),
-        'mapping-area-realisasi-do-2026-10_2026-11.png',
+    assert.deepEqual(
+        foa.rows.slice(3).map(({ label, count, base, percentage }) => [label, count, base, percentage]),
+        [['FOA 2026-09', 30, 50, 60], ['FOA 2026-10', 48, 70, 68.6]],
     );
-    assert.ok(chartCsv(report).includes('"Realisasi DO"'));
-    const layout = layoutDonutLegend(report.rows, (text) => text.length * 12);
-    assert.ok(layout.at(-1).y + layout.at(-1).height > 650);
-    assert.ok(
-        layout.every(
-            (row, i) => !i || row.y >= layout[i - 1].y + layout[i - 1].height,
-        ),
+    assert.deepEqual(
+        pma.rows.slice(0, 2).map(({ label, count }) => [label, count]),
+        [['Dalam PMA', 108], ['Luar PMA', 12]],
     );
-    assert.ok(
-        layout.every((row) =>
-            row.lines.every((line) => line.length * 12 <= 300),
-        ),
-    );
-    assert.equal(
-        chartRowColor('area', '32.17.08'),
-        chartRowColor('area', '32.17.08'),
-    );
-    assert.notEqual(
-        chartRowColor('area', '32.17.08'),
-        chartRowColor('area', '32.17.06'),
-    );
+    assert.equal(pma.rows.at(-1).label, 'PMA 2026-10');
+    assert.equal(pma.rows.at(-1).percentage, 90);
+    assert.deepEqual(foaDistricts.rows.map((row) => row.label), ['Ngamprah', 'Gununghalu', 'Kecamatan lain']);
+    assert.equal(foaDistricts.rows.at(-1).muted, true);
+    assert.deepEqual(pmaRegions.rows.map((row) => row.muted ?? false), [false, false, true, true]);
+    assert.deepEqual(pmaRegions.rows.map((row) => row.label), ['Kabupaten Bandung Barat', 'Kota Cimahi', 'Kabupaten Sumedang (luar PMA)', 'Kota Lain (luar PMA)']);
+    assert.equal(chartFilename(foa, 'csv'), 'porsi-foa-realisasi-do-2026-09_2026-10.csv');
+    assert.equal(chartFilename(foaDistricts, 'png'), 'do-kecamatan-foa-realisasi-do-2026-09_2026-10.png');
+    assert.equal(chartFilename(pma, 'csv'), 'porsi-pma-realisasi-do-2026-09_2026-10.csv');
+    assert.equal(chartFilename(pmaRegions, 'csv'), 'do-kab-kota-realisasi-do-2026-09_2026-10.csv');
+    const csv = chartCsv(foa).split('\r\n');
+    assert.ok(csv[4].includes('"FOA 2026-09";"30";"50";"60"'));
+    assert.ok(csv[1].includes('"FOA";"78";"120";"65"'));
+    assert.notEqual(chartRowColor(foa.kind, 'foa'), chartRowColor(foa.kind, 'outside'));
 });
+
+test('area exports stay zero-safe on an empty range', () => {
+    const empty = { ...areaReport, total: 0, foa: 0, pmaOutsideFoa: 0, outsidePma: 0,
+        districts: [{ id: 'other', name: 'Kecamatan lain', regionName: '', count: 0 }], regions: [],
+        months: [{ month: '2026-09', total: 0, foa: 0, pma: 0 }] };
+    const exports = makeAreaChartExports(areaMeta, empty);
+    for (const chart of Object.values(exports))
+        assert.ok(chart.rows.every((row) => Number.isFinite(row.percentage) && row.percentage === 0));
+    const layout = layoutDonutLegend(exports.foa.rows, (text) => text.length * 12);
+    assert.ok(layout.every((row, i) => !i || row.y >= layout[i - 1].y + layout[i - 1].height));
+});
+
 import {
     summarizeFinancing,
     syntheticDeals,

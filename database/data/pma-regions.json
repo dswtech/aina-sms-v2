@@ -1,0 +1,414 @@
+{
+    "source": "Kode Kemendagri (Kepmendagri, data wilayah.id diperbarui 2025-07-04), snapshot 2026-11-20; BPS SIG tidak tersedia saat diambil",
+    "regions": [
+        {
+            "code": "32.14",
+            "name": "Kabupaten Purwakarta"
+        },
+        {
+            "code": "32.03",
+            "name": "Kabupaten Cianjur"
+        },
+        {
+            "code": "32.13",
+            "name": "Kabupaten Subang"
+        }
+    ],
+    "districts": [
+        {
+            "code": "32.14.12",
+            "name": "Babakancikao",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.11",
+            "name": "Bojong",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.13",
+            "name": "Bungursari",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.02",
+            "name": "Campaka",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.14",
+            "name": "Cibatu",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.06",
+            "name": "Darangdan",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.03",
+            "name": "Jatiluhur",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.17",
+            "name": "Kiarapedes",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.07",
+            "name": "Maniis",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.10",
+            "name": "Pasawahan",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.04",
+            "name": "Plered",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.16",
+            "name": "Pondoksalam",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.01",
+            "name": "Purwakarta",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.15",
+            "name": "Sukasari",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.05",
+            "name": "Sukatani",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.08",
+            "name": "Tegalwaru",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.14.09",
+            "name": "Wanayasa",
+            "region_code": "32.14"
+        },
+        {
+            "code": "32.03.22",
+            "name": "Agrabinta",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.06",
+            "name": "Bonjogpicung",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.15",
+            "name": "Campaka",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.25",
+            "name": "Campakamulya",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.01",
+            "name": "Cianjur",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.03",
+            "name": "Cibeber",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.23",
+            "name": "Cidaun",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.29",
+            "name": "Cijati",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.26",
+            "name": "Cikadu",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.12",
+            "name": "Cikalongkulon",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.04",
+            "name": "Cilaku",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.28",
+            "name": "Cipanas",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.05",
+            "name": "Ciranjang",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.20",
+            "name": "Cubinong",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.11",
+            "name": "Cugenang",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.27",
+            "name": "Gekbrong",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.31",
+            "name": "Haurwangi",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.17",
+            "name": "Kadupandak",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.07",
+            "name": "Karangtengah",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.30",
+            "name": "Leles",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.08",
+            "name": "Mande",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.24",
+            "name": "Naringgul",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.10",
+            "name": "Pacet",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.18",
+            "name": "Pagelarang",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.32",
+            "name": "Pasirkuda",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.21",
+            "name": "Sindangbarang",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.09",
+            "name": "Sukaluyu",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.14",
+            "name": "Sukanagara",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.13",
+            "name": "Sukaresmi",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.16",
+            "name": "Takokak",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.19",
+            "name": "Tanggeung",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.03.02",
+            "name": "Warungkondang",
+            "region_code": "32.03"
+        },
+        {
+            "code": "32.13.08",
+            "name": "Binong",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.13",
+            "name": "Blanakan",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.09",
+            "name": "Ciasem",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.29",
+            "name": "Ciater",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.17",
+            "name": "Cibogo",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.19",
+            "name": "Cijambe",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.22",
+            "name": "Cikaum",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.20",
+            "name": "Cipeundeuy",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.18",
+            "name": "Cipunagara",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.02",
+            "name": "Cisalak",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.15",
+            "name": "Compreng",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.27",
+            "name": "Dawuan",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.12",
+            "name": "Jalancagak",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.04",
+            "name": "Kalijati",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.26",
+            "name": "Kasomalang",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.21",
+            "name": "Legonkulon",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.05",
+            "name": "Pabuaran",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.07",
+            "name": "Pagaden",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.28",
+            "name": "Pagaden Barat",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.11",
+            "name": "Pamanukan",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.16",
+            "name": "Patokbeusi",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.06",
+            "name": "Purwadadi",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.30",
+            "name": "Pusakajaya",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.10",
+            "name": "Pusakanagara",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.01",
+            "name": "Sagalaherang",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.23",
+            "name": "Serangpanjang",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.03",
+            "name": "Subang",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.24",
+            "name": "Sukasari",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.25",
+            "name": "Tambakdahan",
+            "region_code": "32.13"
+        },
+        {
+            "code": "32.13.14",
+            "name": "Tanjungsiang",
+            "region_code": "32.13"
+        }
+    ]
+}

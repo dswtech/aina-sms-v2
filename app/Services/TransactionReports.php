@@ -6,6 +6,7 @@ use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\User;
 use App\Support\ReportingPeriod;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -82,13 +83,32 @@ final class TransactionReports
             'unknown' => $unknown, 'leasing' => array_values($groups)];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Groups come from the DO snapshot (FOA first, then PMA, then outside). The zero rows listed
+     * for FOA districts and PMA regions follow the dealer's current settings.
+     *
+     * @return array<string, mixed>
+     */
     public function mappingArea(User $actor, string $from, string $to): array
     {
         [$start, $end] = $this->window($from, $to);
-        $groups = [];
-        $foa = $other = $unverified = 0;
-        foreach ($this->realizedDo($actor, $start, $end)->get(['area_snapshot']) as $history) {
+        $foaCodes = DB::table('dealer_foa_districts')->where('dealer_id', $actor->dealer_id)->pluck('district_code')->all();
+        $pmaCodes = DB::table('dealer_pma_regions')->where('dealer_id', $actor->dealer_id)->pluck('region_code')->all();
+        $regionNames = DB::table('area_regions')->pluck('name', 'code');
+        $months = [];
+        for ($month = CarbonImmutable::createFromFormat('!Y-m', $from); $month->format('Y-m') <= $to; $month = $month->addMonth()) {
+            $months[$month->format('Y-m')] = ['month' => $month->format('Y-m'), 'total' => 0, 'foa' => 0, 'pma' => 0];
+        }
+        $districts = [];
+        foreach (DB::table('area_districts')->whereIn('code', $foaCodes)->get() as $d) {
+            $districts[$d->code] = ['id' => $d->code, 'name' => $d->name, 'regionName' => $regionNames[$d->region_code] ?? '', 'count' => 0];
+        }
+        $regions = [];
+        foreach ($pmaCodes as $code) {
+            $regions[$code] = ['id' => $code, 'name' => $regionNames[$code] ?? $code, 'isPma' => true, 'count' => 0];
+        }
+        $foa = $pmaOutsideFoa = $outsidePma = $unverified = 0;
+        foreach ($this->realizedDo($actor, $start, $end)->get(['area_snapshot', 'created_at']) as $history) {
             $area = $history->area_snapshot;
             if ($area === null) {
                 $unverified++; // legacy DO without snapshot: surfaced, never guessed into an area
@@ -96,20 +116,34 @@ final class TransactionReports
                 continue;
             }
             $isFoa = (bool) ($area['is_foa'] ?? false);
-            $id = $isFoa ? $area['district_code'] : 'other';
-            $groups[$id] ??= $isFoa
-                ? ['id' => $id, 'name' => $area['district_name'].' · '.str_replace('Kabupaten', 'Kab.', $area['region_name']),
-                    'districtName' => $area['district_name'], 'regionName' => $area['region_name'], 'category' => 'foa', 'count' => 0]
-                : ['id' => 'other', 'name' => 'Area lain', 'districtName' => '', 'regionName' => '', 'category' => 'other', 'count' => 0];
-            $groups[$id]['count']++;
-            $isFoa ? $foa++ : $other++;
-        }
-        $groups['other'] ??= ['id' => 'other', 'name' => 'Area lain', 'districtName' => '', 'regionName' => '', 'category' => 'other', 'count' => 0];
-        uasort($groups, fn (array $a, array $b): int => [$a['id'] === 'other' ? 1 : 0, -$a['count'], mb_strtolower($a['name'])]
-            <=> [$b['id'] === 'other' ? 1 : 0, -$b['count'], mb_strtolower($b['name'])]);
+            $isPma = (bool) ($area['is_pma'] ?? false);
+            $isFoa ? $foa++ : ($isPma ? $pmaOutsideFoa++ : $outsidePma++);
+            $month = &$months[$history->created_at->setTimezone('Asia/Jakarta')->format('Y-m')];
+            $month['total']++;
+            $month['foa'] += (int) $isFoa;
+            $month['pma'] += (int) ($isFoa || $isPma);
+            unset($month);
 
-        return ['from' => $from, 'to' => $to, 'total' => $foa + $other, 'foa' => $foa, 'other' => $other,
-            'unverified' => $unverified, 'rows' => array_values($groups)];
+            $district = $isFoa ? (string) $area['district_code'] : 'other';
+            $districts[$district] ??= $isFoa
+                ? ['id' => $district, 'name' => (string) $area['district_name'], 'regionName' => (string) $area['region_name'], 'count' => 0]
+                : ['id' => 'other', 'name' => 'Kecamatan lain', 'regionName' => '', 'count' => 0];
+            $districts[$district]['count']++;
+
+            $region = (string) $area['region_code'];
+            $regions[$region] ??= $region === 'other'
+                ? ['id' => 'other', 'name' => 'Kota Lain', 'isPma' => false, 'count' => 0]
+                : ['id' => $region, 'name' => (string) ($area['region_name'] ?? $regionNames[$region] ?? $region), 'isPma' => false, 'count' => 0];
+            $regions[$region]['count']++;
+        }
+        $districts['other'] ??= ['id' => 'other', 'name' => 'Kecamatan lain', 'regionName' => '', 'count' => 0];
+        $byCount = fn (array $a, array $b): int => [-$a['count'], mb_strtolower($a['name'])] <=> [-$b['count'], mb_strtolower($b['name'])];
+        uasort($districts, fn (array $a, array $b): int => [$a['id'] === 'other'] <=> [$b['id'] === 'other'] ?: $byCount($a, $b));
+        uasort($regions, fn (array $a, array $b): int => [$a['id'] === 'other', ! $a['isPma']] <=> [$b['id'] === 'other', ! $b['isPma']] ?: $byCount($a, $b));
+
+        return ['from' => $from, 'to' => $to, 'total' => $foa + $pmaOutsideFoa + $outsidePma, 'foa' => $foa,
+            'pmaOutsideFoa' => $pmaOutsideFoa, 'outsidePma' => $outsidePma, 'unverified' => $unverified,
+            'districts' => array_values($districts), 'regions' => array_values($regions), 'months' => array_values($months)];
     }
 
     /** @return Builder<StageHistory> */

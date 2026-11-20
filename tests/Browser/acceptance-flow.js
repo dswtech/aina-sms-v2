@@ -74,12 +74,13 @@ async function acceptanceFlow(page) {
             new RegExp(`Total DO\\s+${report.total}\\b`).test(await summary.innerText()),
             `Mapping Area summary does not show total ${report.total}`,
         );
-        assert(report.foa + report.other === report.total, 'Mapping Area: FOA + Area lain != total');
+        assert(report.foa + report.pmaOutsideFoa + report.outsidePma === report.total, 'Mapping Area: FOA + PMA + luar PMA != total');
         assert(
-            report.rows.reduce((sum, row) => sum + row.count, 0) === report.total,
-            'Mapping Area: rows do not reconcile with total',
+            report.districts.reduce((sum, row) => sum + row.count, 0) === report.total &&
+                report.regions.reduce((sum, row) => sum + row.count, 0) === report.total,
+            'Mapping Area: district or region rows do not reconcile with total',
         );
-        assert(report.rows.at(-1).id === 'other', 'Mapping Area: Area lain is not last');
+        assert(report.districts.at(-1).id === 'other', 'Mapping Area: Kecamatan lain is not last');
         return report;
     };
     const financing = async (mode) => {
@@ -105,8 +106,8 @@ async function acceptanceFlow(page) {
     };
     const countOf = (rows, id) => rows.find((row) => row.id === id)?.count ?? 0;
     const areaSig = (r) => ({
-        total: r.total, foa: r.foa, other: r.other, unverified: r.unverified,
-        rows: Object.fromEntries(r.rows.filter((row) => row.count).map((row) => [row.id, row.count])),
+        total: r.total, foa: r.foa, other: r.pmaOutsideFoa + r.outsidePma, unverified: r.unverified,
+        rows: Object.fromEntries(r.districts.filter((row) => row.count).map((row) => [row.id, row.count])),
     });
     const finSig = (r) => ({
         total: r.total, cash: r.cash, credit: r.credit, unknown: r.unknown,
@@ -173,7 +174,7 @@ async function acceptanceFlow(page) {
             await page
                 .getByRole('checkbox', { name: `${districtName(code)}, ${regionName(code)}`, exact: true })
                 .setChecked(on);
-        const save = page.getByRole('button', { name: 'Simpan PMA', exact: true });
+        const save = page.getByRole('button', { name: 'Simpan FOA', exact: true });
         if (await save.isEnabled())
             await Promise.all([
                 page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes('/dealer-settings/area-foa')),
@@ -322,7 +323,7 @@ async function acceptanceFlow(page) {
         const M1 = await mapping();
         const FDo1 = await financing('do');
         same(
-            [M1.total - M0.total, M1.foa - M0.foa, M1.other - M0.other, countOf(M1.rows, D) - countOf(M0.rows, D)],
+            [M1.total - M0.total, M1.foa - M0.foa, M1.pmaOutsideFoa + M1.outsidePma - (M0.pmaOutsideFoa + M0.outsidePma), countOf(M1.districts, D) - countOf(M0.districts, D)],
             [1, 1, 0, 1],
             `Mapping Area delta after DO (${districtLabel(D)})`,
         );
@@ -373,7 +374,7 @@ async function acceptanceFlow(page) {
         const M2 = await mapping();
         const FDo2 = await financing('do');
         same(
-            [M2.total - M0.total, countOf(M2.rows, E) - countOf(M0.rows, E), countOf(M2.rows, D) - countOf(M0.rows, D)],
+            [M2.total - M0.total, countOf(M2.districts, E) - countOf(M0.districts, E), countOf(M2.districts, D) - countOf(M0.districts, D)],
             [1, 1, 0],
             'Mapping Area carries the NEW snapshot after redo',
         );

@@ -90,22 +90,88 @@ it('reads DO financing from the snapshot, drops cancelled DO', function () {
     expect($row()['total'])->toBe(1);
 });
 
-it('maps DO by snapshot FOA with Area lain last and a zero-safe empty range', function () {
+function areaDo($t, array $area, string $when = '2026-11-10 03:00:00'): DealTransaction
+{
+    $deal = rDeal($t, [...$area, 'current_stage' => PipelineStage::Spk]);
+    rMove($t, $deal, PipelineStage::Do, $when, DO_OK);
+
+    return $deal;
+}
+
+function areaReport($t, string $from = '2026-11', string $to = '2026-11'): array
+{
+    return $t->actingAs($t->admin)->get("/analytics/mapping-area?from=$from&to=$to")->assertOk()->viewData('page')['props']['report'];
+}
+
+function firstDistrict(string $region): string
+{
+    return DB::table('area_districts')->where('region_code', $region)->orderBy('code')->value('code');
+}
+
+it('maps DO into FOA, PMA outside FOA and outside PMA', function () {
     app(TransactionMasters::class)->setFoa($this->admin, ['32.73.05']);
-    foreach ([BANDUNG_ANDIR, BANDUNG_ANDIR, ['region_code' => '32.73', 'district_code' => '32.73.03'], ['region_code' => 'other', 'other_city' => 'Jakarta']] as $area) {
-        $deal = rDeal($this, [...$area, 'current_stage' => PipelineStage::Spk]);
-        rMove($this, $deal, PipelineStage::Do, '2026-11-10 03:00:00', DO_OK);
+    foreach ([BANDUNG_ANDIR, BANDUNG_ANDIR, ['region_code' => '32.73', 'district_code' => '32.73.03'],
+        ['region_code' => '32.11', 'district_code' => firstDistrict('32.11')], ['region_code' => 'other', 'other_city' => 'Jakarta']] as $area) {
+        areaDo($this, $area);
     }
     // FOA changes after the fact do not recolor history.
     app(TransactionMasters::class)->setFoa($this->admin, []);
+    app(TransactionMasters::class)->setFoa($this->admin, ['32.73.05']);
 
     $this->actingAs($this->admin)->get('/analytics/mapping-area?from=2026-11&to=2026-11')->assertOk()
-        ->assertInertia(fn (Assert $p) => $p->component('analytics/mapping-area')
-            ->where('report.total', 4)->where('report.foa', 2)->where('report.other', 2)
-            ->where('report.rows.0.districtName', 'Andir')->where('report.rows.0.regionName', 'Kota Bandung')->where('report.rows.0.count', 2)
-            ->where('report.rows.1.id', 'other')->where('report.rows.1.count', 2));
-    $this->get('/analytics/mapping-area?from=2026-01&to=2026-01')->assertInertia(fn (Assert $p) => $p
-        ->where('report.total', 0)->where('report.rows.0.id', 'other')->where('report.rows.0.count', 0));
+        ->assertInertia(fn (Assert $p) => $p->component('analytics/mapping-area'));
+    $r = areaReport($this);
+    expect([$r['total'], $r['foa'], $r['pmaOutsideFoa'], $r['outsidePma'], $r['unverified']])->toBe([5, 2, 1, 2, 0])
+        ->and($r['districts'][0])->toMatchArray(['id' => '32.73.05', 'name' => 'Andir', 'regionName' => 'Kota Bandung', 'count' => 2])
+        ->and(end($r['districts']))->toMatchArray(['id' => 'other', 'name' => 'Kecamatan lain', 'count' => 3])
+        ->and($r['regions'][0])->toMatchArray(['id' => '32.73', 'name' => 'Kota Bandung', 'isPma' => true, 'count' => 3])
+        ->and(collect($r['regions'])->firstWhere('id', '32.11'))->toMatchArray(['isPma' => false, 'count' => 1])
+        ->and(end($r['regions']))->toMatchArray(['id' => 'other', 'name' => 'Kota Lain', 'isPma' => false, 'count' => 1])
+        ->and($r['months'])->toBe([['month' => '2026-11', 'total' => 5, 'foa' => 2, 'pma' => 3]]);
+});
+
+it('keeps snapshot PMA after the list changes', function () {
+    areaDo($this, ['region_code' => '32.77', 'district_code' => '32.77.01']);
+    app(TransactionMasters::class)->setPma($this->admin, []);
+    $r = areaReport($this);
+    expect($r['pmaOutsideFoa'])->toBe(1)
+        ->and(collect($r['regions'])->firstWhere('id', '32.77'))->toMatchArray(['isPma' => false, 'count' => 1]);
+});
+
+it('counts FOA first even outside PMA regions', function () {
+    $district = firstDistrict('32.11');
+    app(TransactionMasters::class)->setFoa($this->admin, [$district]);
+    areaDo($this, ['region_code' => '32.11', 'district_code' => $district]);
+    $r = areaReport($this);
+    expect([$r['foa'], $r['pmaOutsideFoa'], $r['outsidePma']])->toBe([1, 0, 0])
+        ->and($r['months'][0]['pma'])->toBe(1);
+});
+
+it('returns zero rows for an empty range', function () {
+    $r = areaReport($this, '2026-01', '2026-03');
+    expect($r['total'])->toBe(0)
+        ->and($r['months'])->toBe([
+            ['month' => '2026-01', 'total' => 0, 'foa' => 0, 'pma' => 0],
+            ['month' => '2026-02', 'total' => 0, 'foa' => 0, 'pma' => 0],
+            ['month' => '2026-03', 'total' => 0, 'foa' => 0, 'pma' => 0],
+        ])
+        ->and(collect($r['regions'])->where('isPma', true)->pluck('id')->sort()->values()->all())->toBe(['32.03', '32.04', '32.13', '32.14', '32.17', '32.73', '32.77'])
+        ->and(collect($r['regions'])->sum('count'))->toBe(0)
+        ->and(count($r['districts']))->toBe(17)
+        ->and(end($r['districts']))->toMatchArray(['id' => 'other', 'count' => 0]);
+});
+
+it('ignores legacy DO without snapshot', function () {
+    $deal = areaDo($this, BANDUNG_ANDIR);
+    DB::table('stage_histories')->where('deal_transaction_id', $deal->id)->whereNotNull('area_snapshot')->update(['area_snapshot' => null]);
+    $r = areaReport($this);
+    expect([$r['unverified'], $r['total']])->toBe([1, 0]);
+});
+
+it('splits months in Asia/Jakarta', function () {
+    areaDo($this, BANDUNG_ANDIR, '2026-10-31 18:00:00');
+    $r = areaReport($this, '2026-10', '2026-11');
+    expect(array_column($r['months'], 'total'))->toBe([0, 1]);
 });
 
 it('limits reports to the attribution scope and validates the range', function () {

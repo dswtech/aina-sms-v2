@@ -22,6 +22,11 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas tidak tersedia.');
+    const isList =
+        chart.kind === 'leasing' ||
+        chart.kind === 'area-foa-districts' ||
+        chart.kind === 'area-pma-regions';
+    const isArea = chart.kind.startsWith('area');
     context.font = font(24);
     let nextY = 236;
     const barRows = chart.rows.map((row) => {
@@ -39,18 +44,16 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         chart.rows,
         (text) => context.measureText(text).width,
     );
-    const bodyBottom =
-        chart.kind !== 'leasing'
-            ? Math.max(650, ...legend.map((row) => row.y + row.height))
-            : chart.total === 0
-              ? 340
-              : nextY;
-    const note =
-        chart.kind === 'area'
-            ? 'Persentase dihitung dari seluruh DO sah. Area lain mencakup kecamatan non-PMA dan Kota Lain. Status PMA mengikuti snapshot saat DO.'
-            : chart.kind === 'financing'
-              ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
-              : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';
+    const bodyBottom = !isList
+        ? Math.max(650, ...legend.map((row) => row.y + row.height))
+        : chart.kind === 'leasing' && chart.total === 0
+          ? 340
+          : nextY;
+    const note = isArea
+        ? 'Persentase dihitung dari seluruh DO sah; baris bulanan dari DO bulan itu. FOA = kecamatan FOA dealer; PMA = kab/kota PMA, termasuk FOA. Status mengikuti snapshot saat DO.'
+        : chart.kind === 'financing'
+          ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
+          : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';
     context.font = font(18);
     const footer = wrapChartLabel(
         note,
@@ -84,7 +87,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
     );
     context.font = font(20);
     context.fillText(
-        `${numbers.format(chart.total)} transaksi${chart.kind === 'leasing' ? ' Kredit' : chart.kind === 'area' ? ' DO' : ''} · jumlah acuan persentase`,
+        `${numbers.format(chart.total)} transaksi${chart.kind === 'leasing' ? ' Kredit' : isArea ? ' DO' : ''} · jumlah acuan persentase`,
         padding,
         166,
     );
@@ -95,7 +98,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
     context.lineTo(width - padding, 196);
     context.stroke();
 
-    if (chart.kind !== 'leasing') {
+    if (!isList) {
         const centerX = 300;
         const centerY = 420;
         context.lineWidth = 56;
@@ -104,27 +107,16 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         context.arc(centerX, centerY, 152, 0, Math.PI * 2);
         context.stroke();
         let angle = -Math.PI / 2;
-        for (const row of chart.rows) {
+        for (const row of chart.rows.slice(0, chart.donut)) {
             if (!row.count || !chart.total) continue;
             const nextAngle = angle + (row.count / chart.total) * Math.PI * 2;
             context.beginPath();
-            if (chart.kind === 'area') {
-                context.moveTo(centerX, centerY);
-                context.arc(centerX, centerY, 180, angle, nextAngle);
-                context.closePath();
-                context.fillStyle = chartRowColor(chart.kind, row.id);
-                context.fill();
-                context.strokeStyle = '#ffffff';
-                context.lineWidth = 1;
-                context.stroke();
-            } else {
-                context.strokeStyle = chartRowColor(chart.kind, row.id);
-                context.arc(centerX, centerY, 152, angle, nextAngle);
-                context.stroke();
-            }
+            context.strokeStyle = chartRowColor(chart.kind, row.id);
+            context.arc(centerX, centerY, 152, angle, nextAngle);
+            context.stroke();
             angle = nextAngle;
         }
-        if (chart.kind !== 'area') {
+        if (!isArea) {
             context.textAlign = 'center';
             context.fillStyle = ink;
             context.font = font(52, 600);
@@ -138,26 +130,18 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             context.font = font(22);
             context.fillText('transaksi', centerX, centerY + 46);
         } else {
-            let start = -Math.PI / 2;
-            for (const row of chart.rows) {
-                if (!row.count || !chart.total) continue;
-                const share = row.count / chart.total;
-                const middle = start + share * Math.PI;
-                start += share * Math.PI * 2;
-                if (share < 0.04) continue;
-                const x = centerX + Math.cos(middle) * 108;
-                const y = centerY + Math.sin(middle) * 108;
-                context.textAlign = 'center';
-                context.fillStyle = '#ffffff';
-                context.font = font(16, 600);
-                if (share >= 0.15)
-                    context.fillText(row.label.split(' · ')[0], x, y - 4, 130);
-                context.fillText(
-                    `${numbers.format(row.percentage)}%`,
-                    x,
-                    y + (share >= 0.15 ? 18 : 5),
-                );
-            }
+            context.textAlign = 'center';
+            context.fillStyle = ink;
+            context.font = font(52, 600);
+            context.fillText(
+                `${numbers.format(chart.rows[0].percentage)}%`,
+                centerX,
+                centerY + 10,
+                240,
+            );
+            context.fillStyle = secondary;
+            context.font = font(22);
+            context.fillText(chart.rows[0].label, centerX, centerY + 46);
         }
         chart.rows.forEach((row, index) => {
             const { y, lines } = legend[index];
@@ -180,7 +164,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
                 y,
             );
         });
-    } else if (chart.total === 0) {
+    } else if (chart.kind === 'leasing' && chart.total === 0) {
         context.fillStyle = secondary;
         context.font = font(26);
         context.fillText(
@@ -209,7 +193,10 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             );
             context.fillStyle = pale;
             context.fillRect(padding, row.barY, contentWidth, 16);
-            context.fillStyle = row.id === 'unselected' ? secondary : blue;
+            context.fillStyle =
+                row.muted || row.id === 'unselected'
+                    ? secondary
+                    : chartRowColor(chart.kind, row.id);
             context.fillRect(
                 padding,
                 row.barY,
