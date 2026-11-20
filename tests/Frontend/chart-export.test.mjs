@@ -74,6 +74,20 @@ test('area exports split FOA and PMA cards with monthly shares on their own base
     assert.notEqual(chartRowColor(foa.kind, 'foa'), chartRowColor(foa.kind, 'outside'));
 });
 
+test('monthly legend rows sit compact under their own divider on long ranges', () => {
+    const months = Array.from({ length: 24 }, (_, i) => ({
+        month: `2025-${String(i + 1).padStart(2, '0')}`, total: 1, foa: 1, pma: 1,
+    }));
+    const { foa } = makeAreaChartExports(areaMeta, { ...areaReport, months });
+    const layout = layoutDonutLegend(foa.rows, (text) => text.length * 12);
+    const first = layout[3];
+    assert.equal(first.divider, true);
+    assert.ok(layout.slice(0, 3).every((row) => !row.divider));
+    assert.ok(first.y >= layout[2].y + layout[2].height + 64);
+    assert.ok(layout.slice(3).every((row) => row.height <= 44));
+    assert.ok(layout.at(-1).y + layout.at(-1).height < 1700);
+});
+
 test('area exports stay zero-safe on an empty range', () => {
     const empty = { ...areaReport, total: 0, foa: 0, pmaOutsideFoa: 0, outsidePma: 0,
         districts: [{ id: 'other', name: 'Kecamatan lain', regionName: '', count: 0 }], regions: [],

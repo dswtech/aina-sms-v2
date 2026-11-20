@@ -225,14 +225,22 @@ export function chartRowColor(kind: ChartExportKind, id: string): string {
 }
 
 export function layoutDonutLegend(
-    rows: { label: string }[],
+    rows: { label: string; base?: number }[],
     measure: (value: string) => number,
 ) {
     let y = 330;
+    let monthly = false;
+    // Monthly rows (they carry their own base) are compact and start under a "Per bulan" divider.
     return rows.map((row) => {
         const lines = wrapChartLabel(row.label, measure, 300);
-        const height = Math.max(78, lines.length * 30 + 24);
-        const entry = { lines, y, height };
+        const compact = row.base !== undefined;
+        const divider = compact && !monthly;
+        if (divider) y += 64;
+        monthly ||= compact;
+        const height = compact
+            ? Math.max(40, lines.length * 30 + 10)
+            : Math.max(78, lines.length * 30 + 24);
+        const entry = { lines, y, height, divider };
         y += height;
         return entry;
     });
