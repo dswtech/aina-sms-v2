@@ -63,6 +63,7 @@ test('area exports split FOA and PMA cards with monthly shares on their own base
     assert.deepEqual(foaDistricts.rows.map((row) => row.label), ['Ngamprah', 'Gununghalu', 'Kecamatan lain']);
     assert.equal(foaDistricts.rows.at(-1).muted, true);
     assert.deepEqual(pmaRegions.rows.map((row) => row.muted ?? false), [false, false, true, true]);
+    assert.deepEqual(pmaRegions.rows.map((row) => row.label), ['Kabupaten Bandung Barat', 'Kota Cimahi', 'Kabupaten Sumedang (luar PMA)', 'Kota Lain (luar PMA)']);
     assert.equal(chartFilename(foa, 'csv'), 'porsi-foa-realisasi-do-2026-09_2026-10.csv');
     assert.equal(chartFilename(foaDistricts, 'png'), 'do-kecamatan-foa-realisasi-do-2026-09_2026-10.png');
     assert.equal(chartFilename(pma, 'csv'), 'porsi-pma-realisasi-do-2026-09_2026-10.csv');

@@ -175,7 +175,8 @@ export function makeAreaChartExports(
             'DO per kab/kota',
             report.regions.map((r) => ({
                 id: r.id,
-                label: r.name,
+                // The group is spelled out so the CSV keeps what the grey bar shows on screen.
+                label: r.isPma ? r.name : `${r.name} (luar PMA)`,
                 count: r.count,
                 muted: !r.isPma || undefined,
             })),

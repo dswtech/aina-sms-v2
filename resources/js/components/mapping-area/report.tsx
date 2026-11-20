@@ -133,39 +133,39 @@ function ShareCard({
                 </dl>
             </div>
             <p className="mt-6 text-xs text-muted-foreground">{trendLabel}</p>
-            <ol className="mt-2 flex h-32 items-end gap-2 border-b">
-                {months.map((row) => (
-                    <li
-                        key={row.id}
-                        className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1 text-xs text-muted-foreground"
-                    >
-                        <span className="tabular-nums">
-                            {percent(row.percentage)}
-                        </span>
-                        <span
-                            aria-hidden="true"
-                            className="w-full max-w-8 rounded-t"
-                            style={{
-                                height: `${Math.max(row.percentage, 1) * 0.8}px`,
-                                background: chartRowColor(chart.kind, row.id),
-                            }}
-                        />
-                        <span className="sr-only">
-                            {row.label}: {row.count} dari {row.base} DO
-                        </span>
-                    </li>
-                ))}
-            </ol>
-            <div className="mt-1 flex gap-2 text-xs text-muted-foreground">
-                {months.map((row) => (
-                    <span
-                        key={row.id}
-                        aria-hidden="true"
-                        className="min-w-0 flex-1 truncate text-center"
-                    >
-                        {monthLabel(row.id.slice('month-'.length))}
-                    </span>
-                ))}
+            {/* Up to 24 months: fixed-width columns scroll instead of overlapping. */}
+            <div className="mt-2 overflow-x-auto">
+                <ol className="flex min-w-full gap-2">
+                    {months.map((row) => (
+                        <li
+                            key={row.id}
+                            className="flex w-12 min-w-12 flex-1 flex-col items-center text-xs text-muted-foreground"
+                        >
+                            <div className="flex h-32 w-full flex-col items-center justify-end gap-1 border-b">
+                                <span className="tabular-nums">
+                                    {row.base ? percent(row.percentage) : '–'}
+                                </span>
+                                <span
+                                    aria-hidden="true"
+                                    className="w-full max-w-8 rounded-t"
+                                    style={{
+                                        height: `${Math.max(row.percentage, 1) * 0.8}px`,
+                                        background: chartRowColor(
+                                            chart.kind,
+                                            row.id,
+                                        ),
+                                    }}
+                                />
+                            </div>
+                            <span aria-hidden="true" className="mt-1">
+                                {monthLabel(row.id.slice('month-'.length))}
+                            </span>
+                            <span className="sr-only">
+                                {row.label}: {row.count} dari {row.base} DO
+                            </span>
+                        </li>
+                    ))}
+                </ol>
             </div>
         </section>
     );
