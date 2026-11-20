@@ -14,7 +14,7 @@
 |---|---|
 | Nama kerja | DealDrive Supervisor |
 | Cakupan | Fondasi dan MVP inti |
-| Requirement | 80 aktif |
+| Requirement | 89 aktif |
 | Prasyarat | Tidak ada aplikasi sebelumnya di repository |
 | Aturan ID | ID asli dipertahankan dan tidak boleh digunakan ulang |
 
