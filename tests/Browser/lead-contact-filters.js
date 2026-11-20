@@ -9,6 +9,7 @@ async function leadContactFilters(page) {
     const browserErrors = [];
     page.on('pageerror', (error) => browserErrors.push(error.message));
     let fixture;
+    let customersFixture;
     let customer;
     let failure = null;
     const writes = [];
@@ -45,6 +46,35 @@ async function leadContactFilters(page) {
                 contentType: 'application/json',
                 headers: { 'X-Inertia': 'true' },
                 body: JSON.stringify(fixture),
+            });
+        }
+        if (
+            url.pathname === '/transactions/qa-deal' &&
+            (request.headers().accept ?? '').includes('application/json')
+        ) {
+            const page1 = (data) => ({ data, current_page: 1, last_page: 1, total: data.length });
+            const area = { region_code: null, region_name: null, district_code: null, district_name: null, other_city: null };
+            return route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    public_id: 'qa-deal', vehicle_model: 'Model QA', vehicle_color: null, vehicle_ownership: null,
+                    source: 'walk_in', source_channel: null, notes: null,
+                    current_stage: 'lead', stage_label: 'Lead', estimated_value: null, expected_closing_month: null,
+                    customer: {
+                        public_id: customer.public_id, name: customer.name, phone: customer.phone,
+                        email: null, social_media_account: null, address: null, gender: null, birth_date: null, occupation: null,
+                        contact_channel_preference: customer.contact_channel_preference, opt_out: customer.opt_out,
+                        last_contact_at: null, assigned_sales: { id: 1, name: 'Sales QA' },
+                        next_follow_up: null, follow_up_history: [], area,
+                    },
+                    sales: { name: 'Sales QA', username: 'qa-sales' }, supervisors: [], area,
+                    financing: { type: null, leasing_id: null, other_name: null },
+                    deal_id: 1, progress_at: null, customer_profile: null,
+                    can_edit_metadata: false, can_edit_customer: true, can_assign_customer: false,
+                    can_update: false, can_record_do: false, can_cancel_do: false,
+                    do_event_id: null, stage_event_id: null, can_comment: false, days_in_stage: 1,
+                    stages: page1([]), comments: page1([]),
+                }),
             });
         }
         if (url.pathname.endsWith('/history')) {
@@ -137,7 +167,16 @@ async function leadContactFilters(page) {
                         name: 'Sales QA',
                         username: 'qa-sales',
                     },
-                    active_deal: null,
+                    active_deal: {
+                        id: 1,
+                        public_id: 'qa-deal',
+                        vehicle_model: 'Model QA',
+                        current_stage: 'lead',
+                        stage_label: 'Lead',
+                        is_closed: false,
+                        is_stagnant: false,
+                        estimated_value: null,
+                    },
                     next_follow_up: null, follow_up_history: [],
                     stage_history: [],
                     recent_activities: [],
@@ -176,6 +215,7 @@ async function leadContactFilters(page) {
                         assignableSales: [],
                     },
                 };
+                customersFixture = fixture;
                 await page.goto(`${origin}/customers`);
                 assert(
                     (await page
@@ -187,6 +227,11 @@ async function leadContactFilters(page) {
                     .getByRole('button', { name: 'Detail', exact: true })
                     .filter({ visible: true })
                     .first()
+                    .click();
+                // Contact preferences live in the transaction modal's customer panel.
+                await page
+                    .getByRole('dialog')
+                    .getByRole('button', { name: 'Pelanggan', exact: true })
                     .click();
                 const form = page.getByRole('region', {
                     name: 'Preferensi kontak pelanggan',
@@ -201,7 +246,7 @@ async function leadContactFilters(page) {
                     .click();
                 await page
                     .getByRole('dialog')
-                    .getByRole('link', { name: 'WhatsApp', exact: true })
+                    .getByRole('link', { name: 'WhatsApp Pelanggan QA', exact: true })
                     .waitFor();
                 assert(
                     (await page.locator('a[href^="tel:"]').count()) === 0,
@@ -308,11 +353,16 @@ async function leadContactFilters(page) {
         }
         for (const kind of ['http', 'network']) {
             failure = kind;
+            fixture = customersFixture;
             await page.goto(`${origin}/customers`);
             await page
                 .getByRole('button', { name: 'Detail', exact: true })
                 .filter({ visible: true })
                 .first()
+                .click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: 'Pelanggan', exact: true })
                 .click();
             const form = page.getByRole('region', {
                 name: 'Preferensi kontak pelanggan',

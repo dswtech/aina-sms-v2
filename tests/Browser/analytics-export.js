@@ -85,6 +85,7 @@ async function analyticsExport(page) {
                             },
                             analytics: {
                                 period: '2026-11',
+                                to: '2026-11',
                                 mode,
                                 dimension: 'source',
                                 value: 'walk_in',
@@ -122,7 +123,7 @@ async function analyticsExport(page) {
                         (await page
                             .getByRole('link', { name: 'Unduh CSV' })
                             .getAttribute('href')) ===
-                            `/analytics/export.csv?period=2026-11&mode=${mode}`,
+                            `/analytics/export.csv?period=2026-11&to=2026-11&mode=${mode}`,
                         'CSV filter query',
                     );
                     await page.evaluate(() => {

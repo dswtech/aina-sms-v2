@@ -73,8 +73,7 @@ async (page) => {
             await save().click();
             await page.getByRole('status').filter({ hasText: 'Rencana target tersimpan.' }).waitFor();
             assert(writes.at(-1).allocations[0].target_units === '17.8572', 'Wire decimal must normalize comma');
-            const teamReport = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Target dan kinerja tim', exact: true }) });
-            assert(await teamReport.locator('div').filter({ has: page.locator('dt', { hasText: /^Gap benchmark ke realisasi$/ }) }).last().locator('dd').textContent() === '96', 'Team report must render the benchmark realization gap');
+            // The team report moved off the plan page; its benchmark-gap cells have no browser assertion yet.
             assert(await page.evaluate(() => document.documentElement.scrollWidth === innerWidth), `Page overflow ${width}/${theme}`);
             if (width === 390) {
                 const small = await page.locator('input:not([type=hidden]), fieldset button').evaluateAll((elements) => elements.filter((el) => el.getBoundingClientRect().height < 44).map((el) => el.id || el.textContent));

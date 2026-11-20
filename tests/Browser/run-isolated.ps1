@@ -44,11 +44,14 @@ try {
     }
     if (!$ready) { throw 'G11 loopback server failed readiness check' }
 
-    playwright-cli "-s=$session" open "$env:APP_URL/login" --browser chrome --persistent
-    if ($LASTEXITCODE -ne 0) { throw 'G11 browser failed to start' }
-    foreach ($script in @('lead-server-save.js', 'analytics-recovery.js', 'analytics-chart-drilldown.js', 'transaction-filter-recovery.js', 'transaction-stage-save.js', 'transaction-pagination.js', 'do-workflow.js', 'customer-action-recovery.js', 'target-plan-recovery.js', 'target-forecast-breakdown.js', 'import-recovery.js', 'transactions-financing-roles.js', 'transaction-detail-modal.js', 'transaction-detail-workspace.js', 'acceptance-flow.js', 'exports-real.js', 'narrow-viewport-reflow.js')) {
+    foreach ($script in @('lead-server-save.js', 'analytics-recovery.js', 'analytics-chart-drilldown.js', 'transaction-filter-recovery.js', 'transaction-stage-save.js', 'transaction-pagination.js', 'do-workflow.js', 'customer-action-recovery.js', 'target-plan-recovery.js', 'target-forecast-breakdown.js', 'import-recovery.js', 'transactions-financing-roles.js', 'transaction-detail-modal.js', 'transaction-detail-workspace.js', 'acceptance-flow.js', 'exports-real.js', 'narrow-viewport-reflow.js', 'accessibility.js', 'analytics-export.js', 'customer-history.js', 'dashboard-layout.js', 'import-responsive.js', 'sales-calendar.js', 'target-plan.js', 'target-role-metrics.js', 'lead-contact-filters.js')) {
+        # A fresh profile per script: localStorage, init scripts and routes must not leak between scripts.
+        playwright-cli "-s=$session" open "$env:APP_URL/login" --browser chrome --persistent
+        if ($LASTEXITCODE -ne 0) { throw 'G11 browser failed to start' }
         playwright-cli "-s=$session" run-code --filename "tests/Browser/$script"
         if ($LASTEXITCODE -ne 0) { throw "G11 browser regression failed: $script" }
+        playwright-cli "-s=$session" close | Out-Null
+        playwright-cli "-s=$session" delete-data | Out-Null
     }
 } finally {
     if ($server) {
