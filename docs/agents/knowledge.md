@@ -94,7 +94,8 @@ Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan A
 | Porsi | Persentase kontribusi suatu kategori terhadap total pada filter yang sama. |
 | Drilldown | Daftar transaksi sumber yang membentuk satu angka analisis. |
 | Area | Dimensi lokasi Customer yang memerlukan data lokasi terstruktur sebelum dianalisis. |
-| PMA | Primary Market Area; kecamatan wilayah pasar utama dealer, diatur Admin di Pengaturan Dealer → Area & PMA. DO di kecamatan lain atau Kota Lain masuk Area lain (non-PMA). Sebelum 17 November 2026 disebut FOA; identifier kode dan data (`dealer_foa_districts`, `is_foa`, audit `dealer.foa_updated`, route `area-foa`) tetap memakai `foa`. |
+| FOA | Kecamatan FOA dealer (bawaan seluruh Kabupaten Bandung Barat), diatur Admin di Pengaturan Dealer → Area & PMA. Atasan menilai dealer dari porsi DO yang berasal dari FOA; makin dekat 100% makin baik. Identifier kode dan data: `dealer_foa_districts`, `is_foa`, audit `dealer.foa_updated`, route `area-foa`. |
+| PMA | Primary Market Area; kab/kota yang masih boleh digarap dealer (bawaan Kota Bandung, Kab. Bandung, Kab. Bandung Barat, Kota Cimahi, Kab. Purwakarta, Kab. Cianjur, Kab. Subang), diatur Admin di Area & PMA. FOA berada di dalam PMA; DO di kab/kota lain atau Kota Lain masuk luar PMA. Identifier: `dealer_pma_regions`, `is_pma`, audit `dealer.pma_updated`, route `area-pma`. Antara 17 dan 20 November 2026 label "PMA" sempat dipakai untuk kecamatan FOA. |
 | MSCP | Market Share Credit Portion; analisis porsi pembiayaan. Dipenuhi oleh porsi per leasing pada Analisis Pembiayaan; pemilik menutup kebutuhan ini pada 9 November 2026 dan tidak ada konsep MSCP terpisah. |
 
 ## Prinsip akses data
