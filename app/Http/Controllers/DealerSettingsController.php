@@ -29,6 +29,7 @@ class DealerSettingsController extends Controller
             'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
             'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
             'foa' => DB::table('dealer_foa_districts')->where('dealer_id', $actor->dealer_id)->orderBy('district_code')->pluck('district_code'),
+            'pma' => DB::table('dealer_pma_regions')->where('dealer_id', $actor->dealer_id)->orderBy('region_code')->pluck('region_code'),
         ]);
     }
 
@@ -58,6 +59,13 @@ class DealerSettingsController extends Controller
     public function updateFoa(Request $request, TransactionMasters $masters): RedirectResponse
     {
         $masters->setFoa($this->actor($request), $request->validate(['districts' => ['present', 'array']])['districts']);
+
+        return back();
+    }
+
+    public function updatePma(Request $request, TransactionMasters $masters): RedirectResponse
+    {
+        $masters->setPma($this->actor($request), $request->validate(['regions' => ['present', 'array']])['regions']);
 
         return back();
     }

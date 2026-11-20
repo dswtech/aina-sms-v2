@@ -173,7 +173,7 @@ async function acceptanceFlow(page) {
             await page
                 .getByRole('checkbox', { name: `${districtName(code)}, ${regionName(code)}`, exact: true })
                 .setChecked(on);
-        const save = page.getByRole('button', { name: 'Simpan PMA', exact: true });
+        const save = page.getByRole('button', { name: 'Simpan FOA', exact: true });
         if (await save.isEnabled())
             await Promise.all([
                 page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes('/dealer-settings/area-foa')),

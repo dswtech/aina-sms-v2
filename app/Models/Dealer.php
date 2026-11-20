@@ -20,6 +20,7 @@ class Dealer extends Model
         static::created(function (Dealer $dealer): void {
             TransactionMasters::initialize((int) $dealer->getKey());
             TransactionMasters::initializeFoa((int) $dealer->getKey());
+            TransactionMasters::initializePma((int) $dealer->getKey());
         });
     }
 

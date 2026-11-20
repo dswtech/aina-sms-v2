@@ -85,6 +85,32 @@ final class TransactionMasters
         );
     }
 
+    /** Owner default (2026-11-20): the seven kab/kota the dealer may still work. Admin edits it later. */
+    public const DEFAULT_PMA_REGIONS = ['32.73', '32.04', '32.17', '32.77', '32.14', '32.03', '32.13'];
+
+    public static function initializePma(int $dealerId): void
+    {
+        DB::table('dealer_pma_regions')->insertOrIgnore(array_map(
+            fn (string $code): array => ['dealer_id' => $dealerId, 'region_code' => $code],
+            self::DEFAULT_PMA_REGIONS,
+        ));
+    }
+
+    /** @param list<string> $regions */
+    public function setPma(User $actor, array $regions): void
+    {
+        DB::transaction(function () use ($actor, $regions): void {
+            $this->lockDealer($actor);
+            Validator::make(['regions' => $regions], ['regions' => ['array'], 'regions.*' => ['required', 'string', 'distinct', Rule::exists('area_regions', 'code')]])->validate();
+            $before = DB::table('dealer_pma_regions')->where('dealer_id', $actor->dealer_id)->orderBy('region_code')->pluck('region_code')->all();
+            DB::table('dealer_pma_regions')->where('dealer_id', $actor->dealer_id)->delete();
+            foreach ($regions as $code) {
+                DB::table('dealer_pma_regions')->insert(['dealer_id' => $actor->dealer_id, 'region_code' => $code]);
+            }
+            AuditRecorder::record($actor, 'dealer.pma_updated', $actor, ['regions' => $before], ['regions' => $regions]);
+        });
+    }
+
     /** @param list<string> $districts */
     public function setFoa(User $actor, array $districts): void
     {

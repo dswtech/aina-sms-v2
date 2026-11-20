@@ -119,6 +119,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('dealer-settings/leasing', [DealerSettingsController::class, 'leasing'])->name('dealer-settings.leasing');
         Route::get('dealer-settings/vehicles', [DealerSettingsController::class, 'vehicles'])->name('dealer-settings.vehicles');
         Route::patch('dealer-settings/area-foa', [DealerSettingsController::class, 'updateFoa'])->name('dealer-settings.area-foa');
+        Route::patch('dealer-settings/area-pma', [DealerSettingsController::class, 'updatePma'])->name('dealer-settings.area-pma');
         Route::post('dealer-settings/leasing', [DealerSettingsController::class, 'storeLeasing'])->name('dealer-settings.leasing.store');
         Route::patch('dealer-settings/leasing/{leasing}', [DealerSettingsController::class, 'updateLeasing'])->whereNumber('leasing')->name('dealer-settings.leasing.update');
         Route::post('dealer-settings/vehicle-types', [DealerSettingsController::class, 'storeVehicleType'])->name('dealer-settings.vehicle-types.store');

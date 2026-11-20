@@ -119,7 +119,41 @@ it('accepts Kota Lain without district and clears irrelevant metadata without mo
         'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
     ]);
     expect($event->area_snapshot['other_city'])->toBe('Jakarta')
-        ->and($event->area_snapshot['is_foa'])->toBeFalse();
+        ->and($event->area_snapshot['is_foa'])->toBeFalse()
+        ->and($event->area_snapshot['is_pma'])->toBeFalse();
+});
+
+it('snapshots PMA for a new Purwakarta district and not for Sumedang', function (string $region, bool $pma) {
+    $district = DB::table('area_districts')->where('region_code', $region)->orderBy('code')->value('code');
+    $deal = foundationDeal($this);
+    $this->actingAs($this->sales)->patch('/transactions/'.$deal->public_id, [
+        'area' => ['region_code' => $region, 'district_code' => $district], 'financing' => ['type' => 'cash'],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+    $event = $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
+        'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
+    expect($event->area_snapshot['is_pma'])->toBe($pma)->and($event->area_snapshot['is_foa'])->toBeFalse();
+})->with([['32.14', true], ['32.11', false]]);
+
+it('backfills is_pma on earlier DO snapshots from the default PMA list', function () {
+    $deal = foundationDeal($this);
+    $this->actingAs($this->sales)->patch('/transactions/'.$deal->public_id, [
+        'area' => ['region_code' => '32.77', 'district_code' => '32.77.01'], 'financing' => ['type' => 'cash'],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+    $history = $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
+        'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
+    $backfill = fn () => (require database_path('migrations/2026_11_20_120000_create_dealer_pma_regions.php'))->backfill();
+    $history->forceFill(['area_snapshot' => ['region_code' => '32.77', 'district_code' => '32.77.01', 'is_foa' => false]])->save();
+    $backfill();
+    expect($history->fresh()->area_snapshot['is_pma'])->toBeTrue();
+    $history->forceFill(['area_snapshot' => ['region_code' => 'other', 'other_city' => 'Jakarta', 'is_foa' => false]])->save();
+    $backfill();
+    expect($history->fresh()->area_snapshot['is_pma'])->toBeFalse();
+    // A snapshot that already records PMA is never rewritten.
+    $history->forceFill(['area_snapshot' => ['region_code' => '32.11', 'is_foa' => false, 'is_pma' => true]])->save();
+    $backfill();
+    expect($history->fresh()->area_snapshot['is_pma'])->toBeTrue();
 });
 
 it('starts with 185 official districts, eight dealer lenders and Bandung Barat as the temporary FOA', function () {
