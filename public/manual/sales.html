@@ -12,7 +12,7 @@
 <div class="layout">
 <nav class="toc" aria-label="Daftar isi">
   <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
-  <p class="ver">Manual Sales · Versi 1.2.0</p>
+  <p class="ver">Manual Sales · Versi 1.3.0</p>
   <h2>Sales</h2>
   <ol>
     <li><a href="#masuk">1. Masuk &amp; akun</a></li>
@@ -41,7 +41,7 @@
   <h1>Manual Sales</h1>
   <p>Panduan langkah demi langkah memakai aplikasi AIna DealDrive.</p>
   <ul class="meta">
-    <li>Versi 1.2.0</li>
+    <li>Versi 1.3.0</li>
     <li>20 November 2026</li>
     <li>Berlaku untuk aplikasi v1.4.0 dan pembaruan sesudahnya</li>
     <li>Peran: Sales</li>
@@ -246,7 +246,6 @@
   <ul>
     <li>Tombol <span class="ui">Detail</span> (ikon mata) di ujung kanan membuka detail transaksi.</li>
     <li>Tombol <span class="ui">Ubah tahap</span> (ikon pensil) membuka formulir ubah tahap.</li>
-    <li>Pada transaksi berstatus DO, tombol <span class="ui">Konfirmasi Delivery</span> (ikon truk) dipakai saat kendaraan sudah dikirim.</li>
     <li>Kolom unit menampilkan juga <strong>Warna</strong> dan <strong>Ownership</strong> kendaraan bila sudah diisi.</li>
     <li><span class="ui">Ekspor CSV</span> mengunduh daftar transaksi untuk diolah di spreadsheet, termasuk kolom Warna dan Ownership. <span class="ui">Refresh</span> memuat ulang data terbaru.</li>
   </ul>
@@ -297,6 +296,7 @@
     <li>Isi <span class="ui">Waktu follow-up</span> (tanggal dan jam) serta <span class="ui">Rencana</span>, misalnya "Konfirmasi jadwal test drive".</li>
     <li>Klik <span class="ui">Jadwalkan</span>. Rencana ini muncul di <a href="#kalender">Kalender</a> dan di Buku Pelanggan Saya.</li>
   </ol>
+  <p>Pada transaksi yang sudah DO atau Lost, follow-up tidak dapat dijadwalkan lagi.</p>
   <figure>
     <a href="img/detail-followup.png" target="_blank"><img src="img/detail-followup.png" alt="Panel follow-up" width="1280" height="800" loading="lazy"></a>
     <figcaption>Panel Follow-up.</figcaption>
@@ -329,7 +329,7 @@
   <h2>8. Mengubah tahap pipeline</h2>
   <p>Setiap transaksi bergerak melalui tahap berikut:</p>
   <div class="stages" aria-label="Urutan tahap">
-    <span>Lead</span><i>→</i><span>Prospect</span><i>→</i><span>Hot Prospect</span><i>→</i><span>SPK</span><i>→</i><span>DO</span><i>→</i><span>Delivery</span><i>atau</i><span>Lost</span>
+    <span>Lead</span><i>→</i><span>Prospect</span><i>→</i><span>Hot Prospect</span><i>→</i><span>SPK</span><i>→</i><span>DO</span><i>atau</i><span>Lost</span>
   </div>
   <figure>
     <a href="img/detail-ubah-tahap.png" target="_blank"><img src="img/detail-ubah-tahap.png" alt="Formulir ubah tahap" width="1280" height="800" loading="lazy"></a>
@@ -349,7 +349,6 @@
     <tr><td>Prospect, Hot Prospect</td><td>Gender dan alamat pelanggan.</td></tr>
     <tr><td>SPK</td><td>Gender, alamat, pekerjaan, dan area pelanggan; unit kendaraan (warna boleh diisi sekalian); centang <span class="ui">Konfirmasi booking fee</span>.</td></tr>
     <tr><td>DO</td><td>Centang ketiga <span class="ui">Checklist DO</span>: PO, DP, dan Unit. Pilih <span class="ui">Ownership</span> bila belum diisi. DO hanya bisa dipilih dari tahap SPK.</td></tr>
-    <tr><td>Delivery</td><td>Konfirmasi bahwa kendaraan sudah terkirim (tombol <span class="ui">Konfirmasi Delivery</span>).</td></tr>
     <tr><td>Lost</td><td>Pilih <span class="ui">Alasan lost</span>: membeli di kompetitor, harga/anggaran belum sesuai, leasing ditolak, tidak merespons follow-up, batal/menunda, atau alasan lainnya. Tambahkan catatan bila perlu.</td></tr>
   </table></div>
   <p>Data pelanggan yang belum lengkap dapat diisi langsung di formulir ubah tahap, atau kapan saja di panel kiri. Warna dan Ownership dapat diubah di panel kiri sampai tahap SPK; sejak DO keduanya terkunci.</p>
@@ -367,7 +366,7 @@
     <a href="img/stage-do.png" target="_blank"><img src="img/stage-do.png" alt="Formulir ubah tahap ke DO dengan checklist PO, DP, dan Unit" width="1280" height="800" loading="lazy"></a>
     <figcaption>Ke DO dari SPK: centang PO, DP, dan Unit.</figcaption>
   </figure>
-  <div class="callout warn"><p><strong>Penting.</strong> DO, Delivery, dan Lost adalah tahap selesai. Setelah DO, transaksi hanya dapat dilanjutkan ke Delivery. Transaksi yang sudah Delivery atau Lost terkunci dan tidak dapat diubah lagi. Pembatalan DO hanya dapat dilakukan Admin, sebelum Delivery. Periksa kembali sebelum menyimpan.</p></div>
+  <div class="callout warn"><p><strong>Penting.</strong> DO dan Lost adalah tahap selesai. Transaksi yang sudah DO atau Lost terkunci dan tidak dapat diubah lagi, dan follow-up yang masih tertunda dibatalkan otomatis. Pembatalan DO hanya dapat dilakukan Admin, pada bulan yang sama saat DO dicatat. Periksa kembali sebelum menyimpan.</p></div>
 </section>
 
 <section id="coaching">
@@ -465,7 +464,7 @@
 </section>
 
 <footer>
-  <p>Manual Book AIna DealDrive · Versi 1.2.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Supervisor atau Admin dealer Anda.</p>
+  <p>Manual Book AIna DealDrive · Versi 1.3.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Supervisor atau Admin dealer Anda.</p>
 </footer>
 </main>
 </div>
