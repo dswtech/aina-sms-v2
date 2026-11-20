@@ -14,7 +14,7 @@ Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement a
 
 - Role: **A** Admin, **S** Sales, **V** Supervisor, **B** Branch Manager; **Semua** mencakup keempat role dan pengunjung tanpa login bila relevan.
 - Status teknis **Parsial** berarti ada assertion relevan tetapi acceptance belum lengkap; **Belum ada** berarti assertion langsung belum ditemukan dalam suite yang diperiksa; **Gap source** berarti ada perbedaan konkret antara source dan kebutuhan; **Batas MVP** berarti larangan yang perlu dijaga; **Ditunda** berarti capability memang ditunda PRD dan bukan fitur MVP yang hilang. Status gabungan mempertahankan kedua informasi.
-- Bukti E01–E24 di katalog menunjuk file dan nama tes, disertai batas assertion. Hasil suite terbaru dicatat terpisah dari cakupan. Kode G menunjuk backlog; kode A/S/V/B/X/O menunjuk skenario dan gerbang.
+- Bukti E01–E32 di katalog menunjuk file dan nama tes, disertai batas assertion. Hasil suite terbaru dicatat terpisah dari cakupan. Kode G menunjuk backlog; kode A/S/V/B/X/O menunjuk skenario dan gerbang.
 - Semua skenario fungsional harus dijalankan nanti oleh pemilik role dengan QA pada lingkungan UAT terisolasi yang telah disetujui. Tidak ada langkah di dokumen ini yang sudah dijalankan. Persiapan akun, manipulasi waktu/data, pengiriman email, impor, dan penyimpanan melalui UI dilakukan hanya setelah target lingkungan dan izin pelaksanaan ditetapkan; tidak memakai production atau database development bersama secara otomatis.
 - Isi hasil aktual dengan waktu, commit, lingkungan, pelaksana, screenshot/rekaman tersanitasi, dan ID temuan. Jangan simpan credential, token aktivasi/reset, isi environment, atau data pelanggan nyata. Status boleh menjadi Lulus/Gagal/Terblokir hanya setelah ada bukti eksekusi.
 
@@ -26,7 +26,7 @@ Gunakan pelanggan berlabel jelas `UAT-C1`/S1, `UAT-C2`/S2, `UAT-C3`/S3, pelangga
 
 Siapkan transaksi pada tujuh tahap, tanggal aktivitas tepat sebelum/pada/setelah ambang tiga hari, follow-up kemarin/hari ini/besok, serta transaksi melintasi batas bulan UTC/Asia/Jakarta. Buat CSV valid, campuran invalid, duplikat, dan Sales di luar tim dari template unduhan; jangan unggah data asli. Untuk angka laporan, QA menyusun ledger input sintetis dan hasil hitung manual sebelum pengujian; bobot uji tidak dianggap bobot production yang telah disetujui.
 
-## Matriks ketertelusuran — 80 referensi
+## Matriks ketertelusuran — 83 referensi
 
 Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalankan**, termasuk pemeriksaan batas MVP; fitur tertunda tidak memerlukan eksekusi capability yang belum masuk MVP.
 
