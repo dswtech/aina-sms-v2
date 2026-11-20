@@ -90,6 +90,9 @@ class DevelopmentDemoSeeder extends Seeder
 
         $this->call(AreaMasterSeeder::class);
         TransactionMasters::initialize($dealer->id);
+        // DatabaseSeeder mutes model events, so Dealer::created never seeds these defaults there.
+        TransactionMasters::initializeFoa($dealer->id);
+        TransactionMasters::initializePma($dealer->id);
 
         if (Customer::query()->where('dealer_id', $dealer->id)->where('notes', 'like', '[demo]%')->exists()) {
             $this->command?->info('Data demo sudah ada; melengkapi contoh laporan tanpa membuat ulang data.');

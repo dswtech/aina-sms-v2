@@ -12,6 +12,7 @@ use App\Models\SalesTarget;
 use App\Models\StageHistory;
 use App\Services\TransactionMasters;
 use Database\Seeders\AreaMasterSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DevelopmentDemoSeeder;
 use Illuminate\Support\Facades\DB;
 
@@ -88,4 +89,22 @@ it('seeds the official area master idempotently and repairs edited names', funct
     expect(DB::table('area_regions')->count())->toBe(8)
         ->and(DB::table('area_districts')->count())->toBe(185)
         ->and(DB::table('area_districts')->where('code', '32.73.05')->value('name'))->toBe('Andir');
+});
+
+it('gives the demo dealer its default FOA and PMA even when seeding without model events', function () {
+    $originalEnvironment = app()->environment();
+    app()->detectEnvironment(fn (): string => 'local');
+    try {
+        // `php artisan db:seed` runs DatabaseSeeder, which mutes model events, so Dealer::created never fires there.
+        $this->seed(DatabaseSeeder::class);
+    } finally {
+        app()->detectEnvironment(fn (): string => $originalEnvironment);
+    }
+    $dealerId = DB::table('dealers')->where('name', 'AINA Development Dealer')->value('id');
+    $snapshots = StageHistory::query()->where('to_stage', PipelineStage::Do)->pluck('area_snapshot');
+
+    expect(DB::table('dealer_foa_districts')->where('dealer_id', $dealerId)->count())->toBe(16)
+        ->and(DB::table('dealer_pma_regions')->where('dealer_id', $dealerId)->count())->toBe(7)
+        ->and($snapshots->contains(fn ($s) => $s['is_foa']))->toBeTrue()
+        ->and($snapshots->contains(fn ($s) => ! $s['is_foa'] && $s['is_pma']))->toBeTrue();
 });
