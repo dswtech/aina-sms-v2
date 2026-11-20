@@ -246,7 +246,7 @@ class TransactionController extends Controller
                 foreach ($rows as $t) {
                     $put([
                         $t->progress_at?->setTimezone('Asia/Jakarta')->format('Y-m-d'), $t->customer?->name, $t->vehicle_model, $t->vehicle_color, $t->vehicle_ownership?->label(), $t->current_stage->label(),
-                        $t->source, $t->source_channel, $regions[$t->region_code] ?? $t->other_city, $districts[$t->district_code] ?? null,
+                        $t->source, $t->source_channel, $t->region_code === 'other' ? ($t->other_city ?? 'Kota Lain') : ($regions[$t->region_code] ?? null), $districts[$t->district_code] ?? null,
                         $t->sales?->name, collect($supervisors[$t->team_id] ?? [])->pluck('name')->implode(', '),
                         $t->last_activity_at?->setTimezone('Asia/Jakarta')->format('Y-m-d'), $t->notes,
                     ]);

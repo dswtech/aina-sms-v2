@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 export type PickerOption = { value: string; label: string };
 export type PickerStep =
     | { title: string; options: PickerOption[] }
-    | { title: string; text: true; type?: 'date' };
+    | { title: string; text: true; type?: 'date'; optional?: true };
 
 type Props = {
     label: string;
@@ -243,7 +243,8 @@ export function PropertyPicker({
                         className="space-y-2 p-3"
                         onSubmit={(event) => {
                             event.preventDefault();
-                            if (text.trim()) advance(text.trim());
+                            if (text.trim() || step.optional)
+                                advance(text.trim());
                         }}
                     >
                         <input
@@ -265,7 +266,7 @@ export function PropertyPicker({
                         />
                         <button
                             type="submit"
-                            disabled={!text.trim()}
+                            disabled={!text.trim() && !step.optional}
                             className="min-h-11 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50"
                         >
                             Simpan

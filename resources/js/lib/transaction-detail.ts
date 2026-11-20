@@ -28,15 +28,16 @@ export function areaPatch(chosen: string[]) {
     const [region, second] = chosen;
     if (!region) return { area: null };
     if (region === 'other')
-        return second?.trim()
-            ? {
+        // The city step may be left empty; only a pending step (no second value) is incomplete.
+        return second === undefined
+            ? null
+            : {
                   area: {
                       region_code: 'other',
                       district_code: null,
-                      other_city: second.trim(),
+                      other_city: second.trim() || null,
                   },
-              }
-            : null;
+              };
 
     return second
         ? {

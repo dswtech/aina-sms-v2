@@ -251,7 +251,12 @@ export function DetailProperties({
                 ],
             };
         if (chosen.length > 1 || chosen[0] === '') return null;
-        if (chosen[0] === 'other') return { title: 'Nama kota', text: true };
+        if (chosen[0] === 'other')
+            return {
+                title: 'Nama kota (boleh dikosongkan)',
+                text: true,
+                optional: true,
+            };
 
         return {
             title: `Kecamatan di ${regionName(chosen[0])}`,
@@ -310,8 +315,10 @@ export function DetailProperties({
     const customerArea = detail.customer.area;
     const customerAreaLabel = customerArea.other_city
         ? customerArea.other_city
-        : (districts.find((d) => d.code === customerArea.district_code)?.name ??
-          '-');
+        : customerArea.region_code === 'other'
+          ? 'Kota Lain'
+          : (districts.find((d) => d.code === customerArea.district_code)
+                ?.name ?? '-');
     const optionLabel = (
         options: { value: string; label: string }[],
         value: string | null,

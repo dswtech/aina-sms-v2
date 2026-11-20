@@ -57,7 +57,7 @@ Pemilik memindahkan production dari Vercel ke VPS ([ADR 008](adr/ADR-008-vps-hos
 
 ## Pembaruan 20 November 2026 — patcher FOA/PMA untuk rilis berikutnya
 
-Migration `2026_11_21_100000_reset_foa_pma_and_resnapshot_do` (branch `fix/foa-pma-production-patch`) menimpa pilihan Admin: setiap dealer mendapat FOA = 16 kecamatan Kabupaten Bandung Barat dan PMA = tujuh kab/kota, lalu `is_foa`/`is_pma` semua snapshot DO dihitung ulang dari kode kecamatan/kab-kota yang tercatat (field snapshot lain dan snapshot pembiayaan tidak berubah; DO tanpa snapshot tetap belum terverifikasi). Deploy VPS tidak menjalankan migration: pemilik perlu backup database lalu `php artisan migrate --force` setelah rilis. Tidak bisa dibalik selain dari backup.
+Migration `2026_11_21_100000_reset_foa_pma_and_resnapshot_do` (branch `fix/foa-pma-production-patch`) menimpa pilihan Admin: setiap dealer mendapat FOA = 16 kecamatan Kabupaten Bandung Barat dan PMA = tujuh kab/kota, lalu `is_foa`/`is_pma` semua snapshot DO dihitung ulang dari kode kecamatan/kab-kota yang tercatat (field snapshot lain dan snapshot pembiayaan tidak berubah; DO tanpa snapshot tetap belum terverifikasi). Deploy VPS tidak menjalankan migration: pemilik perlu backup database lalu `php artisan migrate --force` setelah rilis. Tidak bisa dibalik selain dari backup. Di branch yang sama, nama kota untuk Kota Lain menjadi opsional di semua input area (create lead, Detail, profil pelanggan, import); Kota Lain tanpa nama tetap area lengkap untuk SPK/DO dan tampil "Kota Lain".
 
 ## Pembaruan 20 November 2026 — FOA kecamatan, PMA kab/kota
 
