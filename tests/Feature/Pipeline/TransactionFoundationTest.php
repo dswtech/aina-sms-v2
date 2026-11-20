@@ -122,9 +122,9 @@ it('accepts Kota Lain without district and clears irrelevant metadata without mo
         ->and($event->area_snapshot['is_foa'])->toBeFalse();
 });
 
-it('starts with 106 official districts, eight dealer lenders and Bandung Barat as the temporary FOA', function () {
-    expect(DB::table('area_districts')->count())->toBe(106)
-        ->and(DB::table('area_regions')->count())->toBe(5)
+it('starts with 185 official districts, eight dealer lenders and Bandung Barat as the temporary FOA', function () {
+    expect(DB::table('area_districts')->count())->toBe(185)
+        ->and(DB::table('area_regions')->count())->toBe(8)
         ->and(DB::table('dealer_foa_districts')->where('dealer_id', $this->dealer->id)->count())->toBe(16)
         ->and(DB::table('dealer_foa_districts')->where('dealer_id', $this->dealer->id)->where('district_code', 'not like', '32.17.%')->count())->toBe(0)
         ->and(DB::table('leasing_companies')->where('dealer_id', $this->dealer->id)->count())->toBe(8);

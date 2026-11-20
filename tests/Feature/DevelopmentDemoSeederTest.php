@@ -61,7 +61,7 @@ it('seeds the official area master idempotently and repairs edited names', funct
     $this->seed(AreaMasterSeeder::class);
     $this->seed(AreaMasterSeeder::class);
 
-    expect(DB::table('area_regions')->count())->toBe(5)
-        ->and(DB::table('area_districts')->count())->toBe(106)
+    expect(DB::table('area_regions')->count())->toBe(8)
+        ->and(DB::table('area_districts')->count())->toBe(185)
         ->and(DB::table('area_districts')->where('code', '32.73.05')->value('name'))->toBe('Andir');
 });

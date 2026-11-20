@@ -17,7 +17,7 @@ beforeEach(function () {
 it('renders area and leasing masters for Admin only', function () {
     $this->actingAs($this->admin)->get('/dealer-settings')->assertOk()->assertInertia(fn (Assert $p) => $p
         ->component('dealer-settings/index')
-        ->has('regions', 5)->has('districts', 106)->has('foa', 16)->missing('leasings'));
+        ->has('regions', 8)->has('districts', 185)->has('foa', 16)->missing('leasings'));
     $this->get('/dealer-settings/leasing')->assertOk()->assertInertia(fn (Assert $p) => $p
         ->component('dealer-settings/leasing')->has('leasings', 8)->missing('regions'));
     $this->get('/dealer-settings/vehicles')->assertOk()->assertInertia(fn (Assert $p) => $p

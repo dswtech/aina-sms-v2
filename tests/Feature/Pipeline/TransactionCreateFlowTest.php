@@ -20,7 +20,7 @@ beforeEach(function () {
 it('renders the create page with masters, sources and no assignable Sales for Sales', function () {
     $this->actingAs($this->sales)->get('/transactions/create')->assertOk()->assertInertia(fn (Assert $p) => $p
         ->component('transactions/create')
-        ->has('regions', 5)->has('districts', 106)->has('leasings', 8)
+        ->has('regions', 8)->has('districts', 185)->has('leasings', 8)
         ->where('sources.0.value', 'walk_in')
         ->where('sources.4.value', 'repeat_order')->where('sources.5.value', 'database')->has('sources', 6)
         ->where('assignableSales', []));
