@@ -8,7 +8,7 @@
 | Gerbang rilis | [Roadmap Fase 6](roadmap.md#fase-6--import-hardening-dan-pilot) |
 | Status UAT | Kolom UAT per skenario tetap **Belum dijalankan**. Pada 12 November 2026 pemilik menyatakan UAT manual dilewati dan dianggap lolos ([G15](#g15)); ini deklarasi pemilik, bukan hasil eksekusi. Belum ada persetujuan go-live |
 
-Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh dua baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
+Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh tiga baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
 
 ## Cara membaca dan menjalankan
 
@@ -87,6 +87,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [PIP-05](PRD.md#74-sales-pipeline-pip) | S, V | [S04](#s04), [V02](#v02) | [E14](#e14), [E12](#e12), [E29](#e29): cutoff hari kalender Jakarta bersama, null fallback, tepat ambang, closed serta kesamaan accessor/filter/count/dashboard. | Terverifikasi teknis | UAT manusia belum dijalankan; [G07](#g07). | Belum dijalankan |
 | [PIP-06](PRD.md#74-sales-pipeline-pip) | S, V | [S04](#s04) | [E12](#e12): activity, actor dan timestamp Customer/deal diperbarui. | Parsial | Belum mengassert tahap tetap sama serta endpoint positif Supervisor. | Belum dijalankan |
 | [PIP-07](PRD.md#74-sales-pipeline-pip) | S, V, A | [S05](#s05) | [E07](#e07), [E30](#e30) merekam baseline lama. | Revalidasi | Uji SPK → DO, DO sebagai tahap akhir, dan pembatalan DO hanya di bulan Jakarta yang sama ([ADR 010](adr/ADR-010-remove-delivery-stage.md)). | Belum dijalankan |
+| [PIP-08](PRD.md#74-sales-pipeline-pip) | S, V | [S05](#s05) | [E32](#e32): simpan saat lead baru dan tampil di daftar/detail; nilai Ownership asing dan warna terlalu panjang ditolak; ubah sampai SPK lalu terkunci sejak DO; warna ikut saat SPK; DO tanpa Ownership ditolak dan tersimpan dari dialog. | Parsial | Dialog DO, panel detail dan kolom Warna/Ownership di ekspor CSV belum diassert; akses Supervisor belum diuji langsung. | Belum dijalankan |
 
 ### Conversation dan coaching
 
@@ -314,6 +315,10 @@ CI lengkap lulus: tujuh tes frontend, lint/format, TypeScript, Pint, PHPStan ser
 
 **G10 — impor dan ekspor, 6 November 2026.** [Rencana dan bukti](implementation-g10-import-export.md). `ImportVerificationTest` mencakup template, preview privat, validasi baris, pembatasan role/aktor/dealer/sesi, perubahan akses setelah preview, rollback, unggah ulang, dan replay berurutan. `ExportVerificationTest` membandingkan seluruh sel CSV terhadap ledger Jakarta, termasuk periode, mode, cakupan tiga role, kutipan CSV, sanitasi dan perlindungan label formula. Regresi cetak memakai aset nyata dan fixture sintetis untuk 12 kombinasi. Pemeriksaan teks dan render PDF membuktikan hasil cetak agregat pada Chrome QA. Penerimaan cetak operasional dan UAT manusia belum dijalankan.
 
+### E32
+
+**PIP-08 — warna dan Ownership kendaraan, 20 November 2026.** [VehicleColorOwnershipTest](../../tests/Feature/Pipeline/VehicleColorOwnershipTest.php) menguji lima perilaku sebagai Sales: warna dan Ownership tersimpan bersama lead baru serta tampil di daftar dan JSON detail; Ownership di luar `first_buyer`/`additional`/`trade_in` dan warna lebih dari 50 karakter ditolak; keduanya dapat diubah sampai SPK lalu PATCH ditolak sejak DO; warna yang dikirim bersama kendaraan tersimpan saat pindah ke SPK; DO tanpa Ownership ditolak dengan tahap tetap SPK, dan Ownership dari dialog DO tersimpan. Tidak mencakup UI dialog/panel, kolom ekspor CSV, maupun akses Supervisor secara langsung.
+
 ## Skenario UAT empat role
 
 Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan karena gap source, catat **Terblokir/Gagal** setelah dicoba pada lingkungan yang disetujui; jangan mengganti expected result mengikuti keterbatasan source. Penolakan request berarti tidak ada mutasi dan tidak ada data sensitif pada respons, bukan sekadar tombol disembunyikan.
@@ -356,7 +361,7 @@ Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan
 
 ### S05
 
-**Pipeline — Sales dan Supervisor, dengan pembatalan oleh Admin.** Prasyarat: peluang terpisah untuk DO akhir bulan, pembatalan DO, dan Lost. Coba SPK tanpa konfirmasi, DO dari luar SPK, DO dengan checklist tidak lengkap, Lost tanpa alasan, dan request asing. Catat DO lengkap pada akhir bulan Jakarta, lalu coba membatalkannya sebagai Admin pada bulan berikutnya. Pada peluang kedua, batalkan DO sebagai Admin dengan alasan di bulan yang sama, periksa histori dan laporan, lalu catat ulang DO dengan checklist baru. Coba pembatalan sebagai non-Admin. Hasil: penolakan tidak menambah histori. DO keluar dari pipeline aktif, membatalkan follow-up tertunda, dan menentukan bulan realisasi. DO bulan lalu tidak dapat dibatalkan. Pembatalan yang sah mengembalikan SPK dan mengecualikan DO yang dibatalkan tanpa menghapus histori. **Hasil aktual/bukti: Belum dijalankan.**
+**Pipeline — Sales dan Supervisor, dengan pembatalan oleh Admin.** Prasyarat: peluang terpisah untuk DO akhir bulan, pembatalan DO, dan Lost. Coba SPK tanpa konfirmasi, DO dari luar SPK, DO dengan checklist tidak lengkap, Lost tanpa alasan, dan request asing. Catat DO lengkap pada akhir bulan Jakarta, lalu coba membatalkannya sebagai Admin pada bulan berikutnya. Pada peluang kedua, batalkan DO sebagai Admin dengan alasan di bulan yang sama, periksa histori dan laporan, lalu catat ulang DO dengan checklist baru. Coba pembatalan sebagai non-Admin. Isi Warna dan Ownership saat lead baru, ubah keduanya sebelum SPK, coba catat DO tanpa Ownership, lalu coba ubah keduanya setelah DO. Hasil: penolakan tidak menambah histori. DO meminta Ownership bila kosong; sejak DO, Warna dan Ownership terkunci dan tetap tampil di daftar serta ekspor CSV. DO keluar dari pipeline aktif, membatalkan follow-up tertunda, dan menentukan bulan realisasi. DO bulan lalu tidak dapat dibatalkan. Pembatalan yang sah mengembalikan SPK dan mengecualikan DO yang dibatalkan tanpa menghapus histori. **Hasil aktual/bukti: Belum dijalankan.**
 
 ### S06
 
