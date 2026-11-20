@@ -4,6 +4,20 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.7.0',
+        'date' => '2026-11-20',
+        'notify' => true,
+        'summary' => 'Versi baru: logo dan tampilan baru, serta pemilih tanggal dan bulan yang lebih mudah dipakai.',
+        'items' => [
+            'Logo baru di halaman masuk, menu aplikasi dan ikon tab browser.',
+            'Tampilan aplikasi diperbarui dengan huruf dan warna baru; warna aksen bawaan kini oranye. Warna yang sudah Anda pilih sendiri tetap dipakai.',
+            'Tanggal lahir, rentang tanggal di filter Transaksi dan estimasi bulan closing kini dipilih lewat kalender.',
+            'Isian teks, tanggal dan bulan bisa dikosongkan dengan satu klik.',
+            'Unit yang diminati bisa dicari dan dikelompokkan per tipe.',
+            'Pencarian pelanggan lama menampilkan paling banyak lima hasil.',
+        ],
+    ],
+    [
         'version' => '1.6.0',
         'date' => '2026-11-20',
         'notify' => true,
