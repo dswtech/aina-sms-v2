@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PipelineStage;
 use App\Models\DealTransaction;
 use App\Models\StageHistory;
 use App\Models\User;
@@ -33,7 +34,7 @@ final class TransactionReports
             });
         } else {
             $firstProspect = DB::table('stage_histories')->selectRaw('deal_transaction_id, min(created_at) as first_at')
-                ->where('to_stage', 'prospect')->groupBy('deal_transaction_id');
+                ->where('to_stage', PipelineStage::Prospect->value)->groupBy('deal_transaction_id');
             $rows = DealTransaction::query()->visibleInReportsTo($actor)
                 ->joinSub($firstProspect, 'fp', 'fp.deal_transaction_id', '=', 'deal_transactions.id')
                 ->where('fp.first_at', '>=', $start)->where('fp.first_at', '<', $end)
