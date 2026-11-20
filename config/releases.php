@@ -4,6 +4,15 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.5.1',
+        'date' => '2026-11-20',
+        'notify' => false,
+        'summary' => '',
+        'items' => [
+            'Gambar di panduan pengguna diperbarui supaya sesuai tampilan terbaru tanpa tahap Delivery.',
+        ],
+    ],
+    [
         'version' => '1.5.0',
         'date' => '2026-11-20',
         'notify' => true,
