@@ -1911,7 +1911,7 @@ async function accessibility(page) {
     await test('monthly target plan sends one atomic write and exposes keyboard-accessible errors', async () => {
         await page.setViewportSize({ width: 390, height: 1000 });
         await load(
-            'targets/index',
+            'targets/plans',
             {
                 ...reportProps,
                 auth: { user: { ...user, role: 'supervisor' } },
@@ -1940,7 +1940,7 @@ async function accessibility(page) {
                     },
                 ],
             },
-            '/targets',
+            '/targets/plans',
         );
         await page
             .getByLabel('Target management (unit)', { exact: true })
