@@ -79,8 +79,7 @@ export const draftFromProfile = (
     city: p?.other_city ?? '',
 });
 
-const hasArea = (p: ProfileDraft) =>
-    p.district !== '' || (p.region === 'other' && p.city.trim() !== '');
+const hasArea = (p: ProfileDraft) => p.district !== '' || p.region === 'other';
 
 /** Mirrors Customer::assertProfileFor: gender and address from Prospect, area and occupation at SPK. */
 export function requiredProfileFields(stage: string): ProfileField[] {

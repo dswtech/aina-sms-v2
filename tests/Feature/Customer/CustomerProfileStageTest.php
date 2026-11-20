@@ -71,8 +71,6 @@ it('asks for kecamatan and occupation before SPK, even when skipping Prospect', 
     $this->actingAs($this->sales)->patch(route('transactions.stage', $deal), $spk)
         ->assertSessionHasErrors(['customer.occupation', 'customer.area.district_code']);
     $this->patch(route('transactions.stage', $deal), [...$spk, 'customer' => ['occupation' => 'astronaut']])->assertSessionHasErrors('customer.occupation');
-    $this->patch(route('transactions.stage', $deal), [...$spk, 'customer' => ['occupation' => 'farmer', 'area' => ['region_code' => 'other']]])
-        ->assertSessionHasErrors('customer.area.other_city');
     $this->patch(route('transactions.stage', $deal), [...$spk, 'customer' => ['occupation' => 'farmer', 'area' => ['region_code' => '32.17', 'district_code' => '32.73.05']]])
         ->assertSessionHasErrors('customer.area.district_code');
     expect($deal->fresh()->current_stage)->toBe(PipelineStage::Lead);
@@ -90,6 +88,16 @@ it('accepts Kota Lain with a city name as the SPK area', function () {
         'customer' => ['occupation' => 'others', 'area' => ['region_code' => 'other', 'other_city' => 'Garut']],
     ])->assertSessionHasNoErrors();
     expect($deal->customer->fresh()->only(['region_code', 'district_code', 'other_city']))->toBe(['region_code' => 'other', 'district_code' => null, 'other_city' => 'Garut']);
+});
+
+it('accepts Kota Lain without a city name as the SPK area', function () {
+    $deal = profileDeal($this, ['gender' => 'P', 'address' => 'Jl. A']);
+    $this->actingAs($this->sales)->patch(route('transactions.stage', $deal), [
+        'to_stage' => 'spk', 'booking_fee_confirmed' => true,
+        'customer' => ['occupation' => 'others', 'area' => ['region_code' => 'other']],
+    ])->assertSessionHasNoErrors();
+    expect($deal->fresh()->current_stage)->toBe(PipelineStage::Spk)
+        ->and($deal->customer->fresh()->only(['region_code', 'district_code', 'other_city']))->toBe(['region_code' => 'other', 'district_code' => null, 'other_city' => null]);
 });
 
 it('never blanks stored profile data when a stage change sends empty values', function () {

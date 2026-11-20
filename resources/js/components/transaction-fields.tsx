@@ -333,7 +333,7 @@ export function AreaFields({
             {value.region === 'other' && (
                 <Field
                     id={`${idPrefix}city`}
-                    label="Nama kota"
+                    label="Nama kota (opsional)"
                     error={errors['area.other_city']}
                 >
                     <Input

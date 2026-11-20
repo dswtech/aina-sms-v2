@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { areaLabel } from '../../resources/js/lib/transaction-labels.ts';
 import {
     areaPatch,
     clampPanelWidth,
@@ -53,7 +54,14 @@ test('area is only complete once the district (or the free city) is chosen', () 
         },
     });
     assert.equal(areaPatch(['other']), null);
-    assert.equal(areaPatch(['other', '  ']), null);
+    // Kota Lain is complete without a city name; an empty name submits null.
+    for (const blank of ['', '  '])
+        assert.deepEqual(areaPatch(['other', blank]), {
+            area: { region_code: 'other', district_code: null, other_city: null },
+        });
+    const kotaLain = { region_code: 'other', district_code: null, region_name: null, district_name: null, other_city: null };
+    assert.equal(areaLabel({ area: kotaLain }), 'Kota Lain');
+    assert.equal(areaLabel({ area: { ...kotaLain, other_city: 'Garut' } }), 'Garut');
     assert.deepEqual(areaPatch(['other', 'Bandung']), {
         area: {
             region_code: 'other',

@@ -81,11 +81,9 @@ final class TransactionMetadata
         $district = $area['district_code'] ?? null;
         $city = $area['other_city'] ?? null;
         if ($region === 'other') {
-            if (! is_string($city) || trim($city) === '') {
-                throw ValidationException::withMessages(["$field.other_city" => 'Isi nama Kota Lain.']);
-            }
+            // The city name is optional (owner decision 2026-11-20); Kota Lain alone is a complete area.
             $district = null;
-            $city = trim($city);
+            $city = is_string($city) && trim($city) !== '' ? trim($city) : null;
         } elseif ($region !== null || $district !== null || $city !== null || $require) {
             if (! DB::table('area_regions')->where('code', $region)->exists()) {
                 throw ValidationException::withMessages(["$field.region_code" => 'Pilih kabupaten/kota.']);

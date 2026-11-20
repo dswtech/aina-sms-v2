@@ -47,7 +47,7 @@ test('only fields the saved profile lacks are asked for', () => {
             region_code: 'other',
             other_city: ' ',
         }),
-        ['area'],
+        [],
     );
     assert.deepEqual(
         missingProfileFields('spk', {

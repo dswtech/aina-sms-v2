@@ -299,7 +299,7 @@ class Customer extends Model
 
     public function hasArea(): bool
     {
-        return filled($this->district_code) || ($this->region_code === 'other' && filled($this->other_city));
+        return filled($this->district_code) || $this->region_code === 'other';
     }
 
     public function setPhoneAttribute(?string $value): void

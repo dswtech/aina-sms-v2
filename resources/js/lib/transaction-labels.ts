@@ -48,6 +48,7 @@ export const areaLabel = (t: { area: Area }, full = false) => {
         other_city: city,
     } = t.area;
     if (city) return city;
+    if (t.area.region_code === 'other') return 'Kota Lain';
     if (!district) return '-';
     // Names repeat across regions (e.g. Cisarua), so the parent is always shown in full mode.
     return full && region ? `${district}, ${region}` : district;

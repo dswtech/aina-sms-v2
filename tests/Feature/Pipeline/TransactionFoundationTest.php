@@ -38,6 +38,21 @@ it('rejects DO without complete area at the domain boundary', function () {
     $this->assertDatabaseCount('stage_histories', 0);
 });
 
+it('accepts Kota Lain without a city name and records it in the DO snapshot', function () {
+    $this->actingAs($this->sales)->postJson(route('customers.store'), [
+        'name' => 'Pelanggan Kota Lain', 'gender' => 'L', 'phone' => '081234567899',
+        'vehicle_model' => 'Avanza', 'source' => 'walk_in', 'area' => ['region_code' => 'other', 'other_city' => '  '],
+    ])->assertSessionHasNoErrors();
+    $deal = DealTransaction::query()->latest('id')->firstOrFail();
+    expect($deal->only(['region_code', 'district_code', 'other_city']))->toBe(['region_code' => 'other', 'district_code' => null, 'other_city' => null]);
+    $deal->forceFill(['current_stage' => PipelineStage::Spk])->save();
+    $event = $deal->transitionTo(PipelineStage::Do, $this->sales, options: [
+        'vehicle_ownership' => 'first_buyer', 'po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true,
+    ]);
+    expect($event->area_snapshot['region_code'])->toBe('other')->and($event->area_snapshot['other_city'])->toBeNull()
+        ->and($event->area_snapshot['is_pma'])->toBeFalse();
+});
+
 it('validates area parents and digital channels before any customer write', function (array $extra, string $error) {
     $this->actingAs($this->sales)->postJson(route('customers.store'), [
         'name' => 'Pelanggan baru', 'gender' => 'L', 'phone' => '081234567890',
@@ -48,7 +63,6 @@ it('validates area parents and digital channels before any customer write', func
 })->with([
     'mismatch' => [['area' => ['region_code' => '32.73', 'district_code' => '32.17.08']], 'area.district_code'],
     'partial' => [['area' => ['region_code' => '32.17']], 'area.district_code'],
-    'other city missing' => [['area' => ['region_code' => 'other']], 'area.other_city'],
     'digital missing' => [['source' => 'digital_ad'], 'source_channel'],
     'digital unknown' => [['source' => 'digital_ad', 'source_channel' => 'unknown'], 'source_channel'],
     'social too long' => [['social_media_account' => str_repeat('x', 256)], 'social_media_account'],
