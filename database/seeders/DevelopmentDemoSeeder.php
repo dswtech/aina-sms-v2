@@ -68,6 +68,11 @@ class DevelopmentDemoSeeder extends Seeder
      */
     private array $customerContext = [];
 
+    /**
+     * @var array<string, list<string>>|null
+     */
+    private ?array $districtsByRegion = null;
+
     public function run(): void
     {
         if (! app()->environment('local')) {
@@ -234,7 +239,7 @@ class DevelopmentDemoSeeder extends Seeder
                 'gender' => $index % 2 === 0 ? 'L' : 'P',
                 'birth_date' => now()->subYears(25 + $index % 30)->subDays($index)->toDateString(),
                 'occupation' => ['employee', 'entrepreneur', 'civil-servant', 'teacher', 'farmer', 'others'][$index % 6],
-                'region_code' => '32.17', 'district_code' => '32.17.08',
+                ...$this->demoArea("customer-$index"),
             ]);
 
             if ($index % 11 === 0 && count($salesList) > 1) {
@@ -389,9 +394,9 @@ class DevelopmentDemoSeeder extends Seeder
                 'source' => $sources[$index % count($sources)],
                 'source_channel' => $sources[$index % count($sources)] === 'digital_ad' ? 'instagram' : null,
                 'notes' => '[demo] Catatan transaksi contoh.',
-                'region_code' => '32.17', 'district_code' => '32.17.08',
+                ...$this->demoArea("deal-$index"),
                 'financing_type' => $index % 2 === 0 ? 'cash' : 'credit',
-                'leasing_id' => $index % 2 === 0 ? null : DB::table('leasing_companies')->where('dealer_id', $dealer->id)->where('code', 'acc')->value('id'),
+                ...($index % 2 === 0 ? [] : $this->demoLeasing("deal-$index", $dealer->id)),
                 'tenor_months' => $index % 2 === 0 ? null : [12, 24, 36, 48, 60][$index % 5],
                 'insurance_type' => $index % 2 === 0 ? null : ['tlo', 'all_risk', 'combination'][$index % 3],
                 'current_stage' => $stage,
@@ -862,6 +867,47 @@ class DevelopmentDemoSeeder extends Seeder
                 'revoked_at' => $state === 'revoked' ? now()->subDay() : null,
             ]);
         }
+    }
+
+    /**
+     * Deterministic per key (no mt_rand, so other seeded values stay stable): mostly FOA (Bandung Barat),
+     * then the other PMA regions, some Sumedang (outside PMA) and some Kota Lain, sometimes without a name.
+     *
+     * @return array{region_code: string, district_code: string|null, other_city: string|null}
+     */
+    private function demoArea(string $key): array
+    {
+        $hash = crc32($key);
+        $bucket = $hash % 100;
+        if ($bucket >= 92) {
+            return ['region_code' => 'other', 'district_code' => null, 'other_city' => ['Jakarta', 'Garut', 'Tasikmalaya', null][$hash % 4]];
+        }
+        $region = match (true) {
+            $bucket < 55 => '32.17',
+            $bucket < 84 => ['32.73', '32.04', '32.77', '32.14', '32.03', '32.13'][$hash % 6],
+            default => '32.11',
+        };
+        if ($this->districtsByRegion === null) {
+            $this->districtsByRegion = [];
+            foreach (DB::table('area_districts')->orderBy('code')->get(['code', 'region_code']) as $row) {
+                $this->districtsByRegion[(string) $row->region_code][] = (string) $row->code;
+            }
+        }
+        $districts = $this->districtsByRegion[$region];
+
+        return ['region_code' => $region, 'district_code' => $districts[intdiv($hash, 100) % count($districts)], 'other_city' => null];
+    }
+
+    /** @return array{leasing_id: int|null, financing_other_name: string|null} */
+    private function demoLeasing(string $key, int $dealerId): array
+    {
+        $hash = crc32("leasing-$key");
+        if ($hash % 10 === 0) {
+            return ['leasing_id' => null, 'financing_other_name' => 'BFI Finance']; // Kredit Lain
+        }
+        $ids = DB::table('leasing_companies')->where('dealer_id', $dealerId)->orderBy('id')->pluck('id')->all();
+
+        return ['leasing_id' => $ids[$hash % count($ids)], 'financing_other_name' => null];
     }
 
     private function randomThisMonth(): CarbonInterface
