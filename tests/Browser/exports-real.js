@@ -117,7 +117,12 @@ async function exportsReal(page) {
         {
             path: '/analytics/mapping-area',
             data: (p) => p.report,
-            menus: [['Penjualan berdasarkan area', 'mapping-area']],
+            menus: [
+                ['Porsi DO di FOA', 'porsi-foa'],
+                ['DO per kecamatan FOA', 'do-kecamatan-foa'],
+                ['Porsi DO di PMA', 'porsi-pma'],
+                ['DO per kab/kota', 'do-kab-kota'],
+            ],
             mode: 'realisasi-do',
         },
     ];
@@ -146,8 +151,10 @@ async function exportsReal(page) {
                     assert(body.every((r) => r[7] === 'Data laporan'), `${title} CSV carries a sample-data marker`);
                     assert(body.length > 0, `${title} CSV has no rows`);
                     const total = Number(body[0][5]);
-                    assert(body.reduce((sum, r) => sum + Number(r[4]), 0) === total, `${title} CSV rows do not reconcile with total_acuan`);
-                    if (slug === 'mapping-area') assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);
+                    // Share cards list FOA/PMA and its complement first; later rows are context (PMA di luar FOA, months).
+                    const parts = slug.startsWith('porsi-') ? body.slice(0, 2) : body;
+                    assert(parts.reduce((sum, r) => sum + Number(r[4]), 0) === total, `${title} CSV rows do not reconcile with total_acuan`);
+                    if (['porsi-foa', 'do-kecamatan-foa', 'porsi-pma', 'do-kab-kota'].includes(slug)) assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);
                     if (slug === 'cara-pembiayaan') assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);
                     if (slug === 'leasing-tujuan') assert(total === report.credit, `${title} CSV total ${total} != credit ${report.credit}`);
                     assert(!leaksContact(rows), `${title} CSV leaks contact data`);
