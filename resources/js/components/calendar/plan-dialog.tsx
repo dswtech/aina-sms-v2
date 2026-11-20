@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatDay, type CalendarItem } from '@/lib/calendar';
-
-const selectClass =
-    'native-select min-h-11 w-full rounded-md border bg-background px-3';
 
 /**
  * Closes a pending plan: record the activity that resulted from it, or cancel it with a reason.
@@ -98,13 +96,12 @@ export function PlanDialog({
                     {mode === 'done' && (
                         <div className="space-y-1.5">
                             <Label htmlFor="plan-type">Kanal aktivitas</Label>
-                            <select
+                            <NativeSelect
                                 id="plan-type"
                                 value={type}
                                 onChange={(event) =>
                                     setType(event.target.value)
                                 }
-                                className={selectClass}
                             >
                                 <option value="call">Telepon langsung</option>
                                 <option value="whatsapp">Chat WhatsApp</option>
@@ -115,7 +112,7 @@ export function PlanDialog({
                                     Pertemuan showroom
                                 </option>
                                 <option value="note">Catatan tambahan</option>
-                            </select>
+                            </NativeSelect>
                         </div>
                     )}
                     <div className="space-y-1.5">

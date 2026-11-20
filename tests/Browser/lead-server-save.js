@@ -27,7 +27,8 @@ async function leadServerSave(page) {
     await page.locator('#name').fill('G11 Lead Persisted');
     await page.locator('#phone').fill('081234567899');
     await page.locator('#gender').selectOption('L');
-    await page.locator('#model').selectOption('G11 Test Model');
+    await page.locator('#model').click();
+    await page.getByRole('option', { name: 'G11 Test Model', exact: true }).click();
     const save = page.getByRole('button', {
         name: 'Simpan transaksi',
         exact: true,
@@ -66,7 +67,8 @@ async function leadServerSave(page) {
     await page.locator('#name').fill('G11 Duplicate Name');
     await page.locator('#phone').fill('081234567899');
     await page.locator('#gender').selectOption('L');
-    await page.locator('#model').selectOption('G11 Test Model');
+    await page.locator('#model').click();
+    await page.getByRole('option', { name: 'G11 Test Model', exact: true }).click();
     await save.click();
     await page.getByText('Nomor telepon sudah terdaftar', { exact: false }).waitFor();
     assert(

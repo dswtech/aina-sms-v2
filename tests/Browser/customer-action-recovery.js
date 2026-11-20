@@ -16,7 +16,8 @@ async function customerActionRecovery(page) {
     await page.locator('#name').fill('G11 Customer Recovery');
     await page.locator('#phone').fill('081234567866');
     await page.locator('#gender').selectOption('L');
-    await page.locator('#model').selectOption('G11 Recovery Model');
+    await page.locator('#model').click();
+    await page.getByRole('option', { name: 'G11 Recovery Model', exact: true }).click();
     await page
         .getByRole('button', { name: 'Simpan transaksi', exact: true })
         .click();

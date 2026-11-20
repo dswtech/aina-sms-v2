@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -126,9 +127,9 @@ export function CustomerHistory({
                         <Label htmlFor="history-transaction">
                             Pilih transaksi
                         </Label>
-                        <select
+                        <NativeSelect
                             id="history-transaction"
-                            className="mt-2 min-h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"
+                            className="mt-2 min-w-0"
                             value={data.selected_transaction?.public_id ?? ''}
                             onChange={(event) =>
                                 setRequest((previous) => ({
@@ -151,7 +152,7 @@ export function CustomerHistory({
                                     · {transaction.stage_label}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                     </div>
                     {data.selected_transaction && (
                         <TransactionTimeline

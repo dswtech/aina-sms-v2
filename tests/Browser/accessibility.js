@@ -2,6 +2,23 @@
 // Documents and mutations are intercepted; only the real app assets are loaded.
 // eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
 async function accessibility(page) {
+    // Steps the month picker popover to the year holding month (yyyy-MM), then picks it.
+    const pickMonth = async (page, trigger, month) => {
+        await trigger.click();
+        const popover = page.locator('[data-slot="popover-content"]');
+        for (let step = 0; step < 50; step++) {
+            const button = popover.locator(`button[data-month="${month}"]`);
+            if (await button.count()) {
+                await button.click();
+                return;
+            }
+            const shown = await popover.locator('button[data-month]').first().getAttribute('data-month');
+            await popover
+                .getByRole('button', { name: month < shown ? 'Tahun sebelumnya' : 'Tahun berikutnya', exact: true })
+                .click();
+        }
+        throw new Error(`Month picker never showed ${month}`);
+    };
     page.setDefaultTimeout(8000);
     const origin = new URL(page.url()).origin;
     const template = await (await page.request.get(`${origin}/login`)).text();
@@ -1626,9 +1643,7 @@ async function accessibility(page) {
                     `${id} should align at ${expected}px, got ${size.height}`,
                 );
             }
-            const range = await page
-                .getByRole('group', { name: 'Rentang tanggal tahap', exact: true })
-                .boundingBox();
+            const range = await page.locator('#transaction-date').boundingBox();
             assert(
                 Math.abs(range.height - expected) <= 0.5,
                 `date range should align at ${expected}px, got ${range.height}`,
@@ -1990,7 +2005,7 @@ async function accessibility(page) {
         const month = page.getByLabel('Estimasi bulan closing', {
             exact: true,
         });
-        await month.fill('2026-12');
+        await pickMonth(page, month, '2026-12');
         await page
             .getByRole('button', { name: 'Simpan estimasi closing' })
             .press('Enter');
@@ -2001,7 +2016,7 @@ async function accessibility(page) {
                 lastMutation.data.expected_closing_month === '2026-12',
             'Wrong closing-month update',
         );
-        await month.fill('');
+        await page.getByRole('button', { name: 'Hapus bulan', exact: true }).click();
         await page
             .getByRole('button', { name: 'Simpan estimasi closing' })
             .press('Enter');

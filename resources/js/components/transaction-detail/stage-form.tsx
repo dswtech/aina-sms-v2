@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { router } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
@@ -38,8 +39,7 @@ type Props = {
 // Keeps this form's validation errors apart from the properties panel and the page.
 const ERROR_BAG = 'transactionStage';
 
-const selectClass =
-    'native-select mt-2 min-h-11 w-full rounded-md border bg-background px-3';
+const selectClass = 'mt-2';
 
 const titles = {
     cancel: 'Batalkan DO',
@@ -172,7 +172,7 @@ export function StageForm({
                     <>
                         <div>
                             <Label htmlFor="stage-to">Tahap baru</Label>
-                            <select
+                            <NativeSelect
                                 id="stage-to"
                                 value={toStage}
                                 onChange={(event) =>
@@ -203,7 +203,7 @@ export function StageForm({
                                         </option>
                                     );
                                 })}
-                            </select>
+                            </NativeSelect>
                             {direction && (
                                 <p
                                     className={`mt-2 flex items-center gap-1.5 text-sm font-medium ${backward ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}
@@ -312,7 +312,7 @@ export function StageForm({
                         <Label htmlFor="stage-ownership">
                             Ownership (wajib untuk DO)
                         </Label>
-                        <select
+                        <NativeSelect
                             id="stage-ownership"
                             required
                             value={ownership}
@@ -327,7 +327,7 @@ export function StageForm({
                                     {o.label}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                     </div>
                 )}
                 {!action && toStage === 'spk' && (
@@ -354,7 +354,7 @@ export function StageForm({
                             <Label htmlFor="stage-lost-reason">
                                 Alasan lost
                             </Label>
-                            <select
+                            <NativeSelect
                                 id="stage-lost-reason"
                                 value={lostReason}
                                 onChange={(event) =>
@@ -368,7 +368,7 @@ export function StageForm({
                                         {item.label}
                                     </option>
                                 ))}
-                            </select>
+                            </NativeSelect>
                         </div>
                         <div>
                             <Label htmlFor="stage-lost-notes">

@@ -187,17 +187,17 @@ const COLOR_DEFINITIONS: Record<ColorTheme, ColorDefinition> = {
 };
 
 const listeners = new Set<() => void>();
-let currentColor: ColorTheme = 'blue';
+let currentColor: ColorTheme = 'orange';
 
 const getStoredColor = (): ColorTheme => {
     if (typeof window === 'undefined') {
-        return 'blue';
+        return 'orange';
     }
 
     const stored = localStorage.getItem(
         'color-theme',
     ) as unknown as ColorTheme | null;
-    return stored && stored in COLOR_DEFINITIONS ? stored : 'blue';
+    return stored && stored in COLOR_DEFINITIONS ? stored : 'orange';
 };
 
 const setCookie = (name: string, value: string, days = 365): void => {
@@ -267,7 +267,7 @@ export function useColor(): {
             return () => listeners.delete(callback);
         },
         () => currentColor,
-        () => 'blue' as ColorTheme,
+        () => 'orange' as ColorTheme,
     );
 
     const updateColor = (nextColor: ColorTheme): void => {

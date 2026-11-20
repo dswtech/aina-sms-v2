@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import InputError from '@/components/input-error';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, RefreshCw, Search, Undo2 } from 'lucide-react';
@@ -423,13 +424,13 @@ export default function TransactionsIndex({
                         />
                         <div>
                             <Label htmlFor="stage">Tahap</Label>
-                            <select
+                            <NativeSelect
                                 id="stage"
                                 value={stage}
                                 onChange={(event) =>
                                     setStage(event.target.value)
                                 }
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                className="mt-1.5"
                             >
                                 <option value="">Semua tahap</option>
                                 {stages.map((item) => (
@@ -437,12 +438,12 @@ export default function TransactionsIndex({
                                         {item.label}
                                     </option>
                                 ))}
-                            </select>
+                            </NativeSelect>
                         </div>
                         {supervisorOptions.length > 0 && (
                             <div>
                                 <Label htmlFor="supervisor">Supervisor</Label>
-                                <select
+                                <NativeSelect
                                     id="supervisor"
                                     value={
                                         supervisorLocked
@@ -453,7 +454,7 @@ export default function TransactionsIndex({
                                     onChange={(event) =>
                                         setSupervisorId(event.target.value)
                                     }
-                                    className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="mt-1.5"
                                 >
                                     {!supervisorLocked && (
                                         <option value="">
@@ -465,7 +466,7 @@ export default function TransactionsIndex({
                                             {user.name}
                                         </option>
                                     ))}
-                                </select>
+                                </NativeSelect>
                             </div>
                         )}
                         {assignableSales.length > 0 && (
@@ -497,9 +498,9 @@ export default function TransactionsIndex({
                             <Label htmlFor="transaction-source">
                                 Sumber lead
                             </Label>
-                            <select
+                            <NativeSelect
                                 id="transaction-source"
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3"
+                                className="mt-1.5"
                                 value={source}
                                 onChange={(event) =>
                                     setSource(event.target.value)
@@ -516,14 +517,14 @@ export default function TransactionsIndex({
                                         {value}
                                     </option>
                                 ))}
-                            </select>
+                            </NativeSelect>
                             <InputError message={errors?.source} />
                         </div>
                         <div>
                             <Label htmlFor="source-channel">
                                 Kanal digital
                             </Label>
-                            <select
+                            <NativeSelect
                                 id="source-channel"
                                 value={
                                     source === 'digital_ad' ? sourceChannel : ''
@@ -532,7 +533,7 @@ export default function TransactionsIndex({
                                 onChange={(event) =>
                                     setSourceChannel(event.target.value)
                                 }
-                                className="native-select mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="mt-1.5"
                             >
                                 <option value="">Semua kanal</option>
                                 {Object.entries(CHANNEL_LABELS).map(
@@ -542,7 +543,7 @@ export default function TransactionsIndex({
                                         </option>
                                     ),
                                 )}
-                            </select>
+                            </NativeSelect>
                         </div>
                         <div>
                             <Label htmlFor="region">Kabupaten/Kota</Label>
