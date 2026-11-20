@@ -99,7 +99,7 @@ export function UserMenuContent({ user }: Props) {
                 <DropdownMenuItem asChild>
                     <a
                         className="w-full cursor-pointer px-4 py-2"
-                        href={manualHref[user.role] ?? '/manual/'}
+                        href={manualHref[user.role] ?? '/manual/index.html'}
                         target="_blank"
                         rel="noopener"
                         onClick={cleanup}
