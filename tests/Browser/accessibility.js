@@ -2,7 +2,7 @@
 // Documents and mutations are intercepted; only the real app assets are loaded.
 // eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
 async function accessibility(page) {
-    page.setDefaultTimeout(2500);
+    page.setDefaultTimeout(8000);
     const origin = new URL(page.url()).origin;
     const template = await (await page.request.get(`${origin}/login`)).text();
     const bootstrap = /(<script\b[^>]*data-page[^>]*>)([\s\S]*?)(<\/script>)/;

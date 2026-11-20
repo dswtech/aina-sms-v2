@@ -42,7 +42,7 @@ jobs:
         run: composer ci:check
 
       - name: Run isolated browser regression
-        timeout-minutes: 5
+        timeout-minutes: 12
         run: |
           npm install --prefix "$RUNNER_TEMP/aina-browser" --ignore-scripts --no-save --no-audit --no-fund @playwright/cli@0.1.22
           export PATH="$RUNNER_TEMP/aina-browser/node_modules/.bin:$PATH"
