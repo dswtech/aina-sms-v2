@@ -144,7 +144,19 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             context.fillText(chart.rows[0].label, centerX, centerY + 46);
         }
         chart.rows.forEach((row, index) => {
-            const { y, lines } = legend[index];
+            const { y, lines, divider } = legend[index];
+            if (divider) {
+                context.strokeStyle = '#dbe4f0';
+                context.lineWidth = 1;
+                context.beginPath();
+                context.moveTo(556, y - 52);
+                context.lineTo(width - padding, y - 52);
+                context.stroke();
+                context.textAlign = 'left';
+                context.fillStyle = secondary;
+                context.font = font(20, 600);
+                context.fillText('Per bulan', 556, y - 22);
+            }
             context.fillStyle = chartRowColor(chart.kind, row.id);
             context.fillRect(556, y - 16, 12, 12);
             context.textAlign = 'left';

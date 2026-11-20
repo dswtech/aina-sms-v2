@@ -44,6 +44,7 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Backfilled is_pma keys stay in old snapshots: harmless, and a later up() skips them.
         Schema::dropIfExists('dealer_pma_regions');
     }
 };

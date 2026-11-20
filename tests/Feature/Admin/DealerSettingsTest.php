@@ -59,6 +59,13 @@ it('stores the dealer PMA selection with audit and replaces it wholesale', funct
     expect(DB::table('dealer_pma_regions')->where('dealer_id', $this->dealer->id)->count())->toBe(0);
 });
 
+it('audits FOA and PMA selections as plain lists even with non-sequential keys', function () {
+    $this->actingAs($this->admin)->patch('/dealer-settings/area-pma', ['regions' => [5 => '32.73', 9 => '32.11']])->assertRedirect();
+    $this->patch('/dealer-settings/area-foa', ['districts' => [3 => '32.73.05']])->assertRedirect();
+    expect(AuditLog::where('action', 'dealer.pma_updated')->sole()->metadata['after']['regions'])->toBe(['32.73', '32.11'])
+        ->and(AuditLog::where('action', 'dealer.foa_updated')->sole()->metadata['after']['districts'])->toBe(['32.73.05']);
+});
+
 it('creates, renames, deactivates and un-monitors leasing, never crossing dealers', function () {
     $this->actingAs($this->admin)->post('/dealer-settings/leasing', ['name' => 'Leasing Baru'])->assertRedirect();
     $row = DB::table('leasing_companies')->where('dealer_id', $this->dealer->id)->where('name', 'Leasing Baru')->first();

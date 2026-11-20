@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { CircleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { ChartExportMenu } from '@/components/chart-export-menu';
 import { FilterPanel } from '@/components/filter-panel';
@@ -56,8 +57,8 @@ function ShareCard({
     chart: ChartExportData;
     trendLabel: string;
 }) {
-    const [inside, outside] = chart.rows;
-    const months = chart.rows.slice(3);
+    const [inside, outside] = chart.rows.slice(0, chart.donut);
+    const months = chart.rows.filter((row) => row.id.startsWith('month-'));
     const circumference = 2 * Math.PI * 40;
     const insideLength = chart.total
         ? (inside.count / chart.total) * circumference
@@ -208,10 +209,21 @@ function ListCard({
                             className={`grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_2.5rem] items-center gap-3 text-sm ${row.id === 'other' ? 'border-t pt-2.5' : ''}`}
                         >
                             <span
-                                className={`truncate ${empty ? 'text-destructive' : ''}`}
+                                className={`flex min-w-0 items-center gap-1 ${empty ? 'text-destructive' : ''}`}
                                 title={row.label}
                             >
-                                {row.label}
+                                {empty && (
+                                    <CircleAlert
+                                        aria-hidden="true"
+                                        className="size-3.5 shrink-0"
+                                    />
+                                )}
+                                <span className="truncate">{row.label}</span>
+                                {empty && (
+                                    <span className="sr-only">
+                                        , belum ada DO
+                                    </span>
+                                )}
                             </span>
                             <span
                                 aria-hidden="true"
@@ -312,6 +324,7 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-valuenow={foaShare}
+                        aria-valuetext={percent(foaShare)}
                         className="mt-2 h-1.5 rounded-full bg-muted"
                     >
                         <div
@@ -336,78 +349,65 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                     </p>
                 </div>
             </section>
-            {!result.total ? (
-                <section className="rounded-xl border px-6 py-14 text-center">
+            {!result.total && (
+                <section className="rounded-xl border px-6 py-10 text-center">
                     <h2 className="text-lg font-semibold">
-                        Belum ada DO pada rentang ini
+                        {result.unverified
+                            ? 'Belum ada DO terverifikasi pada rentang ini'
+                            : 'Belum ada DO pada rentang ini'}
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Pilih rentang bulan lain untuk melihat DO yang sudah
-                        tercatat.
+                        Kecamatan FOA dan kab/kota PMA tetap ditampilkan dengan
+                        angka 0. Pilih rentang bulan lain untuk melihat DO yang
+                        sudah tercatat.
                     </p>
                 </section>
-            ) : (
-                <>
-                    <section
-                        aria-labelledby="mapping-foa"
-                        className="space-y-3"
-                    >
-                        <div>
-                            <h2
-                                id="mapping-foa"
-                                className="text-lg font-semibold"
-                            >
-                                FOA
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Kecamatan FOA dealer, ukuran penilaian dealer.
-                            </p>
-                        </div>
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            <ShareCard
-                                id="mapping-foa-share"
-                                chart={charts.foa}
-                                trendLabel="Porsi FOA per bulan"
-                            />
-                            <ListCard
-                                id="mapping-foa-districts"
-                                chart={charts.foaDistricts}
-                                hint="Kecamatan lain mencakup Kota Lain."
-                                limit={8}
-                            />
-                        </div>
-                    </section>
-                    <section
-                        aria-labelledby="mapping-pma"
-                        className="space-y-3"
-                    >
-                        <div>
-                            <h2
-                                id="mapping-pma"
-                                className="text-lg font-semibold"
-                            >
-                                PMA
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Kab/kota yang masih digarap dealer, termasuk
-                                FOA.
-                            </p>
-                        </div>
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            <ShareCard
-                                id="mapping-pma-share"
-                                chart={charts.pma}
-                                trendLabel="Porsi PMA per bulan"
-                            />
-                            <ListCard
-                                id="mapping-pma-regions"
-                                chart={charts.pmaRegions}
-                                hint="Kab/kota PMA dulu, lalu luar PMA."
-                            />
-                        </div>
-                    </section>
-                </>
             )}
+            <section aria-labelledby="mapping-foa" className="space-y-3">
+                <div>
+                    <h2 id="mapping-foa" className="text-lg font-semibold">
+                        FOA
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                        Kecamatan FOA dealer, ukuran penilaian dealer.
+                    </p>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <ShareCard
+                        id="mapping-foa-share"
+                        chart={charts.foa}
+                        trendLabel="Porsi FOA per bulan"
+                    />
+                    <ListCard
+                        id="mapping-foa-districts"
+                        chart={charts.foaDistricts}
+                        hint="Kecamatan lain mencakup Kota Lain."
+                        limit={8}
+                    />
+                </div>
+            </section>
+            <section aria-labelledby="mapping-pma" className="space-y-3">
+                <div>
+                    <h2 id="mapping-pma" className="text-lg font-semibold">
+                        PMA
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                        Kab/kota yang masih digarap dealer, termasuk FOA.
+                    </p>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <ShareCard
+                        id="mapping-pma-share"
+                        chart={charts.pma}
+                        trendLabel="Porsi PMA per bulan"
+                    />
+                    <ListCard
+                        id="mapping-pma-regions"
+                        chart={charts.pmaRegions}
+                        hint="Kab/kota PMA dulu, lalu luar PMA."
+                    />
+                </div>
+            </section>
             {result.unverified > 0 && (
                 <p
                     role="alert"

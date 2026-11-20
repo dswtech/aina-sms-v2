@@ -96,9 +96,10 @@ final class TransactionMasters
         ));
     }
 
-    /** @param list<string> $regions */
+    /** @param array<array-key, string> $regions request input; stored and audited as a list */
     public function setPma(User $actor, array $regions): void
     {
+        $regions = array_values($regions);
         DB::transaction(function () use ($actor, $regions): void {
             $this->lockDealer($actor);
             Validator::make(['regions' => $regions], ['regions' => ['array'], 'regions.*' => ['required', 'string', 'distinct', Rule::exists('area_regions', 'code')]])->validate();
@@ -111,9 +112,10 @@ final class TransactionMasters
         });
     }
 
-    /** @param list<string> $districts */
+    /** @param array<array-key, string> $districts request input; stored and audited as a list */
     public function setFoa(User $actor, array $districts): void
     {
+        $districts = array_values($districts);
         DB::transaction(function () use ($actor, $districts): void {
             $this->lockDealer($actor);
             Validator::make(['districts' => $districts], ['districts' => ['array'], 'districts.*' => ['required', 'string', 'distinct', Rule::exists('area_districts', 'code')]])->validate();

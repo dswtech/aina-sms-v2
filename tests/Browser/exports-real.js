@@ -252,7 +252,7 @@ async function exportsReal(page) {
     assert(!/\bNaN\b|undefined/.test(decode(emptyAnalytics.buf)), 'empty analytics CSV contains NaN/undefined');
     checks.push('analytics CSV empty');
 
-    // ---- empty report ranges: states, no NaN, no export menu to click ----
+    // ---- empty report ranges: states and no NaN (Mapping Area keeps its zero cards and menus) ----
     for (const [path, text] of [
         ['/analytics/financing?from=2000-01&to=2000-01&mode=do', 'Belum ada transaksi pada periode ini'],
         ['/analytics/financing?from=2000-01&to=2000-01&mode=prospect', 'Belum ada transaksi pada periode ini'],
@@ -263,6 +263,18 @@ async function exportsReal(page) {
         await page.getByText(text).first().waitFor();
         await noNaN(path);
         checks.push(`empty ${path}`);
+    }
+    {
+        // Mapping Area keeps its cards on an empty range, so a zero CSV must still download cleanly.
+        await open('/analytics/mapping-area?from=2000-01&to=2000-01');
+        const file = await grab(async () => {
+            await page.getByRole('button', { name: 'Unduh DO per kab/kota', exact: true }).click();
+            await page.getByRole('menuitem', { name: 'Unduh CSV', exact: true }).click();
+        });
+        const [, ...body] = parseCsv(decode(file.buf), ';').filter((r) => r.length > 1 || r[0] !== '');
+        assert(body.length > 0 && body.every((r) => r[4] === '0' && r[6] === '0'), 'empty Mapping Area CSV is not all zero rows');
+        assert(!/NaN|undefined/.test(decode(file.buf)), 'empty Mapping Area CSV contains NaN/undefined');
+        checks.push('empty Mapping Area CSV');
     }
 
     // ---- negative: BM has no transaction export ----
