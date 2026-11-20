@@ -4,6 +4,20 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.6.0',
+        'date' => '2026-11-20',
+        'notify' => true,
+        'summary' => 'Versi baru: laporan FOA dan PMA di Mapping Area, tiga kabupaten baru, dan nama kota untuk Kota Lain tidak wajib lagi.',
+        'items' => [
+            'Mapping Area kini memisahkan FOA (kecamatan FOA dealer) dan PMA (kab/kota yang masih digarap dealer), lengkap dengan porsi DO, tren per bulan, DO per kecamatan FOA dan DO per kab/kota.',
+            'Setiap grafik di Mapping Area bisa diunduh sebagai gambar PNG atau tabel CSV.',
+            'Admin mengatur kab/kota PMA dan kecamatan FOA di Pengaturan Dealer, menu Area & PMA.',
+            'FOA diatur ke seluruh kecamatan Kabupaten Bandung Barat dan PMA ke tujuh kab/kota, lalu DO yang sudah tercatat dihitung ulang mengikuti pengaturan ini.',
+            'Kabupaten Purwakarta, Cianjur dan Subang beserta kecamatannya kini bisa dipilih sebagai area pelanggan dan transaksi.',
+            'Saat memilih Kota Lain, nama kota tidak wajib diisi lagi.',
+        ],
+    ],
+    [
         'version' => '1.5.2',
         'date' => '2026-11-20',
         'notify' => false,
