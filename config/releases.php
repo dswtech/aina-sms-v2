@@ -4,6 +4,15 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.5.2',
+        'date' => '2026-11-20',
+        'notify' => false,
+        'summary' => '',
+        'items' => [
+            'Menu Manual untuk Admin dan Branch Manager kini membuka halaman pilih manual, bukan halaman galat.',
+        ],
+    ],
+    [
         'version' => '1.5.1',
         'date' => '2026-11-20',
         'notify' => false,
