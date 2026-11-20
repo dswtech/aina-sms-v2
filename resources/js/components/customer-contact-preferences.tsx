@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -74,9 +75,9 @@ export function CustomerContactPreferences({
                     <Label htmlFor="customer-contact-channel">
                         Kanal pilihan
                     </Label>
-                    <select
+                    <NativeSelect
                         id="customer-contact-channel"
-                        className="native-select min-h-11 w-full rounded-md border bg-background px-3"
+
                         value={form.data.contact_channel_preference}
                         disabled={form.processing}
                         onChange={(event) =>
@@ -96,7 +97,7 @@ export function CustomerContactPreferences({
                         <option value="whatsapp">WhatsApp</option>
                         <option value="phone">Telepon</option>
                         <option value="any">WhatsApp dan telepon</option>
-                    </select>
+                    </NativeSelect>
                     <InputError
                         id="contact-channel-error"
                         message={form.errors.contact_channel_preference}

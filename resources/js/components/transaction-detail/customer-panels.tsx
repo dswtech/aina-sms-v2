@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { CustomerContactPreferences } from '@/components/customer-contact-preferences';
@@ -16,9 +17,6 @@ const BAG = {
     activity: 'detailActivity',
     followUp: 'detailFollowUp',
 };
-
-const selectClass =
-    'native-select min-h-11 w-full rounded-md border bg-background px-3';
 
 /** Posts through Inertia with the page state kept, so the open modal survives the redirect. */
 function usePost(
@@ -120,11 +118,10 @@ export function CustomerPanel({
                     }}
                 >
                     <Label htmlFor="detail-reassign">Ganti PIC Sales</Label>
-                    <select
+                    <NativeSelect
                         id="detail-reassign"
                         value={salesId}
                         onChange={(event) => setSalesId(event.target.value)}
-                        className={selectClass}
                     >
                         <option value="">Pilih Sales</option>
                         {assignableSales
@@ -134,7 +131,7 @@ export function CustomerPanel({
                                     {s.name}
                                 </option>
                             ))}
-                    </select>
+                    </NativeSelect>
                     <Message error={assign.error} />
                     <Button
                         type="submit"
@@ -218,18 +215,17 @@ export function ActivityForm({
             }}
         >
             <Label htmlFor="detail-act-type">Kanal aktivitas</Label>
-            <select
+            <NativeSelect
                 id="detail-act-type"
                 value={type}
                 onChange={(event) => setType(event.target.value)}
-                className={selectClass}
             >
                 <option value="call">Telepon langsung</option>
                 <option value="whatsapp">Chat WhatsApp</option>
                 <option value="visit">Kunjungan rumah / kantor</option>
                 <option value="meeting">Pertemuan showroom</option>
                 <option value="note">Catatan tambahan</option>
-            </select>
+            </NativeSelect>
             <Label htmlFor="detail-act-notes">Hasil komunikasi</Label>
             <Input
                 id="detail-act-notes"

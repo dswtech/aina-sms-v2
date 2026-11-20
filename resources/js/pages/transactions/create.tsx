@@ -1,3 +1,6 @@
+import { MonthPicker } from '@/components/date-picker';
+import { Textarea } from '@/components/ui/textarea';
+import { NativeSelect } from '@/components/ui/native-select';
 import { CustomerProfileFields } from '@/components/customer-profile-fields';
 import {
     AreaFields,
@@ -8,7 +11,6 @@ import {
     areaPayload,
     emptyAreaFinancing,
     financingPayload,
-    selectClass,
 } from '@/components/transaction-fields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -238,9 +240,8 @@ export default function TransactionCreate({
                                     label="Sales penanggung jawab"
                                     error={err('sales_id')}
                                 >
-                                    <select
+                                    <NativeSelect
                                         id="sales"
-                                        className={selectClass}
                                         disabled={mode === 'existing'}
                                         value={salesId}
                                         onChange={(e) =>
@@ -257,7 +258,7 @@ export default function TransactionCreate({
                                                 {s.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 </Field>
                             ) : (
                                 <p className="text-sm">
@@ -304,9 +305,8 @@ export default function TransactionCreate({
                                     label="Ownership (opsional, wajib saat DO)"
                                     error={err('vehicle_ownership')}
                                 >
-                                    <select
+                                    <NativeSelect
                                         id="ownership"
-                                        className={selectClass}
                                         value={ownership}
                                         onChange={(e) =>
                                             touch(setOwnership)(e.target.value)
@@ -323,7 +323,7 @@ export default function TransactionCreate({
                                                 {o.label}
                                             </option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 </Field>
                             </div>
                             <Field
@@ -331,9 +331,8 @@ export default function TransactionCreate({
                                 label="Sumber lead"
                                 error={err('source')}
                             >
-                                <select
+                                <NativeSelect
                                     id="source"
-                                    className={selectClass}
                                     value={source}
                                     onChange={(e) =>
                                         touch(setSource)(e.target.value)
@@ -344,7 +343,7 @@ export default function TransactionCreate({
                                             {s.label}
                                         </option>
                                     ))}
-                                </select>
+                                </NativeSelect>
                             </Field>
                             {source === 'digital_ad' && (
                                 <Field
@@ -352,9 +351,8 @@ export default function TransactionCreate({
                                     label="Kanal digital"
                                     error={err('source_channel')}
                                 >
-                                    <select
+                                    <NativeSelect
                                         id="channel"
-                                        className={selectClass}
                                         value={channel}
                                         onChange={(e) =>
                                             touch(setChannel)(e.target.value)
@@ -369,7 +367,7 @@ export default function TransactionCreate({
                                                 {c.label}
                                             </option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 </Field>
                             )}
                             <Field
@@ -377,14 +375,10 @@ export default function TransactionCreate({
                                 label="Estimasi bulan closing (opsional)"
                                 error={err('expected_closing_month')}
                             >
-                                <Input
+                                <MonthPicker
                                     id="closing"
-                                    type="month"
-                                    className="min-h-11"
                                     value={closing}
-                                    onChange={(e) =>
-                                        touch(setClosing)(e.target.value)
-                                    }
+                                    onChange={touch(setClosing)}
                                 />
                             </Field>
                             <FinancingFields
@@ -398,11 +392,10 @@ export default function TransactionCreate({
                                 label="Keterangan"
                                 error={err('notes')}
                             >
-                                <textarea
+                                <Textarea
                                     id="notes"
                                     rows={3}
                                     maxLength={2000}
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={notes}
                                     onChange={(e) =>
                                         touch(setNotes)(e.target.value)
@@ -603,7 +596,7 @@ export default function TransactionCreate({
                                                             picked?.public_id ===
                                                             c.public_id
                                                         }
-                                                        className="min-h-11 w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-muted aria-pressed:border-primary"
+                                                        className="min-h-11 w-full rounded-md border border-input bg-input/20 px-3 py-2 text-left text-sm transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none aria-pressed:border-primary aria-pressed:bg-primary/10 dark:bg-input/30"
                                                         onClick={() => {
                                                             setPicked(c);
                                                             setDirty(true);

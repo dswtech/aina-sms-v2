@@ -97,7 +97,8 @@ async function exportsReal(page) {
     await page.locator('#phone').fill(`0814${tag}`);
     await page.locator('#gender').selectOption('L');
     await page.locator('#social').fill('@qa.export');
-    await page.locator('#model').selectOption('+SUM EXPT');
+    await page.locator('#model').click();
+    await page.getByRole('option', { name: '+SUM EXPT', exact: true }).click();
     await page.locator('#notes').fill(`@notes EXPT${tag}`);
     await page.getByRole('button', { name: 'Simpan transaksi' }).click();
     await page.waitForURL(/\/transactions(\?|$)/);

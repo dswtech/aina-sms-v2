@@ -1,10 +1,9 @@
+import { Combobox } from '@/components/ui/combobox';
+import { NativeSelect } from '@/components/ui/native-select';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INSURANCES, TENORS } from '@/lib/customer-profile';
-
-export const selectClass =
-    'border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm';
 
 export function Field({
     id,
@@ -73,23 +72,21 @@ export function VehicleSelect({
         : null;
     return (
         <>
-            <select
+            <Combobox
                 id={id}
-                className={selectClass}
                 value={value}
-                onChange={(event) => onChange(event.target.value)}
-            >
-                <option value="">Belum dipilih</option>
-                {options.map((group) => (
-                    <optgroup key={group.type} label={group.type}>
-                        {group.models.map((model) => (
-                            <option key={model.name} value={model.name}>
-                                {model.name}
-                            </option>
-                        ))}
-                    </optgroup>
-                ))}
-            </select>
+                onValueChange={onChange}
+                options={options.flatMap((group) =>
+                    group.models.map((model) => ({
+                        value: model.name,
+                        label: model.name,
+                        group: group.type,
+                    })),
+                )}
+                placeholder="Belum dipilih"
+                searchPlaceholder="Cari unit..."
+                emptyMessage="Unit tidak ditemukan."
+            />
             {range && (
                 <p className="text-sm text-muted-foreground">
                     Kisaran harga: {range}
@@ -170,16 +167,15 @@ export function FinancingFields({
                 label="Pembiayaan"
                 error={errors['financing.type']}
             >
-                <select
+                <NativeSelect
                     id={`${idPrefix}financing`}
-                    className={selectClass}
                     value={value.financing}
                     onChange={(e) => set({ financing: e.target.value })}
                 >
                     <option value="">Belum ditentukan</option>
                     <option value="cash">Cash</option>
                     <option value="credit">Kredit</option>
-                </select>
+                </NativeSelect>
             </Field>
             {value.financing === 'credit' && (
                 <Field
@@ -187,9 +183,8 @@ export function FinancingFields({
                     label="Leasing"
                     error={errors['financing.leasing_id']}
                 >
-                    <select
+                    <NativeSelect
                         id={`${idPrefix}leasing`}
-                        className={selectClass}
                         value={value.leasing}
                         onChange={(e) => set({ leasing: e.target.value })}
                     >
@@ -200,7 +195,7 @@ export function FinancingFields({
                             </option>
                         ))}
                         <option value="other">Kredit Lain</option>
-                    </select>
+                    </NativeSelect>
                 </Field>
             )}
             {value.financing === 'credit' && value.leasing === 'other' && (
@@ -224,9 +219,8 @@ export function FinancingFields({
                         label="Tenor *"
                         error={errors['financing.tenor_months']}
                     >
-                        <select
+                        <NativeSelect
                             id={`${idPrefix}tenor`}
-                            className={selectClass}
                             value={value.tenor}
                             onChange={(e) => set({ tenor: e.target.value })}
                         >
@@ -236,16 +230,15 @@ export function FinancingFields({
                                     {months} bulan
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                     </Field>
                     <Field
                         id={`${idPrefix}insurance`}
                         label="Jenis asuransi *"
                         error={errors['financing.insurance_type']}
                     >
-                        <select
+                        <NativeSelect
                             id={`${idPrefix}insurance`}
-                            className={selectClass}
                             value={value.insurance}
                             onChange={(e) => set({ insurance: e.target.value })}
                         >
@@ -255,7 +248,7 @@ export function FinancingFields({
                                     {i.label}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                     </Field>
                 </>
             )}
@@ -290,9 +283,8 @@ export function AreaFields({
                 label="Kabupaten/Kota"
                 error={errors['area.region_code']}
             >
-                <select
+                <NativeSelect
                     id={`${idPrefix}region`}
-                    className={selectClass}
                     value={value.region}
                     onChange={(e) =>
                         set({ region: e.target.value, district: '' })
@@ -305,7 +297,7 @@ export function AreaFields({
                         </option>
                     ))}
                     <option value="other">Kota Lain</option>
-                </select>
+                </NativeSelect>
             </Field>
             {value.region !== '' && value.region !== 'other' && (
                 <Field
@@ -313,9 +305,8 @@ export function AreaFields({
                     label={districtLabel}
                     error={errors['area.district_code']}
                 >
-                    <select
+                    <NativeSelect
                         id={`${idPrefix}district`}
-                        className={selectClass}
                         value={value.district}
                         onChange={(e) => set({ district: e.target.value })}
                     >
@@ -327,7 +318,7 @@ export function AreaFields({
                                     {d.name}
                                 </option>
                             ))}
-                    </select>
+                    </NativeSelect>
                 </Field>
             )}
             {value.region === 'other' && (

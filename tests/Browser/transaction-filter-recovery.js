@@ -108,26 +108,27 @@ async function transactionFilterRecovery(page) {
         checked.push(failure);
     }
     await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=&date_to=`);
-    await page.locator('#transaction-date-from').fill('2001-02-01');
-    const end = page.locator('#transaction-date-to');
-    await end.fill('2001-01-01');
-    if (
-        (await end.inputValue()) !== '2001-02-01' ||
-        (await page
-            .getByRole('button', { name: 'Coba lagi', exact: true })
-            .count())
-    ) {
-        throw new Error(
-            'An end date before the start date was not lifted to the start',
-        );
-    }
     await page
         .getByText(/^G11 Report Model ·/)
         .filter({ visible: true })
         .waitFor();
+    // Picking an earlier day after the start reorders the range instead of saving a reversed one.
+    await page.goto(`${origin}/transactions?search=G11%20Report%20Model&date_from=2001-02-10&date_to=`);
+    const range = page.locator('#transaction-date');
+    await range.click();
+    await page.locator('[data-slot="popover-content"] button[data-day="2001-02-03"]').click();
+    await page.keyboard.press('Escape');
+    if (
+        !/^03 Feb 2001 – 10 Feb 2001$/.test((await range.innerText()).trim()) ||
+        (await page
+            .getByRole('button', { name: 'Coba lagi', exact: true })
+            .count())
+    ) {
+        throw new Error('An earlier pick did not reorder the date range');
+    }
     return {
         checked,
         transactionRetryReachedLaravel: true,
-        endDateLiftedToStart: true,
+        reversedPickReordered: true,
     };
 }

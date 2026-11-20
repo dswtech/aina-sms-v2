@@ -38,11 +38,12 @@ async function transactionDetailWorkspace(page) {
     await dialog.getByRole('status').filter({ hasText: 'Tersimpan' }).waitFor();
     await dialog.getByRole('button', { name: /^Kendaraan:/ }).waitFor();
 
-    // Birth date uses a date input; the phone is editable and stored normalized.
+    // Birth date uses the shadcn date picker with month/year dropdowns; the phone is editable and stored normalized.
     await dialog.getByRole('button', { name: /^Tanggal lahir:/ }).click();
-    const birth = page.getByLabel('Tanggal lahir', { exact: true });
-    assert((await birth.getAttribute('type')) === 'date', 'Birth date is not a date input');
-    await birth.fill('1990-05-01');
+    const picker = page.getByLabel('Tanggal lahir', { exact: true });
+    await picker.locator('select.rdp-years_dropdown').selectOption('1990');
+    await picker.locator('select.rdp-months_dropdown').selectOption('4');
+    await picker.locator('button[data-day="1990-05-01"]').click();
     await page.getByRole('button', { name: 'Simpan', exact: true }).click();
     await dialog.getByRole('button', { name: /^Tanggal lahir: 1990-05-01/ }).waitFor();
     await dialog.getByRole('button', { name: /^Telepon:/ }).click();

@@ -232,7 +232,8 @@ async function acceptanceFlow(page) {
         await page.locator('#phone').fill(phone);
         await page.locator('#gender').selectOption('L');
         await page.locator('#social').fill(social);
-        await page.locator('#model').selectOption(model);
+        await page.locator('#model').click();
+        await page.getByRole('option', { name: model, exact: true }).click();
         await page.locator('#source').selectOption('digital_ad');
         await page.locator('#channel').selectOption('instagram');
         await page.locator('#region').selectOption('32.17');
@@ -404,7 +405,8 @@ async function acceptanceFlow(page) {
             '?customer= did not select Pelanggan Lama',
         );
         assert(await page.getByText(custName).first().isVisible(), '?customer= card does not show the customer');
-        await page.locator('#model').selectOption(repeatModel);
+        await page.locator('#model').click();
+        await page.getByRole('option', { name: repeatModel, exact: true }).click();
         await page.getByRole('button', { name: 'Simpan transaksi' }).click();
         await page.waitForURL(/\/transactions(\?|$)/);
         const after = (await json(`/transactions/customer-search?q=${encodeURIComponent(phone)}`)).data;

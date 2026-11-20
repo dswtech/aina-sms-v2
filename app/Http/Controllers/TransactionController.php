@@ -475,7 +475,7 @@ class TransactionController extends Controller
             $query->where(fn ($q) => $q->whereRaw("lower(name) like ? escape '\\'", [$like])
                 ->when(strlen($digits) >= 4, fn ($q) => $q->orWhere('phone', 'like', '%'.$digits.'%')));
         }
-        $page = $query->paginate(10, ['id', 'public_id', 'name', 'phone', 'social_media_account']);
+        $page = $query->paginate(5, ['id', 'public_id', 'name', 'phone', 'social_media_account']);
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (Customer $c): array => $this->customerCard($c))->all(),

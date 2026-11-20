@@ -78,6 +78,15 @@ it('searches only customers the actor may use, requires an active assignment and
     $this->getJson('/transactions/customer-search?q[]=x')->assertUnprocessable();
 });
 
+it('returns at most five customers per search so the picker stays short', function () {
+    Customer::factory()->count(7)->create(['dealer_id' => $this->dealer->id])
+        ->each(fn (Customer $customer) => $customer->assignTo($this->sales));
+
+    $this->actingAs($this->sales)->getJson('/transactions/customer-search?q=')->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('total', 7);
+});
+
 it('creates a repeat transaction for an existing customer without touching identity or assignment', function () {
     $customer = Customer::factory()->create(['dealer_id' => $this->dealer->id, 'name' => 'Sari Dewi', 'social_media_account' => '@sari']);
     $customer->assignTo($this->sales);

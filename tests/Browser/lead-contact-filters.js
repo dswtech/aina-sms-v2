@@ -2,6 +2,24 @@
 // eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
 async function leadContactFilters(page) {
     page.setDefaultTimeout(5000);
+    // Steps the shadcn calendar popover to the month holding iso, then picks that day.
+    const pickDay = async (iso) => {
+        for (let step = 0; step < 48; step++) {
+            const day = page.locator(`[data-slot="popover-content"] button[data-day="${iso}"]`);
+            if (await day.count()) {
+                await day.first().click();
+                return;
+            }
+            const shown = await page
+                .locator('[data-slot="popover-content"] button[data-day]')
+                .first()
+                .getAttribute('data-day');
+            await page
+                .locator(`[data-slot="popover-content"] .rdp-button_${iso < shown ? 'previous' : 'next'}`)
+                .click();
+        }
+        throw new Error(`Calendar never showed ${iso}`);
+    };
     const origin = new URL(page.url()).origin;
     const template = await (await page.request.get(`${origin}/login`)).text();
     const bootstrap = /(<script\b[^>]*data-page[^>]*>)([\s\S]*?)(<\/script>)/;
@@ -309,9 +327,10 @@ async function leadContactFilters(page) {
                     },
                 };
                 await page.goto(`${origin}/transactions`);
-                await page.locator('#transaction-date-from').waitFor();
-                await page.locator('#transaction-date-from').fill('2026-11-01');
-                await page.locator('#transaction-date-to').fill('2026-11-05');
+                await page.locator('#transaction-date').click();
+                await pickDay('2026-11-01');
+                await pickDay('2026-11-05');
+                await page.keyboard.press('Escape');
                 await page
                     .getByLabel('Sumber lead', { exact: true })
                     .selectOption('referral');

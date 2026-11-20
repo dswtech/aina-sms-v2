@@ -1,6 +1,8 @@
 import { ArrowLeft, Search } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { toDate, toIso } from '@/components/date-picker';
+import { Calendar } from '@/components/ui/calendar';
 
 export type PickerOption = { value: string; label: string };
 export type PickerStep =
@@ -45,6 +47,7 @@ export function PropertyPicker({
     const [position, setPosition] = useState<Position | null>(null);
 
     const step = open ? getStep(chosen) : null;
+    const isDate = !!step && 'text' in step && step.type === 'date';
 
     const close = (focusTrigger = true) => {
         setOpen(false);
@@ -60,7 +63,7 @@ export function PropertyPicker({
             const trigger = triggerRef.current;
             if (!trigger) return;
             const rect = trigger.getBoundingClientRect();
-            const width = Math.max(rect.width, 240);
+            const width = Math.max(rect.width, isDate ? 340 : 240);
             const up =
                 window.innerHeight - rect.bottom < PANEL_MAX_HEIGHT &&
                 rect.top > window.innerHeight - rect.bottom;
@@ -86,7 +89,7 @@ export function PropertyPicker({
             window.removeEventListener('resize', place);
             window.removeEventListener('scroll', place, true);
         };
-    }, [open, container]);
+    }, [open, container, isDate]);
 
     useEffect(() => {
         if (!open) return;
@@ -247,23 +250,33 @@ export function PropertyPicker({
                                 advance(text.trim());
                         }}
                     >
-                        <input
-                            autoFocus
-                            type={step.type ?? 'text'}
+                        {isDate ? (
                             // A birth date cannot be in the future; the server also requires a past day.
-                            max={
-                                step.type === 'date'
-                                    ? new Date().toLocaleDateString('en-CA', {
-                                          timeZone: 'Asia/Jakarta',
-                                      })
-                                    : undefined
-                            }
-                            value={text}
-                            onChange={(event) => setText(event.target.value)}
-                            aria-label={step.title}
-                            maxLength={255}
-                            className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        />
+                            <Calendar
+                                aria-label={step.title}
+                                mode="single"
+                                captionLayout="dropdown"
+                                startMonth={new Date(1930, 0)}
+                                endMonth={new Date()}
+                                disabled={{ after: new Date() }}
+                                selected={toDate(text)}
+                                defaultMonth={toDate(text)}
+                                onSelect={(date) => setText(toIso(date))}
+                                className="mx-auto p-0 sm:p-0"
+                            />
+                        ) : (
+                            <input
+                                autoFocus
+                                type="text"
+                                value={text}
+                                onChange={(event) =>
+                                    setText(event.target.value)
+                                }
+                                aria-label={step.title}
+                                maxLength={255}
+                                className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                        )}
                         <button
                             type="submit"
                             disabled={!text.trim() && !step.optional}

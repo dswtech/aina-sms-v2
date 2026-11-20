@@ -1,8 +1,6 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import InputError from '@/components/input-error';
-import {
-    selectClass,
-    vehiclePriceRange,
-} from '@/components/transaction-fields';
+import { vehiclePriceRange } from '@/components/transaction-fields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -102,9 +100,8 @@ function ModelDialog({
                 <form className="space-y-3" onSubmit={submit}>
                     <div className="space-y-1">
                         <Label htmlFor="vm-type">Jenis kendaraan</Label>
-                        <select
+                        <NativeSelect
                             id="vm-type"
-                            className={selectClass}
                             value={form.vehicle_type_id}
                             onChange={(e) =>
                                 setForm({
@@ -125,7 +122,7 @@ function ModelDialog({
                                         {t.name}
                                     </option>
                                 ))}
-                        </select>
+                        </NativeSelect>
                         <InputError message={errors?.vehicle_type_id} />
                     </div>
                     <div className="space-y-1">

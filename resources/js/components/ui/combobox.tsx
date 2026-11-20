@@ -1,5 +1,5 @@
-import { Check, ChevronsUpDown, Search } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,6 +7,8 @@ export type ComboboxOption = {
     value: string;
     label: string;
     hint?: string;
+    /** Options sharing a group are listed under one heading, in the order given. */
+    group?: string;
 };
 
 type ComboboxProps = {
@@ -17,6 +19,7 @@ type ComboboxProps = {
     searchPlaceholder?: string;
     emptyMessage?: string;
     disabled?: boolean;
+    showClear?: boolean;
     id?: string;
     name?: string;
     className?: string;
@@ -41,6 +44,7 @@ export function Combobox({
     searchPlaceholder = 'Cari...',
     emptyMessage = 'Tidak ada hasil.',
     disabled = false,
+    showClear = true,
     id,
     name,
     className,
@@ -68,7 +72,7 @@ export function Combobox({
         }
 
         return options.filter((option) =>
-            `${option.label} ${option.hint ?? ''} ${option.value}`
+            `${option.label} ${option.hint ?? ''} ${option.value} ${option.group ?? ''}`
                 .toLowerCase()
                 .includes(term),
         );
@@ -295,12 +299,29 @@ export function Combobox({
                     )}
                     {filteredOptions.map((option, index) => {
                         const isSelected = option.value === value;
+                        const heading =
+                            option.group &&
+                            option.group !== filteredOptions[index - 1]?.group
+                                ? option.group
+                                : null;
 
                         return (
+                            <Fragment key={option.value || 'empty'}>
+                            {heading && (
+                                <div
+                                    role="presentation"
+                                    data-slot="combobox-group-label"
+                                    className={cn(
+                                        'px-2 pt-2 pb-1 text-xs text-muted-foreground',
+                                        index > 0 && 'mt-1 border-t',
+                                    )}
+                                >
+                                    {heading}
+                                </div>
+                            )}
                             <button
                                 id={`${listboxId}-option-${index}`}
                                 tabIndex={-1}
-                                key={option.value || 'empty'}
                                 ref={(element) => {
                                     optionRefs.current[index] = element;
                                 }}
@@ -333,14 +354,17 @@ export function Combobox({
                                     />
                                 )}
                             </button>
+                            </Fragment>
                         );
                     })}
                 </div>
             </div>
         ) : null;
 
+    const clearable = showClear && value !== '' && !disabled;
+
     return (
-        <div className="w-full">
+        <div className="relative w-full">
             <button
                 ref={triggerRef}
                 data-slot="combobox-trigger"
@@ -361,7 +385,8 @@ export function Combobox({
                     }
                 }}
                 className={cn(
-                    'flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-left text-sm transition-colors outline-none hover:bg-accent/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+                    'flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-input/20 px-3 py-2 text-left dark:bg-input/30 text-sm transition-colors outline-none hover:bg-accent/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+                    clearable && 'pr-20 xl:pointer-fine:pr-16',
                     className,
                 )}
             >
@@ -378,6 +403,20 @@ export function Combobox({
                     className="size-4 shrink-0 opacity-50"
                 />
             </button>
+            {clearable && (
+                <button
+                    type="button"
+                    aria-label="Hapus pilihan"
+                    data-slot="combobox-clear"
+                    onClick={() => {
+                        onValueChange('');
+                        triggerRef.current?.focus();
+                    }}
+                    className="absolute inset-y-0 right-8 flex w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none xl:pointer-fine:w-9"
+                >
+                    <X aria-hidden="true" className="size-4" />
+                </button>
+            )}
             {name && <input type="hidden" name={name} value={value} />}
             {panel &&
                 position &&

@@ -1,8 +1,6 @@
-import {
-    AreaFields,
-    Field,
-    selectClass,
-} from '@/components/transaction-fields';
+import { NativeSelect } from '@/components/ui/native-select';
+import { DatePicker } from '@/components/date-picker';
+import { AreaFields, Field } from '@/components/transaction-fields';
 import { Input } from '@/components/ui/input';
 import {
     GENDERS,
@@ -58,9 +56,8 @@ export function CustomerProfileFields({
                     label={mark('gender', 'Gender')}
                     error={error('gender')}
                 >
-                    <select
+                    <NativeSelect
                         id={`${idPrefix}gender`}
-                        className={selectClass}
                         value={value.gender}
                         onChange={(e) => set({ gender: e.target.value })}
                     >
@@ -70,7 +67,7 @@ export function CustomerProfileFields({
                                 {g.label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                 </Field>
             )}
             {fields.includes('address') && (
@@ -94,12 +91,16 @@ export function CustomerProfileFields({
                     label="Tanggal lahir"
                     error={error('birth_date')}
                 >
-                    <Input
+                    <DatePicker
                         id={`${idPrefix}birth-date`}
-                        type="date"
-                        className="min-h-11"
                         value={value.birth_date}
-                        onChange={(e) => set({ birth_date: e.target.value })}
+                        onChange={(birth_date) => set({ birth_date })}
+                        calendarProps={{
+                            captionLayout: 'dropdown',
+                            startMonth: new Date(1930, 0),
+                            endMonth: new Date(),
+                            disabled: { after: new Date() },
+                        }}
                     />
                 </Field>
             )}
@@ -109,9 +110,8 @@ export function CustomerProfileFields({
                     label={mark('occupation', 'Pekerjaan')}
                     error={error('occupation')}
                 >
-                    <select
+                    <NativeSelect
                         id={`${idPrefix}occupation`}
-                        className={selectClass}
                         value={value.occupation}
                         onChange={(e) => set({ occupation: e.target.value })}
                     >
@@ -121,7 +121,7 @@ export function CustomerProfileFields({
                                 {o.label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                 </Field>
             )}
             {fields.includes('area') && (

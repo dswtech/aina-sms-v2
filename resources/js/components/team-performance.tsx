@@ -1,3 +1,4 @@
+import { MonthPicker } from '@/components/date-picker';
 import type { StageAchievementData } from '@/components/stage-achievement-table';
 import type { TargetPlan } from '@/components/target-plan-editor';
 import { Link, useForm, usePage } from '@inertiajs/react';
@@ -641,7 +642,7 @@ export function ClosingMonthForm({
             <Label htmlFor={`closing-${transactionId}`}>
                 Estimasi bulan closing
             </Label>
-            <Input
+            <MonthPicker
                 id={`closing-${transactionId}`}
                 aria-invalid={!!form.errors.expected_closing_month}
                 aria-describedby={
@@ -649,10 +650,9 @@ export function ClosingMonthForm({
                         ? `closing-error-${transactionId}`
                         : undefined
                 }
-                type="month"
                 value={form.data.expected_closing_month}
-                onChange={(e) =>
-                    form.setData('expected_closing_month', e.target.value)
+                onChange={(month) =>
+                    form.setData('expected_closing_month', month)
                 }
             />
             <p className="text-xs leading-5 text-muted-foreground">
