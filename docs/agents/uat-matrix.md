@@ -8,13 +8,13 @@
 | Gerbang rilis | [Roadmap Fase 6](roadmap.md#fase-6--import-hardening-dan-pilot) |
 | Status UAT | Kolom UAT per skenario tetap **Belum dijalankan**. Pada 12 November 2026 pemilik menyatakan UAT manual dilewati dan dianggap lolos ([G15](#g15)); ini deklarasi pemilik, bukan hasil eksekusi. Belum ada persetujuan go-live |
 
-Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh tiga baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
+Dokumen ini adalah peta bukti dan panduan pengujian, bukan salinan requirement atau keputusan produk baru. Delapan puluh sembilan baris di bawah merujuk requirement kanonik di PRD. Assertion yang disebut hanya membuktikan perilaku yang benar-benar diperiksa; tes lulus tidak berarti seluruh requirement selesai. Pemeriksaan source adalah bukti statis, bukan reproduksi runtime atau hasil UAT.
 
 ## Cara membaca dan menjalankan
 
 - Role: **A** Admin, **S** Sales, **V** Supervisor, **B** Branch Manager; **Semua** mencakup keempat role dan pengunjung tanpa login bila relevan.
 - Status teknis **Parsial** berarti ada assertion relevan tetapi acceptance belum lengkap; **Belum ada** berarti assertion langsung belum ditemukan dalam suite yang diperiksa; **Gap source** berarti ada perbedaan konkret antara source dan kebutuhan; **Batas MVP** berarti larangan yang perlu dijaga; **Ditunda** berarti capability memang ditunda PRD dan bukan fitur MVP yang hilang. Status gabungan mempertahankan kedua informasi.
-- Bukti E01–E24 di katalog menunjuk file dan nama tes, disertai batas assertion. Hasil suite terbaru dicatat terpisah dari cakupan. Kode G menunjuk backlog; kode A/S/V/B/X/O menunjuk skenario dan gerbang.
+- Bukti E01–E38 di katalog menunjuk file dan nama tes, disertai batas assertion. Hasil suite terbaru dicatat terpisah dari cakupan. Kode G menunjuk backlog; kode A/S/V/B/X/O menunjuk skenario dan gerbang.
 - Semua skenario fungsional harus dijalankan nanti oleh pemilik role dengan QA pada lingkungan UAT terisolasi yang telah disetujui. Tidak ada langkah di dokumen ini yang sudah dijalankan. Persiapan akun, manipulasi waktu/data, pengiriman email, impor, dan penyimpanan melalui UI dilakukan hanya setelah target lingkungan dan izin pelaksanaan ditetapkan; tidak memakai production atau database development bersama secara otomatis.
 - Isi hasil aktual dengan waktu, commit, lingkungan, pelaksana, screenshot/rekaman tersanitasi, dan ID temuan. Jangan simpan credential, token aktivasi/reset, isi environment, atau data pelanggan nyata. Status boleh menjadi Lulus/Gagal/Terblokir hanya setelah ada bukti eksekusi.
 
@@ -26,7 +26,7 @@ Gunakan pelanggan berlabel jelas `UAT-C1`/S1, `UAT-C2`/S2, `UAT-C3`/S3, pelangga
 
 Siapkan transaksi pada tujuh tahap, tanggal aktivitas tepat sebelum/pada/setelah ambang tiga hari, follow-up kemarin/hari ini/besok, serta transaksi melintasi batas bulan UTC/Asia/Jakarta. Buat CSV valid, campuran invalid, duplikat, dan Sales di luar tim dari template unduhan; jangan unggah data asli. Untuk angka laporan, QA menyusun ledger input sintetis dan hasil hitung manual sebelum pengujian; bobot uji tidak dianggap bobot production yang telah disetujui.
 
-## Matriks ketertelusuran — 80 referensi
+## Matriks ketertelusuran — 89 referensi
 
 Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalankan**, termasuk pemeriksaan batas MVP; fitur tertunda tidak memerlukan eksekusi capability yang belum masuk MVP.
 
@@ -41,6 +41,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [IAM-05](PRD.md#71-authentication--identity-iam) | Semua | [X01](#x01), [V01](#v01), [B02](#b02) | [E04](#e04), [E07](#e07): route 200/403 per role; mutasi pelanggan asing 403 tanpa perubahan. | Parsial | Matriks route bukan bukti seluruh aksi/field; tambahkan kasus coaching, ekspor, dan perpindahan assignment [G09](#g09). | Belum dijalankan |
 | [IAM-06](PRD.md#71-authentication--identity-iam) | A, Semua | [A02](#a02), [X01](#x01) | [E03](#e03), [E05](#e05): props tanpa password/token; reset valid redirect tanpa error, invalid ditolak. | Parsial | Belum menguji login dengan password baru/lama dan seluruh permukaan ekspor/log; email nyata [O01](#o01). | Belum dijalankan |
 | [IAM-07](PRD.md#71-authentication--identity-iam) | Pengunjung | [X04](#x04) | [E05](#e05): GET dan POST `/register` menghasilkan 404. | Batas MVP | Pertahankan akses melalui undangan; bukan backlog registrasi publik. | Belum dijalankan |
+| [IAM-08](PRD.md#71-authentication--identity-iam) | A, Semua | [A01](#a01) | [E33](#e33): bentuk 6–12 karakter diawali huruf, kata terlarang, unik global dan habis setelah 50 percobaan; username dipesan saat undangan dibuat dan dilepas saat diterima/dicabut; ganti sendiri satu kali dengan password, nama lama tetap ditahan. | Parsial | "Generator tidak mengganti username akun lama" belum diassert langsung; UI halaman Profil belum diuji. | Belum dijalankan |
 
 ### Organisasi
 
@@ -103,6 +104,10 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [CVS-08](PRD.md#75-conversation--coaching-cvs) | Semua | [S06](#s06), [X01](#x01) | [E30](#e30): DELETE HTTP menghasilkan 405 untuk empat role; komentar hasil edit dan revisi sebelumnya tetap ada. | Terverifikasi teknis | UAT manusia belum dijalankan. | Belum dijalankan |
 | [CVS-09](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03), [O01](#o01) | [E25](#e25): notifikasi database metadata, job tanpa body, worker retry/recovery enqueue dan otorisasi ulang; SMTP template dikonfirmasi Mailtrap CLI. | Parsial | Intent durable/tautan transaksi sudah tersedia; SLA, provider production, worker/scheduler deployment dan UAT tetap terbuka. | Belum dijalankan |
 | [CVS-10](PRD.md#75-conversation--coaching-cvs) | S, V | [X04](#x04) | Belum ada assertion lampiran; request komentar hanya body/parent_id. | Ditunda | Lampiran di luar MVP; cek tidak ada kontrol/jalur upload coaching aktif. | Belum dijalankan |
+| [CVS-11](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03) | [E34](#e34): riwayat 3 hari terbaca/belum, batas 200, notifikasi transaksi hilang setelah akses dicabut, daftar kosong untuk Admin/Branch Manager. | Terverifikasi teknis | Tampilan halaman riwayat dan lonceng hanya diuji lewat props; UAT manusia belum dijalankan. | Belum dijalankan |
+| [CVS-12](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03) | [E35](#e35): Supervisor tim menerima notifikasi saat Sales mengubah tahap dan saat DO dibatalkan; pelaku, Supervisor nonaktif, transisi ditolak dan lead baru tidak memicu notifikasi. | Parsial | Isi notifikasi "tanpa data pelanggan" belum diassert eksplisit. | Belum dijalankan |
+| [CVS-13](PRD.md#75-conversation--coaching-cvs) | S, V | [V03](#v03) | [E36](#e36): notifikasi per transaksi untuk Sales dan ringkasan untuk Supervisor; idempoten, ulang setelah aktif lalu stagnan lagi, batas hari Jakarta, jadwal harian terdaftar. | Terverifikasi teknis | Bergantung scheduler production berjalan ([O01](#o01)); UAT manusia belum dijalankan. | Belum dijalankan |
+| [CVS-14](PRD.md#75-conversation--coaching-cvs) | Semua | [V03](#v03) | [E37](#e37): notifikasi rilis di lonceng dan riwayat semua role, satu kali per pengguna aktif, halaman Riwayat Rilis untuk semua role, validasi isi rilis. | Parsial | Versi aplikasi di menu pengguna dan bahasa awam isi rilis belum diassert. | Belum dijalankan |
 
 ### Impor
 
@@ -162,6 +167,7 @@ Kolom UAT sengaja terpisah dari status teknis. Semua hasil masih **Belum dijalan
 | [ANL-07](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B02](#b02), [V01](#v01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | Scope tim transaksi, perpindahan/ended membership dan sanitasi mengikuti E27; UAT lintas role belum dijalankan. | Belum dijalankan |
 | [ANL-08](PRD.md#710-analisis-penjualan-anl) | V, B, A | [B01](#b01) | [E27](#e27), [E26](#e26): rekonsiliasi laporan, scope dan PostgreSQL; bukti awal tetap historis. | Parsial | [E31](#e31) menambah rekonsiliasi CSV tiga role dan PDF browser. Penerimaan cetak operasional masih terbuka. | Belum dijalankan |
 | [ANL-09](PRD.md#710-analisis-penjualan-anl) | V, B | [X04](#x04) | Belum assertion Area; PRD secara eksplisit menunda. MSCP ditutup (porsi per leasing mencukupi). | Ditunda | Area menunggu lokasi terstruktur; bukan penghambat MVP. | Belum dijalankan |
+| [ANL-10](PRD.md#710-analisis-penjualan-anl) | S, V, B | [S05](#s05), [B01](#b01) | [E38](#e38): kecamatan wajib sejak SPK, Kota Lain dengan/tanpa nama kota; DO dipetakan ke FOA, PMA di luar FOA dan di luar PMA dari snapshot; patch master FOA/PMA menghitung ulang snapshot. | Parsial | Kecamatan harus sesuai kabupaten/kota dan laporan tanpa kategori "belum diisi" belum diassert langsung. | Belum dijalankan |
 
 ## Katalog bukti otomatis
 
@@ -319,13 +325,37 @@ CI lengkap lulus: tujuh tes frontend, lint/format, TypeScript, Pint, PHPStan ser
 
 **PIP-08 — warna dan Ownership kendaraan, 20 November 2026.** [VehicleColorOwnershipTest](../../tests/Feature/Pipeline/VehicleColorOwnershipTest.php) menguji lima perilaku sebagai Sales: warna dan Ownership tersimpan bersama lead baru serta tampil di daftar dan JSON detail; Ownership di luar `first_buyer`/`additional`/`trade_in` dan warna lebih dari 50 karakter ditolak; keduanya dapat diubah sampai SPK lalu PATCH ditolak sejak DO; warna yang dikirim bersama kendaraan tersimpan saat pindah ke SPK; DO tanpa Ownership ditolak dengan tahap tetap SPK, dan Ownership dari dialog DO tersimpan. Tidak mencakup UI dialog/panel, kolom ekspor CSV, maupun akses Supervisor secara langsung.
 
+### E33
+
+**IAM-08 — username otomatis dan ganti sekali, 13–18 November 2026.** [UsernameGeneratorTest](../../tests/Unit/UsernameGeneratorTest.php) memeriksa normalisasi nama Latin, awalan huruf, panjang 6–12, padding digit, kata terlarang, tambahan dua digit bila terpakai, batas 50 percobaan dan determinisme seed. [UsernameReservationTest](../../tests/Feature/Auth/UsernameReservationTest.php) memeriksa pemesanan saat undangan dibuat, dua undangan nama sama, rollback tanpa sisa, serta pelepasan saat diterima/dicabut/tim nonaktif. [UsernameChangeTest](../../tests/Feature/Settings/UsernameChangeTest.php) memeriksa ganti sekali dengan password, penolakan ganti kedua/nama tidak valid/terpakai, nama lama tetap ditahan, login memakai nama baru, dan kunci di halaman Profil. Tidak mengassert bahwa generator membiarkan username akun lama.
+
+### E34
+
+**CVS-11 — riwayat notifikasi, 18 November 2026.** [NotificationHistoryTest](../../tests/Feature/Notifications/NotificationHistoryTest.php) memeriksa riwayat 3 hari terbaca dan belum untuk Sales, pengecualian notifikasi lebih lama, notifikasi transaksi yang aksesnya dicabut, daftar kosong untuk Admin/Branch Manager, batas 200 dengan tanda terpotong, dan lonceng hanya berisi notifikasi belum dibaca dalam jendela riwayat.
+
+### E35
+
+**CVS-12 — notifikasi perubahan tahap, 18 November 2026.** [StageChangeNotificationTest](../../tests/Feature/Notifications/StageChangeNotificationTest.php) memeriksa notifikasi ke Supervisor tim saat Sales mengubah tahap dan saat DO dibatalkan, pengecualian Supervisor pelaku dan nonaktif, tanpa notifikasi untuk transisi ditolak dan lead baru. Isi payload tanpa data pelanggan belum diassert eksplisit.
+
+### E36
+
+**CVS-13 — notifikasi stagnan, 18 November 2026.** [DetectStagnantDealsTest](../../tests/Feature/Notifications/DetectStagnantDealsTest.php) memeriksa notifikasi per transaksi untuk Sales dan ringkasan untuk Supervisor, pengecualian transaksi tertutup/aktif/terlalu lama/Sales nonaktif, idempotensi, notifikasi ulang setelah aktif lalu stagnan lagi, batas hari Jakarta, dan jadwal harian.
+
+### E37
+
+**CVS-14 — notifikasi dan Riwayat Rilis, 18 November 2026.** [ReleaseNotificationTest](../../tests/Feature/Notifications/ReleaseNotificationTest.php), [AnnounceReleaseCommandTest](../../tests/Feature/Notifications/AnnounceReleaseCommandTest.php), [ReleaseLogPageTest](../../tests/Feature/Releases/ReleaseLogPageTest.php) dan [ReleasesConfigTest](../../tests/Feature/Releases/ReleasesConfigTest.php) memeriksa notifikasi rilis di lonceng dan riwayat semua role, pengumuman satu kali per pengguna aktif, halaman Riwayat Rilis untuk semua role dan redirect tamu, serta validasi format, urutan dan versi entri rilis. Versi di menu pengguna dan keterbacaan isi tidak diassert.
+
+### E38
+
+**ANL-10 — area transaksi dan laporan FOA/PMA, 8–20 November 2026.** [CustomerProfileStageTest](../../tests/Feature/Customer/CustomerProfileStageTest.php) memeriksa kecamatan wajib sebelum SPK, Kota Lain dengan atau tanpa nama kota, dan default area dari kecamatan pelanggan. [FinancingAndAreaReportTest](../../tests/Feature/Reports/FinancingAndAreaReportTest.php) memeriksa pemetaan DO ke FOA, PMA di luar FOA dan di luar PMA dari snapshot, FOA lebih dulu walau di luar PMA, DO batal dan DO lama tanpa snapshot dikecualikan, serta cakupan role. [FoaPmaPatchTest](../../tests/Feature/Pipeline/FoaPmaPatchTest.php) dan [AreaMasterExtensionTest](../../tests/Feature/Pipeline/AreaMasterExtensionTest.php) memeriksa master area dan hitung ulang snapshot. Kecocokan kecamatan dengan kabupaten/kota belum diassert langsung.
+
 ## Skenario UAT empat role
 
 Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan karena gap source, catat **Terblokir/Gagal** setelah dicoba pada lingkungan yang disetujui; jangan mengganti expected result mengikuti keterbatasan source. Penolakan request berarti tidak ada mutasi dan tidak ada data sensitif pada respons, bukan sekadar tombol disembunyikan.
 
 ### A01
 
-**Undangan dan aktivasi — Admin/penerima.** Prasyarat: A1 aktif, T1 aktif, mailbox uji, undangan valid/expired/revoked/used disiapkan secara terkontrol. Data: calon S2 dan calon Supervisor dengan email sandbox berbeda. Langkah: undang dengan role/tim; buka tautan sebagai penerima, tetapkan credential sendiri dan login; coba tautan kedua kali, kedaluwarsa dan dicabut; coba tim nonaktif/asing serta role/tim invalid. Hasil: role/tim berasal dari undangan, aktivasi satu kali, kegagalan tidak membuat akun atau membocorkan identitas; email mengikuti O01. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
+**Undangan dan aktivasi — Admin/penerima.** Prasyarat: A1 aktif, T1 aktif, mailbox uji, undangan valid/expired/revoked/used disiapkan secara terkontrol. Data: calon S2 dan calon Supervisor dengan email sandbox berbeda. Langkah: undang dengan role/tim; buka tautan sebagai penerima, tetapkan credential sendiri dan login; coba tautan kedua kali, kedaluwarsa dan dicabut; coba tim nonaktif/asing serta role/tim invalid. Periksa username yang dibuat dari nama lengkap, lalu sebagai penerima ganti username sekali dari Profil dan coba ganti kedua kali. Hasil: username sesuai aturan bentuk dan unik, ganti hanya sekali dan nama lama tidak dapat dipakai akun lain; role/tim berasal dari undangan, aktivasi satu kali, kegagalan tidak membuat akun atau membocorkan identitas; email mengikuti O01. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
 
 ### A02
 
@@ -377,11 +407,11 @@ Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan
 
 ### V03
 
-**Coaching dan notifikasi — Supervisor/Sales.** Prasyarat: V1 dan S1 memiliki akses C1, recipient/queue/mailbox uji disetujui. Langkah: V1 memberi arahan, S1 melihat notifikasi lalu membalas; buka tautan dan tandai baca; ulangi sebagai orang lain; QA mensimulasikan email gagal sesuai O01. Hasil: in-app/email diberikan hanya kepada pihak conversation lain, URL menuju transaksi berhak, unread/read benar, email tanpa body coaching; penyimpanan komentar tidak bergantung keberhasilan email. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
+**Coaching dan notifikasi — Supervisor/Sales.** Prasyarat: V1 dan S1 memiliki akses C1, recipient/queue/mailbox uji disetujui. Langkah: V1 memberi arahan, S1 melihat notifikasi lalu membalas; buka tautan dan tandai baca; ulangi sebagai orang lain; QA mensimulasikan email gagal sesuai O01. S1 mengubah tahap transaksi dan V1 memeriksa notifikasinya; QA menyiapkan transaksi stagnan dan menjalankan deteksi harian; umumkan rilis uji lalu buka Riwayat Rilis dari setiap role; buka riwayat notifikasi 3 hari. Hasil: notifikasi tahap dan stagnan tanpa data pelanggan, ringkasan stagnan satu per Supervisor, notifikasi rilis untuk semua role, riwayat hanya 3 hari dan hanya transaksi yang masih berhak; in-app/email diberikan hanya kepada pihak conversation lain, URL menuju transaksi berhak, unread/read benar, email tanpa body coaching; penyimpanan komentar tidak bergantung keberhasilan email. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
 
 ### B01
 
-**Perbandingan tim, Analisis dan ekspor — Branch Manager, ulangi Analisis sebagai Admin/Supervisor.** Prasyarat: ledger T1/T2, beberapa sumber/model, transaksi tanggal akuisisi dan event tahap pada bulan berbeda; expected count/share/conversion dihitung QA. Langkah: bandingkan tim pada dashboard/kinerja; pilih periode Analisis, berganti Akuisisi/Pencapaian; drilldown Sumber dan Model lalu kembali; unduh CSV, simpan PDF melalui dialog cetak; cocokkan angka, label penyebut dan hasil filter. Hasil: seluruh tim D1 teragregasi dengan benar, hanya V1/T1 untuk Supervisor, conversion hanya Akuisisi, CSV/PDF agregat konsisten dan tanpa data sensitif; periode/mode/dimensi tetap. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
+**Perbandingan tim, Analisis dan ekspor — Branch Manager, ulangi Analisis sebagai Admin/Supervisor.** Prasyarat: ledger T1/T2, beberapa sumber/model, transaksi tanggal akuisisi dan event tahap pada bulan berbeda; expected count/share/conversion dihitung QA. Langkah: bandingkan tim pada dashboard/kinerja; pilih periode Analisis, berganti Akuisisi/Pencapaian; drilldown Sumber dan Model lalu kembali; unduh CSV, simpan PDF melalui dialog cetak; cocokkan angka, label penyebut dan hasil filter. Buka laporan Mapping Area untuk DO dengan kecamatan FOA, kab/kota PMA di luar FOA, Kota Lain, dan coba DO dengan kecamatan yang tidak sesuai kab/kotanya. Hasil: DO tanpa area lengkap ditolak, laporan memisahkan FOA dan PMA tanpa kategori belum diisi; seluruh tim D1 teragregasi dengan benar, hanya V1/T1 untuk Supervisor, conversion hanya Akuisisi, CSV/PDF agregat konsisten dan tanpa data sensitif; periode/mode/dimensi tetap. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
 
 ### B02
 
