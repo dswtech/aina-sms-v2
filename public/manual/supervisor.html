@@ -12,7 +12,7 @@
 <div class="layout">
 <nav class="toc" aria-label="Daftar isi">
   <div class="brand"><span class="logo" aria-hidden="true">A</span> AIna DealDrive</div>
-  <p class="ver">Manual Supervisor · Versi 1.2.0</p>
+  <p class="ver">Manual Supervisor · Versi 1.3.0</p>
   <h2>Supervisor</h2>
   <ol>
     <li><a href="#akun">1. Masuk &amp; akun</a></li>
@@ -23,7 +23,7 @@
     <li><a href="#lead-baru">6. Membuat lead untuk Sales</a></li>
     <li><a href="#pic">7. Mengganti PIC Sales</a></li>
     <li><a href="#coaching">8. Memberi coaching</a></li>
-    <li><a href="#tahap">9. Tahap, DO, dan Delivery</a></li>
+    <li><a href="#tahap">9. Tahap dan DO</a></li>
     <li><a href="#kalender">10. Kalender tim</a></li>
     <li><a href="#target">11. Target &amp; Forecast</a></li>
     <li><a href="#rencana-target">12. Rencana Target Bulanan</a></li>
@@ -45,7 +45,7 @@
   <h1>Manual Supervisor</h1>
   <p>Panduan memantau pipeline tim, memberi coaching, dan mengelola target di AIna DealDrive.</p>
   <ul class="meta">
-    <li>Versi 1.2.0</li>
+    <li>Versi 1.3.0</li>
     <li>20 November 2026</li>
     <li>Berlaku untuk aplikasi v1.4.0 dan pembaruan sesudahnya</li>
     <li>Peran: Supervisor</li>
@@ -181,12 +181,12 @@
 </section>
 
 <section id="tahap">
-  <h2>9. Tahap, DO, dan Delivery</h2>
-  <p>Supervisor dapat mencatat aktivitas, menjadwalkan follow-up, mengubah tahap, mencatat DO, dan mengonfirmasi Delivery untuk transaksi timnya. Syarat setiap tahap sama untuk Sales dan Supervisor; lihat <a href="sales.html#detail">Manual Sales, bab 7</a> dan <a href="sales.html#tahap">bab 8</a>.</p>
+  <h2>9. Tahap dan DO</h2>
+  <p>Supervisor dapat mencatat aktivitas, menjadwalkan follow-up, mengubah tahap, dan mencatat DO untuk transaksi timnya. Syarat setiap tahap sama untuk Sales dan Supervisor; lihat <a href="sales.html#detail">Manual Sales, bab 7</a> dan <a href="sales.html#tahap">bab 8</a>.</p>
   <ul>
     <li>DO hanya dapat dicatat dari SPK setelah PO, DP, dan Unit dikonfirmasi.</li>
-    <li>Pembatalan DO hanya dapat dilakukan Admin dealer, sebelum Delivery, dengan alasan.</li>
-    <li>Setelah Delivery, tahap transaksi terkunci.</li>
+    <li>DO adalah tahap akhir; setelah DO, tahap transaksi terkunci.</li>
+    <li>Pembatalan DO hanya dapat dilakukan Admin dealer, pada bulan yang sama saat DO dicatat, dengan alasan.</li>
   </ul>
 </section>
 
@@ -259,7 +259,7 @@
   <p>Menu <span class="ui">Analisis</span> berisi empat laporan. Semuanya mengikuti cakupan tim Anda dan memakai <span class="ui">Rentang bulan</span> (Dari bulan – Sampai bulan).</p>
 
   <h3>Sumber &amp; Model</h3>
-  <p>Membandingkan sumber lead dan model kendaraan: jumlah, porsi, SPK, DO, Delivery, dan conversion (DO dibagi jumlah lead).</p>
+  <p>Membandingkan sumber lead dan model kendaraan: jumlah, porsi, SPK, DO, dan conversion (DO dibagi jumlah lead).</p>
   <ul>
     <li><span class="ui">Mode tanggal</span> <strong>Akuisisi</strong> memakai tanggal lead dibuat. <strong>Pencapaian</strong> memakai tanggal tahap sah: tanggal tahap yang gugur karena transaksi mundur tidak dihitung, termasuk untuk bulan sebelumnya.</li>
     <li>Di atas tabel ada grafik: ringkasan per tahap, alur dari sumber ke tahap terjauh, porsi sumber (donat), conversion per sumber, dan tahap per model (9 model teratas plus Lainnya). Pada mode Pencapaian, grafik alur dan conversion diganti grafik batang kejadian tahap.</li>
@@ -331,7 +331,7 @@
 </section>
 
 <footer>
-  <p>Manual Book AIna DealDrive · Versi 1.2.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Admin dealer Anda.</p>
+  <p>Manual Book AIna DealDrive · Versi 1.3.0 · Pertanyaan tentang penggunaan aplikasi dapat disampaikan kepada Admin dealer Anda.</p>
 </footer>
 </main>
 </div>
