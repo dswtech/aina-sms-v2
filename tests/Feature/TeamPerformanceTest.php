@@ -386,7 +386,14 @@ it('counts Monday to Saturday workdays for the dashboard pace', function () {
         ->where('dashboard.workdays.elapsed', 0));
     $this->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->where('targetPlans.0.members.0.period_workdays', 25)
-        ->where('targetPlans.0.members.0.remaining_workdays', 7));
+        ->where('targetPlans.0.members.0.remaining_workdays', 7)
+        // Pace badges per row are computed from these fields in the frontend.
+        ->has('dashboard.performance.0.target_units')
+        ->has('dashboard.performance.0.realization_units'));
+    // On Sunday today is not counted, so the frontend's remaining days stay total − elapsed.
+    $this->travelTo(CarbonImmutable::parse('2026-11-29 08:00', 'Asia/Jakarta'));
+    $this->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.workdays', ['elapsed' => 24, 'total' => 25]));
 });
 
 it('drills the missing closing month warning and forecast contributors into readable transactions', function () {

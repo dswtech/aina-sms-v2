@@ -10,14 +10,57 @@ import {
     type PerformanceRow,
     type ReportingProps,
 } from '@/components/team-performance';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
     chartMaximum,
     chartWidth,
+    monthPace,
+    rankByPace,
     rankPerformance,
+    type Pace,
 } from '@/lib/dashboard-charts';
 
 type DashboardData = ReportingProps['dashboard'];
+
+const rate = (value: number) =>
+    new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
+
+/** Status as text and colour; "Target belum ditetapkan" stays plain text. */
+export function PaceBadge({ pace }: { pace: Pace }) {
+    if (pace.status === 'none') return null;
+    return (
+        <Badge
+            data-pace={pace.status}
+            variant={
+                pace.status === 'behind'
+                    ? 'destructive'
+                    : pace.status === 'on'
+                      ? 'default'
+                      : 'secondary'
+            }
+        >
+            {pace.label}
+        </Badge>
+    );
+}
+
+/** Rate line; the forecast is never the basis, only realized DO units. */
+export function PaceLine({ pace }: { pace: Pace }) {
+    if (pace.status === 'none')
+        return <span data-pace-line>Target belum ditetapkan</span>;
+    if (pace.summary) return <span data-pace-line>{pace.summary}</span>;
+    return (
+        <span data-pace-line>
+            Butuh {rate(pace.needed!)}/hari (±{rate(pace.needed! * 6)}/minggu) ·
+            saat ini{' '}
+            {pace.current === null ? '—' : `${rate(pace.current)}/hari`} ·{' '}
+            {rate(pace.remainingUnits)} unit lagi, {pace.remainingDays} hari
+            kerja
+        </span>
+    );
+}
 
 function ComparisonBars({
     row,
@@ -117,6 +160,8 @@ export function PerformanceChart({
     title = team ? 'Kinerja per tim' : 'Kinerja per Sales',
     rowHref,
     pace = null,
+    workdays,
+    period,
 }: {
     rows: PerformanceRow[];
     team?: boolean;
@@ -124,7 +169,18 @@ export function PerformanceChart({
     title?: string;
     rowHref?: (row: PerformanceRow) => string;
     pace?: number | null;
+    workdays?: DashboardData['workdays'];
+    period?: string;
 }) {
+    const paceOf = (row: PerformanceRow) =>
+        monthPace(
+            row.target_units,
+            row.realization_units,
+            workdays,
+            period ?? '',
+        );
+    const showPace = showTarget && !!period;
+    const [order, setOrder] = useState<'realization' | 'pace'>('realization');
     // One row has nothing to rank or compare against.
     const single = rows.length === 1;
     const showTeams =
@@ -139,7 +195,9 @@ export function PerformanceChart({
                   (b.forecast_gap_units ?? -1e9) -
                       (a.forecast_gap_units ?? -1e9),
           )
-        : rankPerformance(rows);
+        : order === 'pace' && showPace
+          ? rankByPace(rows, paceOf)
+          : rankPerformance(rows);
     const visible = team || expanded ? sorted : sorted.slice(0, 5);
     const maximum = chartMaximum(
         rows.flatMap((row) => [
@@ -163,11 +221,30 @@ export function PerformanceChart({
                             : `${rows.length} ${team ? 'tim' : 'Sales'} · unit`}
                     </span>
                 </div>
+                {!team && !single && showPace && (
+                    <label className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        Urutkan
+                        <NativeSelect
+                            className="w-auto"
+                            value={order}
+                            onChange={(event) =>
+                                setOrder(event.target.value as typeof order)
+                            }
+                        >
+                            <option value="realization">
+                                Realisasi tertinggi
+                            </option>
+                            <option value="pace">Paling tertinggal</option>
+                        </NativeSelect>
+                    </label>
+                )}
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     {!single &&
                         (team
                             ? 'Bandingkan hasil dan estimasi setiap tim. '
-                            : 'Diurutkan dari realisasi, lalu forecast tertinggi. ')}
+                            : order === 'pace' && showPace
+                              ? 'Diurutkan dari yang paling tertinggal dari laju. '
+                              : 'Diurutkan dari realisasi, lalu forecast tertinggi. ')}
                     Forecast sudah mencakup realisasi.
                 </p>
                 <div
@@ -219,18 +296,23 @@ export function PerformanceChart({
                                         </span>
                                     )}
                                     <div className="min-w-0 flex-1">
-                                        <h3 className="text-sm font-medium break-words">
-                                            {rowHref ? (
-                                                <Link
-                                                    href={rowHref(row)}
-                                                    className="underline decoration-muted-foreground/40 underline-offset-4 hover:text-primary hover:decoration-primary pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
-                                                >
-                                                    {row.name}
-                                                </Link>
-                                            ) : (
-                                                row.name
+                                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                                            <h3 className="text-sm font-medium break-words">
+                                                {rowHref ? (
+                                                    <Link
+                                                        href={rowHref(row)}
+                                                        className="underline decoration-muted-foreground/40 underline-offset-4 hover:text-primary hover:decoration-primary pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                                                    >
+                                                        {row.name}
+                                                    </Link>
+                                                ) : (
+                                                    row.name
+                                                )}
+                                            </h3>
+                                            {showPace && (
+                                                <PaceBadge pace={paceOf(row)} />
                                             )}
-                                        </h3>
+                                        </div>
                                         {showTeams && row.team_name && (
                                             <p className="mt-1 text-xs text-muted-foreground">
                                                 {row.team_name}
@@ -253,6 +335,11 @@ export function PerformanceChart({
                                             showTarget={showTarget}
                                             pace={pace}
                                         />
+                                        {showPace && (
+                                            <p className="mt-1 text-right text-xs text-muted-foreground tabular-nums">
+                                                <PaceLine pace={paceOf(row)} />
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </li>

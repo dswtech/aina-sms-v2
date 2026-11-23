@@ -13,9 +13,12 @@ import { StageAchievementTable } from '@/components/stage-achievement-table';
 import { formatMonth } from '@/lib/calendar';
 import {
     ForecastContributors,
+    PaceBadge,
+    PaceLine,
     PerformanceChart,
     PipelineChart,
 } from '@/components/dashboard-charts';
+import { monthPace } from '@/lib/dashboard-charts';
 
 const gap = (value: number | null) =>
     value != null && value < 0
@@ -31,6 +34,12 @@ export default function Dashboard({
     const canViewManagementTarget =
         role === 'supervisor' || role === 'branch_manager';
     const pace = paceRatio(d.workdays);
+    const monthly = monthPace(
+        d.targetUnits,
+        d.realizationUnits,
+        d.workdays,
+        d.period,
+    );
     // A single team repeats the KPI strip; its benchmark details stay on the Target page.
     const showTeams = (d.teams?.length ?? 0) !== 1 || role !== 'supervisor';
     const metrics = [
@@ -93,13 +102,16 @@ export default function Dashboard({
                     <dl
                         className={`grid grid-cols-2 gap-px bg-border ${role === 'admin' ? '' : 'md:grid-cols-3 lg:grid-cols-5'}`}
                     >
-                        {metrics.map(([label, value, note]) => (
+                        {metrics.map(([label, value, note], index) => (
                             <div
                                 key={label}
                                 className="min-w-0 bg-card p-4 last:odd:col-span-2 sm:p-5 lg:last:odd:col-span-1"
                             >
-                                <dt className="text-sm text-muted-foreground">
-                                    {label}
+                                <dt className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                                    <span>{label}</span>
+                                    {index === 0 && role !== 'admin' && (
+                                        <PaceBadge pace={monthly} />
+                                    )}
                                 </dt>
                                 <dd className="mt-2 text-xl font-semibold break-words tabular-nums sm:mt-3 sm:text-2xl">
                                     {value}
@@ -107,6 +119,23 @@ export default function Dashboard({
                                 {note && (
                                     <dd className="mt-1 text-xs text-muted-foreground">
                                         {note}
+                                    </dd>
+                                )}
+                                {index === 0 && role !== 'admin' && (
+                                    <dd className="mt-1 text-xs text-muted-foreground tabular-nums">
+                                        <PaceLine pace={monthly} />
+                                        {monthly.status === 'none' &&
+                                            canManage && (
+                                                <>
+                                                    {' · '}
+                                                    <Link
+                                                        href={`/targets?period=${d.period.slice(0, 7)}`}
+                                                        className="font-medium text-primary hover:underline"
+                                                    >
+                                                        Kelola target
+                                                    </Link>
+                                                </>
+                                            )}
                                     </dd>
                                 )}
                             </div>
@@ -221,6 +250,8 @@ export default function Dashboard({
                                     team
                                     showTarget={canViewManagementTarget}
                                     pace={pace}
+                                    workdays={d.workdays}
+                                    period={d.period}
                                 />
                                 {role === 'branch_manager' && (
                                     <Link
@@ -260,6 +291,8 @@ export default function Dashboard({
                             rows={d.performance}
                             showTarget
                             pace={pace}
+                            workdays={d.workdays}
+                            period={d.period}
                             title={
                                 role === 'sales' ? 'Kinerja saya' : undefined
                             }
