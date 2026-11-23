@@ -46,7 +46,11 @@ export default function Dashboard({
         ...(role !== 'admin'
             ? [
                   [
-                      role === 'sales' ? 'Target Sales' : 'Target management',
+                      role === 'sales'
+                          ? 'Target Sales'
+                          : role === 'branch_manager'
+                            ? 'Target cabang'
+                            : 'Target tim',
                       amount(d.targetUnits),
                       pace !== null && d.targetUnits
                           ? `Seharusnya s.d. hari ini: ${amount(paceUnits(d.targetUnits, pace))}`
@@ -121,23 +125,25 @@ export default function Dashboard({
                                         {note}
                                     </dd>
                                 )}
-                                {index === 0 && role !== 'admin' && (
-                                    <dd className="mt-1 text-xs text-muted-foreground tabular-nums">
-                                        <PaceLine pace={monthly} />
-                                        {monthly.status === 'none' &&
-                                            canManage && (
-                                                <>
-                                                    {' · '}
-                                                    <Link
-                                                        href={`/targets?period=${d.period.slice(0, 7)}`}
-                                                        className="font-medium text-primary hover:underline"
-                                                    >
-                                                        Kelola target
-                                                    </Link>
-                                                </>
-                                            )}
-                                    </dd>
-                                )}
+                                {index === 0 &&
+                                    role !== 'admin' &&
+                                    role !== 'sales' && (
+                                        <dd className="mt-1 text-xs text-muted-foreground tabular-nums">
+                                            <PaceLine pace={monthly} />
+                                            {monthly.status === 'none' &&
+                                                canManage && (
+                                                    <>
+                                                        {' · '}
+                                                        <Link
+                                                            href={`/targets?period=${d.period.slice(0, 7)}`}
+                                                            className="font-medium text-primary hover:underline"
+                                                        >
+                                                            Kelola target
+                                                        </Link>
+                                                    </>
+                                                )}
+                                        </dd>
+                                    )}
                             </div>
                         ))}
                     </dl>
@@ -293,6 +299,9 @@ export default function Dashboard({
                             pace={pace}
                             workdays={d.workdays}
                             period={d.period}
+                            defaultOrder={
+                                role === 'supervisor' ? 'pace' : 'realization'
+                            }
                             title={
                                 role === 'sales' ? 'Kinerja saya' : undefined
                             }

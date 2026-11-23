@@ -424,18 +424,36 @@ async function dashboardLayout(page) {
                                 kpi.includes('% dari target'),
                             'KPI shows pace and achievement: ' + role,
                         );
-                        // Fixture: Sales 3/6 is behind, managers 13/16 are on pace (19 of 25 workdays).
+                        // Fixture: Sales 3/6 is slightly behind, managers 13/16 are on pace (19 of 25 workdays).
                         const [status, label] =
                             role === 'sales'
-                                ? ['behind', 'Tertinggal']
+                                ? ['slipping', 'Sedikit tertinggal']
                                 : ['on', 'Sesuai laju'];
                         assert(
                             (await page
                                 .locator(`dl [data-pace="${status}"]`)
                                 .first()
-                                .innerText()) === label &&
-                                /Butuh .+\/hari .* saat ini .+\/hari/.test(kpi),
+                                .innerText()) === label,
                             'KPI shows explicit pace status: ' + role,
+                        );
+                        // Sales reads the rate once, in "Kinerja saya"; managers read it on the tile.
+                        const rateText =
+                            role === 'sales'
+                                ? await page
+                                      .getByRole('region', {
+                                          name: 'Kinerja saya',
+                                      })
+                                      .innerText()
+                                : kpi;
+                        assert(
+                            /Butuh .+\/hari .*saat ini .+\/hari/.test(
+                                rateText,
+                            ) &&
+                                rateText.includes('/minggu') &&
+                                (role !== 'sales' ||
+                                    !/Butuh .+\/hari/.test(kpi)),
+                            'Pace line placement, weekly rate with 7 days left: ' +
+                                role,
                         );
                     }
                     if (role === 'supervisor') {
@@ -515,7 +533,7 @@ async function dashboardLayout(page) {
                     assert(
                         (await page
                             .getByRole('main')
-                            .getByText('Target management', { exact: true })
+                            .getByText(/^Target (tim|cabang)$/)
                             .count()) >
                             0 ===
                             ['supervisor', 'branch_manager'].includes(role),

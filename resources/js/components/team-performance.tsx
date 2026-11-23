@@ -352,9 +352,7 @@ export function PerformanceTable({
     const showManagement =
         !team || role === 'supervisor' || role === 'branch_manager';
     const columns = [
-        ...(showManagement
-            ? [team ? 'Target management' : 'Target personal']
-            : []),
+        ...(showManagement ? [team ? 'Target tim' : 'Target personal'] : []),
         ...(team
             ? [
                   'Benchmark tim',
