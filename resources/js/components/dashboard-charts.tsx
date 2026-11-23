@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { StageBadge } from '@/components/stage-badge';
@@ -5,6 +6,7 @@ import {
     amount,
     PerformanceTable,
     stageLabel,
+    paceUnits,
     type PerformanceRow,
     type ReportingProps,
 } from '@/components/team-performance';
@@ -21,11 +23,17 @@ function ComparisonBars({
     row,
     maximum,
     showTarget,
+    pace,
 }: {
     row: PerformanceRow;
     maximum: number;
     showTarget: boolean;
+    pace: number | null;
 }) {
+    const expected =
+        showTarget && pace !== null && row.target_units
+            ? paceUnits(row.target_units, pace)
+            : null;
     return (
         <div className="mt-3">
             <dl className="grid gap-2">
@@ -38,7 +46,7 @@ function ComparisonBars({
                     {
                         label: 'Forecast',
                         value: row.forecast_units,
-                        color: 'bg-blue-300',
+                        color: 'bg-forecast',
                     },
                 ].map(({ label, value, color }) => (
                     <div
@@ -58,6 +66,14 @@ function ComparisonBars({
                                     width: `${chartWidth(value, maximum)}%`,
                                 }}
                             />
+                            {expected !== null && (
+                                <span
+                                    className="absolute -top-0.5 h-3 w-0.5 -translate-x-1/2 bg-muted-foreground"
+                                    style={{
+                                        left: `${chartWidth(expected, maximum)}%`,
+                                    }}
+                                />
+                            )}
                             {showTarget && row.target_units !== null && (
                                 <span
                                     className="absolute -top-1 h-4 w-0.5 -translate-x-1/2 bg-foreground"
@@ -80,6 +96,14 @@ function ComparisonBars({
                         {amount(row.target_units)}
                     </span>
                     {row.target_units !== null && ' unit'}
+                    {expected !== null && (
+                        <>
+                            {' · '}seharusnya s.d. hari ini{' '}
+                            <span className="font-medium text-foreground tabular-nums">
+                                {amount(expected)}
+                            </span>
+                        </>
+                    )}
                 </p>
             )}
         </div>
@@ -90,13 +114,32 @@ export function PerformanceChart({
     rows,
     team = false,
     showTarget,
+    title = team ? 'Kinerja per tim' : 'Kinerja per Sales',
+    rowHref,
+    pace = null,
 }: {
     rows: PerformanceRow[];
     team?: boolean;
     showTarget: boolean;
+    title?: string;
+    rowHref?: (row: PerformanceRow) => string;
+    pace?: number | null;
 }) {
+    // One row has nothing to rank or compare against.
+    const single = rows.length === 1;
+    const showTeams =
+        !team && new Set(rows.map((row) => row.team_name)).size > 1;
     const [expanded, setExpanded] = useState(false);
-    const sorted = team ? rows : rankPerformance(rows);
+    // Teams most behind their forecast come first; inactive teams and missing gaps last.
+    const sorted = team
+        ? [...rows].sort(
+              (a, b) =>
+                  Number(a.is_active === false) -
+                      Number(b.is_active === false) ||
+                  (b.forecast_gap_units ?? -1e9) -
+                      (a.forecast_gap_units ?? -1e9),
+          )
+        : rankPerformance(rows);
     const visible = team || expanded ? sorted : sorted.slice(0, 5);
     const maximum = chartMaximum(
         rows.flatMap((row) => [
@@ -105,7 +148,6 @@ export function PerformanceChart({
             showTarget ? row.target_units : null,
         ]),
     );
-    const title = team ? 'Kinerja per tim' : 'Kinerja per Sales';
     return (
         <section
             aria-label={title}
@@ -116,13 +158,16 @@ export function PerformanceChart({
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="text-base font-semibold">{title}</h2>
                     <span className="text-xs text-muted-foreground">
-                        {rows.length} {team ? 'tim' : 'Sales'} · unit
+                        {single
+                            ? 'unit'
+                            : `${rows.length} ${team ? 'tim' : 'Sales'} · unit`}
                     </span>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    {team
-                        ? 'Bandingkan hasil dan estimasi setiap tim.'
-                        : 'Diurutkan dari realisasi, lalu forecast tertinggi.'}{' '}
+                    {!single &&
+                        (team
+                            ? 'Bandingkan hasil dan estimasi setiap tim. '
+                            : 'Diurutkan dari realisasi, lalu forecast tertinggi. ')}
                     Forecast sudah mencakup realisasi.
                 </p>
                 <div
@@ -134,13 +179,19 @@ export function PerformanceChart({
                         Realisasi
                     </span>
                     <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-4 rounded-sm bg-blue-300" />
+                        <span className="h-2 w-4 rounded-sm bg-forecast" />
                         Forecast
                     </span>
                     {showTarget && (
                         <span className="inline-flex items-center gap-2">
                             <span className="h-3 w-0.5 bg-foreground" />
                             {team ? 'Target management' : 'Target personal'}
+                        </span>
+                    )}
+                    {showTarget && pace !== null && (
+                        <span className="inline-flex items-center gap-2">
+                            <span className="h-2.5 w-0.5 bg-muted-foreground" />
+                            Seharusnya s.d. hari ini
                         </span>
                     )}
                 </div>
@@ -162,15 +213,29 @@ export function PerformanceChart({
                         {visible.map((row, index) => (
                             <li key={row.id} className="px-5 py-4">
                                 <div className="flex items-start gap-3">
-                                    {!team && (
+                                    {!team && !single && (
                                         <span className="w-4 shrink-0 pt-0.5 text-xs text-muted-foreground tabular-nums">
                                             {index + 1}.
                                         </span>
                                     )}
                                     <div className="min-w-0 flex-1">
                                         <h3 className="text-sm font-medium break-words">
-                                            {row.name}
+                                            {rowHref ? (
+                                                <Link
+                                                    href={rowHref(row)}
+                                                    className="underline decoration-muted-foreground/40 underline-offset-4 hover:text-primary hover:decoration-primary pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                                                >
+                                                    {row.name}
+                                                </Link>
+                                            ) : (
+                                                row.name
+                                            )}
                                         </h3>
+                                        {showTeams && row.team_name && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {row.team_name}
+                                            </p>
+                                        )}
                                         {row.is_active === false && (
                                             <p className="mt-1 text-xs text-muted-foreground">
                                                 Tim nonaktif
@@ -186,6 +251,7 @@ export function PerformanceChart({
                                             row={row}
                                             maximum={maximum}
                                             showTarget={showTarget}
+                                            pace={pace}
                                         />
                                     </div>
                                 </div>
@@ -293,8 +359,10 @@ export function PipelineChart({
 
 export function ForecastContributors({
     contributors,
+    hideSales = false,
 }: {
     contributors: DashboardData['contributors'];
+    hideSales?: boolean;
 }) {
     const maximum = chartMaximum(contributors.map((row) => row.weighted_value));
     return (
@@ -320,13 +388,22 @@ export function ForecastContributors({
                     {contributors.map((row) => (
                         <li key={row.public_id} className="p-5 pt-4">
                             <p className="text-sm font-medium break-words">
-                                {row.vehicle_model}
+                                {row.url ? (
+                                    <Link
+                                        href={row.url}
+                                        className="underline decoration-muted-foreground/40 underline-offset-4 hover:text-primary hover:decoration-primary pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                                    >
+                                        {row.vehicle_model}
+                                    </Link>
+                                ) : (
+                                    row.vehicle_model
+                                )}
                             </p>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <StageBadge stage={row.stage_label}>
                                     {row.stage_label}
                                 </StageBadge>
-                                {row.sales_name && (
+                                {row.sales_name && !hideSales && (
                                     <span className="text-xs break-words text-muted-foreground">
                                         {row.sales_name}
                                     </span>

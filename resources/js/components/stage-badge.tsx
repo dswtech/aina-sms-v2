@@ -26,6 +26,8 @@ export function StageBadge({
         <Badge
             variant="outline"
             className={cn(
+                // The Mira badge default is 10px; stage names stay on the 12px floor of the type scale.
+                'text-xs',
                 stageColors[stage.toLowerCase().replaceAll(' ', '_')],
                 className,
             )}

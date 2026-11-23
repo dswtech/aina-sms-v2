@@ -5,8 +5,11 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import InputError from '@/components/input-error';
+import { formatMonth } from '@/lib/calendar';
+import { formatRelativeTime } from '@/lib/notifications';
 import { StageBadge } from '@/components/stage-badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -30,6 +33,7 @@ export type PerformanceRow = Metrics & {
     id: number | string;
     name: string;
     username?: string;
+    team_name?: string | null;
     is_current_member?: boolean;
     is_active?: boolean;
     sales_target_units?: number | null;
@@ -46,16 +50,22 @@ export type PerformanceRow = Metrics & {
 type Priority = {
     id?: string;
     public_id?: string;
-    title?: string;
-    vehicle_model?: string;
-    sales_name?: string;
+    customer_name?: string | null;
+    vehicle_model?: string | null;
+    sales_name?: string | null;
     stage?: string;
+    last_activity_at?: string | null;
+    author_name?: string | null;
+    excerpt?: string;
+    estimated_value?: number | null;
+    expected_closing_month?: string | null;
     url: string;
 };
 export type ReportingProps = {
     dashboard: {
         period: string;
         targetUnits: number | null;
+        workdays: { elapsed: number; total: number };
         salesTargetUnits: number | null;
         salesTargetsMissing: number;
         teamTargetsMissing: number;
@@ -76,12 +86,14 @@ export type ReportingProps = {
             vehicle_model: string;
             stage_label: string;
             sales_name: string | null;
+            url?: string | null;
             weighted_value: number;
         }[];
         performance: PerformanceRow[];
         teams: PerformanceRow[];
         unassignedTeam: Metrics | null;
         stageAchievement?: StageAchievementData | null;
+        priorityTotals?: { stagnant: number; closing: number; unread: number };
         priorities: {
             stagnant: Priority[];
             closing: Priority[];
@@ -107,6 +119,22 @@ export function stageLabel(stage: string) {
         )[stage] ?? stage
     );
 }
+
+/** Share of the month's Monday–Saturday workdays already started; null once the month is over or before it starts. */
+export function paceRatio(workdays?: { elapsed: number; total: number }) {
+    return workdays && workdays.total && workdays.elapsed < workdays.total
+        ? workdays.elapsed / workdays.total
+        : null;
+}
+
+/** Units the target expects by today, one decimal. */
+export const paceUnits = (target: number, ratio: number) =>
+    Math.round(target * ratio * 10) / 10;
+
+export const percentOf = (value: number | null, target: number | null) =>
+    value == null || !target
+        ? null
+        : `${Math.round((value / target) * 100)}% dari target`;
 
 export function amount(
     value: number | null | undefined,
@@ -153,7 +181,14 @@ export function PeriodPicker({ period }: { period: string }) {
                 variant="secondary"
                 disabled={form.processing}
             >
-                Tampilkan
+                {form.processing ? (
+                    <>
+                        <Spinner aria-hidden="true" />
+                        Memuat
+                    </>
+                ) : (
+                    'Tampilkan'
+                )}
             </Button>
         </form>
     );
@@ -547,12 +582,20 @@ export function PerformanceTable({
     );
 }
 
+const rupiah = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+});
+
 export function PriorityLists({
     priorities,
-    showCounts = false,
+    totals,
+    hideSales = false,
 }: {
     priorities: ReportingProps['dashboard']['priorities'];
-    showCounts?: boolean;
+    totals?: ReportingProps['dashboard']['priorityTotals'];
+    hideSales?: boolean;
 }) {
     const groups = [
         ['stagnant', 'Transaksi stagnan'],
@@ -560,60 +603,109 @@ export function PriorityLists({
         ['closing', 'Peluang closing periode ini'],
     ] as const;
     return (
-        <div className="grid min-w-0 gap-5 lg:grid-cols-3">
-            {groups.map(([key, title]) => (
-                <section
-                    key={key}
-                    className="min-w-0 overflow-hidden rounded-xl border bg-card"
-                >
-                    <h2 className="border-b p-5 text-base font-semibold">
-                        {title}
-                        {showCounts && (
+        <div className="grid min-w-0 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {groups.map(([key, title]) => {
+                const items = priorities?.[key] ?? [];
+                const total = Math.max(totals?.[key] ?? 0, items.length);
+                return (
+                    <section
+                        key={key}
+                        className="min-w-0 overflow-hidden rounded-xl border bg-card"
+                    >
+                        <h3 className="border-b p-5 text-base font-semibold">
+                            {title}
                             <span className="ml-2 text-sm font-normal text-muted-foreground">
-                                ({priorities?.[key]?.length ?? 0})
+                                {total > items.length
+                                    ? `${items.length} dari ${total}`
+                                    : `(${items.length})`}
                             </span>
-                        )}
-                    </h2>
-                    {!priorities?.[key]?.length ? (
-                        <p className="p-5 text-sm text-muted-foreground">
-                            Tidak ada tindakan pada daftar ini.
-                        </p>
-                    ) : (
-                        <ol className="divide-y">
-                            {priorities[key].map((item) => (
-                                <li
-                                    key={item.id ?? item.public_id}
-                                    className="striped-row flex items-center gap-3 px-4 py-2"
-                                >
-                                    <Link
-                                        href={item.url}
-                                        className="inline-flex min-h-11 min-w-0 flex-1 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                                    >
-                                        <span
-                                            className="truncate"
-                                            title={
-                                                item.title ?? item.vehicle_model
-                                            }
+                        </h3>
+                        {!items.length ? (
+                            <p className="p-5 text-sm text-muted-foreground">
+                                Tidak ada tindakan pada daftar ini.
+                            </p>
+                        ) : (
+                            <ol className="divide-y">
+                                {items.map((item) => {
+                                    const name =
+                                        item.customer_name ??
+                                        item.vehicle_model ??
+                                        'Transaksi';
+                                    const detail = [
+                                        hideSales ? null : item.sales_name,
+                                        key === 'unread'
+                                            ? [item.author_name, item.excerpt]
+                                                  .filter(Boolean)
+                                                  .join(': ')
+                                            : key === 'stagnant' &&
+                                                item.last_activity_at
+                                              ? `Aktivitas terakhir ${formatRelativeTime(item.last_activity_at)}`
+                                              : key === 'closing'
+                                                ? [
+                                                      item.estimated_value !=
+                                                      null
+                                                          ? rupiah.format(
+                                                                item.estimated_value,
+                                                            )
+                                                          : null,
+                                                      item.expected_closing_month
+                                                          ? `closing ${formatMonth(item.expected_closing_month)}`
+                                                          : null,
+                                                  ]
+                                                      .filter(Boolean)
+                                                      .join(' · ')
+                                                : null,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ');
+                                    return (
+                                        <li
+                                            key={item.id ?? item.public_id}
+                                            className="striped-row flex items-center gap-3 px-4 py-2"
                                         >
-                                            {item.title ?? item.vehicle_model}
-                                        </span>
-                                    </Link>
-                                    {item.stage && (
-                                        <StageBadge stage={item.stage}>
-                                            {stageLabel(item.stage)}
-                                        </StageBadge>
-                                    )}
-                                    {item.sales_name && (
-                                        <span className="shrink-0 text-xs text-muted-foreground">
-                                            {item.sales_name}
-                                        </span>
-                                    )}
-                                </li>
-                            ))}
-                        </ol>
-                    )}
-                </section>
-            ))}
+                                            <Link
+                                                href={item.url}
+                                                className="group grid min-h-11 min-w-0 flex-1 content-center py-1 text-sm"
+                                            >
+                                                <span className="truncate font-medium text-foreground underline-offset-4 group-hover:text-primary group-hover:underline">
+                                                    {name}
+                                                    {item.customer_name &&
+                                                        item.vehicle_model && (
+                                                            <span className="font-normal text-muted-foreground">
+                                                                {' · '}
+                                                                {
+                                                                    item.vehicle_model
+                                                                }
+                                                            </span>
+                                                        )}
+                                                </span>
+                                                {detail && (
+                                                    <span className="line-clamp-2 text-xs text-muted-foreground">
+                                                        {detail}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                            {item.stage && (
+                                                <StageBadge stage={item.stage}>
+                                                    {stageLabel(item.stage)}
+                                                </StageBadge>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        )}
+                        {key === 'stagnant' && total > items.length && (
+                            <Link
+                                href="/transactions?tab=stagnant&date_from=&date_to="
+                                className="flex min-h-11 items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            >
+                                Lihat semua {total} transaksi stagnan
+                            </Link>
+                        )}
+                    </section>
+                );
+            })}
         </div>
     );
 }

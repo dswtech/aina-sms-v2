@@ -294,8 +294,10 @@ async function targetRoleMetrics(page) {
                                 }),
                             });
                         assert(
-                            (await forecast.locator('dd').innerText()) ===
-                                (isSales ? '1,5' : '3'),
+                            (await forecast
+                                .locator('dd')
+                                .first()
+                                .innerText()) === (isSales ? '1,5' : '3'),
                             `Dashboard forecast: ${role}`,
                         );
                     }

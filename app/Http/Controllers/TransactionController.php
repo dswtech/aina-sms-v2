@@ -100,6 +100,7 @@ class TransactionController extends Controller
             'region_code' => ['nullable', 'string', 'max:16'],
             'district_code' => ['nullable', 'string', 'max:16'],
             'supervisor_id' => ['nullable', 'integer'],
+            'closing_month' => ['nullable', 'in:missing'],
         ]);
 
         $search = trim((string) $request->input('search', ''));
@@ -165,6 +166,11 @@ class TransactionController extends Controller
             $query->where('sales_id', $salesId);
         }
 
+        // Same set as the dashboard warning: open transactions not yet in any forecast month.
+        if (($validated['closing_month'] ?? null) === 'missing') {
+            $query->whereNull('expected_closing_month')->whereNotIn('current_stage', PipelineStage::closedValues());
+        }
+
         match ($tab) {
             'active' => $query->whereNotIn('current_stage', PipelineStage::closedValues()),
             'stagnant' => $query->stagnant(),
@@ -180,6 +186,7 @@ class TransactionController extends Controller
             'source' => $validated['source'] ?? null, 'source_channel' => $validated['source_channel'] ?? null,
             'customer_name' => $validated['customer_name'] ?? null,
             'region_code' => $validated['region_code'] ?? null, 'district_code' => $validated['district_code'] ?? null,
+            'closing_month' => $validated['closing_month'] ?? null,
         ]];
     }
 

@@ -4,26 +4,27 @@
 
 ## Karakter
 
-Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melalui urutan, ukuran, dan satu aksen biru; bukan melalui dekorasi.
+Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melalui urutan, ukuran, dan satu warna aksen; bukan melalui dekorasi.
 
 ## Struktur
 
-- Desktop: sidebar berlabel sekitar 228px dan lembar kerja putih di dalam frame biru-abu sangat muda.
+- Desktop: sidebar berlabel sekitar 228px dan lembar kerja putih; sidebar memakai surface abu sangat muda (`--sidebar`).
 - Halaman data (Dashboard, Target, Transaksi, Pelanggan, Analisis, Admin pengguna dan tim) memakai batas konten 1536px (`max-w-screen-2xl`); form dan pengaturan tetap sempit (5xl/6xl).
-- Tablet: sidebar dilipat; navigasi dan konten tetap mempertahankan urutan desktop.
+- Tablet (768–1023px): sidebar dibuka sebagai rail ikon saat halaman dimuat (`app-shell.tsx`), tombol sidebar tetap dapat membukanya; navigasi dan konten mempertahankan urutan desktop. Di dashboard, daftar prioritas 2 kolom dan KPI 3 kolom mulai `md`. Link teks di baris data memakai target 44px pada pointer kasar (`pointer-coarse:min-h-11`).
 - Mobile: empat tujuan utama termasuk “Lainnya”; detail transaksi menjadi full-screen sheet.
-- Sales memulai dari antrean waktu. Role lain memulai dari dashboard operasional.
+- Sales dan Supervisor memulai dari dashboard yang dibuka dengan Prioritas tindak lanjut, lalu KPI dan analitik. Branch Manager memulai dari KPI dan kinerja lintas tim.
 
 ## Token visual
 
-- Ground: `#e9f0f8`.
-- Surface: `#ffffff`.
-- Ink: `#0f172a`.
-- Secondary ink: `#526175`.
-- Accent/action: `#1769e0`; dark accent text: `#0f4faa`.
-- Border: `#dbe4f0`; control border: `#c4d0df`.
-- Negative: `#b42318`; warning: `#92400e`; positive: `#08783e`.
-- Font: system sans-serif; scale utama 12/14/16/24px.
+Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; nilai di bawah adalah tema terang.
+
+- Background dan surface: putih (`--background`, `--card`); sidebar `oklch(0.985 0 0)`.
+- Ink: `oklch(0.145 0.008 326)`; secondary ink (`--muted-foreground`): `oklch(0.542 0.034 322.5)`.
+- Muted surface dan hover (`--muted`, `--accent`): `oklch(0.96 0.003 325.6)`; border/input: `oklch(0.922 0.005 325.62)`.
+- Accent/action (`--primary`) dipilih pengguna lewat menu akun (`use-color.tsx`): Oranye default (`#c2410c` terang, `#fb923c` gelap), atau Biru, Hijau, Ungu, Merah, Teal. Komponen tidak boleh menulis warna aksen langsung; selalu turunkan dari `--primary`/`--accent`.
+- Forecast (`--forecast`, `bg-forecast`): campuran 50% `--primary` dengan `--card`, sehingga mengikuti aksen dan tema.
+- Negative (`--destructive`): `oklch(0.577 0.245 27.325)`.
+- Font: Inter Variable; scale utama 12/14/16/24px.
 - Radius: 8px untuk kontrol, 12px untuk panel, 14px untuk dialog.
 
 ## Komponen
@@ -35,7 +36,7 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 - Combobox memakai fokus pada header pencarian, tanpa ring kotak bersarang; opsi aktif combobox/select memakai muted dengan teks foreground. Opsi desktop minimum 36px dan label/hint bertingkat; opsi sentuh tetap mengikuti target 44px.
 - Tombol/link di sel aksi tabel memakai `table-actions`: bentuk terlihat 32px, teks 12px, border halus tanpa shadow, dengan area klik/fokus minimal 44px. Hover tetap memakai accent.
 - Area filter Pelanggan, Transaksi, Admin pengguna dan Analisis memakai panel bersama yang awalnya terbuka, dengan tombol Sembunyikan/Tampilkan filter dan ringkasan konteks. Melipat panel mempertahankan nilai/draft dan URL, menutup popup di dalamnya, serta mengeluarkan field tersembunyi dari urutan Tab. Keadaan lipat tidak disimpan antar reload.
-- Baris tabel data dan list/kartu mobile penggantinya memakai `striped-row`: baris pertama surface (`--card`), kedua muted biru-abu (`--muted`), berulang dan dimulai ulang pada setiap hasil filter/halaman. Token mengikuti tema terang/gelap; hover memakai accent. Header, empty state, timeline, komentar, dan form tidak ikut pola; warna status dan fokus tetap dipertahankan.
+- Baris tabel data dan list/kartu mobile penggantinya memakai `striped-row`: baris pertama surface (`--card`), kedua muted (`--muted`), berulang dan dimulai ulang pada setiap hasil filter/halaman. Token mengikuti tema terang/gelap; hover memakai accent. Header, empty state, timeline, komentar, dan form tidak ikut pola; warna status dan fokus tetap dipertahankan.
 - Status memakai tint pucat dengan teks gelap; warna bukan satu-satunya pembeda.
 - Badge tahap memakai satu komponen bersama: Lead slate, Prospect sky, Hot Prospect amber, SPK violet, DO indigo, dan Lost rose. Tema gelap memakai tint gelap dengan teks terang; nama tahap selalu ditampilkan dan pasangan teks/latar harus memenuhi 4,5:1.
 - Lost pada tema gelap memakai burgundy redup: latar `#30252c`, border `#60434d`, teks `#dfb7c2`; saturasi latar/border rendah agar tidak menyala di tabel gelap, dengan kontras teks sekitar 8,19:1. Palet Lost tema terang tetap.
@@ -46,15 +47,19 @@ Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melal
 
 ### Dashboard analitik
 
-- Setelah KPI dan catatan periode, dashboard memakai grid 2:1 mulai 1280px: kinerja tim berdampingan dengan distribusi pipeline, lalu ranking Sales dengan kontributor forecast. Di bawah 1280px panel bertumpuk; Sales memakai kinerja personal tanpa panel lintas tim.
-- Realisasi dan forecast memakai dua batang sejajar, biru solid dan biru muda, pada skala bersama per panel. Forecast sudah mencakup realisasi. Target ditandai garis dengan angka terlihat sesuai hak akses; nilai di atas target tidak dipotong. Target belum ditetapkan dan forecast tidak tersedia mempunyai label tersendiri.
-- Ranking awal menampilkan lima Sales menurut realisasi, forecast, lalu nama; tombol 44px membuka seluruh Sales. Semua angka lama tetap tersedia dalam disclosure rincian yang dapat dibuka dengan keyboard. Distribusi tujuh tahap tidak dilabeli sebagai conversion funnel.
-- Kontributor forecast menampilkan perbandingan nilai rupiah berbobot. Prioritas tindak lanjut menampilkan jumlah item yang sedang terlihat; peringatan stagnan berada di dekat daftar. Hak akses serta arti periode tetap mengikuti PRD dan server.
+- Untuk Supervisor dan Sales, Prioritas tindak lanjut berada tepat di bawah header, sebelum KPI. Setiap item menyebut pelanggan dan kendaraan, lalu baris kedua berisi Sales (disembunyikan bagi Sales sendiri), aktivitas terakhir untuk item stagnan, atau penulis dan cuplikan untuk komentar. Judul item memakai warna teks; aksen hanya saat hover/fokus.
+- Pada bulan berjalan, tile target menampilkan "Seharusnya s.d. hari ini: N" dan tile realisasi/forecast menampilkan "N% dari target" (DSH-07). Batang kinerja memberi tanda pace pendek `bg-muted-foreground` di samping tanda target `bg-foreground`; legenda dan baris "Target … · seharusnya s.d. hari ini …" menyebutnya dengan teks. Tim diurutkan dari gap forecast terbesar; tim nonaktif di akhir.
+- KPI memakai grid 2 kolom di ponsel dan 5 kolom mulai `lg`. Gap negatif ditulis sebagai angka positif dengan keterangan "Target terlampaui". Peringatan data tetap terlihat; definisi masuk disclosure "Cara membaca angka".
+- Panel yang hanya berisi satu baris tidak menampilkan peringkat atau hitungan; Sales melihat "Kinerja saya". "Transaksi tanpa tim" hanya tampil bila ada nilai. Ranking menampilkan nama tim bila berisi lebih dari satu tim.
+- Setelah KPI dan catatan periode, dashboard memakai dua kolom independen 2:1 mulai 1280px: kiri kinerja tim lalu ranking Sales (Sales: "Kinerja saya"), kanan distribusi pipeline lalu kontributor forecast. Supervisor dengan satu tim tidak melihat panel tim karena angkanya sama dengan KPI; benchmark tim ada di halaman Target. Di bawah 1280px panel bertumpuk mengikuti urutan itu. Kontributor tidak menampilkan nama Sales bagi Sales itu sendiri.
+- Realisasi dan forecast memakai dua batang sejajar, `bg-primary` solid dan `bg-forecast` lebih muda, pada skala bersama per panel; label Realisasi/Forecast selalu tertulis sehingga warna bukan satu-satunya pembeda. Forecast sudah mencakup realisasi. Target ditandai garis dengan angka terlihat sesuai hak akses; nilai di atas target tidak dipotong. Target belum ditetapkan dan forecast tidak tersedia mempunyai label tersendiri.
+- Ranking awal menampilkan lima Sales menurut realisasi, forecast, lalu nama; tombol 44px membuka seluruh Sales. Semua angka lama tetap tersedia dalam disclosure rincian yang dapat dibuka dengan keyboard. Distribusi enam tahap tidak dilabeli sebagai conversion funnel.
+- Kontributor forecast menampilkan perbandingan nilai rupiah berbobot. Judul daftar stagnan menampilkan "N dari total" bila total lebih besar dari item yang terlihat. Hak akses serta arti periode tetap mengikuti PRD dan server.
 
 ### Pola umum
 
 - Target sentuh minimum 44×44px.
-- Focus ring biru terlihat dan tidak tertutup sticky navigation.
+- Focus ring (`--ring`) terlihat dan tidak tertutup sticky navigation.
 - Semua dialog dapat ditutup dengan Escape dan mengembalikan focus ke pemicu.
 - Filter dan posisi daftar dipertahankan ketika detail ditutup.
 - `prefers-reduced-motion` menghapus perpindahan non-esensial.

@@ -14,7 +14,9 @@ use App\Models\TeamTargetAllocation;
 use App\Models\User;
 use App\Support\ReportingPeriod;
 use App\Support\TargetUnits;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use stdClass;
 
 class TeamPerformance
@@ -31,7 +33,7 @@ class TeamPerformance
         $teamIds = $teams->modelKeys();
         $isBranchManager = $actor->role === UserRole::BranchManager;
         $dealsQuery = DealTransaction::query()->visibleInReportsTo($actor)
-            ->select(['id', 'public_id', 'team_id', 'sales_id', 'current_stage', 'vehicle_model', 'estimated_value', 'expected_closing_month', 'last_activity_at', 'created_at'])
+            ->select(['id', 'public_id', 'team_id', 'sales_id', 'customer_id', 'current_stage', 'vehicle_model', 'estimated_value', 'expected_closing_month', 'last_activity_at', 'created_at'])
             ->selectRaw('case when expected_closing_month >= ? and expected_closing_month < ? then 1 else 0 end as closing_in_period', [
                 $period.'-01', $end->setTimezone('Asia/Jakarta')->toDateString(),
             ])
@@ -113,6 +115,7 @@ class TeamPerformance
         $rowUsers = $users->concat($allocations->pluck('user'))->concat($dealSales)->unique('id')->sortBy('name');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
+            'team_name' => $teams->firstWhere('id', $memberships->firstWhere('user_id', $sales->id)?->team_id)?->name,
             'is_current_member' => $users->contains('id', $sales->id),
         ], $this->metrics($dealsBySales->get($sales->id, collect()), $personalUnits->get($sales->id), $historical)))->values()->all();
         $closing = $historical ? collect() : $deals->filter(function (DealTransaction|stdClass $deal): bool {
@@ -120,32 +123,39 @@ class TeamPerformance
 
             return $inPeriod && ! $this->stage($deal)->isClosed();
         });
+        $visibleIds = $isBranchManager ? collect() : DealTransaction::query()->visibleTo($actor)->pluck('id')->flip();
         $contributors = $closing
             ->sortByDesc(fn (DealTransaction|stdClass $deal): float => (float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$this->stage($deal)->value, 0))
             ->take(5)->map(fn (DealTransaction|stdClass $deal): array => [
                 'public_id' => $deal->public_id, 'vehicle_model' => $deal->vehicle_model, 'stage_label' => $this->stage($deal)->label(),
-                'sales_name' => $dealSales->get($deal->sales_id)?->name, 'weighted_value' => round((float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$this->stage($deal)->value, 0), 2),
+                'sales_name' => $dealSales->get($deal->sales_id)?->name,
+                // Branch Managers never receive a transaction link (sanitized drilldown only).
+                ...($isBranchManager ? [] : ['url' => $visibleIds->has($deal->id) ? route('transactions.coaching', $deal->public_id, false) : null]),
+                'weighted_value' => round((float) ($deal->estimated_value ?? 0) * (float) config('forecast.weights.'.$this->stage($deal)->value, 0), 2),
             ])->values()->all();
         $priorities = ['stagnant' => [], 'closing' => [], 'unread' => []];
+        $priorityTotals = ['stagnant' => 0, 'closing' => 0, 'unread' => 0];
         if ($isBranchManager) {
             $stagnantCount = DealTransaction::query()->visibleInReportsTo($actor)->stagnant()->count();
         } else {
             $stagnant = $operationalDeals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
             $stagnantCount = $stagnant->count();
-            $visibleIds = DealTransaction::query()->visibleTo($actor)->pluck('id')->flip();
             $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
                 ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             if (! $historical) {
-                $priorities['closing'] = $closing->filter(fn (DealTransaction|stdClass $deal): bool => $deal instanceof DealTransaction && $visibleIds->has($deal->id))
+                $closingVisible = $closing->filter(fn (DealTransaction|stdClass $deal): bool => $deal instanceof DealTransaction && $visibleIds->has($deal->id));
+                $priorityTotals['closing'] = $closingVisible->count();
+                $priorities['closing'] = $closingVisible
                     ->sortByDesc(fn (DealTransaction|stdClass $deal): float => (float) config('forecast.weights.'.$this->stage($deal)->value, 0))
                     ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             }
-            $priorities['unread'] = $this->unread($actor);
+            [$priorities['unread'], $priorityTotals['unread']] = $this->unread($actor);
+            $priorityTotals['stagnant'] = $stagnantCount;
         }
 
         return [
             'dashboard' => [
-                'period' => $period.'-01', 'targetUnits' => $metrics['target_units'],
+                'period' => $period.'-01', 'targetUnits' => $metrics['target_units'], 'workdays' => $this->workdays($period),
                 'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->pluck('id')->diff($personalUnits->keys())->count(),
                 'teamTargetsMissing' => $missingTeamTargets,
                 'targetAllocationDifference' => $canViewManagementTarget && $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
@@ -154,7 +164,7 @@ class TeamPerformance
                 'gapUnits' => $metrics['gap_units'], 'forecastGapUnits' => $metrics['forecast_gap_units'],
                 'stageCounts' => $metrics['stage_counts'], 'forecastStages' => $metrics['forecast_stages'], 'stagnantCount' => $stagnantCount,
                 'missingClosingMonthCount' => $metrics['missing_closing_month_count'], 'missingDoHistoryCount' => $metrics['missing_do_history_count'],
-                'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities,
+                'contributors' => $contributors, 'performance' => $performance, 'teams' => $teamRows->all(), 'priorities' => $priorities, 'priorityTotals' => $priorityTotals,
                 'unassignedTeam' => in_array($actor->role, [UserRole::Admin, UserRole::BranchManager], true)
                     ? $this->metrics($dealsByTeam->get('', collect()), null, $historical) : null,
             ],
@@ -162,6 +172,27 @@ class TeamPerformance
             'targetableUsers' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $users->map(fn (User $u): array => ['id' => $u->id, 'name' => $u->name, 'username' => $u->username])->values()->all() : [],
             'targetableTeams' => in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true) ? $teams->where('is_active', true)->map(fn (Team $t): array => ['id' => $t->public_id, 'name' => $t->name])->values()->all() : [],
         ];
+    }
+
+    /**
+     * Monday–Saturday workdays in the month and those up to today (Asia/Jakarta). National holidays are not excluded yet.
+     *
+     * @return array{elapsed: int, total: int}
+     */
+    private function workdays(string $period): array
+    {
+        $first = CarbonImmutable::parse($period.'-01', 'Asia/Jakarta');
+        $today = now('Asia/Jakarta')->startOfDay();
+        $elapsed = $total = 0;
+        for ($day = $first; $day->month === $first->month; $day = $day->addDay()) {
+            if ($day->isSunday()) {
+                continue;
+            }
+            $total++;
+            $elapsed += $day->lte($today) ? 1 : 0;
+        }
+
+        return ['elapsed' => $elapsed, 'total' => $total];
     }
 
     private function stage(DealTransaction|stdClass $deal): PipelineStage
@@ -230,28 +261,36 @@ class TeamPerformance
     /** @return array<string, mixed> */
     private function priority(DealTransaction $deal): array
     {
+        $deal->loadMissing(['customer', 'sales']);
+
         return ['public_id' => $deal->public_id, 'vehicle_model' => $deal->vehicle_model, 'stage' => $deal->current_stage->value,
+            'customer_name' => $deal->customer?->name, 'last_activity_at' => ($deal->last_activity_at ?? $deal->created_at)?->toIso8601String(),
+            'estimated_value' => $deal->estimated_value === null ? null : (float) $deal->estimated_value,
+            'expected_closing_month' => $deal->expected_closing_month?->format('Y-m-d'),
             'sales_name' => $deal->sales?->name, 'url' => route('transactions.coaching', $deal, false)];
     }
 
-    /** @return list<array<string, mixed>> */
+    /** @return array{0: list<array<string, mixed>>, 1: int} The five newest readable unread comments and the readable total. */
     private function unread(User $actor): array
     {
         if (! in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)) {
-            return [];
+            return [[], 0];
         }
         $items = [];
+        $total = 0;
         foreach (app(VisibleCoachingNotifications::class)->forUser($actor) as $notification) {
-            $comment = DealComment::query()->with('deal')->whereKey($notification->data['comment_id'] ?? 0)->first();
+            $comment = DealComment::query()->with(['deal.customer', 'author'])->whereKey($notification->data['comment_id'] ?? 0)->first();
             if ($comment === null || ! $actor->can('create', [DealComment::class, $comment->deal])) {
                 continue;
             }
-            $items[] = ['id' => $notification->id, 'title' => 'Komentar belum dibaca', 'url' => route('transactions.coaching', $comment->deal, false)];
-            if (count($items) === 5) {
-                break;
+            if (++$total > 5) {
+                continue;
             }
+            $items[] = ['id' => $notification->id, 'customer_name' => $comment->deal->customer?->name, 'vehicle_model' => $comment->deal->vehicle_model,
+                'author_name' => $comment->author?->name, 'excerpt' => Str::limit(Str::squish((string) $comment->body), 90),
+                'url' => route('transactions.coaching', $comment->deal, false)];
         }
 
-        return $items;
+        return [$items, $total];
     }
 }
