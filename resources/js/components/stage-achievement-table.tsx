@@ -26,7 +26,38 @@ export function StageAchievementTable({
                     Capaian per tahap{caption && ` · ${caption}`}
                 </h2>
             </div>
-            <div className="overflow-x-auto">
+            {/* Phone: one card per Sales so SPK and DO stay visible without sideways scroll. */}
+            <ul className="text-sm md:hidden">
+                {data.rows.length === 0 && (
+                    <li className="px-5 py-6 text-center text-muted-foreground">
+                        Belum ada Sales.
+                    </li>
+                )}
+                {[
+                    ...data.rows,
+                    { id: 'total', name: 'Total', counts: data.totals },
+                ].map((row) => (
+                    <li
+                        key={row.id}
+                        className={`striped-row px-5 py-4 ${row.id === 'total' ? 'border-t font-semibold' : ''}`}
+                    >
+                        <h3 className="font-medium">{row.name}</h3>
+                        <dl className="mt-2 grid grid-cols-3 gap-x-4 gap-y-2">
+                            {data.stages.map((stage) => (
+                                <div key={stage} className="min-w-0">
+                                    <dt className="truncate text-xs font-normal text-muted-foreground">
+                                        {stageLabel(stage)}
+                                    </dt>
+                                    <dd className="tabular-nums">
+                                        {row.counts[stage] ?? 0}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </li>
+                ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b text-left text-xs text-muted-foreground">

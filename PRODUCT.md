@@ -10,7 +10,7 @@ web
 
 ## Stack
 
-Prototipe Fase 0 menggunakan HTML, CSS, dan JavaScript mandiri tanpa package baru. Implementasi produk yang direncanakan adalah Laravel, Inertia, React TypeScript, Tailwind CSS, dan shadcn/ui dalam satu repository.
+Aplikasi production dalam satu repository: Laravel 13 (PHP 8.4), Inertia 3, React 19 TypeScript, Tailwind CSS 4, shadcn/ui, PostgreSQL, dan Vite+ (ADR 001–002). Rilis bertag versi (ADR 006); production berjalan di VPS (ADR 008).
 
 ## Users
 
@@ -29,9 +29,9 @@ Customer menjadi identitas hubungan jangka panjang yang terpisah dari transaksi,
 
 ## Operating Context
 
-- Satu dealer dengan banyak tim dan hierarki Admin → Branch Manager → Supervisor → Sales.
+- Satu dealer dengan banyak tim dan hierarki Admin → Branch Manager → Supervisor → Sales. Model data mengenal Dealer, tetapi production hanya melayani satu dealer.
 - Sales bekerja mobile-first; Supervisor dan Branch Manager juga menggunakan tablet atau desktop.
-- Tahap pipeline: Lead, Prospect, Hot Prospect, SPK, DO, dan Lost.
+- Tahap pipeline: Lead, Prospect, Hot Prospect, SPK, DO, dan Lost. DO adalah tahap akhir yang berhasil; Delivery dihapus (ADR 010).
 - Sistem digunakan online; tidak ada native app, PWA, atau offline sync pada MVP.
 - Semua waktu bisnis ditampilkan dalam zona Asia/Jakarta.
 
@@ -42,21 +42,25 @@ Customer menjadi identitas hubungan jangka panjang yang terpisah dari transaksi,
 - Branch Manager hanya menerima agregat dan drilldown tersanitasi, serta tidak membaca coaching.
 - Conversation berada dalam konteks transaksi dan menggabungkan komentar dengan aktivitas sistem.
 - Forecast adalah perkiraan berbobot, bukan janji hasil.
-- Analisis MVP mencakup Sumber dan Model; Area ditunda. MSCP ditutup: porsi pembiayaan per leasing pada Analisis Pembiayaan sudah memenuhi kebutuhan.
-- Nama produk final, bobot forecast, penyedia email, lingkungan deployment, bukti SPK, dan retensi data masih terbuka di PRD.
+- Analisis mencakup Pencapaian Tahap, Pembiayaan, dan Mapping Area (FOA/PMA dari snapshot DO). MSCP ditutup: porsi per leasing pada Analisis Pembiayaan sudah memenuhi kebutuhan.
+- Bobot forecast disetujui 13 November 2026: Lead 10%, Prospect 25%, Hot Prospect 50%, SPK 75%.
+- Masuk SPK cukup dengan konfirmasi eksplisit booking fee diterima, dengan pelaku dan waktu tercatat.
+- Data pelanggan dan audit disimpan tanpa batas waktu; ditinjau ulang setelah satu tahun production.
+- Semua keputusan terbuka PRD bagian 14 sudah ditutup; keputusan baru dicatat di PRD atau ADR.
 
 ## Brand Commitments
 
-- Nama kerja: “AIna DealDrive”.
+- Nama produk final: “AIna DealDrive” (13 November 2026).
 - Arah visual awal: netral dengan aksen biru.
 - Bahasa antarmuka: Bahasa Indonesia dengan istilah domain dari PRD.
-- Belum tersedia logo, font khusus, atau pedoman merek final.
+- Ikon aplikasi ada (`public/favicon.svg`, `AppLogoIcon`); belum ada font khusus atau pedoman merek final.
 
 ## Evidence on Hand
 
-- PRD, roadmap, glosarium domain, dan tiga ADR awal berada di `docs/agents/`.
-- Belum ada source aplikasi, design system, screenshot produk, logo, atau data pelanggan nyata.
-- Data pada prototipe wajib sintetis dan diberi penanda; klaim bisnis tidak boleh dibuat-buat.
+- PRD, roadmap, glosarium, ADR 001–010, matriks UAT, dan catatan implementasi berada di `docs/agents/`; arah navigasi di `docs/design/`.
+- Aplikasi berjalan di production (v1.7.0) dengan DESIGN.md sebagai design system terdokumentasi.
+- Production menyimpan data pelanggan nyata. Mock, screenshot, preview, dan artifact desain wajib memakai data sintetis berlabel “Data contoh”; data production tidak boleh disalin ke sana.
+- Klaim bisnis, testimoni, atau angka kinerja tidak boleh dibuat-buat.
 
 ## Product Principles
 

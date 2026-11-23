@@ -106,6 +106,9 @@ async function dashboardLayout(page) {
                 targetableTeams: [],
                 dashboard: {
                     period: historical ? '2026-10-01' : '2026-11-01',
+                    workdays: historical
+                        ? { elapsed: 27, total: 27 }
+                        : { elapsed: 19, total: 25 },
                     targetUnits:
                         role === 'sales' ? 6 : canViewManagement ? 16 : null,
                     realizationUnits: empty ? 0 : role === 'sales' ? 3 : 13,
@@ -163,6 +166,7 @@ async function dashboardLayout(page) {
                                 lost: 2,
                             },
                     stagnantCount: 2,
+                    priorityTotals: { stagnant: 2, closing: 1, unread: 7 },
                     teams: empty || role === 'sales' ? [] : teams,
                     performance: empty ? [] : personal,
                     unassignedTeam:
@@ -239,7 +243,12 @@ async function dashboardLayout(page) {
                                   stagnant: [
                                       {
                                           id: 'qa-stagnant',
-                                          title: 'Follow-up pelanggan — Data contoh',
+                                          customer_name:
+                                              'Rina Kusuma — Data contoh',
+                                          vehicle_model: 'Calya',
+                                          last_activity_at:
+                                              '2026-11-01T09:00:00+07:00',
+                                          sales_name: 'Ayu Prameswari',
                                           stage: 'prospect',
                                           url: '/customers?customer=qa-customer',
                                       },
@@ -249,11 +258,23 @@ async function dashboardLayout(page) {
                                           id: 'qa-closing',
                                           vehicle_model:
                                               'Konfirmasi penyerahan — Data contoh',
+                                          estimated_value: 300000000,
+                                          expected_closing_month: '2026-11-01',
                                           stage: 'do',
                                           url: '/transactions?transaction=qa-closing',
                                       },
                                   ],
-                                  unread: [],
+                                  unread: [
+                                      {
+                                          id: 'qa-unread',
+                                          customer_name:
+                                              'Rina Kusuma — Data contoh',
+                                          vehicle_model: 'Calya',
+                                          author_name: 'Supervisor QA',
+                                          excerpt: 'Tolong telepon ulang besok pagi.',
+                                          url: '/transactions/qa-stagnant/coaching',
+                                      },
+                                  ],
                               },
                 },
             },
@@ -332,9 +353,25 @@ async function dashboardLayout(page) {
                         exact: true,
                     });
                     const ranking = page.getByRole('region', {
-                        name: 'Kinerja per Sales',
+                        name:
+                            role === 'sales'
+                                ? 'Kinerja saya'
+                                : 'Kinerja per Sales',
                         exact: true,
                     });
+                    if (role === 'sales')
+                        assert(
+                            !(await ranking.innerText()).includes('1.'),
+                            'A single row is not ranked',
+                        );
+                    assert(
+                        (await page
+                            .locator('details', {
+                                hasText: 'Cara membaca angka',
+                            })
+                            .getAttribute('open')) === null,
+                        'Reading notes start collapsed',
+                    );
                     assert(
                         (await team.count()) === (role === 'sales' ? 0 : 1),
                         'Team visibility: ' + role,
@@ -355,6 +392,93 @@ async function dashboardLayout(page) {
                             .count()) === (role === 'branch_manager' ? 0 : 1),
                         'Priority visibility: ' + role,
                     );
+                    if (role === 'supervisor' || role === 'sales')
+                        assert(
+                            await page.evaluate(
+                                () =>
+                                    document
+                                        .querySelector(
+                                            'section[aria-label="Prioritas tindak lanjut"]',
+                                        )
+                                        .getBoundingClientRect().top <
+                                    [...document.querySelectorAll('h2')]
+                                        .find(
+                                            (h) =>
+                                                h.textContent ===
+                                                'Metrik utama',
+                                        )
+                                        .parentElement.getBoundingClientRect()
+                                        .top,
+                            ),
+                            'Next actions before metrics: ' + role,
+                        );
+                    if (role !== 'admin') {
+                        const kpi = await page
+                            .locator('dl')
+                            .filter({ hasText: 'Realisasi' })
+                            .first()
+                            .innerText();
+                        assert(
+                            kpi.includes('Seharusnya s.d. hari ini') &&
+                                kpi.includes('% dari target'),
+                            'KPI shows pace and achievement: ' + role,
+                        );
+                    }
+                    if (role === 'supervisor' || role === 'sales') {
+                        const lists = page.getByRole('region', {
+                            name: 'Prioritas tindak lanjut',
+                        });
+                        assert(
+                            (
+                                await lists
+                                    .getByRole('link')
+                                    .filter({
+                                        hasText:
+                                            'Supervisor QA: Tolong telepon',
+                                    })
+                                    .innerText()
+                            ).startsWith('Rina Kusuma — Data contoh · Calya'),
+                            'Unread comment names customer and author',
+                        );
+                        assert(
+                            (await lists
+                                .getByText(/Aktivitas terakhir /)
+                                .count()) === 1,
+                            'Stagnant item shows last activity',
+                        );
+                        assert(
+                            (await lists
+                                .getByText(/^Ayu Prameswari · Aktivitas/)
+                                .count()) === (role === 'sales' ? 0 : 1),
+                            'Own name hidden for Sales',
+                        );
+                        assert(
+                            (await lists
+                                .getByRole('link', {
+                                    name: 'Lihat semua 2 transaksi stagnan',
+                                })
+                                .getAttribute('href')) ===
+                                '/transactions?tab=stagnant&date_from=&date_to=',
+                            'Stagnant total drills into transactions',
+                        );
+                        const text = await lists.innerText();
+                        assert(
+                            text.includes('1 dari 7') &&
+                                text.includes('closing November 2026'),
+                            'Real totals and closing reason',
+                        );
+                    }
+                    if (role === 'supervisor')
+                        assert(
+                            (await page
+                                .getByRole('region', {
+                                    name: /^Capaian per tahap/,
+                                })
+                                .locator('table')
+                                .isVisible()) ===
+                                width >= 768,
+                            'Stage achievement cards on phone ' + width,
+                        );
                     assert(
                         (await page
                             .getByRole('main')
@@ -369,6 +493,34 @@ async function dashboardLayout(page) {
                             .locator('#dashboard-sales-rows > li')
                             .count()) === (role === 'sales' ? 1 : 5),
                         'Initial ranking limit',
+                    );
+                    const rowLinks = ranking.locator(
+                        '#dashboard-sales-rows > li h3 a',
+                    );
+                    if (role === 'supervisor' || role === 'admin')
+                        assert(
+                            (await rowLinks.first().getAttribute('href')) ===
+                                '/transactions?sales_id=2&date_from=&date_to=',
+                            'Sales rows drill into transactions: ' + role,
+                        );
+                    else
+                        assert(
+                            (await rowLinks.count()) === 0,
+                            'No transaction drilldown for ' + role,
+                        );
+                    assert(
+                        (await page
+                            .getByRole('link', {
+                                name: 'Lengkapi estimasi closing',
+                            })
+                            .count()) === (role === 'branch_manager' ? 0 : 1),
+                        'Missing closing warning drills in: ' + role,
+                    );
+                    assert(
+                        (await page
+                            .getByRole('link', { name: 'Buka Kinerja Tim' })
+                            .count()) === (role === 'branch_manager' ? 1 : 0),
+                        'Branch Manager reaches Kinerja Tim',
                     );
                     if (role !== 'sales') {
                         assert(
@@ -491,6 +643,27 @@ async function dashboardLayout(page) {
                 }
             }
         }
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await load('sales');
+        assert(
+            !(await page
+                .getByRole('region', { name: 'Kontributor forecast teratas' })
+                .innerText()).includes('Ayu Prameswari'),
+            'Sales does not see their own name on contributors',
+        );
+        await load('supervisor');
+        fixture.props.dashboard.teams = fixture.props.dashboard.teams.slice(0, 1);
+        await page.goto(`${origin}/dashboard`);
+        await page
+            .getByRole('heading', { name: 'Dashboard penjualan', exact: true })
+            .waitFor();
+        assert(
+            (await page
+                .getByRole('region', { name: 'Kinerja per tim', exact: true })
+                .count()) === 0,
+            'A single team folds into the KPI strip',
+        );
+        await geometry();
         for (const width of [390, 1440]) {
             await page.setViewportSize({ width, height: 1000 });
             await load('supervisor', true);

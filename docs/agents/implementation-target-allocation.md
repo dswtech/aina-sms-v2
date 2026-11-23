@@ -22,7 +22,7 @@ Data baca `targetPlans` hanya dikirim ke Supervisor; Admin tidak menerima editor
 
 - Pembagian rata awal otomatis hanya berlaku pada draft baru tanpa penyesuaian. Perubahan markup pada rencana tersimpan mempertahankan alokasi.
 - Bagi rata setelah ada anggota keluar membagi sisa benchmark setelah alokasi anggota keluar dipertahankan. Aksi ini memerlukan konfirmasi bila mengganti penyesuaian personal.
-- Saran prorata memakai benchmark dibagi jumlah penerima alokasi tersimpan, dikalikan sisa hari Senin–Jumat pada bulan tersebut sejak hari ini atau tanggal masuk yang lebih akhir. Hari libur tidak dihitung; SPV tetap menentukan target final.
+- Saran prorata memakai benchmark dibagi jumlah penerima alokasi tersimpan, dikalikan sisa hari Senin–Sabtu pada bulan tersebut (Senin–Jumat sebelum 23 November 2026) sejak hari ini atau tanggal masuk yang lebih akhir. Hari libur tidak dihitung; SPV tetap menentukan target final.
 - Seeder menambah contoh rencana pada bulan berikutnya saja jika record belum ada. Data legacy dan record yang diubah pengguna tidak diadopsi otomatis.
 - Branch fitur digunakan pada checkout bersih yang tersedia. Tidak membuat worktree tambahan atau memasang dependency.
 

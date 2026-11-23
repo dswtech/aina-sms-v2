@@ -203,6 +203,8 @@
         oklch(0.922 0.005 325.62);
     --sidebar-ring:
         oklch(0.711 0.019 323.02);
+    /* Forecast pairs with realisation: same hue as the user's accent, lighter step. */
+    --forecast: color-mix(in oklab, var(--primary) 50%, var(--card));
 }
 
 .dark {
@@ -434,6 +436,7 @@
 }
 
 @theme inline {
+    --color-forecast: var(--forecast);
     --font-sans:
         'Inter Variable', sans-serif;
     --font-heading:

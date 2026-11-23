@@ -55,7 +55,8 @@ class TargetPlans
         $total = 0;
         $remaining = 0;
         for ($date = $start; $date->format('Y-m') === $period; $date = $date->addDay()) {
-            if ($date->isWeekday()) {
+            // Monday–Saturday, the same workdays as the dashboard pace (DSH-07).
+            if (! $date->isSunday()) {
                 $total++;
                 $remaining += $date->toDateString() >= $from ? 1 : 0;
             }

@@ -1,6 +1,6 @@
 import { NativeSelect } from '@/components/ui/native-select';
 import InputError from '@/components/input-error';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { FilterPanel } from '@/components/filter-panel';
 import { useEffect, useRef, useState } from 'react';
@@ -101,6 +101,7 @@ type Props = {
         region_code?: string | null;
         district_code?: string | null;
         source_channel?: string | null;
+        closing_month?: 'missing' | null;
     };
     sourceOptions?: string[];
     supervisorOptions?: { id: number; name: string }[];
@@ -388,6 +389,20 @@ export default function TransactionsIndex({
                     </div>
                 </div>
 
+                {filters.closing_month === 'missing' && (
+                    <p
+                        role="status"
+                        className="mt-6 flex flex-wrap items-center gap-x-3 rounded-lg border bg-muted px-4 py-2 text-sm"
+                    >
+                        Hanya transaksi aktif tanpa estimasi bulan closing.
+                        <Link
+                            href="/transactions"
+                            className="inline-flex min-h-11 items-center font-medium text-primary hover:underline"
+                        >
+                            Tampilkan semua transaksi
+                        </Link>
+                    </p>
+                )}
                 <FilterPanel
                     className="mt-6"
                     title="Filter transaksi"

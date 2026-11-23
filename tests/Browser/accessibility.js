@@ -1820,7 +1820,10 @@ async function accessibility(page) {
             unread: [
                 {
                     id: 'qa-unread',
-                    title: 'Komentar belum dibaca',
+                    customer_name: 'Pelanggan QA',
+                    vehicle_model: 'Model QA',
+                    author_name: 'Supervisor QA',
+                    excerpt: 'Komentar QA',
                     url: '/transactions/qa-deal/coaching',
                 },
             ],
@@ -1867,19 +1870,32 @@ async function accessibility(page) {
                         ),
                         `${component}/${width}/${theme}: page overflow`,
                     );
-                    const row = page
-                        .locator('.striped-row:visible')
-                        .filter({ hasText: 'Tim Supervisor QA' })
-                        .first();
-                    assert(
-                        (await row.innerText()).includes('30') &&
-                            (await row.innerText()).includes('25'),
-                        'Team and Sales targets must remain distinct',
-                    );
-                    assert(
-                        (await row.innerText()).includes('1,25'),
-                        'Quarter-weight forecast lost precision',
-                    );
+                    // A one-team Supervisor dashboard folds the team panel into the KPI strip; Target keeps the team row.
+                    if (component === 'dashboard') {
+                        assert(
+                            (await page
+                                .getByRole('region', {
+                                    name: 'Kinerja per tim',
+                                    exact: true,
+                                })
+                                .count()) === 0,
+                            'Single-team dashboard hides the team panel',
+                        );
+                    } else {
+                        const row = page
+                            .locator('.striped-row:visible')
+                            .filter({ hasText: 'Tim Supervisor QA' })
+                            .first();
+                        assert(
+                            (await row.innerText()).includes('30') &&
+                                (await row.innerText()).includes('25'),
+                            'Team and Sales targets must remain distinct',
+                        );
+                        assert(
+                            (await row.innerText()).includes('1,25'),
+                            'Quarter-weight forecast lost precision',
+                        );
+                    }
                     if (role === 'branch_manager')
                         assert(
                             (await page

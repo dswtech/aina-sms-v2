@@ -198,7 +198,13 @@ it('lists stagnant and closing priorities without exposing revoked coaching noti
     }
     $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
         ->has('dashboard.priorities.stagnant', 1)->has('dashboard.priorities.closing', 2)
-        ->has('dashboard.priorities.unread', 1)->has('notifications', 1)->where('notificationsUnreadCount', 1)->where('dashboard.stagnantCount', 1));
+        ->has('dashboard.priorities.unread', 1)->has('notifications', 1)->where('notificationsUnreadCount', 1)->where('dashboard.stagnantCount', 1)
+        ->where('dashboard.priorities.stagnant.0.customer_name', $f['customer']->name)
+        ->where('dashboard.priorities.stagnant.0.last_activity_at', now()->subDays(4)->toIso8601String())
+        ->where('dashboard.priorities.unread.0.customer_name', $f['customer']->name)
+        ->where('dashboard.priorities.unread.0.author_name', $f['sales']->name)
+        ->where('dashboard.priorities.unread.0.excerpt', 'Coaching secret')
+        ->where('dashboard.performance.0.team_name', $f['team']->name));
 });
 
 it('persists closing estimates and team attribution in both transaction creation flows', function () {
@@ -367,4 +373,48 @@ test('production forecast weights are the owner-approved baseline', function () 
         ->and(config('forecast.weights'))->toBe(['lead' => 0.10, 'prospect' => 0.25, 'hot_prospect' => 0.50, 'spk' => 0.75]);
     $f = g02Fixture();
     $this->actingAs($f['supervisor'])->get('/targets')->assertInertia(fn (Assert $p) => $p->where('dashboard.forecastApproved', true));
+});
+
+it('counts Monday to Saturday workdays for the dashboard pace', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-23 08:00', 'Asia/Jakarta'));
+    $f = g02Fixture();
+    $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.workdays', ['elapsed' => 19, 'total' => 25]));
+    $this->get('/dashboard?period=2026-10')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.workdays', ['elapsed' => 27, 'total' => 27]));
+    $this->get('/dashboard?period=2026-12')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.workdays.elapsed', 0));
+    $this->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('targetPlans.0.members.0.period_workdays', 25)
+        ->where('targetPlans.0.members.0.remaining_workdays', 7));
+});
+
+it('drills the missing closing month warning and forecast contributors into readable transactions', function () {
+    $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
+    $f = g02Fixture();
+    g02Deal($f, ['expected_closing_month' => null]);
+    g02Deal($f, ['expected_closing_month' => null, 'current_stage' => PipelineStage::Lost]);
+    $contributor = g02Deal($f, ['estimated_value' => 300_000_000]);
+    $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.missingClosingMonthCount', 1)
+        ->where('dashboard.contributors.0.url', '/transactions/'.$contributor->public_id.'/coaching'));
+    $this->get('/transactions?tab=active&closing_month=missing&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
+        ->has('transactions.data', 1)->where('filters.closing_month', 'missing'));
+    $this->get('/transactions?closing_month=other')->assertSessionHasErrors('closing_month');
+});
+
+it('reports real priority totals and the closing reason beyond the five shown items', function () {
+    $this->travelTo(now()->setDate(2026, 11, 5)->startOfSecond());
+    $f = g02Fixture();
+    foreach (range(1, 6) as $i) {
+        $deal = g02Deal($f, ['estimated_value' => 100_000_000 * $i]);
+        $comment = $deal->comments()->create(['user_id' => $deal->sales_id, 'body' => 'Komentar '.$i, 'stage_at_creation' => 'hot_prospect']);
+        $f['supervisor']->notifications()->create(['id' => (string) Str::uuid(), 'type' => DealCommentCreated::class,
+            'data' => ['comment_id' => $comment->id, 'url' => '/transactions/'.$deal->public_id.'/coaching']]);
+    }
+    $this->actingAs($f['supervisor'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->has('dashboard.priorities.closing', 5)->has('dashboard.priorities.unread', 5)
+        ->where('dashboard.priorityTotals.closing', 6)->where('dashboard.priorityTotals.unread', 6)
+        ->where('dashboard.priorities.closing.0.expected_closing_month', '2026-11-01')
+        ->has('dashboard.priorities.closing.0.estimated_value'));
 });

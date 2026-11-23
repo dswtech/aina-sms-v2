@@ -17,5 +17,15 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    // Tablets start with the icon rail (DESIGN.md); the toggle still expands it.
+    // shortcut: read once on load, so resizing across 1024px keeps the current state until the next visit.
+    const tablet =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(max-width: 1023px)').matches;
+
+    return (
+        <SidebarProvider defaultOpen={isOpen && !tablet}>
+            {children}
+        </SidebarProvider>
+    );
 }

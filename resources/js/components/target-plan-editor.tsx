@@ -368,7 +368,7 @@ function PlanForm({ plan }: { plan: TargetPlan }) {
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     {member.remaining_workdays}/
                                                     {member.period_workdays}{' '}
-                                                    hari Senin–Jumat tersisa,
+                                                    hari Senin–Sabtu tersisa,
                                                     tanpa hari libur.
                                                 </p>
                                             </div>
