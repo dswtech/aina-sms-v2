@@ -200,7 +200,7 @@ async function targetRoleMetrics(page) {
                     const content = page.getByRole('main');
                     assert(
                         (await content
-                            .getByText('Target management', { exact: true })
+                            .getByText(/^Target (tim|cabang)$/)
                             .count()) >
                             0 ===
                             canViewManagement,

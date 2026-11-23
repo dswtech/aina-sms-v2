@@ -28,7 +28,13 @@ export function chartWidth(value: number | null, maximum: number): number {
         : 0;
 }
 
-export type PaceStatus = 'on' | 'behind' | 'reached' | 'none' | 'over';
+export type PaceStatus =
+    | 'on'
+    | 'slipping'
+    | 'behind'
+    | 'reached'
+    | 'none'
+    | 'over';
 export type Pace = {
     status: PaceStatus;
     label: string;
@@ -41,6 +47,7 @@ export type Pace = {
 
 export const paceLabels: Record<PaceStatus, string> = {
     on: 'Sesuai laju',
+    slipping: 'Sedikit tertinggal',
     behind: 'Tertinggal',
     reached: 'Target tercapai',
     none: 'Target belum ditetapkan',
@@ -110,7 +117,14 @@ export function monthPace(
         );
     const needed = remainingUnits / remainingDays;
     const current = elapsed > 0 ? realized / elapsed : null;
-    return make(current !== null && current >= needed ? 'on' : 'behind', null, {
+    // Only a large shortfall gets the strong status, so the badge still separates people late in the month.
+    const status =
+        current !== null && current >= needed
+            ? 'on'
+            : current !== null && needed < current * 3
+              ? 'slipping'
+              : 'behind';
+    return make(status, null, {
         needed,
         current,
         remainingUnits,
@@ -125,10 +139,11 @@ export function rankByPace<T extends RankedPerformance>(
 ): T[] {
     const order: Record<PaceStatus, number> = {
         behind: 0,
-        on: 1,
-        over: 2,
-        reached: 3,
-        none: 4,
+        slipping: 1,
+        on: 2,
+        over: 3,
+        reached: 4,
+        none: 5,
     };
     const shortfall = (p: Pace) => (p.needed ?? 0) - (p.current ?? 0);
     return [...rows].sort((a, b) => {

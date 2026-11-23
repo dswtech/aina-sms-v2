@@ -33,12 +33,15 @@ export function PaceBadge({ pace }: { pace: Pace }) {
     return (
         <Badge
             data-pace={pace.status}
+            className="h-auto text-xs"
             variant={
                 pace.status === 'behind'
                     ? 'destructive'
-                    : pace.status === 'on'
-                      ? 'default'
-                      : 'secondary'
+                    : pace.status === 'slipping'
+                      ? 'outline'
+                      : pace.status === 'on'
+                        ? 'default'
+                        : 'secondary'
             }
         >
             {pace.label}
@@ -46,18 +49,23 @@ export function PaceBadge({ pace }: { pace: Pace }) {
     );
 }
 
-/** Rate line; the forecast is never the basis, only realized DO units. */
+/** Rate line led by the one number to act on; the forecast is never the basis. */
 export function PaceLine({ pace }: { pace: Pace }) {
     if (pace.status === 'none')
         return <span data-pace-line>Target belum ditetapkan</span>;
     if (pace.summary) return <span data-pace-line>{pace.summary}</span>;
     return (
         <span data-pace-line>
-            Butuh {rate(pace.needed!)}/hari (±{rate(pace.needed! * 6)}/minggu) ·
-            saat ini{' '}
-            {pace.current === null ? '—' : `${rate(pace.current)}/hari`} ·{' '}
-            {rate(pace.remainingUnits)} unit lagi, {pace.remainingDays} hari
-            kerja
+            <span className="font-medium text-foreground">
+                Butuh {rate(pace.needed!)}/hari
+            </span>
+            {/* A weekly rate means nothing when less than a week is left. */}
+            {pace.remainingDays > 5 && ` (±${rate(pace.needed! * 6)}/minggu)`}
+            {' · '}saat ini{' '}
+            {pace.current === null ? '—' : `${rate(pace.current)}/hari`}
+            {' · '}
+            {rate(pace.remainingUnits)} unit lagi dalam {pace.remainingDays}{' '}
+            hari kerja
         </span>
     );
 }
@@ -162,6 +170,7 @@ export function PerformanceChart({
     pace = null,
     workdays,
     period,
+    defaultOrder = 'realization',
 }: {
     rows: PerformanceRow[];
     team?: boolean;
@@ -171,6 +180,7 @@ export function PerformanceChart({
     pace?: number | null;
     workdays?: DashboardData['workdays'];
     period?: string;
+    defaultOrder?: 'realization' | 'pace';
 }) {
     const paceOf = (row: PerformanceRow) =>
         monthPace(
@@ -180,7 +190,7 @@ export function PerformanceChart({
             period ?? '',
         );
     const showPace = showTarget && !!period;
-    const [order, setOrder] = useState<'realization' | 'pace'>('realization');
+    const [order, setOrder] = useState(defaultOrder);
     // One row has nothing to rank or compare against.
     const single = rows.length === 1;
     const showTeams =
@@ -262,7 +272,7 @@ export function PerformanceChart({
                     {showTarget && (
                         <span className="inline-flex items-center gap-2">
                             <span className="h-3 w-0.5 bg-foreground" />
-                            {team ? 'Target management' : 'Target personal'}
+                            {team ? 'Target tim' : 'Target personal'}
                         </span>
                     )}
                     {showTarget && pace !== null && (

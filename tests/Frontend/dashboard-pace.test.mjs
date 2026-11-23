@@ -18,6 +18,9 @@ test('behind and on pace count today among the remaining workdays', () => {
     assert.equal(behind.needed, 5 / 7);
     assert.equal(behind.current, 3 / 19);
     assert.equal(monthPace(8, 7, nov, '2026-11-01', monday).status, 'on');
+    // 5/19 per day against 3/7 needed: behind, but by less than three times.
+    assert.equal(monthPace(8, 5, nov, '2026-11-01', monday).status, 'slipping');
+    assert.equal(monthPace(8, 0, nov, '2026-11-01', monday).status, 'behind');
 });
 
 test('Sunday is not a remaining workday', () => {
