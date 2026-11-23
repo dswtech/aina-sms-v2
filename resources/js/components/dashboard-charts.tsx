@@ -24,6 +24,14 @@ import {
 
 type DashboardData = ReportingProps['dashboard'];
 
+// Whole cars from one a day up; one decimal only for slower rates.
+const rateUp = (value: number) =>
+    value >= 1
+        ? String(Math.ceil(value))
+        : new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(
+              Math.ceil(value * 10) / 10,
+          );
+
 const rate = (value: number) =>
     new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
 
@@ -57,10 +65,11 @@ export function PaceLine({ pace }: { pace: Pace }) {
     return (
         <span data-pace-line>
             <span className="font-medium text-foreground">
-                Butuh {rate(pace.needed!)}/hari
+                Butuh {rateUp(pace.needed!)}/hari
             </span>
-            {/* A weekly rate means nothing when less than a week is left. */}
-            {pace.remainingDays > 5 && ` (±${rate(pace.needed! * 6)}/minggu)`}
+            {/* A weekly rate only helps with at least two weeks left. */}
+            {pace.remainingDays >= 10 &&
+                ` (±${rateUp(pace.needed! * 6)}/minggu)`}
             {' · '}saat ini{' '}
             {pace.current === null ? '—' : `${rate(pace.current)}/hari`}
             {' · '}

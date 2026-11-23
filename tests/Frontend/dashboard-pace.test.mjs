@@ -18,9 +18,10 @@ test('behind and on pace count today among the remaining workdays', () => {
     assert.equal(behind.needed, 5 / 7);
     assert.equal(behind.current, 3 / 19);
     assert.equal(monthPace(8, 7, nov, '2026-11-01', monday).status, 'on');
-    // 5/19 per day against 3/7 needed: behind, but by less than three times.
+    // 5 + 5/19 × 7 projects 85% of 8: slipping; 3 projects 51%: behind.
     assert.equal(monthPace(8, 5, nov, '2026-11-01', monday).status, 'slipping');
     assert.equal(monthPace(8, 0, nov, '2026-11-01', monday).status, 'behind');
+    assert.ok(Math.abs(behind.projected - (3 + (3 / 19) * 7) / 8) < 1e-9);
 });
 
 test('Sunday is not a remaining workday', () => {
@@ -94,5 +95,35 @@ test('coaching order puts the furthest behind first', () => {
     assert.deepEqual(
         ranked.map((r) => r.name),
         ['Budi', 'Sari', 'Andi', 'Dewi', 'Rina'],
+    );
+});
+
+test('no realised units ranks below a Sales with a little progress', () => {
+    const rows = [
+        {
+            name: 'Laila',
+            realization_units: 2,
+            forecast_units: null,
+            target_units: 20,
+        },
+        {
+            name: 'Nanda',
+            realization_units: 0,
+            forecast_units: null,
+            target_units: 4,
+        },
+    ];
+    const ranked = rankByPace(rows, (r) =>
+        monthPace(
+            r.target_units,
+            r.realization_units,
+            nov,
+            '2026-11-01',
+            monday,
+        ),
+    );
+    assert.deepEqual(
+        ranked.map((r) => r.name),
+        ['Nanda', 'Laila'],
     );
 });

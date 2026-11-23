@@ -127,9 +127,9 @@ export function paceRatio(workdays?: { elapsed: number; total: number }) {
         : null;
 }
 
-/** Units the target expects by today, one decimal. */
+/** Whole units the target expects by today, rounded up: cars are sold whole. */
 export const paceUnits = (target: number, ratio: number) =>
-    Math.round(target * ratio * 10) / 10;
+    Math.ceil(target * ratio - 1e-9);
 
 export const percentOf = (value: number | null, target: number | null) =>
     value == null || !target
