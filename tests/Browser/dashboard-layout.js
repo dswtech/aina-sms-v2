@@ -271,7 +271,8 @@ async function dashboardLayout(page) {
                                               'Rina Kusuma — Data contoh',
                                           vehicle_model: 'Calya',
                                           author_name: 'Supervisor QA',
-                                          excerpt: 'Tolong telepon ulang besok pagi.',
+                                          excerpt:
+                                              'Tolong telepon ulang besok pagi.',
                                           url: '/transactions/qa-stagnant/coaching',
                                       },
                                   ],
@@ -423,6 +424,38 @@ async function dashboardLayout(page) {
                                 kpi.includes('% dari target'),
                             'KPI shows pace and achievement: ' + role,
                         );
+                        // Fixture: Sales 3/6 is behind, managers 13/16 are on pace (19 of 25 workdays).
+                        const [status, label] =
+                            role === 'sales'
+                                ? ['behind', 'Tertinggal']
+                                : ['on', 'Sesuai laju'];
+                        assert(
+                            (await page
+                                .locator(`dl [data-pace="${status}"]`)
+                                .first()
+                                .innerText()) === label &&
+                                /Butuh .+\/hari .* saat ini .+\/hari/.test(kpi),
+                            'KPI shows explicit pace status: ' + role,
+                        );
+                    }
+                    if (role === 'supervisor') {
+                        const ranking = page.getByRole('region', {
+                            name: 'Kinerja per Sales',
+                        });
+                        if (await ranking.count()) {
+                            await ranking
+                                .getByRole('combobox')
+                                .selectOption('pace');
+                            assert(
+                                (await ranking.innerText()).includes(
+                                    'paling tertinggal',
+                                ),
+                                'Sales ranking sorts by pace',
+                            );
+                            await ranking
+                                .getByRole('combobox')
+                                .selectOption('realization');
+                        }
                     }
                     if (role === 'supervisor' || role === 'sales') {
                         const lists = page.getByRole('region', {
@@ -646,13 +679,20 @@ async function dashboardLayout(page) {
         await page.setViewportSize({ width: 1440, height: 1000 });
         await load('sales');
         assert(
-            !(await page
-                .getByRole('region', { name: 'Kontributor forecast teratas' })
-                .innerText()).includes('Ayu Prameswari'),
+            !(
+                await page
+                    .getByRole('region', {
+                        name: 'Kontributor forecast teratas',
+                    })
+                    .innerText()
+            ).includes('Ayu Prameswari'),
             'Sales does not see their own name on contributors',
         );
         await load('supervisor');
-        fixture.props.dashboard.teams = fixture.props.dashboard.teams.slice(0, 1);
+        fixture.props.dashboard.teams = fixture.props.dashboard.teams.slice(
+            0,
+            1,
+        );
         await page.goto(`${origin}/dashboard`);
         await page
             .getByRole('heading', { name: 'Dashboard penjualan', exact: true })
@@ -693,6 +733,16 @@ async function dashboardLayout(page) {
                     )
                     .isVisible(),
                 'Historical forecast explanation',
+            );
+            assert(
+                (
+                    await page
+                        .locator('dl')
+                        .filter({ hasText: 'Realisasi' })
+                        .first()
+                        .innerText()
+                ).includes('13 dari 16 unit (kurang 3)'),
+                'Past month shows the shortfall instead of a rate',
             );
             assert(
                 (
