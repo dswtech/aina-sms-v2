@@ -40,6 +40,8 @@ export type Pace = {
     label: string;
     needed: number | null;
     current: number | null;
+    /** Share of the target reached if today's rate holds to month end. */
+    projected: number | null;
     remainingUnits: number;
     remainingDays: number;
     summary: string | null;
@@ -71,6 +73,7 @@ export function monthPace(
     const base = {
         needed: null,
         current: null,
+        projected: null,
         remainingUnits: 0,
         remainingDays: 0,
     };
@@ -117,22 +120,25 @@ export function monthPace(
         );
     const needed = remainingUnits / remainingDays;
     const current = elapsed > 0 ? realized / elapsed : null;
-    // Only a large shortfall gets the strong status, so the badge still separates people late in the month.
+    // Graded on where today's rate lands by month end, so the red badge stays rare late in the month.
+    const projected =
+        current === null ? null : (realized + current * remainingDays) / target;
     const status =
-        current !== null && current >= needed
-            ? 'on'
-            : current !== null && needed < current * 3
+        projected === null || projected < 0.7
+            ? 'behind'
+            : projected < 1
               ? 'slipping'
-              : 'behind';
+              : 'on';
     return make(status, null, {
         needed,
         current,
+        projected,
         remainingUnits,
         remainingDays,
     });
 }
 
-/** Coaching order: furthest behind first, then on pace, reached, period over, and no target. */
+/** Coaching order: lowest projected attainment first, then on pace, period over, reached, and no target. */
 export function rankByPace<T extends RankedPerformance>(
     rows: T[],
     paceOf: (row: T) => Pace,
@@ -145,13 +151,14 @@ export function rankByPace<T extends RankedPerformance>(
         reached: 4,
         none: 5,
     };
-    const shortfall = (p: Pace) => (p.needed ?? 0) - (p.current ?? 0);
+    // Lowest projected attainment first; no realised units yet counts as the worst case.
+    const projected = (p: Pace) => p.projected ?? -1;
     return [...rows].sort((a, b) => {
         const pa = paceOf(a);
         const pb = paceOf(b);
         return (
             order[pa.status] - order[pb.status] ||
-            shortfall(pb) - shortfall(pa) ||
+            projected(pa) - projected(pb) ||
             a.name.localeCompare(b.name, 'id')
         );
     });

@@ -424,19 +424,19 @@ async function dashboardLayout(page) {
                                 kpi.includes('% dari target'),
                             'KPI shows pace and achievement: ' + role,
                         );
-                        // Fixture: Sales 3/6 is slightly behind, managers 13/16 are on pace (19 of 25 workdays).
+                        // Fixture (19 of 25 workdays): Sales 3/6 projects 68% (behind), managers 13/16 project 111% (on pace).
                         const [status, label] =
                             role === 'sales'
-                                ? ['slipping', 'Sedikit tertinggal']
+                                ? ['behind', 'Tertinggal']
                                 : ['on', 'Sesuai laju'];
                         assert(
                             (await page
                                 .locator(`dl [data-pace="${status}"]`)
                                 .first()
-                                .innerText()) === label,
-                            'KPI shows explicit pace status: ' + role,
+                                .innerText()) === label && !/Butuh/.test(kpi),
+                            'KPI tile shows only the pace badge: ' + role,
                         );
-                        // Sales reads the rate once, in "Kinerja saya"; managers read it on the tile.
+                        // Sales reads the rate in "Kinerja saya"; managers below the KPI strip.
                         const rateText =
                             role === 'sales'
                                 ? await page
@@ -444,31 +444,31 @@ async function dashboardLayout(page) {
                                           name: 'Kinerja saya',
                                       })
                                       .innerText()
-                                : kpi;
+                                : await page
+                                      .locator('[data-pace-summary]')
+                                      .innerText();
                         assert(
-                            /Butuh .+\/hari .*saat ini .+\/hari/.test(
+                            /Butuh [\d,]+\/hari .*saat ini .+\/hari/.test(
                                 rateText,
-                            ) &&
-                                rateText.includes('/minggu') &&
-                                (role !== 'sales' ||
-                                    !/Butuh .+\/hari/.test(kpi)),
-                            'Pace line placement, weekly rate with 7 days left: ' +
+                            ) && !rateText.includes('/minggu'),
+                            'Whole-unit pace line without a weekly rate in the last weeks: ' +
                                 role,
                         );
                     }
-                    if (role === 'supervisor') {
+                    if (role === 'supervisor' || role === 'branch_manager') {
                         const ranking = page.getByRole('region', {
                             name: 'Kinerja per Sales',
                         });
                         if (await ranking.count()) {
-                            await ranking
-                                .getByRole('combobox')
-                                .selectOption('pace');
+                            // Coaching roles open the ranking in pace order.
                             assert(
-                                (await ranking.innerText()).includes(
-                                    'paling tertinggal',
-                                ),
-                                'Sales ranking sorts by pace',
+                                (await ranking
+                                    .getByRole('combobox')
+                                    .inputValue()) === 'pace' &&
+                                    (await ranking.innerText()).includes(
+                                        'paling tertinggal',
+                                    ),
+                                'Sales ranking starts in pace order: ' + role,
                             );
                             await ranking
                                 .getByRole('combobox')
@@ -754,11 +754,7 @@ async function dashboardLayout(page) {
             );
             assert(
                 (
-                    await page
-                        .locator('dl')
-                        .filter({ hasText: 'Realisasi' })
-                        .first()
-                        .innerText()
+                    await page.locator('[data-pace-summary]').innerText()
                 ).includes('13 dari 16 unit (kurang 3)'),
                 'Past month shows the shortfall instead of a rate',
             );

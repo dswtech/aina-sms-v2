@@ -125,30 +125,28 @@ export default function Dashboard({
                                         {note}
                                     </dd>
                                 )}
-                                {index === 0 &&
-                                    role !== 'admin' &&
-                                    role !== 'sales' && (
-                                        <dd className="mt-1 text-xs text-muted-foreground tabular-nums">
-                                            <PaceLine pace={monthly} />
-                                            {monthly.status === 'none' &&
-                                                canManage && (
-                                                    <>
-                                                        {' · '}
-                                                        <Link
-                                                            href={`/targets?period=${d.period.slice(0, 7)}`}
-                                                            className="font-medium text-primary hover:underline"
-                                                        >
-                                                            Kelola target
-                                                        </Link>
-                                                    </>
-                                                )}
-                                        </dd>
-                                    )}
                             </div>
                         ))}
                     </dl>
                 </section>
                 <div className="grid gap-2 text-sm leading-6 text-muted-foreground">
+                    {role !== 'admin' && role !== 'sales' && (
+                        <p data-pace-summary className="tabular-nums">
+                            {monthly.status !== 'none' && 'Laju bulan ini: '}
+                            <PaceLine pace={monthly} />
+                            {monthly.status === 'none' && canManage && (
+                                <>
+                                    {' · '}
+                                    <Link
+                                        href={`/targets?period=${d.period.slice(0, 7)}`}
+                                        className="font-medium text-primary hover:underline"
+                                    >
+                                        Kelola target
+                                    </Link>
+                                </>
+                            )}
+                        </p>
+                    )}
                     {!!d.teamTargetsMissing && role !== 'sales' && (
                         <p>
                             {d.teamTargetsMissing} target tim belum ditetapkan;
@@ -300,7 +298,10 @@ export default function Dashboard({
                             workdays={d.workdays}
                             period={d.period}
                             defaultOrder={
-                                role === 'supervisor' ? 'pace' : 'realization'
+                                role === 'supervisor' ||
+                                role === 'branch_manager'
+                                    ? 'pace'
+                                    : 'realization'
                             }
                             title={
                                 role === 'sales' ? 'Kinerja saya' : undefined
