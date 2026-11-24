@@ -119,9 +119,9 @@ async function exportsReal(page) {
             path: '/analytics/mapping-area',
             data: (p) => p.report,
             menus: [
-                ['Porsi DO di FOA', 'porsi-foa'],
-                ['DO per kecamatan FOA', 'do-kecamatan-foa'],
                 ['Porsi DO di PMA', 'porsi-pma'],
+                ['DO per kecamatan FOA', 'do-kecamatan-foa'],
+                ['Tren porsi FOA dan PMA', 'tren-porsi'],
                 ['DO per kab/kota', 'do-kab-kota'],
             ],
             mode: 'realisasi-do',
@@ -133,7 +133,9 @@ async function exportsReal(page) {
         assert(report.total > 0, `${chart.path}: fixture has no DO to export`);
         await noNaN(chart.path);
         for (const [title, slug] of chart.menus) {
-            const expectedName = `${slug}-${chart.mode}-${report.from}_${report.to}`;
+            // The trend reaches back to its own first month.
+            const start = slug === 'tren-porsi' ? report.months[0].month : report.from;
+            const expectedName = `${slug}-${chart.mode}-${start}_${report.to}`;
             for (const format of ['PNG', 'CSV']) {
                 const file = await grab(async () => {
                     await page.getByRole('button', { name: `Unduh ${title}`, exact: true }).click();
@@ -152,18 +154,15 @@ async function exportsReal(page) {
                     assert(body.every((r) => r[7] === 'Data laporan'), `${title} CSV carries a sample-data marker`);
                     assert(body.length > 0, `${title} CSV has no rows`);
                     const total = Number(body[0][5]);
-                    // Share cards list FOA/PMA and its complement first; later rows are context (PMA di luar FOA, months).
-                    const parts = slug.startsWith('porsi-') ? body.slice(0, 2) : body;
-                    assert(parts.reduce((sum, r) => sum + Number(r[4]), 0) === total, `${title} CSV rows do not reconcile with total_acuan`);
-                    if (['porsi-foa', 'do-kecamatan-foa', 'porsi-pma', 'do-kab-kota'].includes(slug)) assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);
-                    if (slug.startsWith('porsi-')) {
-                        const months = body.slice(3);
-                        const share = slug === 'porsi-foa' ? report.foa : report.foa + report.pmaOutsideFoa;
-                        assert(months.length === report.months.length, `${title} CSV has ${months.length} month rows, page ${report.months.length}`);
-                        assert(months.reduce((sum, r) => sum + Number(r[5]), 0) === report.total, `${title} CSV month bases do not sum to total`);
-                        assert(months.reduce((sum, r) => sum + Number(r[4]), 0) === share, `${title} CSV month counts ${share} mismatch`);
-                        assert(Number(body[2][4]) === report.pmaOutsideFoa, `${title} CSV PMA di luar FOA != page ${report.pmaOutsideFoa}`);
-                    }
+                    // The PMA share adds its subtotal after the three parts; the trend has one base per month.
+                    const parts = slug === 'porsi-pma' ? body.slice(0, 3) : body;
+                    if (slug === 'tren-porsi') {
+                        const expected = ['foa', 'pma'].flatMap((key) => report.months.map((m) => `${m[key]}/${m.total}`));
+                        assert(body.map((r) => `${r[4]}/${r[5]}`).join() === expected.join(), `${title} CSV does not match the monthly report`);
+                    } else assert(parts.reduce((sum, r) => sum + Number(r[4]), 0) === total, `${title} CSV rows do not reconcile with total_acuan`);
+                    if (['porsi-pma', 'do-kecamatan-foa', 'do-kab-kota'].includes(slug)) assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);
+                    if (slug === 'porsi-pma')
+                        assert(body.map((r) => Number(r[4])).join() === [report.foa, report.pmaOutsideFoa, report.outsidePma, report.foa + report.pmaOutsideFoa].join(), `${title} CSV parts do not match the page`);
                     if (slug === 'do-kab-kota')
                         assert(body.every((r, i) => r[3].endsWith(' (luar PMA)') === !report.regions[i].isPma), `${title} CSV loses the PMA group`);
                     if (slug === 'cara-pembiayaan') assert(total === report.total, `${title} CSV total ${total} != page ${report.total}`);

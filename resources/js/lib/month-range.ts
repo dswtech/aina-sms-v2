@@ -19,3 +19,20 @@ export function formatMonthRange(from: string, to: string): string {
         formatter.format(new Date(`${value}-01T00:00:00+07:00`));
     return from === to ? format(from) : `${format(from)} – ${format(to)}`;
 }
+
+/** Y-m that lies `count` months before `month`; null means the current month in Jakarta. */
+export function monthsBefore(month: string | null, count: number): string {
+    const [year, index] = (
+        month ??
+        new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Jakarta',
+            year: 'numeric',
+            month: '2-digit',
+        }).format(new Date())
+    )
+        .split('-')
+        .map(Number);
+    return new Date(Date.UTC(year, index - 1 - count, 1))
+        .toISOString()
+        .slice(0, 7);
+}

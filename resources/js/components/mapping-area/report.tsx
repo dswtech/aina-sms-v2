@@ -1,353 +1,329 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { CircleAlert } from 'lucide-react';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { ChartExportMenu } from '@/components/chart-export-menu';
-import { FilterPanel } from '@/components/filter-panel';
+import { BarRow } from '@/components/mapping-area/bar-row';
+import { FoaSection } from '@/components/mapping-area/foa-section';
+import { Trend } from '@/components/mapping-area/trend';
 import { MonthRangeFields } from '@/components/month-range-fields';
-import { formatMonthRange, monthRangeError } from '@/lib/month-range';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatShare, shortRegionName } from '@/lib/area-map';
 import { chartRowColor, makeAreaChartExports } from '@/lib/chart-export';
 import type { AreaReportData, ChartExportData } from '@/lib/chart-export';
+import {
+    formatMonthRange,
+    monthRangeError,
+    monthsBefore,
+} from '@/lib/month-range';
 
 export type { AreaReportData };
 
-const muted = '#526175';
-const percent = (value: number) =>
-    `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value)}%`;
-const shortMonth = new Intl.DateTimeFormat('id-ID', {
-    month: 'short',
-    year: '2-digit',
-    timeZone: 'UTC',
-});
-const monthLabel = (month: string) =>
-    shortMonth.format(new Date(`${month}-01T00:00:00Z`));
+const colors = {
+    foa: chartRowColor('area-share', 'foa'),
+    pma: chartRowColor('area-share', 'pmaOutsideFoa'),
+    outside: chartRowColor('area-share', 'outside'),
+};
+const presets = [
+    { months: 1, label: 'Bulan ini' },
+    { months: 3, label: '3 bulan' },
+    { months: 6, label: '6 bulan' },
+];
 
-function CardHeading({
+function Card({
     id,
     title,
     hint,
     chart,
+    children,
 }: {
     id: string;
     title: string;
     hint: string;
     chart: ChartExportData;
+    children: ReactNode;
 }) {
-    return (
-        <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-                <h3 id={id} className="font-semibold">
-                    {title}
-                </h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    {hint}
-                </p>
-            </div>
-            <ChartExportMenu chart={chart} />
-        </div>
-    );
-}
-
-/** Donut of the first two rows, then the monthly share (rows after the third). */
-function ShareCard({
-    id,
-    chart,
-    trendLabel,
-}: {
-    id: string;
-    chart: ChartExportData;
-    trendLabel: string;
-}) {
-    const [inside, outside] = chart.rows.slice(0, chart.donut);
-    const months = chart.rows.filter((row) => row.id.startsWith('month-'));
-    const circumference = 2 * Math.PI * 40;
-    const insideLength = chart.total
-        ? (inside.count / chart.total) * circumference
-        : 0;
     return (
         <section
             aria-labelledby={id}
             className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
         >
-            <CardHeading
-                id={id}
-                title={chart.title}
-                hint={`${chart.total} DO`}
-                chart={chart}
-            />
-            <div className="mt-5 flex flex-wrap items-center gap-6">
-                <svg
-                    viewBox="0 0 100 100"
-                    role="img"
-                    aria-label={`${inside.label} ${percent(inside.percentage)}, ${outside.label} ${percent(outside.percentage)}`}
-                    className="size-36 shrink-0"
-                >
-                    <g
-                        transform="rotate(-90 50 50)"
-                        fill="none"
-                        strokeWidth="16"
-                    >
-                        <circle
-                            cx="50"
-                            cy="50"
-                            r="40"
-                            stroke={chartRowColor(chart.kind, 'outside')}
-                            strokeOpacity={chart.total ? 1 : 0.2}
-                        />
-                        {insideLength > 0 && (
-                            <circle
-                                cx="50"
-                                cy="50"
-                                r="40"
-                                stroke={chartRowColor(chart.kind, inside.id)}
-                                strokeDasharray={`${insideLength} ${circumference}`}
-                            />
-                        )}
-                    </g>
-                    <text
-                        x="50"
-                        y="56"
-                        textAnchor="middle"
-                        className="fill-foreground text-[17px] font-semibold"
-                    >
-                        {percent(inside.percentage)}
-                    </text>
-                </svg>
-                <dl className="space-y-3 text-sm">
-                    {[inside, outside].map((row) => (
-                        <div key={row.id} className="flex items-center gap-3">
-                            <span
-                                aria-hidden="true"
-                                className="size-2.5 shrink-0 rounded-sm"
-                                style={{
-                                    background: chartRowColor(
-                                        chart.kind,
-                                        row.id,
-                                    ),
-                                }}
-                            />
-                            <dt>{row.label}</dt>
-                            <dd className="font-medium tabular-nums">
-                                {row.count}
-                            </dd>
-                        </div>
-                    ))}
-                </dl>
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h2 id={id} className="font-semibold">
+                        {title}
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {hint}
+                    </p>
+                </div>
+                <ChartExportMenu chart={chart} />
             </div>
-            <p className="mt-6 text-xs text-muted-foreground">{trendLabel}</p>
-            {/* Up to 24 months: fixed-width columns scroll instead of overlapping. */}
-            <div className="mt-2 overflow-x-auto">
-                <ol className="flex min-w-full gap-2">
-                    {months.map((row) => (
-                        <li
-                            key={row.id}
-                            className="flex w-12 min-w-12 flex-1 flex-col items-center text-xs text-muted-foreground"
-                        >
-                            <div className="flex h-32 w-full flex-col items-center justify-end gap-1 border-b">
-                                <span className="tabular-nums">
-                                    {row.base ? percent(row.percentage) : '–'}
-                                </span>
-                                <span
-                                    aria-hidden="true"
-                                    className="w-full max-w-8 rounded-t"
-                                    style={{
-                                        height: `${Math.max(row.percentage, 1) * 0.8}px`,
-                                        background: chartRowColor(
-                                            chart.kind,
-                                            row.id,
-                                        ),
-                                    }}
-                                />
-                            </div>
-                            <span aria-hidden="true" className="mt-1">
-                                {monthLabel(row.id.slice('month-'.length))}
-                            </span>
-                            <span className="sr-only">
-                                {row.label}: {row.count} dari {row.base} DO
-                            </span>
-                        </li>
-                    ))}
-                </ol>
-            </div>
+            {children}
         </section>
     );
 }
 
-/** Horizontal bars; zero rows that still count (FOA or PMA) are marked red, muted rows grey. */
-function ListCard({
-    id,
-    chart,
-    hint,
-    limit,
-}: {
-    id: string;
-    chart: ChartExportData;
-    hint: string;
-    limit?: number;
-}) {
-    const [expanded, setExpanded] = useState(false);
-    const main = chart.rows.filter((row) => row.id !== 'other');
-    const rest = chart.rows.filter((row) => row.id === 'other');
-    const shown = limit && !expanded ? main.slice(0, limit) : main;
-    const maximum = Math.max(1, ...chart.rows.map((row) => row.count));
+/** One 100% bar: FOA sits inside PMA, so both shares read off the same line. */
+function ShareBar({ result }: { result: AreaReportData }) {
+    const pma = result.foa + result.pmaOutsideFoa;
+    const parts = [
+        { label: 'FOA', count: result.foa, color: colors.foa },
+        {
+            label: 'PMA di luar FOA',
+            count: result.pmaOutsideFoa,
+            color: colors.pma,
+        },
+        { label: 'Luar PMA', count: result.outsidePma, color: colors.outside },
+    ];
     return (
-        <section
-            aria-labelledby={id}
-            className="min-w-0 rounded-xl border bg-card p-5 sm:p-6"
-        >
-            <CardHeading
-                id={id}
-                title={chart.title}
-                hint={hint}
-                chart={chart}
-            />
-            <ul className="mt-5 space-y-2.5">
-                {[...shown, ...rest].map((row) => {
-                    const empty = !row.muted && row.count === 0;
-                    return (
-                        <li
-                            key={row.id}
-                            className={`grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_2.5rem] items-center gap-3 text-sm ${row.id === 'other' ? 'border-t pt-2.5' : ''}`}
-                        >
-                            <span
-                                className={`flex min-w-0 items-center gap-1 ${empty ? 'text-destructive' : ''}`}
-                                title={row.label}
-                            >
-                                {empty && (
-                                    <CircleAlert
-                                        aria-hidden="true"
-                                        className="size-3.5 shrink-0"
-                                    />
-                                )}
-                                <span className="truncate">{row.label}</span>
-                                {empty && (
-                                    <span className="sr-only">
-                                        , belum ada DO
-                                    </span>
-                                )}
-                            </span>
+        <div className="mt-4">
+            <p className="text-sm">
+                Dalam PMA{' '}
+                <strong className="font-semibold tabular-nums">
+                    {pma} DO · {formatShare(pma, result.total)}
+                </strong>
+            </p>
+            {pma > 0 && (
+                <div
+                    aria-hidden="true"
+                    className="mt-1 h-2 border-x border-t border-muted-foreground"
+                    style={{ width: `${(pma / result.total) * 100}%` }}
+                />
+            )}
+            <div
+                aria-hidden="true"
+                className="mt-1 flex h-9 gap-0.5 overflow-hidden rounded-md bg-muted"
+            >
+                {parts
+                    .filter((part) => part.count > 0)
+                    .map((part) => (
+                        <span
+                            key={part.label}
+                            style={{
+                                flexGrow: part.count,
+                                flexBasis: 0,
+                                background: part.color,
+                            }}
+                        />
+                    ))}
+            </div>
+            <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                {parts.map((part) => (
+                    <div
+                        key={part.label}
+                        className="flex items-baseline gap-2 sm:block"
+                    >
+                        <dt className="flex items-center gap-2 text-muted-foreground">
                             <span
                                 aria-hidden="true"
-                                className="h-4 rounded-r"
-                                style={{
-                                    width: `${(row.count / maximum) * 100}%`,
-                                    background: row.muted
-                                        ? muted
-                                        : chartRowColor(chart.kind, row.id),
-                                }}
+                                className="size-2.5 shrink-0 rounded-sm"
+                                style={{ background: part.color }}
                             />
-                            <span
-                                className={`text-right tabular-nums ${empty ? 'text-destructive' : ''}`}
-                            >
-                                {row.count}
-                            </span>
+                            {part.label}
+                        </dt>
+                        <dd className="ml-auto tabular-nums sm:mt-1 sm:ml-0">
+                            <span className="font-semibold">
+                                {part.count} DO
+                            </span>{' '}
+                            · {formatShare(part.count, result.total)}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
+        </div>
+    );
+}
+
+function RegionList({ result }: { result: AreaReportData }) {
+    const maximum = Math.max(1, ...result.regions.map((row) => row.count));
+    return [true, false].map((isPma) => {
+        const rows = result.regions.filter((row) => row.isPma === isPma);
+        // Summed from the rows below it; an FOA district may sit in a region outside PMA.
+        const count = rows.reduce((sum, row) => sum + row.count, 0);
+        return (
+            <div key={String(isPma)} className="mt-4">
+                <h3 className="flex justify-between gap-3 text-sm font-medium">
+                    {isPma ? 'Kab/kota PMA' : 'Kab/kota luar PMA'}
+                    <span className="font-normal text-muted-foreground tabular-nums">
+                        {count} DO · {formatShare(count, result.total)}
+                    </span>
+                </h3>
+                <ul className="mt-2">
+                    {rows.map((row) => (
+                        <li
+                            key={row.id}
+                            className={
+                                isPma && !row.count
+                                    ? 'text-destructive'
+                                    : undefined
+                            }
+                        >
+                            <BarRow
+                                label={shortRegionName(row.name)}
+                                parts={[
+                                    { count: row.foa, color: colors.foa },
+                                    {
+                                        count: row.count - row.foa,
+                                        color: isPma
+                                            ? colors.pma
+                                            : colors.outside,
+                                    },
+                                ]}
+                                maximum={maximum}
+                                total={result.total}
+                            />
                         </li>
-                    );
-                })}
-            </ul>
-            {limit !== undefined && main.length > limit && (
-                <button
-                    type="button"
-                    className="mt-4 min-h-11 rounded-md border px-3 text-sm"
-                    aria-expanded={expanded}
-                    onClick={() => setExpanded((value) => !value)}
-                >
-                    {expanded
-                        ? 'Tampilkan lebih sedikit'
-                        : `Lihat semua ${main.length} kecamatan`}
-                </button>
+                    ))}
+                </ul>
+            </div>
+        );
+    });
+}
+
+function PeriodPicker({
+    result,
+    scope,
+}: {
+    result: AreaReportData;
+    scope: string;
+}) {
+    const [from, setFrom] = useState(result.from);
+    const [to, setTo] = useState(result.to);
+    const [thisMonth] = useState(() => monthsBefore(null, 0));
+    const matched = presets.find(
+        ({ months }) =>
+            result.to === thisMonth &&
+            result.from === monthsBefore(thisMonth, months - 1),
+    );
+    const [custom, setCustom] = useState(!matched);
+    const change = (start: string, end: string) => {
+        setFrom(start);
+        setTo(end);
+        if (!monthRangeError(start, end))
+            router.get(
+                '/analytics/mapping-area',
+                { from: start, to: end },
+                { preserveState: true, preserveScroll: true, replace: true },
+            );
+    };
+    return (
+        <section aria-label="Periode Mapping Area" className="space-y-3">
+            <ToggleGroup
+                type="single"
+                aria-label="Periode"
+                value={custom ? 'custom' : String(matched?.months ?? '')}
+                onValueChange={(value) => {
+                    if (!value) return;
+                    setCustom(value === 'custom');
+                    if (value !== 'custom')
+                        change(
+                            monthsBefore(thisMonth, Number(value) - 1),
+                            thisMonth,
+                        );
+                }}
+                className="w-full gap-0.5 rounded-[10px] bg-muted p-[3px] sm:w-fit"
+            >
+                {[
+                    ...presets.map(({ months, label }) => ({
+                        value: String(months),
+                        label,
+                    })),
+                    { value: 'custom', label: 'Pilih rentang' },
+                ].map(({ value, label }) => (
+                    <ToggleGroupItem
+                        key={value}
+                        value={value}
+                        className="h-11 flex-1 rounded-[7px] px-1.5 text-[13px] font-medium text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm sm:flex-none sm:px-4"
+                    >
+                        {label}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
+            {custom && (
+                <div className="max-w-2xl">
+                    <MonthRangeFields
+                        id="mapping-period"
+                        from={from}
+                        to={to}
+                        onChange={change}
+                    />
+                </div>
             )}
+            <p className="text-xs leading-5 text-muted-foreground">
+                Cakupan: {scope}. Berdasarkan DO sah, satu kali per transaksi.
+                FOA dan PMA mengikuti kondisi yang dikunci saat DO.
+            </p>
         </section>
     );
 }
 
 export function AreaReport({ result }: { result: AreaReportData }) {
-    const [from, setFrom] = useState(result.from);
-    const [to, setTo] = useState(result.to);
-    const applied = { from: result.from, to: result.to };
-    const visit = (range: { from: string; to: string }) =>
-        router.get('/analytics/mapping-area', range, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    const periodLabel = formatMonthRange(applied.from, applied.to);
+    const byTeam = usePage().props.auth.user.role === 'supervisor';
+    const periodLabel = formatMonthRange(result.from, result.to);
     const charts = makeAreaChartExports(
-        { ...applied, periodLabel, mode: 'do', synthetic: false },
+        {
+            from: result.from,
+            to: result.to,
+            periodLabel,
+            mode: 'do',
+            synthetic: false,
+        },
         result,
     );
-    const foaShare = charts.foa.rows[0].percentage;
-    const pmaShare = charts.pma.rows[0].percentage;
+    const pma = result.foa + result.pmaOutsideFoa;
+    const trendLabel = formatMonthRange(
+        result.months[0].month,
+        result.months[result.months.length - 1].month,
+    );
     return (
         <div className="space-y-6">
-            <FilterPanel
-                iconOnly
-                title="Filter Mapping Area"
-                summary={`${periodLabel} · Realisasi DO`}
-            >
-                <MonthRangeFields
-                    id="mapping-period"
-                    from={from}
-                    to={to}
-                    onChange={(start, end) => {
-                        setFrom(start);
-                        setTo(end);
-                        if (!monthRangeError(start, end))
-                            visit({ from: start, to: end });
-                    }}
-                />
-                <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                    Berdasarkan DO sah, satu kali per transaksi. FOA dan PMA
-                    mengikuti kondisi yang dikunci saat DO.
+            <PeriodPicker
+                result={result}
+                scope={byTeam ? 'tim Anda' : 'seluruh dealer'}
+            />
+            {result.unverified > 0 && (
+                <p className="flex items-start gap-2 rounded-xl border px-5 py-4 text-sm leading-6">
+                    <CircleAlert
+                        aria-hidden="true"
+                        className="mt-1 size-4 shrink-0"
+                    />
+                    {result.unverified} DO pada rentang ini belum memiliki area
+                    terverifikasi dan tidak dihitung. Tinjau sebelum laporan
+                    dipakai.
                 </p>
-            </FilterPanel>
+            )}
             <section
                 aria-label="Ringkasan Mapping Area"
-                className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-3 sm:gap-x-10"
+                className="grid grid-cols-3 gap-x-3 border-y py-5 sm:gap-x-10"
             >
-                <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Total DO</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
-                        {result.total}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {periodLabel}
-                    </p>
-                </div>
-                <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Porsi FOA</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
-                        {percent(foaShare)}
-                    </p>
-                    <div
-                        role="meter"
-                        aria-label="Porsi FOA menuju 100%"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={foaShare}
-                        aria-valuetext={percent(foaShare)}
-                        className="mt-2 h-1.5 rounded-full bg-muted"
-                    >
-                        <div
-                            className="h-1.5 rounded-full"
-                            style={{
-                                width: `${foaShare}%`,
-                                background: chartRowColor('area-foa', 'foa'),
-                            }}
-                        />
+                {[
+                    {
+                        label: 'Total DO',
+                        value: String(result.total),
+                        note: periodLabel,
+                    },
+                    {
+                        label: 'Porsi FOA',
+                        value: formatShare(result.foa, result.total),
+                        note: `${result.foa} DO${byTeam ? '' : ' · ukuran penilaian dealer'}`,
+                    },
+                    {
+                        label: 'Porsi PMA',
+                        value: formatShare(pma, result.total),
+                        note: `${pma} DO, termasuk FOA`,
+                    },
+                ].map(({ label, value, note }) => (
+                    <div key={label} className="min-w-0">
+                        <p className="text-sm text-muted-foreground">{label}</p>
+                        <p className="mt-2 text-xl font-semibold tracking-tight tabular-nums sm:text-3xl">
+                            {value}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            {note}
+                        </p>
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {result.foa} DO · ukuran penilaian dealer
-                    </p>
-                </div>
-                <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Porsi PMA</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
-                        {percent(pmaShare)}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {result.foa + result.pmaOutsideFoa} DO, termasuk FOA
-                    </p>
-                </div>
+                ))}
             </section>
             {!result.total && (
                 <section className="rounded-xl border px-6 py-10 text-center">
@@ -363,61 +339,37 @@ export function AreaReport({ result }: { result: AreaReportData }) {
                     </p>
                 </section>
             )}
-            <section aria-labelledby="mapping-foa" className="space-y-3">
-                <div>
-                    <h2 id="mapping-foa" className="text-lg font-semibold">
-                        FOA
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        Kecamatan FOA dealer, ukuran penilaian dealer.
-                    </p>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-2">
-                    <ShareCard
-                        id="mapping-foa-share"
-                        chart={charts.foa}
-                        trendLabel="Porsi FOA per bulan"
-                    />
-                    <ListCard
-                        id="mapping-foa-districts"
-                        chart={charts.foaDistricts}
-                        hint="Kecamatan lain mencakup Kota Lain."
-                        limit={8}
-                    />
-                </div>
-            </section>
-            <section aria-labelledby="mapping-pma" className="space-y-3">
-                <div>
-                    <h2 id="mapping-pma" className="text-lg font-semibold">
-                        PMA
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        Kab/kota yang masih digarap dealer, termasuk FOA.
-                    </p>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-2">
-                    <ShareCard
-                        id="mapping-pma-share"
-                        chart={charts.pma}
-                        trendLabel="Porsi PMA per bulan"
-                    />
-                    <ListCard
-                        id="mapping-pma-regions"
-                        chart={charts.pmaRegions}
-                        hint="Kab/kota PMA dulu, lalu luar PMA."
-                    />
-                </div>
-            </section>
-            {result.unverified > 0 && (
-                <p
-                    role="alert"
-                    className="rounded-xl border px-5 py-4 text-sm leading-6"
+            <Card
+                id="mapping-pma-share"
+                title={charts.share.title}
+                hint="FOA termasuk dalam PMA."
+                chart={charts.share}
+            >
+                <ShareBar result={result} />
+            </Card>
+            <FoaSection
+                result={result}
+                chart={charts.foaDistricts}
+                byTeam={byTeam}
+            />
+            <div className="grid gap-4 lg:grid-cols-2">
+                <Card
+                    id="mapping-trend"
+                    title={charts.trend.title}
+                    hint={trendLabel}
+                    chart={{ ...charts.trend, periodLabel: trendLabel }}
                 >
-                    {result.unverified} DO pada rentang ini belum memiliki area
-                    terverifikasi dan tidak dihitung. Tinjau sebelum laporan
-                    dipakai.
-                </p>
-            )}
+                    <Trend months={result.months} />
+                </Card>
+                <Card
+                    id="mapping-pma-regions"
+                    title={charts.pmaRegions.title}
+                    hint="Biru tua adalah DO dari kecamatan FOA."
+                    chart={charts.pmaRegions}
+                >
+                    <RegionList result={result} />
+                </Card>
+            </div>
         </div>
     );
 }

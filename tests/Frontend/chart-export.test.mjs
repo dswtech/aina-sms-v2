@@ -7,7 +7,7 @@ import {
     wrapChartLabel,
     makeAreaChartExports,
     chartRowColor,
-    layoutDonutLegend,
+    chartBarFraction,
 } from '../../resources/js/lib/chart-export.ts';
 
 const areaMeta = {
@@ -31,10 +31,10 @@ const areaReport = {
         { id: 'other', name: 'Kecamatan lain', regionName: '', count: 42 },
     ],
     regions: [
-        { id: '32.17', name: 'Kabupaten Bandung Barat', isPma: true, count: 82 },
-        { id: '32.77', name: 'Kota Cimahi', isPma: true, count: 26 },
-        { id: '32.11', name: 'Kabupaten Sumedang', isPma: false, count: 4 },
-        { id: 'other', name: 'Kota Lain', isPma: false, count: 8 },
+        { id: '32.17', name: 'Kabupaten Bandung Barat', isPma: true, count: 82, foa: 78 },
+        { id: '32.77', name: 'Kota Cimahi', isPma: true, count: 26, foa: 0 },
+        { id: '32.11', name: 'Kabupaten Sumedang', isPma: false, count: 4, foa: 0 },
+        { id: 'other', name: 'Kota Lain', isPma: false, count: 8, foa: 0 },
     ],
     months: [
         { month: '2026-09', total: 50, foa: 30, pma: 45 },
@@ -42,61 +42,50 @@ const areaReport = {
     ],
 };
 
-test('area exports split FOA and PMA cards with monthly shares on their own base', () => {
-    const { foa, foaDistricts, pma, pmaRegions } = makeAreaChartExports(areaMeta, areaReport);
-    assert.equal(foa.mode, 'do');
-    assert.equal(foa.donut, 2);
+test('area exports cover the PMA split, its trend, districts and regions', () => {
+    const { share, trend, foaDistricts, pmaRegions } = makeAreaChartExports(areaMeta, areaReport);
+    assert.equal(share.mode, 'do');
     assert.deepEqual(
-        foa.rows.slice(0, 3).map(({ label, count, percentage }) => [label, count, percentage]),
-        [['FOA', 78, 65], ['Di luar FOA', 42, 35], ['PMA di luar FOA', 30, 25]],
+        share.rows.map(({ label, count, percentage }) => [label, count, percentage]),
+        [['FOA', 78, 65], ['PMA di luar FOA', 30, 25], ['Luar PMA', 12, 10], ['Dalam PMA (FOA + PMA di luar FOA)', 108, 90]],
     );
     assert.deepEqual(
-        foa.rows.slice(3).map(({ label, count, base, percentage }) => [label, count, base, percentage]),
-        [['FOA 2026-09', 30, 50, 60], ['FOA 2026-10', 48, 70, 68.6]],
+        trend.rows.map(({ label, count, base, percentage }) => [label, count, base, percentage]),
+        [['FOA 2026-09', 30, 50, 60], ['FOA 2026-10', 48, 70, 68.6], ['PMA 2026-09', 45, 50, 90], ['PMA 2026-10', 63, 70, 90]],
     );
-    assert.deepEqual(
-        pma.rows.slice(0, 2).map(({ label, count }) => [label, count]),
-        [['Dalam PMA', 108], ['Luar PMA', 12]],
-    );
-    assert.equal(pma.rows.at(-1).label, 'PMA 2026-10');
-    assert.equal(pma.rows.at(-1).percentage, 90);
+    const padded = makeAreaChartExports(areaMeta, { ...areaReport, months: [{ month: '2026-05', total: 10, foa: 1, pma: 2 }, ...areaReport.months] }).trend;
+    assert.equal(chartFilename(padded, 'csv'), 'tren-porsi-realisasi-do-2026-05_2026-10.csv');
+    assert.equal(padded.total, 130);
     assert.deepEqual(foaDistricts.rows.map((row) => row.label), ['Ngamprah', 'Gununghalu', 'Kecamatan lain']);
     assert.equal(foaDistricts.rows.at(-1).muted, true);
     assert.deepEqual(pmaRegions.rows.map((row) => row.muted ?? false), [false, false, true, true]);
     assert.deepEqual(pmaRegions.rows.map((row) => row.label), ['Kabupaten Bandung Barat', 'Kota Cimahi', 'Kabupaten Sumedang (luar PMA)', 'Kota Lain (luar PMA)']);
-    assert.equal(chartFilename(foa, 'csv'), 'porsi-foa-realisasi-do-2026-09_2026-10.csv');
+    assert.equal(chartFilename(share, 'csv'), 'porsi-pma-realisasi-do-2026-09_2026-10.csv');
+    assert.equal(chartFilename(trend, 'csv'), 'tren-porsi-realisasi-do-2026-09_2026-10.csv');
     assert.equal(chartFilename(foaDistricts, 'png'), 'do-kecamatan-foa-realisasi-do-2026-09_2026-10.png');
-    assert.equal(chartFilename(pma, 'csv'), 'porsi-pma-realisasi-do-2026-09_2026-10.csv');
     assert.equal(chartFilename(pmaRegions, 'csv'), 'do-kab-kota-realisasi-do-2026-09_2026-10.csv');
-    const csv = chartCsv(foa).split('\r\n');
-    assert.ok(csv[4].includes('"FOA 2026-09";"30";"50";"60"'));
-    assert.ok(csv[1].includes('"FOA";"78";"120";"65"'));
-    assert.notEqual(chartRowColor(foa.kind, 'foa'), chartRowColor(foa.kind, 'outside'));
+    assert.ok(chartCsv(trend).split('\r\n')[1].includes('"FOA 2026-09";"30";"50";"60"'));
+    assert.ok(chartCsv(share).split('\r\n')[1].includes('"FOA";"78";"120";"65"'));
+    assert.equal(new Set(['foa', 'pmaOutsideFoa', 'outside'].map((id) => chartRowColor('area-share', id))).size, 3);
 });
 
-test('monthly legend rows sit compact under their own divider on long ranges', () => {
-    const months = Array.from({ length: 24 }, (_, i) => ({
-        month: `2025-${String(i + 1).padStart(2, '0')}`, total: 1, foa: 1, pma: 1,
-    }));
-    const { foa } = makeAreaChartExports(areaMeta, { ...areaReport, months });
-    const layout = layoutDonutLegend(foa.rows, (text) => text.length * 12);
-    const first = layout[3];
-    assert.equal(first.divider, true);
-    assert.ok(layout.slice(0, 3).every((row) => !row.divider));
-    assert.ok(first.y >= layout[2].y + layout[2].height + 64);
-    assert.ok(layout.slice(3).every((row) => row.height <= 44));
-    assert.ok(layout.at(-1).y + layout.at(-1).height < 1700);
+test('area PNG bars use shares, and the non-FOA total never sets the district scale', () => {
+    const { share, trend, foaDistricts } = makeAreaChartExports(areaMeta, areaReport);
+    assert.equal(chartBarFraction(share, share.rows[0]), 0.65);
+    assert.equal(chartBarFraction(trend, trend.rows[2]), 0.9);
+    const districts = { ...foaDistricts, rows: foaDistricts.rows.map((row) => row.id === 'other' ? { ...row, count: 900 } : row) };
+    assert.equal(chartBarFraction(districts, districts.rows[0]), 1);
+    assert.equal(chartBarFraction(districts, districts.rows.at(-1)), 0);
 });
 
 test('area exports stay zero-safe on an empty range', () => {
     const empty = { ...areaReport, total: 0, foa: 0, pmaOutsideFoa: 0, outsidePma: 0,
         districts: [{ id: 'other', name: 'Kecamatan lain', regionName: '', count: 0 }], regions: [],
         months: [{ month: '2026-09', total: 0, foa: 0, pma: 0 }] };
-    const exports = makeAreaChartExports(areaMeta, empty);
-    for (const chart of Object.values(exports))
+    for (const chart of Object.values(makeAreaChartExports(areaMeta, empty))) {
         assert.ok(chart.rows.every((row) => Number.isFinite(row.percentage) && row.percentage === 0));
-    const layout = layoutDonutLegend(exports.foa.rows, (text) => text.length * 12);
-    assert.ok(layout.every((row, i) => !i || row.y >= layout[i - 1].y + layout[i - 1].height));
+        assert.ok(chart.rows.every((row) => chartBarFraction(chart, row) === 0));
+    }
 });
 
 import {
