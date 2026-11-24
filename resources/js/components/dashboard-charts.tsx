@@ -64,6 +64,9 @@ export function PaceLine({ pace }: { pace: Pace }) {
     if (pace.summary) return <span data-pace-line>{pace.summary}</span>;
     return (
         <span data-pace-line>
+            {/* The projection explains the order inside one badge tier. */}
+            {pace.projected !== null &&
+                `Proyeksi ${Math.floor(pace.projected * 100)}% · `}
             <span className="font-medium text-foreground">
                 Butuh {rateUp(pace.needed!)}/hari
             </span>
@@ -181,6 +184,7 @@ export function PerformanceChart({
     period,
     defaultOrder = 'realization',
     nextHref,
+    rowPace = true,
 }: {
     rows: PerformanceRow[];
     team?: boolean;
@@ -193,6 +197,7 @@ export function PerformanceChart({
     defaultOrder?: 'realization' | 'pace';
     /** Deals that can close the gap; omitted for roles without transaction access. */
     nextHref?: (row: PerformanceRow) => string;
+    rowPace?: boolean;
 }) {
     const paceOf = (row: PerformanceRow) =>
         monthPace(
@@ -335,7 +340,7 @@ export function PerformanceChart({
                                                 <PaceBadge pace={paceOf(row)} />
                                             )}
                                         </div>
-                                        {showPace && (
+                                        {showPace && rowPace && (
                                             <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                                                 <PaceLine pace={paceOf(row)} />
                                                 {nextHref &&
