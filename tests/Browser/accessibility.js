@@ -1702,7 +1702,7 @@ async function accessibility(page) {
                 .locator('input[type="password"]')
                 .boundingBox();
             const toggleSize = await page
-                .getByRole('button', { name: 'Show password', exact: true })
+                .getByRole('button', { name: 'Tampilkan password', exact: true })
                 .boundingBox();
             assert(
                 Math.abs(passwordSize.height - toggleSize.height) <= 0.5,

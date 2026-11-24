@@ -9,7 +9,7 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center bg-sidebar p-5 sm:p-8">
+        <main className="flex min-h-svh flex-col items-center justify-center bg-sidebar p-5 sm:p-8">
             <div className="w-full max-w-md">
                 <div className="rounded-xl border bg-background px-6 py-8 sm:px-9 sm:py-10">
                     <div className="flex flex-col items-center gap-4">
@@ -32,9 +32,9 @@ export default function AuthSimpleLayout({
                             </p>
                         </div>
                     </div>
-                    {children}
+                    <div className="mt-8">{children}</div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
