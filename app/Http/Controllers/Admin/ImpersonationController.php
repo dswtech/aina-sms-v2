@@ -34,7 +34,7 @@ class ImpersonationController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $admin = User::query()->find($request->session()->pull('impersonator_id'));
+        $admin = User::query()->whereKey($request->session()->pull('impersonator_id'))->first();
 
         if ($admin === null || ! $admin->is_active || $admin->role !== UserRole::Admin) {
             Auth::logout();
