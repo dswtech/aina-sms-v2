@@ -15,9 +15,12 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Lupa password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <p
+                    role="status"
+                    className="mb-6 text-center text-sm font-medium"
+                >
                     {status}
-                </div>
+                </p>
             )}
 
             <div className="space-y-6">

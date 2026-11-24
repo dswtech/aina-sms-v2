@@ -99,6 +99,7 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
+        app()->setLocale('id');
         RateLimiter::increment(md5('login'.implode('|', [$user->username, '127.0.0.1'])), amount: 5);
 
         $response = $this->post(route('login.store'), [
@@ -106,11 +107,17 @@ class AuthenticationTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
-        $response->assertTooManyRequests();
+        $response->assertRedirect()->assertSessionHasErrors('username');
+        $this->assertMatchesRegularExpression('/^Terlalu banyak percobaan masuk\. Coba lagi dalam \d+ detik\.$/', session('errors')->first('username'));
+        $this->assertGuest();
+
+        $this->postJson(route('login.store'), ['username' => $user->username, 'password' => 'wrong-password'])
+            ->assertTooManyRequests()->assertJsonValidationErrors('username');
     }
 
     public function test_one_ip_cannot_try_unlimited_usernames(): void
     {
+        app()->setLocale('id');
         foreach (range(1, 60) as $attempt) {
             $this->post(route('login.store'), [
                 'username' => 'nobody-'.$attempt,
@@ -121,7 +128,8 @@ class AuthenticationTest extends TestCase
         $this->post(route('login.store'), [
             'username' => 'nobody-61',
             'password' => 'wrong-password',
-        ])->assertTooManyRequests();
+        ])->assertSessionHasErrors('username');
+        $this->assertStringStartsWith('Terlalu banyak percobaan masuk.', session('errors')->first('username'));
     }
 
     public function test_unknown_username_still_spends_a_password_hash(): void

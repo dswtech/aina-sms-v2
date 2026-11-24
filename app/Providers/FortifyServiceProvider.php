@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\LoginResponse;
@@ -104,9 +105,14 @@ class FortifyServiceProvider extends ServiceProvider
             $throttleKey = Str::transliterate(Str::lower(is_string($username) ? $username : '').'|'.$request->ip());
 
             // The second limit stops one IP from trying many usernames; 60 keeps a shared office IP usable.
+            // A form error instead of the bare 429 page; JSON clients still get 429.
+            $tooMany = fn (Request $request, array $headers) => throw ValidationException::withMessages([
+                Fortify::username() => __('auth.throttle', ['seconds' => $headers['Retry-After']]),
+            ])->status(429);
+
             return [
-                Limit::perMinute(5)->by($throttleKey),
-                Limit::perMinute(60)->by($request->ip()),
+                Limit::perMinute(5)->by($throttleKey)->response($tooMany),
+                Limit::perMinute(60)->by($request->ip())->response($tooMany),
             ];
         });
 

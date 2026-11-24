@@ -20,9 +20,20 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Masuk" />
 
+            {status && (
+                <p
+                    role="status"
+                    className="mb-6 text-center text-sm font-medium"
+                >
+                    {status}
+                </p>
+            )}
+
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
+                // The disabled submit button drops focus to the body.
+                onError={() => document.getElementById('password')?.focus()}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -100,12 +111,6 @@ export default function Login({ status, canResetPassword }: Props) {
                     </>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </>
     );
 }
