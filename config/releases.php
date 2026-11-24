@@ -5,7 +5,7 @@
 return [
     [
         'version' => '1.8.0',
-        'date' => '2026-11-24',
+        'date' => '2026-11-25',
         'notify' => true,
         'summary' => 'Versi baru: peta penjualan FOA di Mapping Area, status laju target di Beranda, dan halaman Riwayat Target.',
         'items' => [
