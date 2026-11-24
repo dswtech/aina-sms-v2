@@ -113,10 +113,14 @@ class TeamPerformance
         }
         // Allocations retain their original team and period after membership changes.
         $rowUsers = $users->concat($allocations->pluck('user'))->concat($dealSales)->unique('id')->sortBy('name');
+        // Same scope as the transaction list the count links to; Branch Managers have no such list.
+        $openSpk = $isBranchManager ? null : DealTransaction::query()->visibleTo($actor)->where('current_stage', PipelineStage::Spk)
+            ->toBase()->selectRaw('sales_id, count(*) as total')->groupBy('sales_id')->pluck('total', 'sales_id');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
             'team_name' => $teams->firstWhere('id', $memberships->firstWhere('user_id', $sales->id)?->team_id)?->name,
             'is_current_member' => $users->contains('id', $sales->id),
+            ...($openSpk === null ? [] : ['open_spk_count' => (int) $openSpk->get($sales->id, 0)]),
         ], $this->metrics($dealsBySales->get($sales->id, collect()), $personalUnits->get($sales->id), $historical)))->values()->all();
         $closing = $historical ? collect() : $deals->filter(function (DealTransaction|stdClass $deal): bool {
             $inPeriod = $deal instanceof DealTransaction ? $deal->getAttribute('closing_in_period') : $deal->closing_in_period;

@@ -40,6 +40,7 @@ export default function Dashboard({
         d.workdays,
         d.period,
     );
+    const ownSpk = role === 'sales' && d.performance[0]?.open_spk_count;
     // A single team repeats the KPI strip; its benchmark details stay on the Target page.
     const showTeams = (d.teams?.length ?? 0) !== 1 || role !== 'supervisor';
     const metrics = [
@@ -106,17 +107,14 @@ export default function Dashboard({
                     <dl
                         className={`grid grid-cols-2 gap-px bg-border ${role === 'admin' ? '' : 'md:grid-cols-3 lg:grid-cols-5'}`}
                     >
-                        {metrics.map(([label, value, note], index) => (
+                        {metrics.map(([label, value, note]) => (
                             <div
                                 key={label}
                                 // Derivable from the tiles beside it; phones keep a 2×2 strip.
                                 className={`min-w-0 bg-card p-4 last:odd:col-span-2 sm:p-5 lg:last:odd:col-span-1 ${label === 'Gap ke forecast' ? 'max-md:hidden' : ''}`}
                             >
-                                <dt className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-                                    <span>{label}</span>
-                                    {index === 0 && role !== 'admin' && (
-                                        <PaceBadge pace={monthly} />
-                                    )}
+                                <dt className="text-sm text-muted-foreground">
+                                    {label}
                                 </dt>
                                 <dd className="mt-2 text-xl font-semibold break-words tabular-nums sm:mt-3 sm:text-2xl">
                                     {value}
@@ -133,7 +131,8 @@ export default function Dashboard({
                 <div className="grid gap-2 text-sm leading-6 text-muted-foreground">
                     {role !== 'admin' && (
                         <p data-pace-summary className="tabular-nums">
-                            {monthly.status !== 'none' && 'Laju bulan ini: '}
+                            <PaceBadge pace={monthly} />
+                            {monthly.status !== 'none' && ' Laju bulan ini: '}
                             <PaceLine pace={monthly} />
                             {monthly.status === 'none' && canManage && (
                                 <>
@@ -146,7 +145,7 @@ export default function Dashboard({
                                     </Link>
                                 </>
                             )}
-                            {role === 'sales' &&
+                            {!!ownSpk &&
                                 ['behind', 'slipping'].includes(
                                     monthly.status,
                                 ) && (
@@ -156,7 +155,7 @@ export default function Dashboard({
                                             href="/transactions?tab=active&stage=spk&date_from=&date_to="
                                             className="font-medium text-primary underline-offset-4 hover:underline"
                                         >
-                                            Lihat SPK siap DO
+                                            {ownSpk} SPK siap DO
                                         </Link>
                                     </>
                                 )}
@@ -339,7 +338,7 @@ export default function Dashboard({
                                 role === 'branch_manager'
                                     ? undefined
                                     : (row) =>
-                                          `/transactions?${role === 'sales' ? '' : `sales_id=${row.id}&`}tab=active&stage=spk&date_from=&date_to=`
+                                          `/transactions?sales_id=${row.id}&tab=active&stage=spk&date_from=&date_to=`
                             }
                         />
                     </div>

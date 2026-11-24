@@ -315,7 +315,8 @@ it('lists each current, allocated and historical sales user once in manager perf
         ->where('dashboard.performance.1.target_units', 2.5)
         ->where('dashboard.performance.2.id', $historical->id)
         ->where('dashboard.performance.2.is_current_member', false)
-        ->where('dashboard.performance.2.stage_counts.hot_prospect', 2));
+        ->where('dashboard.performance.2.stage_counts.hot_prospect', 2)
+        ->missing('dashboard.performance.0.open_spk_count'));
     expect($loadedDeals)->toBe(0);
 });
 
@@ -373,6 +374,22 @@ test('production forecast weights are the owner-approved baseline', function () 
         ->and(config('forecast.weights'))->toBe(['lead' => 0.10, 'prospect' => 0.25, 'hot_prospect' => 0.50, 'spk' => 0.75]);
     $f = g02Fixture();
     $this->actingAs($f['supervisor'])->get('/targets')->assertInertia(fn (Assert $p) => $p->where('dashboard.forecastApproved', true));
+});
+
+it('counts open SPK per Sales exactly as the linked transaction list does', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-23 08:00', 'Asia/Jakarta'));
+    $f = g02Fixture();
+    foreach ([PipelineStage::Spk, PipelineStage::Spk, PipelineStage::Do, PipelineStage::HotProspect] as $stage) {
+        g02Deal($f, ['current_stage' => $stage]);
+    }
+    // Another team's record of the same Sales: outside the team report, inside the transaction list.
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'team_id' => Team::factory()->create(['dealer_id' => $f['dealer']->id])->id]);
+    foreach (['supervisor', 'sales'] as $role) {
+        $this->actingAs($f[$role])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+            ->where('dashboard.performance.0.open_spk_count', 3));
+        $this->get("/transactions?sales_id={$f['sales']->id}&tab=active&stage=spk&date_from=&date_to=")
+            ->assertInertia(fn (Assert $p) => $p->where('transactions.total', 3));
+    }
 });
 
 it('counts Monday to Saturday workdays for the dashboard pace', function () {
