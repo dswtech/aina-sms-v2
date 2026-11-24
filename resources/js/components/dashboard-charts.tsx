@@ -456,7 +456,7 @@ export function PerformanceChart({
                         </div>
                     )}
                     <details className="group/details border-t">
-                        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-5 py-3 text-sm font-medium text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+                        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-5 py-3 text-sm font-medium text-primary focus-visible:-outline-offset-2">
                             <ChevronRight
                                 aria-hidden="true"
                                 className="size-4 shrink-0 transition-transform group-open/details:rotate-90 motion-reduce:transition-none"

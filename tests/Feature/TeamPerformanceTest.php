@@ -413,7 +413,9 @@ it('lists SPK without a usable closing estimate first in the closing list of the
         ->where('dashboard.forecastUnits', 0.75));
     // "Lihat semua" opens exactly the counted deals.
     $this->get('/transactions?closing_month=2026-11&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
-        ->where('transactions.total', 3)->where('filters.closing_month', '2026-11'));
+        ->where('transactions.total', 3)->where('filters.closing_month', '2026-11')
+        ->where('transactions.data.0.expected_closing_month', fn (?string $month): bool => $month !== '2026-11')
+        ->where('transactions.data.2.expected_closing_month', '2026-11'));
     $this->get('/transactions?closing_month=2026-12&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
         ->where('transactions.total', 1));
     $this->get('/transactions?closing_month=2026-13')->assertSessionHasErrors('closing_month');

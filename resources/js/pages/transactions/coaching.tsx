@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ClosingMonthForm } from '@/components/team-performance';
 import { formatMonth } from '@/lib/calendar';
+import { closingMonthStale } from '@/lib/transaction-labels';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,13 +32,8 @@ export default function Coaching({ transaction, timeline }: Props) {
     const bodyRef = useRef<HTMLTextAreaElement>(null);
 
     const closing = transaction.expected_closing_month;
-    const thisMonth = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Jakarta',
-        year: 'numeric',
-        month: '2-digit',
-    }).format(new Date());
     // Opened by default when the estimate still has to be filled in; stays put after saving.
-    const [closingOpen] = useState(!closing || closing < thisMonth);
+    const [closingOpen] = useState(closingMonthStale(closing));
 
     function reset() {
         setEditingId(null);

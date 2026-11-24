@@ -135,6 +135,21 @@ async function transactionFilterRecovery(page) {
         throw new Error('A stage link did not collapse the phone filters');
     await page.getByRole('button', { name: 'Tampilkan filter' }).click();
     await searchField.waitFor();
+    // A closing-month link collapses too, counts as a filter and survives a tab change; Reset clears it.
+    await page.goto(`${origin}/transactions?closing_month=2026-11&date_from=&date_to=`);
+    const closingNote = page.getByText(/^Hanya peluang closing/);
+    await closingNote.waitFor();
+    if (await searchField.isVisible())
+        throw new Error('A closing link did not collapse the phone filters');
+    await page.getByText('1 filter aktif', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Tampilkan filter' }).click();
+    await page.getByRole('button', { name: 'Aktif', exact: true }).click();
+    await page.waitForURL(/tab=active/);
+    await page.getByText('2 filter aktif', { exact: true }).waitFor();
+    if (!page.url().includes('closing_month=2026-11') || !(await closingNote.isVisible()))
+        throw new Error('A tab change dropped the closing-month filter');
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    await closingNote.waitFor({ state: 'hidden' });
     await page.goto(`${origin}/transactions?date_from=&date_to=`);
     await searchField.waitFor();
     return {

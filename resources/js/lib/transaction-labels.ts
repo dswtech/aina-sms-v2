@@ -28,6 +28,19 @@ export type RowDetail = {
     supervisors: { id: number; name: string }[];
 };
 
+/** An empty or past closing month (Y-m, Asia/Jakarta) is outside every forecast. */
+export const closingMonthStale = (
+    month: string | null | undefined,
+    now: Date = new Date(),
+) =>
+    !month ||
+    month <
+        new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Jakarta',
+            year: 'numeric',
+            month: '2-digit',
+        }).format(now);
+
 export const formatDate = (value: string | null) =>
     value
         ? new Date(value).toLocaleDateString('id-ID', {

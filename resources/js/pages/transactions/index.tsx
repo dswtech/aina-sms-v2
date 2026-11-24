@@ -18,6 +18,7 @@ import {
     type Area,
     CHANNEL_LABELS,
     areaLabel,
+    closingMonthStale,
     formatDate,
     sourceLabel,
     supervisorLabel,
@@ -82,7 +83,8 @@ type FilterQuery = Record<
     | 'supervisor_id'
     | 'region_code'
     | 'district_code'
-    | 'source_channel',
+    | 'source_channel'
+    | 'closing_month',
     string | null
 >;
 
@@ -122,13 +124,17 @@ const tabs = [
     { value: 'closed', label: 'Selesai' },
 ];
 
+const needsEstimate = (transaction: Transaction) =>
+    transaction.current_stage === 'spk' &&
+    closingMonthStale(transaction.expected_closing_month);
+
 /** Closed deals have no estimate left to fill. */
-const closingLabel = (transaction: Transaction) =>
-    ['do', 'lost'].includes(transaction.current_stage)
-        ? null
-        : transaction.expected_closing_month
-          ? formatMonth(`${transaction.expected_closing_month.slice(0, 7)}-01`)
-          : 'Belum diisi';
+const closingLabel = (transaction: Transaction) => {
+    if (['do', 'lost'].includes(transaction.current_stage)) return null;
+    if (!transaction.expected_closing_month) return 'Belum diisi';
+    const month = formatMonth(`${transaction.expected_closing_month}-01`);
+    return needsEstimate(transaction) ? `${month} (perlu diperbarui)` : month;
+};
 
 export default function TransactionsIndex({
     transactions,
@@ -146,8 +152,10 @@ export default function TransactionsIndex({
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
-    // A stage link from the dashboard opens on the results; filtering here keeps the panel as it was.
-    const [arrivedFiltered] = useState(filters.stage !== '');
+    // A dashboard link opens on the results; filtering here keeps the panel as it was.
+    const [arrivedFiltered] = useState(
+        filters.stage !== '' || !!filters.closing_month,
+    );
     const [stage, setStage] = useState(filters.stage);
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
@@ -210,6 +218,8 @@ export default function TransactionsIndex({
         region_code: regionCode || null,
         district_code: regionCode ? districtCode || null : null,
         source_channel: source === 'digital_ad' ? sourceChannel || null : null,
+        // Set by a dashboard link; tabs and Terapkan narrow it, Reset clears it.
+        closing_month: filters.closing_month ?? null,
     };
     const failedQuery =
         typeof failedVisit?.target === 'string' ? null : failedVisit?.target;
@@ -349,6 +359,7 @@ export default function TransactionsIndex({
             region_code: null,
             district_code: null,
             source_channel: null,
+            closing_month: null,
             ...next,
         });
     };
@@ -420,7 +431,7 @@ export default function TransactionsIndex({
                     className="mt-6"
                     title="Filter transaksi"
                     collapseOnMobile={arrivedFiltered}
-                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.closing_month, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
                     <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4`}>
                         <div>
@@ -805,7 +816,15 @@ export default function TransactionsIndex({
                                                         <p className="text-muted-foreground">
                                                             Estimasi closing
                                                         </p>
-                                                        <p>
+                                                        <p
+                                                            className={
+                                                                needsEstimate(
+                                                                    transaction,
+                                                                )
+                                                                    ? 'font-medium'
+                                                                    : undefined
+                                                            }
+                                                        >
                                                             {closingLabel(
                                                                 transaction,
                                                             )}
@@ -911,7 +930,9 @@ export default function TransactionsIndex({
                                                             {closingLabel(
                                                                 transaction,
                                                             ) && (
-                                                                <p className="mt-1 text-xs whitespace-nowrap text-muted-foreground">
+                                                                <p
+                                                                    className={`mt-1 text-xs ${needsEstimate(transaction) ? 'font-medium' : 'text-muted-foreground'}`}
+                                                                >
                                                                     Closing:{' '}
                                                                     {closingLabel(
                                                                         transaction,
