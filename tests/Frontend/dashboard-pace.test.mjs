@@ -127,3 +127,12 @@ test('no realised units ranks below a Sales with a little progress', () => {
         ['Nanda', 'Laila'],
     );
 });
+
+test('the browser fixture covers every tier', () => {
+    const tier = (realized, target) =>
+        monthPace(target, realized, nov, '2026-11-01', monday).status;
+    assert.deepEqual(
+        [tier(3, 6), tier(2, 3), tier(3, 4), tier(5, 4), tier(0, 0)],
+        ['behind', 'slipping', 'on', 'reached', 'none'],
+    );
+});

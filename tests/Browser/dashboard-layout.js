@@ -35,8 +35,9 @@ async function dashboardLayout(page) {
     const sales = [
         metrics(1, 'Ayu Prameswari — Data contoh', 3, 4.5, 6),
         metrics(2, 'Bima Saputra — Data contoh', 5, 6.25, 4),
-        metrics(3, 'Citra Maharani — Data contoh', 3, 5.25, 6),
-        metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 4),
+        // Targets chosen so the ranking shows every pace tier (19 of 25 workdays).
+        metrics(3, 'Citra Maharani — Data contoh', 3, 5.25, 4),
+        metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
         metrics(5, 'Eka Wulandari — Data contoh', 0, 0, 0),
         metrics(
             6,
@@ -460,6 +461,21 @@ async function dashboardLayout(page) {
                             name: 'Kinerja per Sales',
                         });
                         if (await ranking.count()) {
+                            const tiers = new Set(
+                                await ranking
+                                    .locator(
+                                        '#dashboard-sales-rows [data-pace]',
+                                    )
+                                    .evaluateAll((nodes) =>
+                                        nodes.map((node) => node.dataset.pace),
+                                    ),
+                            );
+                            assert(
+                                ['behind', 'slipping', 'on', 'reached'].every(
+                                    (tier) => tiers.has(tier),
+                                ),
+                                'Ranking shows every pace tier: ' + [...tiers],
+                            );
                             // Coaching roles open the ranking in pace order.
                             assert(
                                 (await ranking
@@ -530,6 +546,43 @@ async function dashboardLayout(page) {
                                 width >= 768,
                             'Stage achievement cards on phone ' + width,
                         );
+                    if (role === 'supervisor' || role === 'sales') {
+                        const visible = await page
+                            .getByRole('region', {
+                                name: 'Prioritas tindak lanjut',
+                            })
+                            .locator('ol')
+                            .evaluateAll((lists) =>
+                                lists.map(
+                                    (list) =>
+                                        [...list.children].filter(
+                                            (item) =>
+                                                item.offsetParent !== null,
+                                        ).length,
+                                ),
+                            );
+                        assert(
+                            visible.every((count) =>
+                                width < 768 ? count <= 3 : count <= 5,
+                            ),
+                            `Priority lists show ${visible} items at ${width}`,
+                        );
+                    }
+                    // Lagging rows link to open SPK; Branch Managers have no transaction access.
+                    const nextStep = ranking.getByRole('link', {
+                        name: 'Lihat SPK siap DO',
+                    });
+                    assert(
+                        role === 'branch_manager'
+                            ? (await nextStep.count()) === 0
+                            : role === 'admin' ||
+                                  (
+                                      await nextStep
+                                          .first()
+                                          .getAttribute('href')
+                                  ).includes('tab=active&stage=spk'),
+                        'Next step from a lagging row: ' + role,
+                    );
                     assert(
                         (await page
                             .getByRole('main')

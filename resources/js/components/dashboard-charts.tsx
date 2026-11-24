@@ -180,6 +180,7 @@ export function PerformanceChart({
     workdays,
     period,
     defaultOrder = 'realization',
+    nextHref,
 }: {
     rows: PerformanceRow[];
     team?: boolean;
@@ -190,6 +191,8 @@ export function PerformanceChart({
     workdays?: DashboardData['workdays'];
     period?: string;
     defaultOrder?: 'realization' | 'pace';
+    /** Deals that can close the gap; omitted for roles without transaction access. */
+    nextHref?: (row: PerformanceRow) => string;
 }) {
     const paceOf = (row: PerformanceRow) =>
         monthPace(
@@ -332,6 +335,31 @@ export function PerformanceChart({
                                                 <PaceBadge pace={paceOf(row)} />
                                             )}
                                         </div>
+                                        {showPace && (
+                                            <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                                                <PaceLine pace={paceOf(row)} />
+                                                {nextHref &&
+                                                    [
+                                                        'behind',
+                                                        'slipping',
+                                                    ].includes(
+                                                        paceOf(row).status,
+                                                    ) && (
+                                                        <>
+                                                            {' · '}
+                                                            <Link
+                                                                href={nextHref(
+                                                                    row,
+                                                                )}
+                                                                className="font-medium text-primary underline-offset-4 hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                                                            >
+                                                                Lihat SPK siap
+                                                                DO
+                                                            </Link>
+                                                        </>
+                                                    )}
+                                            </p>
+                                        )}
                                         {showTeams && row.team_name && (
                                             <p className="mt-1 text-xs text-muted-foreground">
                                                 {row.team_name}
@@ -354,11 +382,6 @@ export function PerformanceChart({
                                             showTarget={showTarget}
                                             pace={pace}
                                         />
-                                        {showPace && (
-                                            <p className="mt-1 text-right text-xs text-muted-foreground tabular-nums">
-                                                <PaceLine pace={paceOf(row)} />
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
                             </li>

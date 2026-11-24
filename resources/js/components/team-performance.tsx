@@ -595,6 +595,7 @@ export function PriorityLists({
     totals?: ReportingProps['dashboard']['priorityTotals'];
     hideSales?: boolean;
 }) {
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const groups = [
         ['stagnant', 'Transaksi stagnan'],
         ['unread', 'Komentar belum dibaca'],
@@ -624,7 +625,7 @@ export function PriorityLists({
                             </p>
                         ) : (
                             <ol className="divide-y">
-                                {items.map((item) => {
+                                {items.map((item, index) => {
                                     const name =
                                         item.customer_name ??
                                         item.vehicle_model ??
@@ -659,7 +660,8 @@ export function PriorityLists({
                                     return (
                                         <li
                                             key={item.id ?? item.public_id}
-                                            className="striped-row flex items-center gap-3 px-4 py-2"
+                                            // Phones show three per list so the metrics stay within reach.
+                                            className={`striped-row flex items-center gap-3 px-4 py-2 ${index >= 3 && !expanded[key] ? 'max-md:hidden' : ''}`}
                                         >
                                             <Link
                                                 href={item.url}
@@ -692,6 +694,17 @@ export function PriorityLists({
                                     );
                                 })}
                             </ol>
+                        )}
+                        {items.length > 3 && !expanded[key] && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setExpanded({ ...expanded, [key]: true })
+                                }
+                                className="flex min-h-11 w-full items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline md:hidden"
+                            >
+                                Tampilkan {items.length - 3} lagi
+                            </button>
                         )}
                         {key === 'stagnant' && total > items.length && (
                             <Link

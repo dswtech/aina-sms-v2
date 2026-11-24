@@ -20,6 +20,10 @@ import {
 } from '@/components/dashboard-charts';
 import { monthPace } from '@/lib/dashboard-charts';
 
+// Forecasts are weighted estimates; one decimal is enough for whole cars.
+const oneDecimal = (value: number | null) =>
+    value == null ? value : Math.round(value * 10) / 10;
+
 const gap = (value: number | null) =>
     value != null && value < 0
         ? [amount(-value), 'Target terlampaui']
@@ -65,13 +69,13 @@ export default function Dashboard({
         ],
         [
             'Forecast (estimasi)',
-            amount(d.forecastUnits, 'Tidak tersedia'),
+            amount(oneDecimal(d.forecastUnits), 'Tidak tersedia'),
             percentOf(d.forecastUnits, d.targetUnits),
         ],
         ...(role !== 'admin'
             ? [
                   ['Gap ke realisasi', ...gap(d.gapUnits)],
-                  ['Gap ke forecast', ...gap(d.forecastGapUnits)],
+                  ['Gap ke forecast', ...gap(oneDecimal(d.forecastGapUnits))],
               ]
             : []),
     ];
@@ -90,7 +94,7 @@ export default function Dashboard({
                                 Prioritas tindak lanjut
                             </h2>
                             <p className="text-xs leading-5 text-muted-foreground">
-                                Lima teratas per daftar. Transaksi stagnan dan
+                                Item teratas per daftar. Transaksi stagnan dan
                                 komentar tidak dibatasi periode laporan.
                             </p>
                         </div>
@@ -311,6 +315,12 @@ export default function Dashboard({
                                     ? (row) =>
                                           `/transactions?sales_id=${row.id}&date_from=&date_to=`
                                     : undefined
+                            }
+                            nextHref={
+                                role === 'branch_manager'
+                                    ? undefined
+                                    : (row) =>
+                                          `/transactions?${role === 'sales' ? '' : `sales_id=${row.id}&`}tab=active&stage=spk&date_from=&date_to=`
                             }
                         />
                     </div>
