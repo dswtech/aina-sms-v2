@@ -3,6 +3,7 @@
 use App\Models\AuditLog;
 use App\Models\Dealer;
 use App\Models\User;
+use App\Notifications\ReleaseAnnounced;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -94,4 +95,60 @@ it('marks impersonable rows on the users page', function () {
             ->and($rows[$otherAdmin->public_id]['can_impersonate'])->toBeFalse()
             ->and($rows[$inactive->public_id]['can_impersonate'])->toBeFalse();
     });
+});
+
+it('blocks writes while viewing as a user', function () {
+    $name = $this->sales->name;
+    startImpersonating($this, $this->admin, $this->sales);
+
+    $this->from('/settings/profile')->patch('/settings/profile', ['name' => 'Diubah Admin', 'email' => $this->sales->email])
+        ->assertRedirect('/settings/profile')
+        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'warning', 'message' => 'Mode lihat saja: perubahan tidak disimpan.']);
+
+    expect($this->sales->fresh()->name)->toBe($name);
+});
+
+it('keeps notifications unread while viewing as a user', function () {
+    $this->sales->notify(new ReleaseAnnounced('1.3.1', 'Ringkasan'));
+    $notification = $this->sales->notifications()->first();
+    startImpersonating($this, $this->admin, $this->sales);
+
+    $this->patch("/notifications/{$notification->id}/read")->assertRedirect();
+
+    expect($notification->fresh()->read_at)->toBeNull();
+});
+
+it('blocks CSV exports while viewing as a user', function () {
+    startImpersonating($this, $this->admin, $this->sales);
+    $response = $this->get('/transactions/export.csv')->assertRedirect();
+    expect((string) $response->headers->get('Content-Type'))->not->toContain('text/csv');
+    $this->post('/impersonation/stop');
+
+    $supervisor = User::factory()->supervisor()->create(['dealer_id' => $this->dealer->id]);
+    startImpersonating($this, $this->admin, $supervisor);
+    $response = $this->get('/analytics/export.csv')->assertRedirect();
+    expect((string) $response->headers->get('Content-Type'))->not->toContain('text/csv');
+});
+
+it('still allows reading pages and stopping', function () {
+    startImpersonating($this, $this->admin, $this->sales);
+
+    $this->get('/dashboard')->assertOk();
+    $this->post('/impersonation/stop')->assertRedirect('/users');
+});
+
+it('logs everyone out on logout while viewing as a user', function () {
+    startImpersonating($this, $this->admin, $this->sales);
+
+    $this->post('/logout')->assertRedirect();
+
+    $this->assertGuest();
+    $this->get('/dashboard')->assertRedirect('/login');
+});
+
+it('does not affect normal users', function () {
+    $this->actingAs($this->sales)->patch('/settings/profile', ['name' => 'Nama Baru', 'email' => $this->sales->email])
+        ->assertSessionHasNoErrors();
+
+    expect($this->sales->fresh()->name)->toBe('Nama Baru');
 });
