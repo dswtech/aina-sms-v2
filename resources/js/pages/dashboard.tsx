@@ -41,6 +41,15 @@ export default function Dashboard({
         d.workdays,
         d.period,
     );
+    // Some teams have a target but not all: say what is known instead of "Belum ditetapkan".
+    const teamsWithTarget = (d.teams ?? []).filter(
+        (team) => team.target_units !== null,
+    );
+    const partialTarget =
+        canViewManagementTarget &&
+        d.targetUnits === null &&
+        d.teamTargetsMissing > 0 &&
+        teamsWithTarget.length > 0;
     // A single team repeats the KPI strip; its benchmark details stay on the Target page.
     const showTeams = (d.teams?.length ?? 0) !== 1 || role !== 'supervisor';
     const metrics = [
@@ -52,10 +61,12 @@ export default function Dashboard({
                           : role === 'branch_manager'
                             ? 'Target cabang'
                             : 'Target tim',
-                      amount(d.targetUnits),
-                      pace !== null && d.targetUnits
-                          ? `Seharusnya s.d. hari ini: ${amount(paceUnits(d.targetUnits, pace))}`
-                          : null,
+                      partialTarget ? 'Belum lengkap' : amount(d.targetUnits),
+                      partialTarget
+                          ? `${teamsWithTarget.length} dari ${teamsWithTarget.length + d.teamTargetsMissing} tim: ${amount(teamsWithTarget.reduce((sum, team) => sum + Number(team.target_units), 0))} unit`
+                          : pace !== null && d.targetUnits
+                            ? `Seharusnya s.d. hari ini: ${amount(paceUnits(d.targetUnits, pace))}`
+                            : null,
                   ],
               ]
             : []),
@@ -133,19 +144,13 @@ export default function Dashboard({
                         <p data-pace-summary className="tabular-nums">
                             <PaceBadge pace={monthly} />
                             {monthly.status !== 'none' && ' Laju bulan ini: '}
-                            <PaceLine pace={monthly} />
+                            {partialTarget ? (
+                                `Target ${(d.teamTargetsMissingNames ?? []).join(', ')} belum ditetapkan, jadi laju dan gap belum bisa dihitung.`
+                            ) : (
+                                <PaceLine pace={monthly} />
+                            )}
                         </p>
                     )}
-                    {role !== 'admin' &&
-                        monthly.status === 'none' &&
-                        canManage && (
-                            <Link
-                                href={`/targets?period=${d.period.slice(0, 7)}`}
-                                className="inline-flex w-fit items-center font-medium text-primary hover:underline pointer-coarse:min-h-11"
-                            >
-                                Kelola target
-                            </Link>
-                        )}
                     {role === 'sales' && d.performance[0] && (
                         <OpenSpkLink
                             row={d.performance[0]}
@@ -154,7 +159,7 @@ export default function Dashboard({
                             className="text-sm"
                         />
                     )}
-                    {!!d.teamTargetsMissing && role !== 'sales' && (
+                    {!!d.teamTargetsMissing && role === 'admin' && (
                         <p>
                             {d.teamTargetsMissing} target tim belum ditetapkan;
                             total target tim belum lengkap.

@@ -396,6 +396,26 @@ it('counts open SPK per Sales exactly as the linked transaction list does', func
     }
 });
 
+it('lists SPK without a usable closing estimate first in the closing list of the current month only', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-23 08:00', 'Asia/Jakarta'));
+    $f = g02Fixture();
+    g02Deal($f, ['current_stage' => PipelineStage::Spk]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => '2026-12-01']);
+    g02Deal($f, ['current_stage' => PipelineStage::Lead, 'expected_closing_month' => null]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => null]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => '2026-10-01']);
+    $this->actingAs($f['sales'])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.priorityTotals.closing', 3)
+        ->where('dashboard.priorities.closing.0.needs_estimate', true)
+        ->where('dashboard.priorities.closing.1.needs_estimate', true)
+        ->where('dashboard.priorities.closing.2.needs_estimate', false)
+        // The forecast still counts only the November SPK.
+        ->where('dashboard.forecastUnits', 0.75));
+    $this->get('/dashboard?period=2026-12')->assertInertia(fn (Assert $p) => $p
+        ->where('dashboard.priorityTotals.closing', 1)
+        ->where('dashboard.priorities.closing.0.needs_estimate', false));
+});
+
 it('counts Monday to Saturday workdays for the dashboard pace', function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-23 08:00', 'Asia/Jakarta'));
     $f = g02Fixture();
@@ -458,6 +478,6 @@ it('does not require a target from a team created after the period', function ()
     $manager = User::factory()->branchManager()->create(['dealer_id' => $dealer->id]);
     foreach ([['2026-09', 0, 10], ['2026-10', 1, null], ['2026-05', 0, null]] as [$period, $missing, $target]) {
         $this->actingAs($manager)->get('/team-performance?period='.$period)->assertInertia(fn (Assert $p) => $p
-            ->where('dashboard.teamTargetsMissing', $missing)->where('dashboard.targetUnits', $target));
+            ->where('dashboard.teamTargetsMissing', $missing)->has('dashboard.teamTargetsMissingNames', $missing)->where('dashboard.targetUnits', $target));
     }
 });

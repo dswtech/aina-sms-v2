@@ -62,6 +62,8 @@ type Priority = {
     excerpt?: string;
     estimated_value?: number | null;
     expected_closing_month?: string | null;
+    /** SPK outside the forecast because its estimate is empty or past. */
+    needs_estimate?: boolean;
     url: string;
 };
 export type ReportingProps = {
@@ -72,6 +74,7 @@ export type ReportingProps = {
         salesTargetUnits: number | null;
         salesTargetsMissing: number;
         teamTargetsMissing: number;
+        teamTargetsMissingNames?: string[];
         targetAllocationDifference: number | null;
         realizationUnits: number;
         forecastUnits: number | null;
@@ -652,6 +655,11 @@ export function PriorityLists({
                                               ? `Aktivitas terakhir ${formatRelativeTime(item.last_activity_at)}`
                                               : key === 'closing'
                                                 ? [
+                                                      item.needs_estimate
+                                                          ? item.expected_closing_month
+                                                              ? 'Perbarui estimasi closing'
+                                                              : 'Isi estimasi closing'
+                                                          : null,
                                                       item.estimated_value !=
                                                       null
                                                           ? rupiah.format(

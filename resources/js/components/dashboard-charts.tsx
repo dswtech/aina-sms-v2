@@ -131,8 +131,7 @@ export function OpenSpkLink({
             </Link>
             {!!row.open_spk_unscheduled_count && (
                 <span>
-                    {row.open_spk_unscheduled_count} tanpa estimasi closing
-                    bulan ini
+                    {row.open_spk_unscheduled_count} di luar forecast bulan ini
                 </span>
             )}
         </p>
