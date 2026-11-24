@@ -16,7 +16,7 @@ export default function AppSidebarLayout({
             <AppSidebar />
             <AppContent
                 variant="sidebar"
-                className="min-w-0 overflow-x-clip pb-16 md:pb-0 md:has-[[data-target-reminder]]:pb-40"
+                className="min-w-0 overflow-x-clip pb-16 md:pb-0 md:has-[[data-target-reminder=corner]]:pb-40"
             >
                 {/* One sticky block so the banner never scrolls out of view. */}
                 <div className="sticky top-0 z-30">

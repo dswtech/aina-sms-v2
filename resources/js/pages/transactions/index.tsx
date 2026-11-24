@@ -137,6 +137,8 @@ export default function TransactionsIndex({
 }: Props) {
     const { errors } = usePage().props as { errors?: Record<string, string> };
     const [search, setSearch] = useState(filters.search);
+    // A stage link from the dashboard opens on the results; filtering here keeps the panel as it was.
+    const [arrivedFiltered] = useState(filters.stage !== '');
     const [stage, setStage] = useState(filters.stage);
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
@@ -406,6 +408,7 @@ export default function TransactionsIndex({
                 <FilterPanel
                     className="mt-6"
                     title="Filter transaksi"
+                    collapseOnMobile={arrivedFiltered}
                     summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
                     <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4`}>

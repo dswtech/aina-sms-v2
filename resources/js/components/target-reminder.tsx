@@ -9,15 +9,17 @@ import {
     reminderMessage,
 } from '@/lib/target-reminder';
 
-/** In the page flow on phones, a corner card from md up. Never modal: it takes no focus and has no overlay. */
+/** In the page flow on phones and on the dashboard (where it would cover the numbers), else a corner card from md up. Never modal: it takes no focus and has no overlay. */
 export function TargetReminder() {
     const { url, props } = usePage();
     const { targetReminder: reminder, auth } = props;
     const [, refresh] = useState(0);
 
+    const { pathname } = new URL(url, 'http://localhost');
+    const inFlow = pathname === '/dashboard';
     if (
         !reminder ||
-        new URL(url, 'http://localhost').pathname === '/targets/plans' ||
+        pathname === '/targets/plans' ||
         isDismissed(browserStore(), auth.user.public_id, reminder.today)
     )
         return null;
@@ -27,11 +29,11 @@ export function TargetReminder() {
         refresh((count) => count + 1);
     };
 
-    return (
+    const card = (
         <div
             role="status"
-            data-target-reminder
-            className="mx-5 mt-4 flex items-start gap-3 rounded-xl border bg-card p-4 text-sm text-card-foreground sm:mx-8 md:fixed md:right-6 md:bottom-6 md:z-20 md:m-0 md:max-w-sm md:shadow-lg"
+            data-target-reminder={inFlow ? 'flow' : 'corner'}
+            className={`mt-4 flex items-start gap-3 rounded-xl border bg-card p-4 text-sm text-card-foreground ${inFlow ? '' : 'mx-5 sm:mx-8 md:fixed md:right-6 md:bottom-6 md:z-20 md:m-0 md:max-w-sm md:shadow-lg'}`}
         >
             <Target
                 aria-hidden="true"
@@ -58,5 +60,12 @@ export function TargetReminder() {
                 <X aria-hidden="true" />
             </Button>
         </div>
+    );
+    return inFlow ? (
+        <div className="mx-auto w-full max-w-screen-2xl px-5 sm:px-8 lg:px-10">
+            {card}
+        </div>
+    ) : (
+        card
     );
 }

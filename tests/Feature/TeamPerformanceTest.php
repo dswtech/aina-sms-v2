@@ -316,7 +316,8 @@ it('lists each current, allocated and historical sales user once in manager perf
         ->where('dashboard.performance.2.id', $historical->id)
         ->where('dashboard.performance.2.is_current_member', false)
         ->where('dashboard.performance.2.stage_counts.hot_prospect', 2)
-        ->missing('dashboard.performance.0.open_spk_count'));
+        ->missing('dashboard.performance.0.open_spk_count')
+        ->missing('dashboard.performance.0.open_spk_unscheduled_count'));
     expect($loadedDeals)->toBe(0);
 });
 
@@ -379,14 +380,17 @@ test('production forecast weights are the owner-approved baseline', function () 
 it('counts open SPK per Sales exactly as the linked transaction list does', function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-23 08:00', 'Asia/Jakarta'));
     $f = g02Fixture();
-    foreach ([PipelineStage::Spk, PipelineStage::Spk, PipelineStage::Do, PipelineStage::HotProspect] as $stage) {
-        g02Deal($f, ['current_stage' => $stage]);
+    foreach ([PipelineStage::Spk, PipelineStage::Do, PipelineStage::HotProspect] as $stage) {
+        g02Deal($f, ['current_stage' => $stage, 'expected_closing_month' => '2026-11-01']);
     }
+    // Outside the November forecast: no estimate, or another month.
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => null]);
     // Another team's record of the same Sales: outside the team report, inside the transaction list.
-    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'team_id' => Team::factory()->create(['dealer_id' => $f['dealer']->id])->id]);
+    g02Deal($f, ['current_stage' => PipelineStage::Spk, 'expected_closing_month' => '2026-12-01', 'team_id' => Team::factory()->create(['dealer_id' => $f['dealer']->id])->id]);
     foreach (['supervisor', 'sales'] as $role) {
         $this->actingAs($f[$role])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
-            ->where('dashboard.performance.0.open_spk_count', 3));
+            ->where('dashboard.performance.0.open_spk_count', 3)
+            ->where('dashboard.performance.0.open_spk_unscheduled_count', 2));
         $this->get("/transactions?sales_id={$f['sales']->id}&tab=active&stage=spk&date_from=&date_to=")
             ->assertInertia(fn (Assert $p) => $p->where('transactions.total', 3));
     }

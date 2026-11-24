@@ -58,7 +58,14 @@ export function PaceBadge({ pace }: { pace: Pace }) {
 }
 
 /** Rate line led by the one number to act on; the forecast is never the basis. */
-export function PaceLine({ pace }: { pace: Pace }) {
+export function PaceLine({
+    pace,
+    brief = false,
+}: {
+    pace: Pace;
+    /** Rows skip the daily rates: rounding makes them read the same for everyone. */
+    brief?: boolean;
+}) {
     if (pace.status === 'none')
         return <span data-pace-line>Target belum ditetapkan</span>;
     if (pace.summary) return <span data-pace-line>{pace.summary}</span>;
@@ -73,18 +80,62 @@ export function PaceLine({ pace }: { pace: Pace }) {
                     {' · '}
                 </>
             )}
-            <span className="font-medium text-foreground">
-                Butuh {rateUp(pace.needed!)}/hari
-            </span>
-            {/* A weekly rate only helps with at least two weeks left. */}
-            {pace.remainingDays >= 10 &&
-                ` (±${rateUp(pace.needed! * 6)}/minggu)`}
-            {' · '}saat ini{' '}
-            {pace.current === null ? '—' : `${rate(pace.current)}/hari`}
-            {' · '}
+            {!brief && (
+                <>
+                    <span className="font-medium text-foreground">
+                        Butuh {rateUp(pace.needed!)}/hari
+                    </span>
+                    {/* A weekly rate only helps with at least two weeks left. */}
+                    {pace.remainingDays >= 10 &&
+                        ` (±${rateUp(pace.needed! * 6)}/minggu)`}
+                    {' · '}saat ini{' '}
+                    {pace.current === null ? '—' : `${rate(pace.current)}/hari`}
+                    {' · '}
+                </>
+            )}
             {rate(pace.remainingUnits)} unit lagi dalam {pace.remainingDays}{' '}
             hari kerja
         </span>
+    );
+}
+
+/** Next step for a lagging Sales: their open SPK, on its own line as a full touch target. */
+export function OpenSpkLink({
+    row,
+    pace,
+    href,
+    className = 'text-xs',
+}: {
+    row: PerformanceRow;
+    pace: Pace;
+    href: string;
+    className?: string;
+}) {
+    if (
+        !row.open_spk_count ||
+        // The list cannot filter by a former member.
+        row.is_current_member === false ||
+        !['behind', 'slipping'].includes(pace.status)
+    )
+        return null;
+    return (
+        <p
+            data-open-spk
+            className={`mt-1 flex flex-wrap items-center gap-x-2 text-muted-foreground tabular-nums ${className}`}
+        >
+            <Link
+                href={href}
+                className="inline-flex items-center font-medium text-primary underline-offset-4 hover:underline pointer-coarse:min-h-11"
+            >
+                {row.open_spk_count} SPK siap DO
+            </Link>
+            {!!row.open_spk_unscheduled_count && (
+                <span>
+                    {row.open_spk_unscheduled_count} tanpa estimasi closing
+                    bulan ini
+                </span>
+            )}
+        </p>
     );
 }
 
@@ -323,12 +374,14 @@ export function PerformanceChart({
                             <li key={row.id} className="px-5 py-4">
                                 <div className="flex items-start gap-3">
                                     {!team && !single && (
-                                        <span className="w-4 shrink-0 pt-0.5 text-xs text-muted-foreground tabular-nums">
+                                        <span
+                                            className={`w-4 shrink-0 pt-0.5 text-xs text-muted-foreground tabular-nums ${rowHref ? 'pointer-coarse:pt-3.5' : ''}`}
+                                        >
                                             {index + 1}.
                                         </span>
                                     )}
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                                             <h3 className="text-sm font-medium break-words">
                                                 {rowHref ? (
                                                     <Link
@@ -347,34 +400,18 @@ export function PerformanceChart({
                                         </div>
                                         {showPace && rowPace && (
                                             <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                                                <PaceLine pace={paceOf(row)} />
-                                                {nextHref &&
-                                                    !!row.open_spk_count &&
-                                                    // The list cannot filter by a former member.
-                                                    row.is_current_member !==
-                                                        false &&
-                                                    [
-                                                        'behind',
-                                                        'slipping',
-                                                    ].includes(
-                                                        paceOf(row).status,
-                                                    ) && (
-                                                        <>
-                                                            {' · '}
-                                                            <Link
-                                                                href={nextHref(
-                                                                    row,
-                                                                )}
-                                                                className="font-medium text-primary underline-offset-4 hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
-                                                            >
-                                                                {
-                                                                    row.open_spk_count
-                                                                }{' '}
-                                                                SPK siap DO
-                                                            </Link>
-                                                        </>
-                                                    )}
+                                                <PaceLine
+                                                    pace={paceOf(row)}
+                                                    brief
+                                                />
                                             </p>
+                                        )}
+                                        {showPace && rowPace && nextHref && (
+                                            <OpenSpkLink
+                                                row={row}
+                                                pace={paceOf(row)}
+                                                href={nextHref(row)}
+                                            />
                                         )}
                                         {showTeams && row.team_name && (
                                             <p className="mt-1 text-xs text-muted-foreground">

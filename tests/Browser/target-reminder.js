@@ -181,6 +181,16 @@ async function targetReminder(page) {
         );
         await noOverflow('desktop');
 
+        // Dashboard: in the flow even on desktop, so it covers no numbers.
+        await open('/dashboard');
+        assert(
+            (await reminder.evaluate(
+                (node) => getComputedStyle(node).position,
+            )) === 'static',
+            'dashboard reminder is in the flow',
+        );
+        await noOverflow('dashboard desktop');
+
         // The page where targets are filled in never shows it.
         await open('/targets/plans');
         assert((await reminder.count()) === 0, 'hidden on the plan page');

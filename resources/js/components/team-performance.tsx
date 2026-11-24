@@ -36,6 +36,8 @@ export type PerformanceRow = Metrics & {
     team_name?: string | null;
     is_current_member?: boolean;
     open_spk_count?: number;
+    /** Open SPK outside this month's forecast: no closing estimate, or another month. */
+    open_spk_unscheduled_count?: number;
     is_active?: boolean;
     sales_target_units?: number | null;
     sales_targets_missing?: number;
