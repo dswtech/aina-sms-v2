@@ -739,7 +739,7 @@ export function PriorityLists({
                                             [key]: true,
                                         })
                                     }
-                                    className="flex min-h-11 w-full items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline md:hidden"
+                                    className="flex min-h-11 w-full items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:-outline-offset-2 md:hidden"
                                 >
                                     Tampilkan {items.length - phoneCount} lagi
                                 </button>
@@ -747,7 +747,7 @@ export function PriorityLists({
                         {fullList[key] && total > items.length && (
                             <Link
                                 href={fullList[key][0]}
-                                className="flex min-h-11 items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                className="flex min-h-11 items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:-outline-offset-2"
                             >
                                 Lihat semua {total} {fullList[key][1]}
                             </Link>

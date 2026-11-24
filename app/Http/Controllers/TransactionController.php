@@ -171,6 +171,12 @@ class TransactionController extends Controller
             $query->whereNull('expected_closing_month')->whereNotIn('current_stage', PipelineStage::closedValues());
         } elseif (! empty($validated['closing_month'])) {
             $query->closingIn($validated['closing_month']);
+            // Same order as the dashboard list: SPK that still need an estimate first.
+            if ($validated['closing_month'] === $today->format('Y-m')) {
+                $query->orderByRaw('case when current_stage = ? and (expected_closing_month is null or expected_closing_month < ?) then 0 else 1 end', [
+                    PipelineStage::Spk->value, $today->format('Y-m-01'),
+                ]);
+            }
         }
 
         match ($tab) {
