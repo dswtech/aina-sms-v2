@@ -126,6 +126,17 @@ async function transactionFilterRecovery(page) {
     ) {
         throw new Error('An earlier pick did not reorder the date range');
     }
+    // On phones a stage link opens on the results; the panel stays one tap away. Other visits start open.
+    await page.setViewportSize({ width: 390, height: 844 });
+    const searchField = page.locator('#search');
+    await page.goto(`${origin}/transactions?tab=active&stage=spk&date_from=&date_to=`);
+    await page.getByRole('button', { name: 'Tampilkan filter' }).waitFor();
+    if (await searchField.isVisible())
+        throw new Error('A stage link did not collapse the phone filters');
+    await page.getByRole('button', { name: 'Tampilkan filter' }).click();
+    await searchField.waitFor();
+    await page.goto(`${origin}/transactions?date_from=&date_to=`);
+    await searchField.waitFor();
     return {
         checked,
         transactionRetryReachedLaravel: true,

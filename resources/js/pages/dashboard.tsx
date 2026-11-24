@@ -14,6 +14,7 @@ import { formatMonth } from '@/lib/calendar';
 import {
     ForecastContributors,
     PaceBadge,
+    OpenSpkLink,
     PaceLine,
     PerformanceChart,
     PipelineChart,
@@ -40,7 +41,6 @@ export default function Dashboard({
         d.workdays,
         d.period,
     );
-    const ownSpk = role === 'sales' && d.performance[0]?.open_spk_count;
     // A single team repeats the KPI strip; its benchmark details stay on the Target page.
     const showTeams = (d.teams?.length ?? 0) !== 1 || role !== 'supervisor';
     const metrics = [
@@ -134,32 +134,25 @@ export default function Dashboard({
                             <PaceBadge pace={monthly} />
                             {monthly.status !== 'none' && ' Laju bulan ini: '}
                             <PaceLine pace={monthly} />
-                            {monthly.status === 'none' && canManage && (
-                                <>
-                                    {' · '}
-                                    <Link
-                                        href={`/targets?period=${d.period.slice(0, 7)}`}
-                                        className="font-medium text-primary hover:underline"
-                                    >
-                                        Kelola target
-                                    </Link>
-                                </>
-                            )}
-                            {!!ownSpk &&
-                                ['behind', 'slipping'].includes(
-                                    monthly.status,
-                                ) && (
-                                    <>
-                                        {' · '}
-                                        <Link
-                                            href="/transactions?tab=active&stage=spk&date_from=&date_to="
-                                            className="font-medium text-primary underline-offset-4 hover:underline"
-                                        >
-                                            {ownSpk} SPK siap DO
-                                        </Link>
-                                    </>
-                                )}
                         </p>
+                    )}
+                    {role !== 'admin' &&
+                        monthly.status === 'none' &&
+                        canManage && (
+                            <Link
+                                href={`/targets?period=${d.period.slice(0, 7)}`}
+                                className="inline-flex w-fit items-center font-medium text-primary hover:underline pointer-coarse:min-h-11"
+                            >
+                                Kelola target
+                            </Link>
+                        )}
+                    {role === 'sales' && d.performance[0] && (
+                        <OpenSpkLink
+                            row={d.performance[0]}
+                            pace={monthly}
+                            href="/transactions?tab=active&stage=spk&date_from=&date_to="
+                            className="text-sm"
+                        />
                     )}
                     {!!d.teamTargetsMissing && role !== 'sales' && (
                         <p>

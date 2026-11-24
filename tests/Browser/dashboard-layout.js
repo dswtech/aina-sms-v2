@@ -26,6 +26,7 @@ async function dashboardLayout(page) {
         forecast_gap_units:
             target === null || forecast === null ? null : target - forecast,
         open_spk_count: 2,
+        open_spk_unscheduled_count: 1,
         benchmark_units: 24,
         sales_target_units: 24,
         allocation_percent: 100,
@@ -44,6 +45,7 @@ async function dashboardLayout(page) {
         {
             ...metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
             open_spk_count: 0,
+            open_spk_unscheduled_count: 0,
         },
         metrics(5, 'Eka Wulandari — Data contoh', 0, 0, 0),
         metrics(
@@ -608,6 +610,32 @@ async function dashboardLayout(page) {
                                       await nextStep.getAttribute('href')
                                   ).includes('tab=active&stage=spk'),
                         'Next step from a lagging row: ' + role,
+                    );
+                    // SPK missing from the forecast say so beside the link.
+                    assert(
+                        role === 'branch_manager' ||
+                            (await page
+                                .locator('[data-open-spk]')
+                                .innerText()).includes(
+                                '1 tanpa estimasi closing bulan ini',
+                            ),
+                        'SPK outside the forecast are named: ' + role,
+                    );
+                    if (width < 768 && role !== 'branch_manager')
+                        assert(
+                            !(await page.evaluate(
+                                () => matchMedia('(pointer: coarse)').matches,
+                            )) || (await nextStep.boundingBox()).height >= 44,
+                            'SPK link is a 44px touch target: ' + role,
+                        );
+                    // Daily rates stay in the summary; rows keep projection and units left.
+                    assert(
+                        !/Butuh|saat ini/.test(
+                            await ranking
+                                .locator('#dashboard-sales-rows')
+                                .innerText(),
+                        ),
+                        'Rows carry no daily rate: ' + role,
                     );
                     assert(
                         (await page
