@@ -51,6 +51,7 @@ class UserController extends Controller
                 'role' => $user->role->value,
                 'status' => $user->is_active ? 'active' : 'inactive',
                 'is_self' => $user->is($actor),
+                'can_impersonate' => $actor->can('impersonate', $user),
             ]);
 
         $invitations = Invitation::query()

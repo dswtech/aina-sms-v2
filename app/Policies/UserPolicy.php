@@ -52,6 +52,15 @@ class UserPolicy
         return $actor->role === UserRole::Admin && $this->sameDealer($actor, $user);
     }
 
+    public function impersonate(User $actor, User $user): bool
+    {
+        return $actor->role === UserRole::Admin
+            && $this->sameDealer($actor, $user)
+            && ! $actor->is($user)
+            && $user->role !== UserRole::Admin
+            && $user->is_active;
+    }
+
     public function delete(User $actor, User $user): bool
     {
         return false;
