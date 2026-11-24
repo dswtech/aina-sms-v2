@@ -3,11 +3,18 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.67 |
+| Versi | v1.68 |
 | Diperbarui | 24 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 24 November 2026 — riwayat pencapaian target dan pengingat
+
+- Branch `feat/target-history` menambah Analisis > Riwayat Target (`/analytics/target-history`, [DSH-08](PRD.md)) lewat `TargetHistory` dan pengingat Supervisor ([DSH-09](PRD.md)) lewat `TargetReminder` dan shared prop `targetReminder`. Tanpa migration dan package baru.
+- `TeamPerformance` tidak lagi menuntut target dari tim untuk bulan sebelum tim itu dibuat (FCT-04); dashboard bulan lampau ikut berubah. `TargetHistory` memakai aturan yang sama dan test-nya merekonsiliasi setiap bulan dengan `TeamPerformance::build`.
+- Admin belum punya layar pengisian target walaupun endpoint mengizinkan, jadi hanya Supervisor yang diingatkan.
+- Belum: PostgreSQL belum dicoba (tes memakai SQLite); manual pengguna dan catatan rilis belum diperbarui.
 
 ## Pembaruan 24 November 2026 — "login sebagai" (hanya lihat)
 

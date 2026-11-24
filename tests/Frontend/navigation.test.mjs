@@ -13,7 +13,13 @@ test('analytics contains source/model and financing children for authorized role
         );
         assert.deepEqual(
             group.children.map((item) => item.title),
-            ['Sumber & Model', 'Pembiayaan', 'Mapping Area', 'Capaian Sales'],
+            [
+                'Sumber & Model',
+                'Pembiayaan',
+                'Mapping Area',
+                'Capaian Sales',
+                ...(role === 'admin' ? [] : ['Riwayat Target']),
+            ],
         );
     }
     assert.equal(
@@ -57,13 +63,28 @@ test('exactly one analytics child is active despite report filters', () => {
     );
 });
 
+test('target history is a child of analytics for supervisors and branch managers', () => {
+    for (const role of ['supervisor', 'branch_manager']) {
+        const group = getNavigation(role).find(
+            (item) => item.key === 'analytics',
+        );
+        const url = '/analytics/target-history?from=2026-06&to=2026-11';
+        assert.deepEqual(
+            group.children
+                .filter((item) => isNavigationItemActive(item, url))
+                .map((item) => item.href),
+            ['/analytics/target-history'],
+        );
+    }
+});
+
 test('mobile more menu keeps nested analytics reachable even with a primary analytics shortcut', () => {
     for (const role of ['admin', 'supervisor', 'branch_manager']) {
         assert.equal(
             getMobileNavigation(role).more.find(
                 (item) => item.key === 'analytics',
             ).children.length,
-            4,
+            role === 'admin' ? 4 : 5,
         );
     }
 });

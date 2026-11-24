@@ -99,10 +99,12 @@ class TeamPerformance
                 'target_allocation_difference' => $managementUnits !== null && $salesTotal !== null ? $managementUnits - $salesTotal : null,
             ], $teamMetrics);
         })->values();
-        $missingTeamTargets = $teams->where('is_active', true)->reject(fn (Team $team): bool => $teamTargets->has($team->id))->count();
+        // A team owes no target for months before it existed.
+        $requiredTeams = $teams->where('is_active', true)->where('created_at', '<', $end);
+        $missingTeamTargets = $requiredTeams->reject(fn (Team $team): bool => $teamTargets->has($team->id))->count();
         $targetUnits = $actor->role === UserRole::Sales
             ? $personalUnits->get($actor->id)
-            : ($canViewManagementTarget && $missingTeamTargets === 0 && ($teams->where('is_active', true)->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
+            : ($canViewManagementTarget && $missingTeamTargets === 0 && ($requiredTeams->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
         $salesTotal = $personalUnits->isEmpty() ? null : TargetUnits::number($personalUnits->sum(fn ($n) => TargetUnits::scaled($n)));
         $metrics = $this->metrics($deals, $targetUnits, $historical);
         if ($isBranchManager) {

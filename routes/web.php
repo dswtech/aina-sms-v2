@@ -90,6 +90,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ->middleware('role:branch_manager')
         ->name('team-performance.index');
 
+    // Admin never receives management targets or attainment (ORG-06).
+    Route::get('analytics/target-history', [ReportController::class, 'targetHistory'])
+        ->middleware('role:supervisor,branch_manager')->name('analytics.target-history');
+
     Route::middleware('role:supervisor,branch_manager,admin')->group(function () {
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('analytics/export.csv', [AnalyticsController::class, 'csv'])->name('analytics.csv');

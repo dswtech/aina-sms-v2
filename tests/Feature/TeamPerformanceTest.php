@@ -442,3 +442,18 @@ it('reports real priority totals and the closing reason beyond the five shown it
         ->where('dashboard.priorities.closing.0.expected_closing_month', '2026-11-01')
         ->has('dashboard.priorities.closing.0.estimated_value'));
 });
+
+it('does not require a target from a team created after the period', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-24 09:00:00', 'Asia/Jakarta'));
+    $dealer = Dealer::factory()->create();
+    $old = Team::factory()->create(['dealer_id' => $dealer->id, 'created_at' => '2026-06-01 00:00:00']);
+    Team::factory()->create(['dealer_id' => $dealer->id, 'created_at' => '2026-10-05 00:00:00']);
+    foreach (['2026-09-01', '2026-10-01'] as $period) {
+        TeamTarget::create(['team_id' => $old->id, 'period' => $period, 'target_units' => 10]);
+    }
+    $manager = User::factory()->branchManager()->create(['dealer_id' => $dealer->id]);
+    foreach ([['2026-09', 0, 10], ['2026-10', 1, null], ['2026-05', 0, null]] as [$period, $missing, $target]) {
+        $this->actingAs($manager)->get('/team-performance?period='.$period)->assertInertia(fn (Assert $p) => $p
+            ->where('dashboard.teamTargetsMissing', $missing)->where('dashboard.targetUnits', $target));
+    }
+});

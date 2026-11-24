@@ -116,6 +116,15 @@ const shared = {
     },
 } satisfies Record<string, AppNavItem>;
 
+// Admin has no target history: management targets stay with Supervisor and BM (ORG-06).
+const analyticsWithTargets: AppNavItem = {
+    ...shared.analytics,
+    children: [
+        ...shared.analytics.children,
+        { title: 'Riwayat Target', href: '/analytics/target-history' },
+    ],
+};
+
 const customerItem = (role: UserRole): AppNavItem => ({
     key: 'customers',
     title:
@@ -142,14 +151,14 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.transactions,
         shared.calendar,
         shared.targetsWithPlans,
-        shared.analytics,
+        analyticsWithTargets,
         shared.imports,
         shared.notifications,
     ],
     branch_manager: [
         shared.home,
         shared.teamPerformance,
-        shared.analytics,
+        analyticsWithTargets,
         shared.notifications,
     ],
     admin: [

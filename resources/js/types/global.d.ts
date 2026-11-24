@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { AppNotification } from '@/types/notifications';
+import type { TargetReminder } from '@/lib/target-reminder';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -16,6 +17,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             notifications: AppNotification[];
             notificationsUnreadCount: number;
+            targetReminder: TargetReminder | null;
             [key: string]: unknown;
         };
     }
