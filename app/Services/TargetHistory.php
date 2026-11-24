@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Support\ReportingPeriod;
 use App\Support\TargetUnits;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 /**
