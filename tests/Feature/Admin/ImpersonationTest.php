@@ -146,6 +146,31 @@ it('logs everyone out on logout while viewing as a user', function () {
     $this->get('/dashboard')->assertRedirect('/login');
 });
 
+it('leaves the viewed user remember token alone and audits the end on logout', function () {
+    $this->sales->forceFill(['remember_token' => 'remembered-device'])->save();
+    startImpersonating($this, $this->admin, $this->sales);
+
+    $this->post('/logout')->assertRedirect();
+
+    expect($this->sales->fresh()->remember_token)->toBe('remembered-device')
+        ->and(AuditLog::where('action', 'impersonation.stopped')
+            ->where('actor_id', $this->admin->id)
+            ->where('subject_public_id', $this->sales->public_id)
+            ->where('metadata->context->reason', 'logout')->exists())->toBeTrue();
+});
+
+it('leaves the viewed user remember token alone when the admin lost access', function () {
+    $this->sales->forceFill(['remember_token' => 'remembered-device'])->save();
+    startImpersonating($this, $this->admin, $this->sales);
+    $this->admin->update(['is_active' => false]);
+
+    $this->post('/impersonation/stop')->assertRedirect('/login');
+
+    expect($this->sales->fresh()->remember_token)->toBe('remembered-device')
+        ->and(AuditLog::where('action', 'impersonation.stopped')
+            ->where('metadata->context->reason', 'admin_access_lost')->exists())->toBeTrue();
+});
+
 it('does not affect normal users', function () {
     $this->actingAs($this->sales)->patch('/settings/profile', ['name' => 'Nama Baru', 'email' => $this->sales->email])
         ->assertSessionHasNoErrors();

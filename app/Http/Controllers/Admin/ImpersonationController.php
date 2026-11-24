@@ -34,21 +34,35 @@ class ImpersonationController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $admin = User::query()->whereKey($request->session()->pull('impersonator_id'))->first();
+        $admin = User::query()->whereKey($request->session()->get('impersonator_id'))->first();
 
         if ($admin === null || ! $admin->is_active || $admin->role !== UserRole::Admin) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            self::signOut($request, 'admin_access_lost');
 
             return redirect()->route('login');
         }
 
+        $request->session()->forget('impersonator_id');
         AuditRecorder::record($admin, 'impersonation.stopped', $request->user(), context: ['role' => $request->user()->role->value]);
 
         Auth::login($admin);
         $request->session()->regenerate();
 
         return redirect()->route('users.index');
+    }
+
+    /** Ends the whole session without Auth::logout(), which would cycle the viewed user's remember token. */
+    public static function signOut(Request $request, string $reason): void
+    {
+        $admin = User::query()->whereKey($request->session()->get('impersonator_id'))->first();
+        $viewed = $request->user();
+
+        if ($admin !== null && $viewed !== null) {
+            AuditRecorder::record($admin, 'impersonation.stopped', $viewed, context: ['role' => $viewed->role->value, 'reason' => $reason]);
+        }
+
+        Auth::guard('web')->logoutCurrentDevice();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
     }
 }
