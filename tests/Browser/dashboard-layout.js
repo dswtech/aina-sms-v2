@@ -437,17 +437,22 @@ async function dashboardLayout(page) {
                                 .innerText()) === label && !/Butuh/.test(kpi),
                             'KPI tile shows only the pace badge: ' + role,
                         );
-                        // Sales reads the rate in "Kinerja saya"; managers below the KPI strip.
-                        const rateText =
-                            role === 'sales'
-                                ? await page
-                                      .getByRole('region', {
-                                          name: 'Kinerja saya',
-                                      })
-                                      .innerText()
-                                : await page
-                                      .locator('[data-pace-summary]')
-                                      .innerText();
+                        // Every role reads the rate under the KPI strip, led by the projection; Sales' one-row panel keeps only the badge.
+                        const rateText = await page
+                            .locator('[data-pace-summary]')
+                            .innerText();
+                        assert(
+                            /^Laju bulan ini: Proyeksi \d+%/.test(rateText) &&
+                                (role !== 'sales' ||
+                                    !(
+                                        await page
+                                            .getByRole('region', {
+                                                name: 'Kinerja saya',
+                                            })
+                                            .innerText()
+                                    ).includes('Butuh')),
+                            'Pace summary placement: ' + role,
+                        );
                         assert(
                             /Butuh [\d,]+\/hari .*saat ini .+\/hari/.test(
                                 rateText,
@@ -563,13 +568,16 @@ async function dashboardLayout(page) {
                             );
                         assert(
                             visible.every((count) =>
-                                width < 768 ? count <= 3 : count <= 5,
+                                // Phones show three, or four when one would be left over.
+                                width < 768 ? count <= 4 : count <= 5,
                             ),
                             `Priority lists show ${visible} items at ${width}`,
                         );
                     }
                     // Lagging rows link to open SPK; Branch Managers have no transaction access.
-                    const nextStep = ranking.getByRole('link', {
+                    const nextStep = (
+                        role === 'sales' ? page.getByRole('main') : ranking
+                    ).getByRole('link', {
                         name: 'Lihat SPK siap DO',
                     });
                     assert(

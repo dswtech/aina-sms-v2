@@ -127,9 +127,9 @@ export function paceRatio(workdays?: { elapsed: number; total: number }) {
         : null;
 }
 
-/** Whole units the target expects by today, rounded up: cars are sold whole. */
+/** Units the target expects by today, one decimal (PRD DSH-07). */
 export const paceUnits = (target: number, ratio: number) =>
-    Math.ceil(target * ratio - 1e-9);
+    Math.round(target * ratio * 10) / 10;
 
 export const percentOf = (value: number | null, target: number | null) =>
     value == null || !target
@@ -606,17 +606,25 @@ export function PriorityLists({
             {groups.map(([key, title]) => {
                 const items = priorities?.[key] ?? [];
                 const total = Math.max(totals?.[key] ?? 0, items.length);
+                // Phones show three; a single leftover item is shown instead of a button for it.
+                const phoneCount =
+                    expanded[key] || items.length <= 4 ? items.length : 3;
+                const count = (shown: number) =>
+                    total > shown ? `${shown} dari ${total}` : `(${shown})`;
                 return (
                     <section
                         key={key}
                         className="min-w-0 overflow-hidden rounded-xl border bg-card"
                     >
                         <h3 className="border-b p-5 text-base font-semibold">
-                            {title}
-                            <span className="ml-2 text-sm font-normal text-muted-foreground">
-                                {total > items.length
-                                    ? `${items.length} dari ${total}`
-                                    : `(${items.length})`}
+                            {title}{' '}
+                            <span className="ml-1 text-sm font-normal text-muted-foreground">
+                                <span className="md:hidden">
+                                    {count(phoneCount)}
+                                </span>
+                                <span className="max-md:hidden">
+                                    {count(items.length)}
+                                </span>
                             </span>
                         </h3>
                         {!items.length ? (
@@ -661,7 +669,7 @@ export function PriorityLists({
                                         <li
                                             key={item.id ?? item.public_id}
                                             // Phones show three per list so the metrics stay within reach.
-                                            className={`striped-row flex items-center gap-3 px-4 py-2 ${index >= 3 && !expanded[key] ? 'max-md:hidden' : ''}`}
+                                            className={`striped-row flex items-center gap-3 px-4 py-2 ${index >= phoneCount ? 'max-md:hidden' : ''}`}
                                         >
                                             <Link
                                                 href={item.url}
@@ -695,17 +703,22 @@ export function PriorityLists({
                                 })}
                             </ol>
                         )}
-                        {items.length > 3 && !expanded[key] && (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setExpanded({ ...expanded, [key]: true })
-                                }
-                                className="flex min-h-11 w-full items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline md:hidden"
-                            >
-                                Tampilkan {items.length - 3} lagi
-                            </button>
-                        )}
+                        {/* One footer per list: the full-list link wins over showing two more. */}
+                        {phoneCount < items.length &&
+                            !(key === 'stagnant' && total > items.length) && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setExpanded({
+                                            ...expanded,
+                                            [key]: true,
+                                        })
+                                    }
+                                    className="flex min-h-11 w-full items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline md:hidden"
+                                >
+                                    Tampilkan {items.length - phoneCount} lagi
+                                </button>
+                            )}
                         {key === 'stagnant' && total > items.length && (
                             <Link
                                 href="/transactions?tab=stagnant&date_from=&date_to="

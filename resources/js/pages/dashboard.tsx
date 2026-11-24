@@ -20,11 +20,7 @@ import {
 } from '@/components/dashboard-charts';
 import { monthPace } from '@/lib/dashboard-charts';
 
-// Forecasts are weighted estimates; one decimal is enough for whole cars.
-const oneDecimal = (value: number | null) =>
-    value == null ? value : Math.round(value * 10) / 10;
-
-const gap = (value: number | null) =>
+const gap = (value: number | null | undefined) =>
     value != null && value < 0
         ? [amount(-value), 'Target terlampaui']
         : [amount(value, '—')];
@@ -69,13 +65,13 @@ export default function Dashboard({
         ],
         [
             'Forecast (estimasi)',
-            amount(oneDecimal(d.forecastUnits), 'Tidak tersedia'),
+            amount(d.forecastUnits, 'Tidak tersedia'),
             percentOf(d.forecastUnits, d.targetUnits),
         ],
         ...(role !== 'admin'
             ? [
                   ['Gap ke realisasi', ...gap(d.gapUnits)],
-                  ['Gap ke forecast', ...gap(oneDecimal(d.forecastGapUnits))],
+                  ['Gap ke forecast', ...gap(d.forecastGapUnits)],
               ]
             : []),
     ];
@@ -113,7 +109,8 @@ export default function Dashboard({
                         {metrics.map(([label, value, note], index) => (
                             <div
                                 key={label}
-                                className="min-w-0 bg-card p-4 last:odd:col-span-2 sm:p-5 lg:last:odd:col-span-1"
+                                // Derivable from the tiles beside it; phones keep a 2×2 strip.
+                                className={`min-w-0 bg-card p-4 last:odd:col-span-2 sm:p-5 lg:last:odd:col-span-1 ${label === 'Gap ke forecast' ? 'max-md:hidden' : ''}`}
                             >
                                 <dt className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
                                     <span>{label}</span>
@@ -134,7 +131,7 @@ export default function Dashboard({
                     </dl>
                 </section>
                 <div className="grid gap-2 text-sm leading-6 text-muted-foreground">
-                    {role !== 'admin' && role !== 'sales' && (
+                    {role !== 'admin' && (
                         <p data-pace-summary className="tabular-nums">
                             {monthly.status !== 'none' && 'Laju bulan ini: '}
                             <PaceLine pace={monthly} />
@@ -149,6 +146,20 @@ export default function Dashboard({
                                     </Link>
                                 </>
                             )}
+                            {role === 'sales' &&
+                                ['behind', 'slipping'].includes(
+                                    monthly.status,
+                                ) && (
+                                    <>
+                                        {' · '}
+                                        <Link
+                                            href="/transactions?tab=active&stage=spk&date_from=&date_to="
+                                            className="font-medium text-primary underline-offset-4 hover:underline"
+                                        >
+                                            Lihat SPK siap DO
+                                        </Link>
+                                    </>
+                                )}
                         </p>
                     )}
                     {!!d.teamTargetsMissing && role !== 'sales' && (
@@ -205,6 +216,13 @@ export default function Dashboard({
                         <div className="grid gap-2 pb-2 pl-6">
                             <p>
                                 Gap = target dikurangi realisasi atau forecast.
+                            </p>
+                            <p>
+                                Laju dinilai dari proyeksi akhir bulan:
+                                realisasi ditambah laju saat ini dikali sisa
+                                hari kerja. Sesuai laju bila proyeksi minimal
+                                100% target, Sedikit tertinggal 70–99%,
+                                Tertinggal di bawah 70%.
                             </p>
                             {d.forecastUnits !== null && (
                                 <p>
@@ -316,6 +334,7 @@ export default function Dashboard({
                                           `/transactions?sales_id=${row.id}&date_from=&date_to=`
                                     : undefined
                             }
+                            rowPace={role !== 'sales'}
                             nextHref={
                                 role === 'branch_manager'
                                     ? undefined
