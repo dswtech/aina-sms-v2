@@ -40,7 +40,7 @@ async function dashboardLayout(page) {
         metrics(1, 'Ayu Prameswari — Data contoh', 3, 4.5, 6),
         metrics(2, 'Bima Saputra — Data contoh', 5, 6.25, 4),
         // Targets chosen so the ranking shows every pace tier (19 of 25 workdays).
-        metrics(3, 'Citra Maharani — Data contoh', 3, 5.25, 4),
+        metrics(3, 'Citra Maharani — Data contoh', 3, 5.25, 3.5),
         // Lagging without open SPK: no link.
         {
             ...metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
@@ -441,7 +441,7 @@ async function dashboardLayout(page) {
                                 kpi.includes('% dari target'),
                             'KPI shows pace and achievement: ' + role,
                         );
-                        // Fixture (19 of 25 workdays): Sales 3/6 projects 68% (behind), managers 13/16 project 111% (on pace).
+                        // Fixture (19 of 25 workdays): Sales 3/6 projects 65% (behind), managers 13/16 project 106% (on pace).
                         const [status, label] =
                             role === 'sales'
                                 ? ['behind', 'Tertinggal']
@@ -617,7 +617,7 @@ async function dashboardLayout(page) {
                             (await page
                                 .locator('[data-open-spk]')
                                 .innerText()).includes(
-                                '1 tanpa estimasi closing bulan ini',
+                                '1 di luar forecast bulan ini',
                             ),
                         'SPK outside the forecast are named: ' + role,
                     );

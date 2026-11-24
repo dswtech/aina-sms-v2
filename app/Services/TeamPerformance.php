@@ -101,7 +101,8 @@ class TeamPerformance
         })->values();
         // A team owes no target for months before it existed.
         $requiredTeams = $teams->where('is_active', true)->where('created_at', '<', $end);
-        $missingTeamTargets = $requiredTeams->reject(fn (Team $team): bool => $teamTargets->has($team->id))->count();
+        $teamsWithoutTarget = $requiredTeams->reject(fn (Team $team): bool => $teamTargets->has($team->id));
+        $missingTeamTargets = $teamsWithoutTarget->count();
         $targetUnits = $actor->role === UserRole::Sales
             ? $personalUnits->get($actor->id)
             : ($canViewManagementTarget && $missingTeamTargets === 0 && ($requiredTeams->isNotEmpty() || $teamTargets->isNotEmpty()) ? TargetUnits::number($teamTargets->sum(fn ($t) => TargetUnits::scaled($t->target_units))) : null);
@@ -154,11 +155,16 @@ class TeamPerformance
             $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
                 ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             if (! $historical) {
-                $closingVisible = $closing->filter(fn (DealTransaction|stdClass $deal): bool => $deal instanceof DealTransaction && $visibleIds->has($deal->id));
+                // An SPK without a usable estimate is closest to DO yet outside the forecast: list it so it gets one.
+                $isCurrent = $period === now('Asia/Jakarta')->format('Y-m');
+                $needsEstimate = fn (DealTransaction $deal): bool => $isCurrent && $deal->current_stage === PipelineStage::Spk
+                    && ($deal->expected_closing_month === null || $deal->expected_closing_month->format('Y-m') < $period);
+                $closingVisible = $operationalDeals->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id)
+                    && ($needsEstimate($deal) || ($deal->getAttribute('closing_in_period') && ! $deal->current_stage->isClosed())));
                 $priorityTotals['closing'] = $closingVisible->count();
                 $priorities['closing'] = $closingVisible
-                    ->sortByDesc(fn (DealTransaction|stdClass $deal): float => (float) config('forecast.weights.'.$this->stage($deal)->value, 0))
-                    ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
+                    ->sortByDesc(fn (DealTransaction $deal): float => (float) config('forecast.weights.'.$deal->current_stage->value, 0) + ($needsEstimate($deal) ? 1 : 0))
+                    ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal) + ['needs_estimate' => $needsEstimate($deal)])->values()->all();
             }
             [$priorities['unread'], $priorityTotals['unread']] = $this->unread($actor);
             $priorityTotals['stagnant'] = $stagnantCount;
@@ -169,6 +175,7 @@ class TeamPerformance
                 'period' => $period.'-01', 'targetUnits' => $metrics['target_units'], 'workdays' => $this->workdays($period),
                 'salesTargetUnits' => $salesTotal, 'salesTargetsMissing' => $users->pluck('id')->diff($personalUnits->keys())->count(),
                 'teamTargetsMissing' => $missingTeamTargets,
+                'teamTargetsMissingNames' => $canViewManagementTarget ? $teamsWithoutTarget->pluck('name')->values()->all() : [],
                 'targetAllocationDifference' => $canViewManagementTarget && $targetUnits !== null && $salesTotal !== null ? $targetUnits - $salesTotal : null,
                 'realizationUnits' => $metrics['realization_units'], 'forecastUnits' => $metrics['forecast_units'],
                 'forecastValue' => $metrics['forecast_value'], 'forecastApproved' => (bool) config('forecast.approved', false),

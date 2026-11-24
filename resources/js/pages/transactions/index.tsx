@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { DateRangeField } from '@/components/date-range-field';
 import { vehicleExtras } from '@/lib/customer-profile';
 import type { CustomerProfile } from '@/lib/customer-profile';
+import { formatMonth } from '@/lib/calendar';
 import {
     type Area,
     CHANNEL_LABELS,
@@ -120,6 +121,14 @@ const tabs = [
     { value: 'stagnant', label: 'Stagnan' },
     { value: 'closed', label: 'Selesai' },
 ];
+
+/** Closed deals have no estimate left to fill. */
+const closingLabel = (transaction: Transaction) =>
+    ['do', 'lost'].includes(transaction.current_stage)
+        ? null
+        : transaction.expected_closing_month
+          ? formatMonth(`${transaction.expected_closing_month.slice(0, 7)}-01`)
+          : 'Belum diisi';
 
 export default function TransactionsIndex({
     transactions,
@@ -789,6 +798,18 @@ export default function TransactionsIndex({
                                                         )}
                                                     </p>
                                                 </div>
+                                                {closingLabel(transaction) && (
+                                                    <div>
+                                                        <p className="text-muted-foreground">
+                                                            Estimasi closing
+                                                        </p>
+                                                        <p>
+                                                            {closingLabel(
+                                                                transaction,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {renderActions(transaction)}
@@ -885,6 +906,16 @@ export default function TransactionsIndex({
                                                                     transaction.stage_label
                                                                 }
                                                             </StageBadge>
+                                                            {closingLabel(
+                                                                transaction,
+                                                            ) && (
+                                                                <p className="mt-1 text-xs whitespace-nowrap text-muted-foreground">
+                                                                    Closing:{' '}
+                                                                    {closingLabel(
+                                                                        transaction,
+                                                                    )}
+                                                                </p>
+                                                            )}
                                                         </td>
                                                         <td className="p-2">
                                                             {sourceLabel(

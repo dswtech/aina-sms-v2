@@ -121,8 +121,8 @@ export function monthPace(
     const needed = remainingUnits / remainingDays;
     const current = elapsed > 0 ? realized / elapsed : null;
     // Graded on where today's rate lands by month end, so the red badge stays rare late in the month.
-    const projected =
-        current === null ? null : (realized + current * remainingDays) / target;
+    // Today is already an elapsed day, so the projection spreads the rate over the whole month once.
+    const projected = current === null ? null : (current * total) / target;
     const status =
         projected === null || projected < 0.7
             ? 'behind'
