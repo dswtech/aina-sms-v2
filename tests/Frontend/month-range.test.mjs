@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
     monthRangeError,
     formatMonthRange,
+    monthsBefore,
 } from '../../resources/js/lib/month-range.ts';
 import {
     initialLeasing,
@@ -25,6 +26,12 @@ test('month ranges validate required dates, calendar months and order', () => {
         formatMonthRange('2026-10', '2026-11'),
         'Oktober 2026 – November 2026',
     );
+});
+
+test('months before a month cross the year', () => {
+    assert.equal(monthsBefore('2026-11', 0), '2026-11');
+    assert.equal(monthsBefore('2026-03', 5), '2025-10');
+    assert.match(monthsBefore(null, 0), /^\d{4}-\d{2}$/);
 });
 
 test('synthetic multi-month totals include each transaction once in the chosen cohort', () => {

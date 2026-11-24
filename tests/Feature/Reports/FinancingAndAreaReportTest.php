@@ -124,10 +124,10 @@ it('maps DO into FOA, PMA outside FOA and outside PMA', function () {
     expect([$r['total'], $r['foa'], $r['pmaOutsideFoa'], $r['outsidePma'], $r['unverified']])->toBe([5, 2, 1, 2, 0])
         ->and($r['districts'][0])->toMatchArray(['id' => '32.73.05', 'name' => 'Andir', 'regionName' => 'Kota Bandung', 'count' => 2])
         ->and(end($r['districts']))->toMatchArray(['id' => 'other', 'name' => 'Kecamatan lain', 'count' => 3])
-        ->and($r['regions'][0])->toMatchArray(['id' => '32.73', 'name' => 'Kota Bandung', 'isPma' => true, 'count' => 3])
-        ->and(collect($r['regions'])->firstWhere('id', '32.11'))->toMatchArray(['isPma' => false, 'count' => 1])
+        ->and($r['regions'][0])->toMatchArray(['id' => '32.73', 'name' => 'Kota Bandung', 'isPma' => true, 'count' => 3, 'foa' => 2])
+        ->and(collect($r['regions'])->firstWhere('id', '32.11'))->toMatchArray(['isPma' => false, 'count' => 1, 'foa' => 0])
         ->and(end($r['regions']))->toMatchArray(['id' => 'other', 'name' => 'Kota Lain', 'isPma' => false, 'count' => 1])
-        ->and($r['months'])->toBe([['month' => '2026-11', 'total' => 5, 'foa' => 2, 'pma' => 3]]);
+        ->and(end($r['months']))->toBe(['month' => '2026-11', 'total' => 5, 'foa' => 2, 'pma' => 3]);
 });
 
 it('keeps snapshot PMA after the list changes', function () {
@@ -144,13 +144,16 @@ it('counts FOA first even outside PMA regions', function () {
     areaDo($this, ['region_code' => '32.11', 'district_code' => $district]);
     $r = areaReport($this);
     expect([$r['foa'], $r['pmaOutsideFoa'], $r['outsidePma']])->toBe([1, 0, 0])
-        ->and($r['months'][0]['pma'])->toBe(1);
+        ->and(end($r['months'])['pma'])->toBe(1);
 });
 
 it('returns zero rows for an empty range', function () {
     $r = areaReport($this, '2026-01', '2026-03');
     expect($r['total'])->toBe(0)
         ->and($r['months'])->toBe([
+            ['month' => '2025-10', 'total' => 0, 'foa' => 0, 'pma' => 0],
+            ['month' => '2025-11', 'total' => 0, 'foa' => 0, 'pma' => 0],
+            ['month' => '2025-12', 'total' => 0, 'foa' => 0, 'pma' => 0],
             ['month' => '2026-01', 'total' => 0, 'foa' => 0, 'pma' => 0],
             ['month' => '2026-02', 'total' => 0, 'foa' => 0, 'pma' => 0],
             ['month' => '2026-03', 'total' => 0, 'foa' => 0, 'pma' => 0],
@@ -171,7 +174,19 @@ it('ignores legacy DO without snapshot', function () {
 it('splits months in Asia/Jakarta', function () {
     areaDo($this, BANDUNG_ANDIR, '2026-10-31 18:00:00');
     $r = areaReport($this, '2026-10', '2026-11');
-    expect(array_column($r['months'], 'total'))->toBe([0, 1]);
+    expect(array_column($r['months'], 'total'))->toBe([0, 0, 0, 0, 0, 1]);
+});
+
+it('trends at least six months without counting earlier DO in the selected range', function () {
+    areaDo($this, BANDUNG_ANDIR, '2026-08-10 03:00:00');
+    $legacy = areaDo($this, BANDUNG_ANDIR, '2026-09-10 03:00:00');
+    DB::table('stage_histories')->where('deal_transaction_id', $legacy->id)->update(['area_snapshot' => null]);
+    areaDo($this, BANDUNG_ANDIR, '2026-05-10 03:00:00');
+    $r = areaReport($this);
+    expect([$r['total'], $r['unverified']])->toBe([0, 0])
+        ->and(collect($r['districts'])->sum('count'))->toBe(0)
+        ->and(array_column($r['months'], 'total', 'month'))->toBe(['2026-06' => 0, '2026-07' => 0, '2026-08' => 1, '2026-09' => 0, '2026-10' => 0, '2026-11' => 0])
+        ->and(count(areaReport($this, '2026-01', '2026-11')['months']))->toBe(11);
 });
 
 it('limits reports to the attribution scope and validates the range', function () {

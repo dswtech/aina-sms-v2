@@ -1,4 +1,6 @@
+import { areaMapLayout, districtClass, districtFills } from '@/lib/area-map';
 import {
+    chartBarFraction,
     chartModeLabel,
     chartRowColor,
     layoutDonutLegend,
@@ -17,18 +19,57 @@ const font = (size: number, weight = 400) =>
     `${weight} ${size}px "Instrument Sans", system-ui, sans-serif`;
 const numbers = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
 
+function drawMap(
+    context: CanvasRenderingContext2D,
+    map: ReturnType<typeof areaMapLayout>,
+) {
+    const [x, y, w, h] = map.viewBox.split(' ').map(Number);
+    const scale = Math.min(contentWidth / w, 580 / h);
+    const maximum = Math.max(...map.shapes.map((shape) => shape.count));
+    context.save();
+    context.translate(padding + (contentWidth - w * scale) / 2, 216);
+    context.scale(scale, scale);
+    context.translate(-x, -y);
+    for (const shape of map.shapes) {
+        const level = districtClass(shape.count, maximum);
+        const path = new Path2D(shape.path);
+        context.fillStyle = level ? districtFills[level - 1].png : '#f7ecec';
+        context.fill(path);
+        context.strokeStyle = '#ffffff';
+        context.lineWidth = 2 / scale;
+        context.stroke(path);
+        context.textAlign = 'center';
+        context.fillStyle = level === 3 ? '#ffffff' : ink;
+        context.font = font(20 / scale, 600);
+        const named = shape.half * scale * 2 >= shape.name.length * 8;
+        context.fillText(
+            numbers.format(shape.count),
+            shape.x,
+            shape.y + (named ? 0 : 7 / scale),
+        );
+        if (!named) continue;
+        context.font = font(14 / scale);
+        context.fillText(shape.name, shape.x, shape.y + 17 / scale);
+    }
+    context.restore();
+}
+
 export async function chartPng(chart: ChartExportData): Promise<Blob> {
     await document.fonts.ready;
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas tidak tersedia.');
-    const isList =
-        chart.kind === 'leasing' ||
-        chart.kind === 'area-foa-districts' ||
-        chart.kind === 'area-pma-regions';
     const isArea = chart.kind.startsWith('area');
+    const isList = chart.kind === 'leasing' || isArea;
+    const map =
+        chart.kind === 'area-foa-districts'
+            ? areaMapLayout(
+                  chart.rows.map((row) => ({ ...row, name: row.label })),
+              )
+            : null;
+    const mapHeight = map?.shapes.length ? 620 : 0;
     context.font = font(24);
-    let nextY = 236;
+    let nextY = 236 + mapHeight;
     const barRows = chart.rows.map((row) => {
         const lines = wrapChartLabel(
             row.label,
@@ -38,7 +79,13 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         const y = nextY;
         const barY = y + lines.length * 30 + 14;
         nextY = barY + 16 + 28;
-        return { ...row, lines, y, barY };
+        return {
+            ...row,
+            fraction: chartBarFraction(chart, row),
+            lines,
+            y,
+            barY,
+        };
     });
     const legend = layoutDonutLegend(
         chart.rows,
@@ -50,7 +97,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
           ? 340
           : nextY;
     const note = isArea
-        ? 'Persentase dihitung dari seluruh DO sah; baris bulanan dari DO bulan itu. FOA = kecamatan FOA dealer; PMA = kab/kota PMA, termasuk FOA. Status mengikuti snapshot saat DO.'
+        ? `Persentase dihitung dari seluruh DO sah; baris bulanan dari DO bulan itu. FOA = kecamatan FOA dealer; PMA = kab/kota PMA, termasuk FOA. Status mengikuti snapshot saat DO.${map ? ' Batas kecamatan pada peta disederhanakan.' : ''}`
         : chart.kind === 'financing'
           ? 'Persentase dihitung dari seluruh transaksi pada rentang dan dasar laporan yang dipilih.'
           : 'Kredit Lain mencakup leasing di luar pantauan utama. Leasing yang belum dipilih dihitung terpisah. Persentase dihitung dari total transaksi Kredit.';
@@ -107,7 +154,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
         context.arc(centerX, centerY, 152, 0, Math.PI * 2);
         context.stroke();
         let angle = -Math.PI / 2;
-        for (const row of chart.rows.slice(0, chart.donut)) {
+        for (const row of chart.rows) {
             if (!row.count || !chart.total) continue;
             const nextAngle = angle + (row.count / chart.total) * Math.PI * 2;
             context.beginPath();
@@ -116,47 +163,20 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             context.stroke();
             angle = nextAngle;
         }
-        if (!isArea) {
-            context.textAlign = 'center';
-            context.fillStyle = ink;
-            context.font = font(52, 600);
-            context.fillText(
-                numbers.format(chart.total),
-                centerX,
-                centerY + 10,
-                240,
-            );
-            context.fillStyle = secondary;
-            context.font = font(22);
-            context.fillText('transaksi', centerX, centerY + 46);
-        } else {
-            context.textAlign = 'center';
-            context.fillStyle = ink;
-            context.font = font(52, 600);
-            context.fillText(
-                `${numbers.format(chart.rows[0].percentage)}%`,
-                centerX,
-                centerY + 10,
-                240,
-            );
-            context.fillStyle = secondary;
-            context.font = font(22);
-            context.fillText(chart.rows[0].label, centerX, centerY + 46);
-        }
+        context.textAlign = 'center';
+        context.fillStyle = ink;
+        context.font = font(52, 600);
+        context.fillText(
+            numbers.format(chart.total),
+            centerX,
+            centerY + 10,
+            240,
+        );
+        context.fillStyle = secondary;
+        context.font = font(22);
+        context.fillText('transaksi', centerX, centerY + 46);
         chart.rows.forEach((row, index) => {
-            const { y, lines, divider } = legend[index];
-            if (divider) {
-                context.strokeStyle = '#dbe4f0';
-                context.lineWidth = 1;
-                context.beginPath();
-                context.moveTo(556, y - 52);
-                context.lineTo(width - padding, y - 52);
-                context.stroke();
-                context.textAlign = 'left';
-                context.fillStyle = secondary;
-                context.font = font(20, 600);
-                context.fillText('Per bulan', 556, y - 22);
-            }
+            const { y, lines } = legend[index];
             context.fillStyle = chartRowColor(chart.kind, row.id);
             context.fillRect(556, y - 16, 12, 12);
             context.textAlign = 'left';
@@ -185,7 +205,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             284,
         );
     } else {
-        const maximum = Math.max(1, ...chart.rows.map((row) => row.count));
+        if (map?.shapes.length) drawMap(context, map);
         for (const row of barRows) {
             context.textAlign = 'left';
             context.fillStyle = ink;
@@ -212,7 +232,7 @@ export async function chartPng(chart: ChartExportData): Promise<Blob> {
             context.fillRect(
                 padding,
                 row.barY,
-                (contentWidth * row.count) / maximum,
+                contentWidth * row.fraction,
                 16,
             );
         }

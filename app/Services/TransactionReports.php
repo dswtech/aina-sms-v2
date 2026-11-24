@@ -86,7 +86,8 @@ final class TransactionReports
 
     /**
      * Groups come from the DO snapshot (FOA first, then PMA, then outside). The zero rows listed
-     * for FOA districts and PMA regions follow the dealer's current settings.
+     * for FOA districts and PMA regions follow the dealer's current settings. The monthly trend
+     * reaches back to at least six months; every other figure stays inside the selected range.
      *
      * @return array<string, mixed>
      */
@@ -97,7 +98,9 @@ final class TransactionReports
         $pmaCodes = DB::table('dealer_pma_regions')->where('dealer_id', $actor->dealer_id)->pluck('region_code')->all();
         $regionNames = DB::table('area_regions')->pluck('name', 'code');
         $months = [];
-        for ($month = CarbonImmutable::createFromFormat('!Y-m', $from); $month->format('Y-m') <= $to; $month = $month->addMonth()) {
+        $trendFrom = min($from, CarbonImmutable::createFromFormat('!Y-m', $to)->subMonths(5)->format('Y-m'));
+        [$trendStart] = $this->window($trendFrom, $to);
+        for ($month = CarbonImmutable::createFromFormat('!Y-m', $trendFrom); $month->format('Y-m') <= $to; $month = $month->addMonth()) {
             $months[$month->format('Y-m')] = ['month' => $month->format('Y-m'), 'total' => 0, 'foa' => 0, 'pma' => 0];
         }
         $districts = [];
@@ -106,24 +109,28 @@ final class TransactionReports
         }
         $regions = [];
         foreach ($pmaCodes as $code) {
-            $regions[$code] = ['id' => $code, 'name' => $regionNames[$code] ?? $code, 'isPma' => true, 'count' => 0];
+            $regions[$code] = ['id' => $code, 'name' => $regionNames[$code] ?? $code, 'isPma' => true, 'count' => 0, 'foa' => 0];
         }
         $foa = $pmaOutsideFoa = $outsidePma = $unverified = 0;
-        foreach ($this->realizedDo($actor, $start, $end)->get(['area_snapshot', 'created_at']) as $history) {
+        foreach ($this->realizedDo($actor, $trendStart, $end)->get(['area_snapshot', 'created_at']) as $history) {
             $area = $history->area_snapshot;
+            $inRange = $history->created_at >= $start;
             if ($area === null) {
-                $unverified++; // legacy DO without snapshot: surfaced, never guessed into an area
+                $unverified += (int) $inRange; // legacy DO without snapshot: surfaced, never guessed into an area
 
                 continue;
             }
             $isFoa = (bool) ($area['is_foa'] ?? false);
             $isPma = (bool) ($area['is_pma'] ?? false);
-            $isFoa ? $foa++ : ($isPma ? $pmaOutsideFoa++ : $outsidePma++);
             $month = &$months[$history->created_at->setTimezone('Asia/Jakarta')->format('Y-m')];
             $month['total']++;
             $month['foa'] += (int) $isFoa;
             $month['pma'] += (int) ($isFoa || $isPma);
             unset($month);
+            if (! $inRange) {
+                continue;
+            }
+            $isFoa ? $foa++ : ($isPma ? $pmaOutsideFoa++ : $outsidePma++);
 
             $district = $isFoa ? (string) $area['district_code'] : 'other';
             $districts[$district] ??= $isFoa
@@ -133,9 +140,10 @@ final class TransactionReports
 
             $region = (string) $area['region_code'];
             $regions[$region] ??= $region === 'other'
-                ? ['id' => 'other', 'name' => 'Kota Lain', 'isPma' => false, 'count' => 0]
-                : ['id' => $region, 'name' => (string) ($area['region_name'] ?? $regionNames[$region] ?? $region), 'isPma' => false, 'count' => 0];
+                ? ['id' => 'other', 'name' => 'Kota Lain', 'isPma' => false, 'count' => 0, 'foa' => 0]
+                : ['id' => $region, 'name' => (string) ($area['region_name'] ?? $regionNames[$region] ?? $region), 'isPma' => false, 'count' => 0, 'foa' => 0];
             $regions[$region]['count']++;
+            $regions[$region]['foa'] += (int) $isFoa;
         }
         $districts['other'] ??= ['id' => 'other', 'name' => 'Kecamatan lain', 'regionName' => '', 'count' => 0];
         $byCount = fn (array $a, array $b): int => [-$a['count'], mb_strtolower($a['name'])] <=> [-$b['count'], mb_strtolower($b['name'])];

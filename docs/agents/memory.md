@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.68 |
+| Versi | v1.69 |
 | Diperbarui | 24 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 24 November 2026 — peta FOA dan batang porsi PMA di Mapping Area
+
+- Tata letak Mapping Area diganti setelah pemilik menyetujui wireframe "peta A": donut FOA/PMA (disetujui 20 November) menjadi satu batang porsi, ditambah peta kecamatan FOA. Aturan di [PRD bagian 8](PRD.md), tampilan di [DESIGN.md](../../DESIGN.md).
+- Batas 185 kecamatan ada di `resources/js/lib/area-boundaries.ts` (dibuat dari `cahyadsn/wilayah_boundaries`, MIT, kode Kemendagri, dibaca 24 November 2026). Batas disederhanakan dan belum diperiksa orang lapangan; jangan diedit manual. Kecamatan baru di master wajib punya batas (`tests/Frontend/area-map.test.mjs`).
+- `months` pada `TransactionReports::mappingArea` kini minimal enam bulan dan dapat dimulai sebelum `from`; `regions` mendapat `foa`. Tanpa migration dan package baru.
 
 ## Pembaruan 24 November 2026 — riwayat pencapaian target dan pengingat
 

@@ -18,7 +18,7 @@ export default function MappingAreaPage({
                         Mapping Area
                     </h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                        Penjualan DO berdasarkan FOA dan PMA.
+                        Persebaran DO di kecamatan FOA dan porsi DO di PMA.
                     </p>
                 </header>
                 <AreaReport result={report} />

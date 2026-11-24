@@ -8,9 +8,9 @@ const percentageFormatter = new Intl.NumberFormat('en-US', {
 export type ChartExportKind =
     | 'financing'
     | 'leasing'
-    | 'area-foa'
+    | 'area-share'
+    | 'area-trend'
     | 'area-foa-districts'
-    | 'area-pma'
     | 'area-pma-regions';
 export type ChartExportMeta = {
     from: string;
@@ -23,8 +23,6 @@ export type ChartExportData = ChartExportMeta & {
     kind: ChartExportKind;
     title: string;
     total: number;
-    /** Leading rows drawn as donut slices; the rest are legend-only lines. */
-    donut?: number;
     rows: {
         id: string;
         label: string;
@@ -50,7 +48,15 @@ export type AreaReportData = {
         regionName: string;
         count: number;
     }[];
-    regions: { id: string; name: string; isPma: boolean; count: number }[];
+    regions: {
+        id: string;
+        name: string;
+        isPma: boolean;
+        count: number;
+        /** DO of this region that came from an FOA district. */
+        foa: number;
+    }[];
+    /** At least six months ending at `to`; may start before `from`. */
     months: { month: string; total: number; foa: number; pma: number }[];
 };
 
@@ -102,53 +108,54 @@ export function chartModeLabel(mode: FinancingMode): string {
 export function makeAreaChartExports(
     meta: ChartExportMeta,
     report: AreaReportData,
-): Record<'foa' | 'foaDistricts' | 'pma' | 'pmaRegions', ChartExportData> {
+): Record<'share' | 'trend' | 'foaDistricts' | 'pmaRegions', ChartExportData> {
     const chart = (
         kind: ChartExportData['kind'],
         title: string,
         rows: Omit<ChartExportData['rows'][number], 'percentage'>[],
-        donut?: number,
     ): ChartExportData => ({
         ...meta,
         kind,
         mode: 'do',
         title,
         total: report.total,
-        donut,
         rows: rows.map((row) => ({
             ...row,
             percentage: share(row.count, row.base ?? report.total),
         })),
     });
-    const pma = report.foa + report.pmaOutsideFoa;
-    const outside = {
-        id: 'pmaOutsideFoa',
-        label: 'PMA di luar FOA',
-        count: report.pmaOutsideFoa,
-    };
     const monthly = (key: 'foa' | 'pma', label: string) =>
         report.months.map((m) => ({
-            id: `month-${m.month}`,
+            id: key === 'foa' ? 'foa' : 'pmaOutsideFoa',
             label: `${label} ${m.month}`,
             count: m[key],
             base: m.total,
         }));
     return {
-        foa: chart(
-            'area-foa',
-            'Porsi DO di FOA',
-            [
-                { id: 'foa', label: 'FOA', count: report.foa },
-                {
-                    id: 'outside',
-                    label: 'Di luar FOA',
-                    count: report.total - report.foa,
-                },
-                outside,
+        share: chart('area-share', 'Porsi DO di PMA', [
+            { id: 'foa', label: 'FOA', count: report.foa },
+            {
+                id: 'pmaOutsideFoa',
+                label: 'PMA di luar FOA',
+                count: report.pmaOutsideFoa,
+            },
+            { id: 'outside', label: 'Luar PMA', count: report.outsidePma },
+            {
+                id: 'pma',
+                label: 'Dalam PMA (FOA + PMA di luar FOA)',
+                count: report.foa + report.pmaOutsideFoa,
+            },
+        ]),
+        // The trend covers its own months, which may start before the selected range.
+        trend: {
+            ...chart('area-trend', 'Tren porsi FOA dan PMA', [
                 ...monthly('foa', 'FOA'),
-            ],
-            2,
-        ),
+                ...monthly('pma', 'PMA'),
+            ]),
+            from: report.months[0].month,
+            to: report.to,
+            total: report.months.reduce((sum, m) => sum + m.total, 0),
+        },
         foaDistricts: chart(
             'area-foa-districts',
             'DO per kecamatan FOA',
@@ -158,17 +165,6 @@ export function makeAreaChartExports(
                 count: d.count,
                 muted: d.id === 'other' || undefined,
             })),
-        ),
-        pma: chart(
-            'area-pma',
-            'Porsi DO di PMA',
-            [
-                { id: 'pma', label: 'Dalam PMA', count: pma },
-                { id: 'outside', label: 'Luar PMA', count: report.outsidePma },
-                outside,
-                ...monthly('pma', 'PMA'),
-            ],
-            2,
         ),
         pmaRegions: chart(
             'area-pma-regions',
@@ -196,14 +192,9 @@ export function chartRowColor(kind: ChartExportKind, id: string): string {
             )[id] ?? '#1769e0'
         );
     if (kind === 'leasing') return id === 'unselected' ? '#526175' : '#1769e0';
-    if (id === 'other' || id === 'outside') return '#526175';
-    if (
-        kind === 'area-pma' ||
-        kind === 'area-pma-regions' ||
-        id === 'pmaOutsideFoa'
-    )
-        return '#0f766e';
-    if (kind === 'area-foa' || kind === 'area-foa-districts') return '#1769e0';
+    if (id === 'other' || id === 'outside') return '#828fa1';
+    if (id === 'pmaOutsideFoa' || kind === 'area-pma-regions') return '#5793e8';
+    if (kind.startsWith('area')) return '#1769e0';
     if (id === 'unknown') return '#94a3b8';
     const palette = [
         '#1769e0',
@@ -224,23 +215,30 @@ export function chartRowColor(kind: ChartExportKind, id: string): string {
     return palette[hash % palette.length];
 }
 
+/** Bar length from 0 to 1. Shares use their own percentage; the non-FOA total is text only. */
+export function chartBarFraction(
+    chart: ChartExportData,
+    row: ChartExportData['rows'][number],
+): number {
+    if (chart.kind === 'area-share' || chart.kind === 'area-trend')
+        return row.percentage / 100;
+    const scaled = chart.rows.filter(
+        (r) => chart.kind !== 'area-foa-districts' || r.id !== 'other',
+    );
+    return scaled.includes(row)
+        ? row.count / Math.max(1, ...scaled.map((r) => r.count))
+        : 0;
+}
+
 export function layoutDonutLegend(
-    rows: { label: string; base?: number }[],
+    rows: { label: string }[],
     measure: (value: string) => number,
 ) {
     let y = 330;
-    let monthly = false;
-    // Monthly rows (they carry their own base) are compact and start under a "Per bulan" divider.
     return rows.map((row) => {
         const lines = wrapChartLabel(row.label, measure, 300);
-        const compact = row.base !== undefined;
-        const divider = compact && !monthly;
-        if (divider) y += 64;
-        monthly ||= compact;
-        const height = compact
-            ? Math.max(40, lines.length * 30 + 10)
-            : Math.max(78, lines.length * 30 + 24);
-        const entry = { lines, y, height, divider };
+        const height = Math.max(78, lines.length * 30 + 24);
+        const entry = { lines, y, height };
         y += height;
         return entry;
     });
@@ -253,9 +251,9 @@ export function chartFilename(
     const slug = {
         financing: 'cara-pembiayaan',
         leasing: 'leasing-tujuan',
-        'area-foa': 'porsi-foa',
+        'area-share': 'porsi-pma',
+        'area-trend': 'tren-porsi',
         'area-foa-districts': 'do-kecamatan-foa',
-        'area-pma': 'porsi-pma',
         'area-pma-regions': 'do-kab-kota',
     }[chart.kind];
     return `${slug}-${chart.mode === 'prospect' ? 'prospek' : 'realisasi-do'}-${chart.from}_${chart.to}.${format}`;
