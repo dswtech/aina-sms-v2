@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use App\Services\VisibleCoachingNotifications;
 use App\Support\Releases;
 use Illuminate\Http\Request;
@@ -55,6 +56,9 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role->value,
                     'is_active' => $user->is_active,
                 ] : null,
+                'impersonator' => $request->session()->has('impersonator_id')
+                    ? ['name' => User::query()->whereKey($request->session()->get('impersonator_id'))->value('name')]
+                    : null,
             ],
             'notifications' => $notifications->take(10)->map(fn ($notification): array => $visibleNotifications->present($notification))->values()->all(),
             'notificationsUnreadCount' => $notifications->count(),

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvitationLifecycleController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\TeamMembershipController;
@@ -108,6 +109,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
+        Route::post('users/{user}/impersonate', [ImpersonationController::class, 'store'])->name('users.impersonate');
         Route::post('invitations/{invitation}/resend', [InvitationLifecycleController::class, 'resend'])->name('invitations.resend');
         Route::patch('invitations/{invitation}/revoke', [InvitationLifecycleController::class, 'revoke'])->name('invitations.revoke');
         Route::get('teams', [TeamController::class, 'index'])->name('teams.index');
@@ -132,5 +134,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::get('rilis', ReleaseLogController::class)->name('releases.index');
 });
+
+// Outside 'active': the viewed user's state must never trap the Admin in their session.
+Route::post('impersonation/stop', [ImpersonationController::class, 'destroy'])->middleware('auth')->name('impersonation.stop');
 
 require __DIR__.'/settings.php';

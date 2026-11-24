@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforceImpersonationReadOnly;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleAppearance;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
+            EnforceImpersonationReadOnly::class,
             AddLinkHeadersForPreloadedAssets::class,
             SecurityHeaders::class,
         ]);

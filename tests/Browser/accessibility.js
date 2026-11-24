@@ -1342,6 +1342,7 @@ async function accessibility(page) {
                         role: 'sales',
                         status: 'active',
                         is_self: false,
+                        can_impersonate: false,
                     })).slice(0, 2),
                     invitations: [
                         {

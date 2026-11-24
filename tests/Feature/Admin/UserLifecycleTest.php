@@ -37,7 +37,7 @@ it('lists only users and invitations in the admin dealer', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/users/index')
             ->has('users', 3)
-            ->has('users.0', 7)
+            ->has('users.0', 8)
             ->missing('users.0.password')
             ->missing('users.0.remember_token')
             ->has('invitations', 1)
