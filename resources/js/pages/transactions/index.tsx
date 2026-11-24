@@ -102,7 +102,7 @@ type Props = {
         region_code?: string | null;
         district_code?: string | null;
         source_channel?: string | null;
-        closing_month?: 'missing' | null;
+        closing_month?: string | null;
     };
     sourceOptions?: string[];
     supervisorOptions?: { id: number; name: string }[];
@@ -400,12 +400,14 @@ export default function TransactionsIndex({
                     </div>
                 </div>
 
-                {filters.closing_month === 'missing' && (
+                {filters.closing_month && (
                     <p
                         role="status"
                         className="mt-6 flex flex-wrap items-center gap-x-3 rounded-lg border bg-muted px-4 py-2 text-sm"
                     >
-                        Hanya transaksi aktif tanpa estimasi bulan closing.
+                        {filters.closing_month === 'missing'
+                            ? 'Hanya transaksi aktif tanpa estimasi bulan closing.'
+                            : `Hanya peluang closing ${formatMonth(`${filters.closing_month}-01`)}. Pada bulan berjalan termasuk SPK yang perlu estimasi.`}
                         <Link
                             href="/transactions"
                             className="inline-flex min-h-11 items-center font-medium text-primary hover:underline"
@@ -819,7 +821,7 @@ export default function TransactionsIndex({
                                 </div>
 
                                 <div className="hidden overflow-x-auto md:block">
-                                    <table className="w-full min-w-[1100px] text-sm">
+                                    <table className="w-full min-w-[1040px] text-sm">
                                         <thead>
                                             <tr className="border-b text-left">
                                                 <th className="p-2">
@@ -949,6 +951,10 @@ export default function TransactionsIndex({
                                                                       {
                                                                           timeZone:
                                                                               'Asia/Jakarta',
+                                                                          dateStyle:
+                                                                              'short',
+                                                                          timeStyle:
+                                                                              'short',
                                                                       },
                                                                   )
                                                                 : '-'}

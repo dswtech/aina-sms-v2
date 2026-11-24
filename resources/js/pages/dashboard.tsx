@@ -109,6 +109,7 @@ export default function Dashboard({
                         <PriorityLists
                             priorities={d.priorities}
                             totals={d.priorityTotals}
+                            period={d.period}
                             hideSales={role === 'sales'}
                         />
                     </section>

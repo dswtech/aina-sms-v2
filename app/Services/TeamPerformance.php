@@ -118,16 +118,16 @@ class TeamPerformance
         $rowUsers = $users->concat($allocations->pluck('user'))->concat($dealSales)->unique('id')->sortBy('name');
         // Same scope as the transaction list the count links to; Branch Managers have no such list.
         $openSpk = $isBranchManager ? null : DealTransaction::query()->visibleTo($actor)->where('current_stage', PipelineStage::Spk)
-            ->toBase()->selectRaw('sales_id, count(*) as total, sum(case when expected_closing_month >= ? and expected_closing_month < ? then 1 else 0 end) as closing', [
-                $period.'-01', $end->setTimezone('Asia/Jakarta')->toDateString(),
-            ])->groupBy('sales_id')->get()->keyBy('sales_id');
+            ->toBase()->selectRaw('sales_id, count(*) as total')->groupBy('sales_id')->pluck('total', 'sales_id');
+        $spkNeedingEstimate = $isBranchManager ? null : DealTransaction::query()->visibleTo($actor)->needsClosingEstimate()
+            ->toBase()->selectRaw('sales_id, count(*) as total')->groupBy('sales_id')->pluck('total', 'sales_id');
         $performance = $rowUsers->map(fn (User $sales): array => array_merge([
             'id' => $sales->id, 'name' => $sales->name, 'username' => $sales->username,
             'team_name' => $teams->firstWhere('id', $memberships->firstWhere('user_id', $sales->id)?->team_id)?->name,
             'is_current_member' => $users->contains('id', $sales->id),
             ...($openSpk === null ? [] : [
-                'open_spk_count' => (int) $openSpk->get($sales->id)?->total,
-                'open_spk_unscheduled_count' => (int) $openSpk->get($sales->id)?->total - (int) $openSpk->get($sales->id)?->closing,
+                'open_spk_count' => (int) $openSpk->get($sales->id, 0),
+                'open_spk_needs_estimate_count' => (int) $spkNeedingEstimate?->get($sales->id, 0),
             ]),
         ], $this->metrics($dealsBySales->get($sales->id, collect()), $personalUnits->get($sales->id), $historical)))->values()->all();
         $closing = $historical ? collect() : $deals->filter(function (DealTransaction|stdClass $deal): bool {
@@ -155,16 +155,13 @@ class TeamPerformance
             $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
                 ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             if (! $historical) {
-                // An SPK without a usable estimate is closest to DO yet outside the forecast: list it so it gets one.
-                $isCurrent = $period === now('Asia/Jakarta')->format('Y-m');
-                $needsEstimate = fn (DealTransaction $deal): bool => $isCurrent && $deal->current_stage === PipelineStage::Spk
-                    && ($deal->expected_closing_month === null || $deal->expected_closing_month->format('Y-m') < $period);
-                $closingVisible = $operationalDeals->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id)
-                    && ($needsEstimate($deal) || ($deal->getAttribute('closing_in_period') && ! $deal->current_stage->isClosed())));
-                $priorityTotals['closing'] = $closingVisible->count();
-                $priorities['closing'] = $closingVisible
-                    ->sortByDesc(fn (DealTransaction $deal): float => (float) config('forecast.weights.'.$deal->current_stage->value, 0) + ($needsEstimate($deal) ? 1 : 0))
-                    ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal) + ['needs_estimate' => $needsEstimate($deal)])->values()->all();
+                // SPK without a usable estimate come first so they get one; same set as the Transaksi closing filter.
+                $needsEstimate = DealTransaction::query()->visibleTo($actor)->needsClosingEstimate()->pluck('id')->flip();
+                $closingDeals = DealTransaction::query()->visibleTo($actor)->closingIn($period)->orderByDesc('id')->get();
+                $priorityTotals['closing'] = $closingDeals->count();
+                $priorities['closing'] = $closingDeals
+                    ->sortByDesc(fn (DealTransaction $deal): float => (float) config('forecast.weights.'.$deal->current_stage->value, 0) + ($needsEstimate->has($deal->id) ? 1 : 0))
+                    ->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal) + ['needs_estimate' => $needsEstimate->has($deal->id)])->values()->all();
             }
             [$priorities['unread'], $priorityTotals['unread']] = $this->unread($actor);
             $priorityTotals['stagnant'] = $stagnantCount;

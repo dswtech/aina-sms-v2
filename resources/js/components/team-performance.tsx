@@ -36,8 +36,8 @@ export type PerformanceRow = Metrics & {
     team_name?: string | null;
     is_current_member?: boolean;
     open_spk_count?: number;
-    /** Open SPK outside this month's forecast: no closing estimate, or another month. */
-    open_spk_unscheduled_count?: number;
+    /** Open SPK whose closing estimate is empty or past. */
+    open_spk_needs_estimate_count?: number;
     is_active?: boolean;
     sales_target_units?: number | null;
     sales_targets_missing?: number;
@@ -596,7 +596,9 @@ export function PriorityLists({
     priorities,
     totals,
     hideSales = false,
+    period,
 }: {
+    period: string;
     priorities: ReportingProps['dashboard']['priorities'];
     totals?: ReportingProps['dashboard']['priorityTotals'];
     hideSales?: boolean;
@@ -607,6 +609,16 @@ export function PriorityLists({
         ['unread', 'Komentar belum dibaca'],
         ['closing', 'Peluang closing periode ini'],
     ] as const;
+    const fullList: Record<string, [string, string]> = {
+        stagnant: [
+            '/transactions?tab=stagnant&date_from=&date_to=',
+            'transaksi stagnan',
+        ],
+        closing: [
+            `/transactions?closing_month=${period.slice(0, 7)}&date_from=&date_to=`,
+            'peluang closing',
+        ],
+    };
     return (
         <div className="grid min-w-0 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {groups.map(([key, title]) => {
@@ -624,7 +636,7 @@ export function PriorityLists({
                     >
                         <h3 className="border-b p-5 text-base font-semibold">
                             {title}{' '}
-                            <span className="ml-1 text-sm font-normal text-muted-foreground">
+                            <span className="ml-1 text-sm font-normal whitespace-nowrap text-muted-foreground">
                                 <span className="md:hidden">
                                     {count(phoneCount)}
                                 </span>
@@ -655,11 +667,6 @@ export function PriorityLists({
                                               ? `Aktivitas terakhir ${formatRelativeTime(item.last_activity_at)}`
                                               : key === 'closing'
                                                 ? [
-                                                      item.needs_estimate
-                                                          ? item.expected_closing_month
-                                                              ? 'Perbarui estimasi closing'
-                                                              : 'Isi estimasi closing'
-                                                          : null,
                                                       item.estimated_value !=
                                                       null
                                                           ? rupiah.format(
@@ -698,6 +705,13 @@ export function PriorityLists({
                                                             </span>
                                                         )}
                                                 </span>
+                                                {item.needs_estimate && (
+                                                    <span className="text-xs font-medium text-foreground">
+                                                        {item.expected_closing_month
+                                                            ? 'Perbarui estimasi closing'
+                                                            : 'Isi estimasi closing'}
+                                                    </span>
+                                                )}
                                                 {detail && (
                                                     <span className="line-clamp-2 text-xs text-muted-foreground">
                                                         {detail}
@@ -716,7 +730,7 @@ export function PriorityLists({
                         )}
                         {/* One footer per list: the full-list link wins over showing two more. */}
                         {phoneCount < items.length &&
-                            !(key === 'stagnant' && total > items.length) && (
+                            !(fullList[key] && total > items.length) && (
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -730,12 +744,12 @@ export function PriorityLists({
                                     Tampilkan {items.length - phoneCount} lagi
                                 </button>
                             )}
-                        {key === 'stagnant' && total > items.length && (
+                        {fullList[key] && total > items.length && (
                             <Link
-                                href="/transactions?tab=stagnant&date_from=&date_to="
+                                href={fullList[key][0]}
                                 className="flex min-h-11 items-center border-t px-5 text-sm font-medium text-primary underline-offset-4 hover:underline"
                             >
-                                Lihat semua {total} transaksi stagnan
+                                Lihat semua {total} {fullList[key][1]}
                             </Link>
                         )}
                     </section>

@@ -26,7 +26,7 @@ async function dashboardLayout(page) {
         forecast_gap_units:
             target === null || forecast === null ? null : target - forecast,
         open_spk_count: 2,
-        open_spk_unscheduled_count: 1,
+        open_spk_needs_estimate_count: 1,
         benchmark_units: 24,
         sales_target_units: 24,
         allocation_percent: 100,
@@ -45,7 +45,7 @@ async function dashboardLayout(page) {
         {
             ...metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
             open_spk_count: 0,
-            open_spk_unscheduled_count: 0,
+            open_spk_needs_estimate_count: 0,
         },
         metrics(5, 'Eka Wulandari — Data contoh', 0, 0, 0),
         metrics(
@@ -611,13 +611,13 @@ async function dashboardLayout(page) {
                                   ).includes('tab=active&stage=spk'),
                         'Next step from a lagging row: ' + role,
                     );
-                    // SPK missing from the forecast say so beside the link.
+                    // SPK needing an estimate say so beside the link.
                     assert(
                         role === 'branch_manager' ||
                             (await page
                                 .locator('[data-open-spk]')
                                 .innerText()).includes(
-                                '1 di luar forecast bulan ini',
+                                'termasuk 1 perlu estimasi closing',
                             ),
                         'SPK outside the forecast are named: ' + role,
                     );

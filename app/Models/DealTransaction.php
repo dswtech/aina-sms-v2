@@ -181,6 +181,33 @@ class DealTransaction extends Model
         return CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays(3)->utc();
     }
 
+    /**
+     * Open SPK whose closing estimate is empty or already past: closest to DO, yet outside every forecast.
+     *
+     * @param  Builder<DealTransaction>  $query
+     */
+    public function scopeNeedsClosingEstimate(Builder $query): void
+    {
+        $query->where($query->qualifyColumn('current_stage'), PipelineStage::Spk)
+            ->where(fn (Builder $q) => $q->whereNull($q->qualifyColumn('expected_closing_month'))
+                ->orWhere($q->qualifyColumn('expected_closing_month'), '<', now('Asia/Jakarta')->format('Y-m-01')));
+    }
+
+    /**
+     * Open deals expected to close in the month (Y-m); the current month adds SPK that still need an estimate.
+     *
+     * @param  Builder<DealTransaction>  $query
+     */
+    public function scopeClosingIn(Builder $query, string $period): void
+    {
+        $column = $query->qualifyColumn('expected_closing_month');
+        $next = CarbonImmutable::createFromFormat('!Y-m', $period)->addMonth()->format('Y-m-d');
+        $query->whereNotIn($query->qualifyColumn('current_stage'), PipelineStage::closedValues())
+            ->where(fn (Builder $q) => $q
+                ->where(fn (Builder $month) => $month->where($column, '>=', $period.'-01')->where($column, '<', $next))
+                ->when($period === now('Asia/Jakarta')->format('Y-m'), fn (Builder $q) => $q->orWhere(fn (Builder $spk) => $spk->needsClosingEstimate())));
+    }
+
     /** @param Builder<DealTransaction> $query */
     public function scopeStagnant(Builder $query): void
     {
