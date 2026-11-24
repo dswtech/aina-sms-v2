@@ -65,8 +65,14 @@ export function PaceLine({ pace }: { pace: Pace }) {
     return (
         <span data-pace-line>
             {/* The projection explains the order inside one badge tier. */}
-            {pace.projected !== null &&
-                `Proyeksi ${Math.floor(pace.projected * 100)}% · `}
+            {pace.projected !== null && (
+                <>
+                    <span className="font-medium text-foreground tabular-nums">
+                        Proyeksi {Math.floor(pace.projected * 100)}%
+                    </span>
+                    {' · '}
+                </>
+            )}
             <span className="font-medium text-foreground">
                 Butuh {rateUp(pace.needed!)}/hari
             </span>
@@ -213,18 +219,17 @@ export function PerformanceChart({
     const showTeams =
         !team && new Set(rows.map((row) => row.team_name)).size > 1;
     const [expanded, setExpanded] = useState(false);
-    // Teams most behind their forecast come first; inactive teams and missing gaps last.
-    const sorted = team
-        ? [...rows].sort(
-              (a, b) =>
-                  Number(a.is_active === false) -
-                      Number(b.is_active === false) ||
-                  (b.forecast_gap_units ?? -1e9) -
-                      (a.forecast_gap_units ?? -1e9),
-          )
-        : order === 'pace' && showPace
-          ? rankByPace(rows, paceOf)
-          : rankPerformance(rows);
+    const byPace = showPace && (team || order === 'pace');
+    // Inactive teams stay last; Admin gets no team targets, so its teams keep the server's order.
+    const sorted = (
+        byPace
+            ? rankByPace(rows, paceOf)
+            : team
+              ? [...rows]
+              : rankPerformance(rows)
+    ).sort(
+        (a, b) => Number(a.is_active === false) - Number(b.is_active === false),
+    );
     const visible = team || expanded ? sorted : sorted.slice(0, 5);
     const maximum = chartMaximum(
         rows.flatMap((row) => [
@@ -267,10 +272,10 @@ export function PerformanceChart({
                 )}
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     {!single &&
-                        (team
-                            ? 'Bandingkan hasil dan estimasi setiap tim. '
-                            : order === 'pace' && showPace
-                              ? 'Diurutkan dari yang paling tertinggal dari laju. '
+                        (byPace
+                            ? 'Diurutkan dari yang paling tertinggal dari laju. '
+                            : team
+                              ? 'Bandingkan hasil dan estimasi setiap tim. '
                               : 'Diurutkan dari realisasi, lalu forecast tertinggi. ')}
                     Forecast sudah mencakup realisasi.
                 </p>
@@ -344,6 +349,10 @@ export function PerformanceChart({
                                             <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                                                 <PaceLine pace={paceOf(row)} />
                                                 {nextHref &&
+                                                    !!row.open_spk_count &&
+                                                    // The list cannot filter by a former member.
+                                                    row.is_current_member !==
+                                                        false &&
                                                     [
                                                         'behind',
                                                         'slipping',
@@ -358,8 +367,10 @@ export function PerformanceChart({
                                                                 )}
                                                                 className="font-medium text-primary underline-offset-4 hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
                                                             >
-                                                                Lihat SPK siap
-                                                                DO
+                                                                {
+                                                                    row.open_spk_count
+                                                                }{' '}
+                                                                SPK siap DO
                                                             </Link>
                                                         </>
                                                     )}

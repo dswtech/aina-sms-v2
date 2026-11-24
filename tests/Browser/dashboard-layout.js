@@ -3,6 +3,8 @@
 // eslint-disable-next-line no-unused-vars -- playwright-cli invokes this function.
 async function dashboardLayout(page) {
     page.setDefaultTimeout(5000);
+    // The pace status reads today's date; the fixture is November 2026.
+    await page.clock.setFixedTime('2026-11-23T03:00:00Z');
     const origin = new URL(page.url()).origin;
     const template = await (await page.request.get(`${origin}/login`)).text();
     const bootstrap = /(<script\b[^>]*data-page[^>]*>)([\s\S]*?)(<\/script>)/;
@@ -23,6 +25,7 @@ async function dashboardLayout(page) {
         gap_units: target === null ? null : target - realization,
         forecast_gap_units:
             target === null || forecast === null ? null : target - forecast,
+        open_spk_count: 2,
         benchmark_units: 24,
         sales_target_units: 24,
         allocation_percent: 100,
@@ -37,7 +40,11 @@ async function dashboardLayout(page) {
         metrics(2, 'Bima Saputra — Data contoh', 5, 6.25, 4),
         // Targets chosen so the ranking shows every pace tier (19 of 25 workdays).
         metrics(3, 'Citra Maharani — Data contoh', 3, 5.25, 4),
-        metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
+        // Lagging without open SPK: no link.
+        {
+            ...metrics(4, 'Dimas Pratama — Data contoh', 2, 3.25, 3),
+            open_spk_count: 0,
+        },
         metrics(5, 'Eka Wulandari — Data contoh', 0, 0, 0),
         metrics(
             6,
@@ -361,6 +368,13 @@ async function dashboardLayout(page) {
                                 : 'Kinerja per Sales',
                         exact: true,
                     });
+                    if (role === 'supervisor' || role === 'branch_manager')
+                        assert(
+                            (await team.innerText()).includes(
+                                'Diurutkan dari yang paling tertinggal',
+                            ),
+                            'Teams share the pace order: ' + role,
+                        );
                     if (role === 'sales')
                         assert(
                             !(await ranking.innerText()).includes('1.'),
@@ -432,17 +446,23 @@ async function dashboardLayout(page) {
                                 : ['on', 'Sesuai laju'];
                         assert(
                             (await page
-                                .locator(`dl [data-pace="${status}"]`)
-                                .first()
-                                .innerText()) === label && !/Butuh/.test(kpi),
-                            'KPI tile shows only the pace badge: ' + role,
+                                .locator(
+                                    `[data-pace-summary] [data-pace="${status}"]`,
+                                )
+                                .innerText()) === label &&
+                                !kpi.includes(label) &&
+                                !/Butuh/.test(kpi),
+                            'Pace badge leads the pace line, not a KPI tile: ' +
+                                role,
                         );
                         // Every role reads the rate under the KPI strip, led by the projection; Sales' one-row panel keeps only the badge.
                         const rateText = await page
                             .locator('[data-pace-summary]')
                             .innerText();
                         assert(
-                            /^Laju bulan ini: Proyeksi \d+%/.test(rateText) &&
+                            /^\S.*\sLaju bulan ini: Proyeksi \d+%/s.test(
+                                rateText,
+                            ) &&
                                 (role !== 'sales' ||
                                     !(
                                         await page
@@ -578,16 +598,14 @@ async function dashboardLayout(page) {
                     const nextStep = (
                         role === 'sales' ? page.getByRole('main') : ranking
                     ).getByRole('link', {
-                        name: 'Lihat SPK siap DO',
+                        name: '2 SPK siap DO',
                     });
                     assert(
                         role === 'branch_manager'
                             ? (await nextStep.count()) === 0
-                            : role === 'admin' ||
+                            : (await nextStep.count()) === 1 &&
                                   (
-                                      await nextStep
-                                          .first()
-                                          .getAttribute('href')
+                                      await nextStep.getAttribute('href')
                                   ).includes('tab=active&stage=spk'),
                         'Next step from a lagging row: ' + role,
                     );
