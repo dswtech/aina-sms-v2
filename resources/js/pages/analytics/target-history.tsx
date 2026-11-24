@@ -3,7 +3,6 @@ import { ChevronRight } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { FilterPanel } from '@/components/filter-panel';
 import { MonthRangeFields } from '@/components/month-range-fields';
-import { Button } from '@/components/ui/button';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
 
 type Percents = {
@@ -123,7 +122,7 @@ function DataCells({
 
 // Sticky cells need an opaque background so months scroll underneath.
 const nameCell =
-    'sticky left-0 z-10 max-w-36 bg-card px-5 text-left align-top break-words sm:max-w-64';
+    'sticky left-0 z-10 w-36 min-w-36 bg-card px-5 text-left break-words sm:w-64 sm:min-w-64';
 
 export default function TargetHistoryPage({ report }: { report: Report }) {
     const role = usePage().props.auth.user.role;
@@ -189,10 +188,10 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                         >
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b text-xs text-muted-foreground">
+                                    <tr className="border-b align-bottom text-xs text-muted-foreground">
                                         <th
                                             scope="col"
-                                            className={`${nameCell} py-3 font-medium`}
+                                            className={`${nameCell} py-3 align-bottom font-medium`}
                                         >
                                             Tim / Sales
                                         </th>
@@ -213,7 +212,7 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                         ))}
                                         <th
                                             scope="col"
-                                            className="px-5 py-3 text-right font-medium"
+                                            className="px-5 py-3 text-right font-medium whitespace-nowrap"
                                         >
                                             Rata-rata
                                             <span className="block font-normal">
@@ -227,7 +226,7 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                         <tr className="font-medium">
                                             <th
                                                 scope="row"
-                                                className={`${nameCell} py-3 font-semibold`}
+                                                className={`${nameCell} py-3 align-top font-semibold`}
                                             >
                                                 {dealer.name}
                                             </th>
@@ -242,13 +241,12 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                             <tr>
                                                 <th
                                                     scope="row"
-                                                    className={`${nameCell} py-1 font-semibold`}
+                                                    className={`${nameCell} py-1 align-top font-semibold`}
                                                 >
                                                     {team.sales.length > 0 ? (
-                                                        <Button
+                                                        <button
                                                             type="button"
-                                                            variant="ghost"
-                                                            className="-ml-3 h-auto min-h-11 justify-start px-3 text-left whitespace-normal"
+                                                            className="-ml-2 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
                                                             aria-expanded={isOpen(
                                                                 team.id,
                                                             )}
@@ -264,10 +262,10 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                                         >
                                                             <ChevronRight
                                                                 aria-hidden="true"
-                                                                className={`transition-transform motion-reduce:transition-none ${isOpen(team.id) ? 'rotate-90' : ''}`}
+                                                                className={`size-4 shrink-0 transition-transform motion-reduce:transition-none ${isOpen(team.id) ? 'rotate-90' : ''}`}
                                                             />
                                                             {team.name}
-                                                        </Button>
+                                                        </button>
                                                     ) : (
                                                         <span className="block py-2">
                                                             {team.name}
@@ -289,7 +287,7 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                                     <tr key={sales.id}>
                                                         <th
                                                             scope="row"
-                                                            className={`${nameCell} py-3 pl-9 font-normal`}
+                                                            className={`${nameCell} py-3 pl-9 align-top font-normal`}
                                                         >
                                                             {sales.name}
                                                         </th>
@@ -305,7 +303,7 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                         <tr>
                                             <th
                                                 scope="row"
-                                                className={`${nameCell} py-3 font-medium`}
+                                                className={`${nameCell} py-3 align-top font-medium`}
                                             >
                                                 {unassigned.name}
                                             </th>
