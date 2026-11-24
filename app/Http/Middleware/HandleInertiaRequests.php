@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Services\TargetReminder;
 use App\Services\VisibleCoachingNotifications;
 use App\Support\Releases;
 use Illuminate\Http\Request;
@@ -62,6 +63,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'notifications' => $notifications->take(10)->map(fn ($notification): array => $visibleNotifications->present($notification))->values()->all(),
             'notificationsUnreadCount' => $notifications->count(),
+            // Admin viewing as a Supervisor is read-only, so the reminder has nothing to offer there.
+            'targetReminder' => fn (): ?array => $request->session()->has('impersonator_id') ? null : app(TargetReminder::class)->forUser($request->user()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
