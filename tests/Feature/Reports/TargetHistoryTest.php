@@ -15,6 +15,7 @@ use App\Services\TargetHistory;
 use App\Services\TeamPerformance;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->travelTo(CarbonImmutable::parse('2026-11-24 09:00:00', 'Asia/Jakarta')));
 
@@ -263,3 +264,22 @@ it('runs a constant number of queries', function () {
     };
     expect($count('2024-12'))->toBe($count('2026-11'));
 });
+
+it('serves the report to supervisors and branch managers only', function () {
+    $f = historyDealer();
+    foreach ([$f['supervisor'], $f['manager']] as $actor) {
+        $this->actingAs($actor)->get('/analytics/target-history')->assertOk()->assertInertia(fn (Assert $p) => $p
+            ->component('analytics/target-history')->where('report.from', '2026-06')->where('report.to', '2026-11'));
+    }
+    foreach ([User::factory()->admin()->create(['dealer_id' => $f['dealer']->id]), historySales($f, 'Sales')] as $actor) {
+        $this->actingAs($actor)->get('/analytics/target-history')->assertForbidden();
+    }
+});
+
+it('validates the report range', function (string $query, string $field) {
+    $this->actingAs(historyDealer()['manager'])->get('/analytics/target-history?'.$query)->assertSessionHasErrors($field);
+})->with([
+    ['from=2026-11&to=2026-10', 'to'],
+    ['from=2024-01&to=2026-11', 'to'],
+    ['from=bad', 'from'],
+]);
