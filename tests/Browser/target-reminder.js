@@ -11,6 +11,7 @@ async function targetReminder(page) {
     let writes = 0;
     let role = 'supervisor';
     let userId = 'qa-spv-1';
+    let rangeError = null;
     page.on('pageerror', (error) => errors.push(error.message));
     const assert = (value, message) => {
         if (!value) throw new Error(message);
@@ -23,12 +24,13 @@ async function targetReminder(page) {
             months.map((month, index) => [
                 month,
                 {
-                    target_units: index === 1 ? null : target,
-                    benchmark_units: index === 1 ? null : benchmark,
+                    expected: index !== 0,
+                    target_units: index < 2 ? null : target,
+                    benchmark_units: index < 2 ? null : benchmark,
                     realization_units: index,
-                    achievement_percent: index === 1 ? null : 50,
+                    achievement_percent: index < 2 ? null : 50,
                     benchmark_achievement_percent:
-                        benchmark === null || index === 1 ? null : 40,
+                        benchmark === null || index < 2 ? null : 40,
                 },
             ]),
         ),
@@ -57,6 +59,7 @@ async function targetReminder(page) {
                 },
                 impersonator: null,
             },
+            errors: rangeError ? { to: rangeError } : {},
             notifications: [],
             notificationsUnreadCount: 0,
             sidebarOpen: true,
@@ -153,6 +156,19 @@ async function targetReminder(page) {
             (await toggle.getAttribute('aria-expanded')) === 'false',
             'page controls work under the reminder',
         );
+        const firstRow = page.locator('tbody tr').first().locator('td');
+        assert(
+            (await firstRow.nth(0).innerText()).trim() === '–',
+            'a month that owes no target is not called unfilled',
+        );
+        assert(
+            (await firstRow.nth(1).innerText()).includes('Belum diisi'),
+            'a month that owes a target is called unfilled',
+        );
+        assert(
+            (await firstRow.last().innerText()).includes('46,67%'),
+            'percentages keep the dashboard precision',
+        );
         // Everything can scroll clear of the fixed card.
         await page.evaluate(() =>
             window.scrollTo(0, document.documentElement.scrollHeight),
@@ -237,6 +253,12 @@ async function targetReminder(page) {
             'branch manager starts collapsed',
         );
         await page.getByText('Total dealer').waitFor();
+        rangeError = 'Rentang maksimal 24 bulan.';
+        await open();
+        await page
+            .getByRole('alert')
+            .filter({ hasText: rangeError })
+            .waitFor();
         await noOverflow('branch manager phone');
 
         assert(writes === 0, 'no writes');

@@ -246,6 +246,25 @@ it('lists an inactive team only when it has history in the range', function () {
         ->and(historyReport($f['manager'], '2026-07')['teams'])->toBe([]);
 });
 
+it('marks months before a team existed or outside a membership as owing no target', function () {
+    $f = historyDealer();
+    $a = historyTeam($f, 'Tim A');
+    $b = historyTeam($f, 'Tim B');
+    $b->forceFill(['created_at' => '2026-09-30 17:00:00'])->save();
+    $moved = historySales($f, 'Pindah');
+    historyMember($a, $moved, '2026-10-10 00:00:00');
+    historyMember($b, $moved);
+    TeamMembership::query()->where('team_id', $b->id)->update(['started_at' => '2026-10-10 00:00:00']);
+    historyPlan($a, '2026-08', 5, [$moved->id => 6]);
+
+    [$teamA, $teamB] = historyReport($f['manager'])['teams'];
+    $expected = fn (array $row): array => array_map(fn (array $cell): bool => $cell['expected'], array_values($row['cells']));
+    expect($expected($teamA))->toBe([true, true, true, true, true, true])
+        ->and($expected($teamB))->toBe([false, false, false, false, true, true])
+        ->and($expected($teamA['sales'][0]))->toBe([true, true, true, true, true, false])
+        ->and($expected($teamB['sales'][0]))->toBe([false, false, false, false, true, true]);
+});
+
 it('runs a constant number of queries', function () {
     $f = historyDealer();
     $team = historyTeam($f, 'Tim A');

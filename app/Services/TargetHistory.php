@@ -39,6 +39,8 @@ class TargetHistory
             ->groupBy(fn (TeamTarget $t): string => CarbonImmutable::parse($t->period)->format('Y-m'))->map(fn (Collection $rows): Collection => $rows->keyBy('team_id'));
         $memberships = TeamMembership::query()->whereIn('team_id', $teams->modelKeys())->whereNull('ended_at')->where('role', UserRole::Sales)
             ->whereHas('user', fn ($q) => $q->where('dealer_id', $actor->dealer_id)->where('is_active', true)->where('role', UserRole::Sales))->get();
+        // Ended memberships too: they tell which months a Sales owed the team a target.
+        $tenures = TeamMembership::query()->whereIn('team_id', $teams->modelKeys())->where('role', UserRole::Sales)->get(['team_id', 'user_id', 'started_at', 'ended_at']);
         $salesTargets = SalesTarget::query()->whereIn('user_id', $memberships->pluck('user_id'))
             ->whereDate('period', '>=', $from.'-01')->whereDate('period', '<=', $to.'-01')->get()
             ->groupBy(fn (SalesTarget $t): string => CarbonImmutable::parse($t->period)->format('Y-m'))->map(fn (Collection $rows): Collection => $rows->keyBy('user_id'));
@@ -63,17 +65,18 @@ class TargetHistory
 
         $teamRows = $teams->filter(fn (Team $team): bool => $team->is_active
             || $targets->contains(fn (Collection $rows): bool => $rows->has($team->id)) || $done->contains('team', $team->id))
-            ->map(function (Team $team) use ($months, $averageMonths, $targets, $teamDone, $salesDone, $salesUnits, $users, $salesIds): array {
+            ->map(function (Team $team) use ($months, $averageMonths, $targets, $teamDone, $salesDone, $salesUnits, $users, $salesIds, $tenures): array {
                 $ids = $salesIds($team);
 
                 return [...$this->row($team->public_id, $team->name, $months, $averageMonths, function (string $month) use ($team, $targets, $teamDone): array {
                     $target = $targets->get($month)?->get($team->id);
 
                     return $this->cell($target?->target_units, $target?->benchmark_units === null ? null : TargetUnits::number(TargetUnits::scaled($target->benchmark_units)),
-                        $teamDone->get($month.'|'.$team->id, 0));
+                        $teamDone->get($month.'|'.$team->id, 0), $team->created_at < (new ReportingPeriod($month))->end);
                 }), 'is_active' => $team->is_active, 'sales' => $users->whereIn('id', $ids)->map(fn (User $sales): array => $this->row(
                     $sales->id, $sales->name, $months, $averageMonths,
-                    fn (string $month): array => $this->cell($salesUnits[$month][$team->id][$sales->id] ?? null, null, $salesDone->get($month.'|'.$team->id.'|'.$sales->id, 0)),
+                    fn (string $month): array => $this->cell($salesUnits[$month][$team->id][$sales->id] ?? null, null, $salesDone->get($month.'|'.$team->id.'|'.$sales->id, 0),
+                        $this->belonged($tenures->where('team_id', $team->id)->where('user_id', $sales->id), $month)),
                 ))->values()->all()];
             })->values()->all();
 
@@ -150,10 +153,19 @@ class TargetHistory
         ]];
     }
 
-    /** @return array<string, int|float|null> */
-    private function cell(int|float|null $target, int|float|null $benchmark, int $realized): array
+    /** @param  Collection<array-key, TeamMembership>  $tenures */
+    private function belonged(Collection $tenures, string $month): bool
     {
-        return ['target_units' => $target, 'benchmark_units' => $benchmark, 'realization_units' => $realized,
+        $window = new ReportingPeriod($month);
+
+        return $tenures->contains(fn (TeamMembership $m): bool => CarbonImmutable::parse($m->started_at) < $window->end
+            && ($m->ended_at === null || CarbonImmutable::parse($m->ended_at) > $window->start));
+    }
+
+    /** @return array<string, bool|int|float|null> `expected` is false when no target was owed that month. */
+    private function cell(int|float|null $target, int|float|null $benchmark, int $realized, bool $expected = true): array
+    {
+        return ['expected' => $expected, 'target_units' => $target, 'benchmark_units' => $benchmark, 'realization_units' => $realized,
             'achievement_percent' => $this->percent($realized, $target), 'benchmark_achievement_percent' => $this->percent($realized, $benchmark)];
     }
 

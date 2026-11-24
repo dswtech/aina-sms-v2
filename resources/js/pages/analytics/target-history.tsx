@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { FilterPanel } from '@/components/filter-panel';
+import InputError from '@/components/input-error';
 import { MonthRangeFields } from '@/components/month-range-fields';
 import { formatMonthRange, monthRangeError } from '@/lib/month-range';
 
@@ -10,6 +11,7 @@ type Percents = {
     benchmark_achievement_percent: number | null;
 };
 type Cell = Percents & {
+    expected: boolean;
     target_units: number | null;
     benchmark_units: number | null;
     realization_units: number;
@@ -35,8 +37,7 @@ type Report = {
 };
 
 const number = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 });
-const percent = (value: number) =>
-    `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value)}%`;
+const percent = (value: number) => `${number.format(value)}%`;
 const shortMonth = (month: string) =>
     new Intl.DateTimeFormat('id-ID', {
         month: 'short',
@@ -46,6 +47,15 @@ const shortMonth = (month: string) =>
 
 function CellContent({ cell, plain }: { cell: Cell; plain?: boolean }) {
     if (plain) return <span>{number.format(cell.realization_units)}</span>;
+    // No target was owed: the team or the membership did not exist that month.
+    if (!cell.expected && cell.target_units === null)
+        return (
+            <span>
+                {cell.realization_units
+                    ? number.format(cell.realization_units)
+                    : '–'}
+            </span>
+        );
     const incomplete =
         cell.target_units === null &&
         !!cell.teams_required &&
@@ -125,11 +135,12 @@ const nameCell =
     'sticky left-0 z-10 w-36 min-w-36 bg-card px-5 text-left break-words sm:w-64 sm:min-w-64';
 
 export default function TargetHistoryPage({ report }: { report: Report }) {
-    const role = usePage().props.auth.user.role;
+    const { auth, errors } = usePage().props;
     const [from, setFrom] = useState(report.from);
     const [to, setTo] = useState(report.to);
     const [open, setOpen] = useState<Record<string, boolean>>({});
-    const isOpen = (id: string | number) => open[id] ?? role === 'supervisor';
+    const isOpen = (id: string | number) =>
+        open[id] ?? auth.user.role === 'supervisor';
     const { dealer, unassigned, averageMonths } = report;
     const averageLabel =
         averageMonths.length === 0
@@ -173,6 +184,10 @@ export default function TargetHistoryPage({ report }: { report: Report }) {
                                         },
                                     );
                             }}
+                        />
+                        <InputError
+                            message={errors.to ?? errors.from}
+                            className="mt-2"
                         />
                     </FilterPanel>
                     {report.teams.length === 0 ? (
