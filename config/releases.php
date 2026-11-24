@@ -4,6 +4,23 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.8.0',
+        'date' => '2026-11-25',
+        'notify' => true,
+        'summary' => 'Versi baru: peta penjualan FOA di Mapping Area, status laju target di Beranda, dan halaman Riwayat Target.',
+        'items' => [
+            'Mapping Area kini menampilkan peta DO per kecamatan FOA beserta peringkatnya. Kecamatan yang belum ada DO diarsir dan langsung terdaftar.',
+            'Porsi DO di PMA kini satu batang: FOA, PMA di luar FOA, dan luar PMA. Tren porsi menampilkan paling sedikit enam bulan.',
+            'Beranda Supervisor dan Sales dibuka dengan Prioritas tindak lanjut, lengkap dengan nama pelanggan dan kendaraan.',
+            'Beranda menampilkan laju bulan ini: proyeksi capaian, kebutuhan unit per hari, dan status Sesuai laju, Sedikit tertinggal, atau Tertinggal.',
+            'SPK yang estimasi closing-nya kosong atau lewat tampil paling atas di Peluang closing dan bisa langsung diisi. Daftar lengkapnya bisa dibuka di Transaksi.',
+            'Halaman baru Riwayat Target di menu Analisis menampilkan target dan capaian per bulan untuk Supervisor dan Branch Manager.',
+            'Supervisor mendapat pengingat bila target tim bulan ini belum diisi atau ada Sales yang belum mendapat target.',
+            'Admin bisa login sebagai pengguna lain untuk membantu mengecek masalah. Mode ini hanya untuk melihat, tidak bisa mengubah data, dan tercatat.',
+            'Bila terlalu banyak percobaan masuk, halaman masuk memberi tahu berapa detik lagi Anda bisa mencoba.',
+        ],
+    ],
+    [
         'version' => '1.7.0',
         'date' => '2026-11-20',
         'notify' => true,
