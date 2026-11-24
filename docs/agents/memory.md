@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.66 |
-| Diperbarui | 20 November 2026 |
+| Versi | v1.67 |
+| Diperbarui | 24 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 24 November 2026 — "login sebagai" (hanya lihat)
+
+- Branch `feat/login-sebagai` menambah tombol "Login sebagai" di halaman Pengguna sesuai [ADR 011](adr/ADR-011-read-only-impersonation.md) dan [IAM-09](PRD.md). Sesi menyimpan `impersonator_id`. `EnforceImpersonationReadOnly` menolak semua non-GET serta kedua export CSV, dan admin melihat toast "Mode lihat saja".
+- Audit `impersonation.started`/`impersonation.stopped` mencatat Admin sebagai pelaku. Angka target management tetap tampil saat melihat sebagai Supervisor atau Branch Manager.
+- Tanpa migration. Route GET baru tidak boleh mengubah data, karena middleware hanya memblokir non-GET dan export.
 
 ## Pembaruan 20 November 2026 — tahap Delivery dihapus
 
