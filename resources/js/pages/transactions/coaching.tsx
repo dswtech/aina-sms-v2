@@ -1,8 +1,11 @@
 import { TransactionTimeline } from '@/components/transaction-timeline';
 import type { HistoryPage, TimelineEvent } from '@/types/history';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ChevronRight } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { ClosingMonthForm } from '@/components/team-performance';
+import { formatMonth } from '@/lib/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,6 +16,8 @@ type Props = {
         public_id: string;
         vehicle_model: string;
         stage_label: string;
+        expected_closing_month?: string | null;
+        can_update?: boolean;
         can_comment: boolean;
     };
 };
@@ -24,6 +29,15 @@ export default function Coaching({ transaction, timeline }: Props) {
     });
     const [editingId, setEditingId] = useState<number | null>(null);
     const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+    const closing = transaction.expected_closing_month;
+    const thisMonth = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+    }).format(new Date());
+    // Opened by default when the estimate still has to be filled in; stays put after saving.
+    const [closingOpen] = useState(!closing || closing < thisMonth);
 
     function reset() {
         setEditingId(null);
@@ -63,6 +77,24 @@ export default function Coaching({ transaction, timeline }: Props) {
                     <p className="font-medium">{transaction.vehicle_model}</p>
                     <Badge variant="secondary">{transaction.stage_label}</Badge>
                 </div>
+                {transaction.can_update && (
+                    <details open={closingOpen} className="group/details mt-4">
+                        <summary className="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium text-primary">
+                            <ChevronRight
+                                aria-hidden="true"
+                                className="size-4 shrink-0 transition-transform group-open/details:rotate-90 motion-reduce:transition-none"
+                            />
+                            Estimasi closing:{' '}
+                            {closing
+                                ? formatMonth(`${closing}-01`)
+                                : 'belum diisi'}
+                        </summary>
+                        <ClosingMonthForm
+                            transactionId={transaction.public_id}
+                            month={closing ?? null}
+                        />
+                    </details>
+                )}
                 <p className="mt-2 text-sm text-muted-foreground">
                     Diskusi untuk transaksi ini. Tahap saat komentar dikirim
                     tetap tersimpan.

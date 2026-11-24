@@ -278,6 +278,12 @@
         @apply border-border outline-ring/50;
     }
 
+    /* Plain links and disclosures have no ring of their own; 50% is under 3:1 on light surfaces. */
+    a:focus-visible,
+    summary:focus-visible {
+        outline: 2px solid var(--primary);
+    }
+
     body {
         @apply antialiased bg-background text-foreground;
         line-height: 1.5;

@@ -317,7 +317,7 @@ it('lists each current, allocated and historical sales user once in manager perf
         ->where('dashboard.performance.2.is_current_member', false)
         ->where('dashboard.performance.2.stage_counts.hot_prospect', 2)
         ->missing('dashboard.performance.0.open_spk_count')
-        ->missing('dashboard.performance.0.open_spk_unscheduled_count'));
+        ->missing('dashboard.performance.0.open_spk_needs_estimate_count'));
     expect($loadedDeals)->toBe(0);
 });
 
@@ -390,7 +390,7 @@ it('counts open SPK per Sales exactly as the linked transaction list does', func
     foreach (['supervisor', 'sales'] as $role) {
         $this->actingAs($f[$role])->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
             ->where('dashboard.performance.0.open_spk_count', 3)
-            ->where('dashboard.performance.0.open_spk_unscheduled_count', 2));
+            ->where('dashboard.performance.0.open_spk_needs_estimate_count', 1));
         $this->get("/transactions?sales_id={$f['sales']->id}&tab=active&stage=spk&date_from=&date_to=")
             ->assertInertia(fn (Assert $p) => $p->where('transactions.total', 3));
     }
@@ -411,6 +411,12 @@ it('lists SPK without a usable closing estimate first in the closing list of the
         ->where('dashboard.priorities.closing.2.needs_estimate', false)
         // The forecast still counts only the November SPK.
         ->where('dashboard.forecastUnits', 0.75));
+    // "Lihat semua" opens exactly the counted deals.
+    $this->get('/transactions?closing_month=2026-11&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
+        ->where('transactions.total', 3)->where('filters.closing_month', '2026-11'));
+    $this->get('/transactions?closing_month=2026-12&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
+        ->where('transactions.total', 1));
+    $this->get('/transactions?closing_month=2026-13')->assertSessionHasErrors('closing_month');
     $this->get('/dashboard?period=2026-12')->assertInertia(fn (Assert $p) => $p
         ->where('dashboard.priorityTotals.closing', 1)
         ->where('dashboard.priorities.closing.0.needs_estimate', false));

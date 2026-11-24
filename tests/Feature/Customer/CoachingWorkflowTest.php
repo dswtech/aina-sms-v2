@@ -155,6 +155,9 @@ it('opens the exact authorized transaction from its notification even when a new
         ->assertInertia(fn (Assert $page) => $page
             ->component('transactions/coaching')
             ->where('transaction.public_id', $this->deal->public_id)
+            // The dashboard sends deals without a closing estimate here to fill it in.
+            ->where('transaction.can_update', true)
+            ->has('transaction.expected_closing_month')
             ->where('timeline.data.0.comment.body', 'Deal pertama')
             ->missing('transaction.customer')
             ->missing('transaction.phone')

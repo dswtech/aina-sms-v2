@@ -37,6 +37,8 @@ class DealCommentController extends Controller
                 'public_id' => $transaction->public_id,
                 'vehicle_model' => $transaction->vehicle_model,
                 'stage_label' => $transaction->current_stage->label(),
+                'expected_closing_month' => $transaction->expected_closing_month?->format('Y-m'),
+                'can_update' => $actor->can('update', $transaction),
                 'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
             ],
         ]);

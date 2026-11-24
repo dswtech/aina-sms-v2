@@ -129,9 +129,10 @@ export function OpenSpkLink({
             >
                 {row.open_spk_count} SPK siap DO
             </Link>
-            {!!row.open_spk_unscheduled_count && (
+            {!!row.open_spk_needs_estimate_count && (
                 <span>
-                    {row.open_spk_unscheduled_count} di luar forecast bulan ini
+                    termasuk {row.open_spk_needs_estimate_count} perlu estimasi
+                    closing
                 </span>
             )}
         </p>
