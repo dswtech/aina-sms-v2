@@ -33,9 +33,10 @@ type UserRow = {
     role: string;
     status: 'active' | 'inactive';
     is_self: boolean;
+    can_impersonate: boolean;
 };
 
-type InvitationRow = Omit<UserRow, 'status' | 'is_self'> & {
+type InvitationRow = Omit<UserRow, 'status' | 'is_self' | 'can_impersonate'> & {
     status: 'valid' | 'expired' | 'revoked' | 'used';
     expires_at: string;
 };
@@ -79,34 +80,47 @@ function UserActions({ user }: { user: UserRow }) {
     const disabled = user.is_self && !activating;
 
     return (
-        <Form
-            action={`/users/${user.id}/status`}
-            method="patch"
-            className="flex justify-end"
-        >
-            {({ processing }) => (
-                <>
-                    <input
-                        type="hidden"
-                        name="is_active"
-                        value={activating ? '1' : '0'}
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={processing || disabled}
-                        title={
-                            disabled
-                                ? 'Akun sendiri tidak dapat dinonaktifkan.'
-                                : undefined
-                        }
-                    >
-                        {processing && <Spinner />}
-                        {activating ? 'Aktifkan' : 'Nonaktifkan'}
-                    </Button>
-                </>
+        <div className="flex flex-wrap justify-end gap-2">
+            {user.can_impersonate && (
+                <Form action={`/users/${user.id}/impersonate`} method="post">
+                    {({ processing }) => (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={processing}
+                            aria-label={`Login sebagai ${user.name}`}
+                        >
+                            {processing && <Spinner />}
+                            Login sebagai
+                        </Button>
+                    )}
+                </Form>
             )}
-        </Form>
+            <Form action={`/users/${user.id}/status`} method="patch">
+                {({ processing }) => (
+                    <>
+                        <input
+                            type="hidden"
+                            name="is_active"
+                            value={activating ? '1' : '0'}
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={processing || disabled}
+                            title={
+                                disabled
+                                    ? 'Akun sendiri tidak dapat dinonaktifkan.'
+                                    : undefined
+                            }
+                        >
+                            {processing && <Spinner />}
+                            {activating ? 'Aktifkan' : 'Nonaktifkan'}
+                        </Button>
+                    </>
+                )}
+            </Form>
+        </div>
     );
 }
 

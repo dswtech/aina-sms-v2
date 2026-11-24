@@ -13,4 +13,5 @@ export type User = {
 
 export type Auth = {
     user: User;
+    impersonator: { name: string } | null;
 };
