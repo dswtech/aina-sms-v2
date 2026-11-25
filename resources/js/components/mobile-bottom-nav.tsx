@@ -27,7 +27,7 @@ export function MobileBottomNav() {
     const moreItems = [...more, profileNavItem];
     const moreIsActive = moreItems.some(
         (item) =>
-            isCurrentUrl(item.href) &&
+            isNavigationItemActive(item, page.url) &&
             !primary.some((shortcut) => shortcut.href === item.href),
     );
 
@@ -142,13 +142,19 @@ export function MobileBottomNav() {
                                               <Link
                                                   href={item.href}
                                                   aria-current={
-                                                      isCurrentUrl(item.href)
+                                                      isNavigationItemActive(
+                                                          item,
+                                                          page.url,
+                                                      )
                                                           ? 'page'
                                                           : undefined
                                                   }
                                                   className={cn(
                                                       'flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
-                                                      isCurrentUrl(item.href) &&
+                                                      isNavigationItemActive(
+                                                          item,
+                                                          page.url,
+                                                      ) &&
                                                           'bg-accent text-accent-foreground',
                                                   )}
                                               >

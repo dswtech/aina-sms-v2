@@ -119,3 +119,20 @@ it('lists stagnant deals from earlier months when following the stagnant notific
     $this->get($url)->assertInertia(fn (Assert $p) => $p
         ->has('transactions.data', 1)->where('transactions.data.0.vehicle_model', 'Old stagnant'));
 });
+
+it('narrows the list and the export to one visible transaction', function () {
+    $sales = User::factory()->sales()->create(['dealer_id' => Dealer::factory()->create()->id]);
+    $other = User::factory()->sales()->create(['dealer_id' => $sales->dealer_id]);
+    $deal = filterDeal($sales, 'Dituju', 'lead', [['lead', '2026-01-05']]);
+    filterDeal($sales, 'Lain', 'lead', [['lead', '2026-01-05']]);
+    $foreign = filterDeal($other, 'Milik orang', 'lead', [['lead', '2026-01-05']]);
+    $this->actingAs($sales);
+
+    $query = "transaction={$deal->public_id}&date_from=&date_to=";
+    expect(filterModels($query))->toBe(['Dituju'])
+        ->and(filterModels("transaction={$foreign->public_id}&date_from=&date_to="))->toBe([]);
+    $this->get('/transactions?'.$query)->assertInertia(fn (Assert $p) => $p->where('filters.transaction', $deal->public_id));
+    $csv = $this->get('/transactions/export.csv?'.$query)->streamedContent();
+    expect($csv)->toContain('Dituju')->not->toContain('Lain;');
+    $this->get('/transactions?transaction=bukan-uuid')->assertSessionHasErrors('transaction');
+});

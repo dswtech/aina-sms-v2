@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -41,6 +42,8 @@ use InvalidArgumentException;
  * @property string|null $lost_notes
  * @property CarbonInterface|null $last_activity_at
  * @property CarbonInterface|null $progress_at
+ * @property CarbonInterface|null $coaching_closed_at
+ * @property-read DealComment|null $latestComment
  * @property-read bool $is_stagnant
  */
 #[Fillable([
@@ -62,6 +65,7 @@ use InvalidArgumentException;
     'lost_reason',
     'lost_notes',
     'last_activity_at',
+    'coaching_closed_at',
 ])]
 class DealTransaction extends Model
 {
@@ -155,6 +159,14 @@ class DealTransaction extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(DealComment::class, 'deal_transaction_id');
+    }
+
+    /**
+     * @return HasOne<DealComment, $this>
+     */
+    public function latestComment(): HasOne
+    {
+        return $this->hasOne(DealComment::class, 'deal_transaction_id')->latestOfMany(['created_at', 'id']);
     }
 
     /**
@@ -332,6 +344,11 @@ class DealTransaction extends Model
                 $this->lost_notes = $options['lost_notes'] ?? null;
             }
 
+            // A closed deal settles its coaching. The shared instant lets a cancelled DO reopen it.
+            if ($toStage->isClosed() && $this->coaching_closed_at === null && $this->comments()->exists()) {
+                $this->coaching_closed_at = $at;
+            }
+
             $this->save();
 
             // A closed deal needs no more contact plans; completed ones stay as history.
@@ -440,6 +457,7 @@ class DealTransaction extends Model
             'booking_fee_confirmed_at' => 'datetime',
             'last_activity_at' => 'datetime',
             'progress_at' => 'datetime',
+            'coaching_closed_at' => 'datetime',
         ];
     }
 }

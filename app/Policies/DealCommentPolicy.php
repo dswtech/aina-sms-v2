@@ -20,7 +20,14 @@ class DealCommentPolicy
         return $comment->deal !== null && app(DealTransactionPolicy::class)->view($actor, $comment->deal);
     }
 
+    /** Writing ends with the deal: DO and Lost lock the conversation. */
     public function create(User $actor, DealTransaction $deal): bool
+    {
+        return ! $deal->current_stage->isClosed() && $this->participate($actor, $deal);
+    }
+
+    /** A side of the conversation: may read it and be notified, also after the deal ended. */
+    public function participate(User $actor, DealTransaction $deal): bool
     {
         return in_array($actor->role, [UserRole::Sales, UserRole::Supervisor], true)
             && app(DealTransactionPolicy::class)->view($actor, $deal);

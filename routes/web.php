@@ -38,6 +38,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('transactions/{transaction}/cancel-do', [CustomerController::class, 'cancelDo'])
         ->middleware('role:admin')->name('transactions.cancel-do');
+    Route::patch('transactions/{transaction}/coaching', [DealCommentController::class, 'close'])
+        ->middleware('role:supervisor')->name('transactions.coaching.update');
     Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])
         ->middleware('role:supervisor,admin')->name('transactions.destroy');
 
@@ -64,6 +66,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
         Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
         Route::get('transactions/{transaction}/feed', [TransactionController::class, 'feed'])->name('transactions.feed');
+        Route::get('coaching', [DealCommentController::class, 'index'])->name('coaching.index');
         Route::get('transactions/{transaction}/coaching', [DealCommentController::class, 'index'])->name('transactions.coaching');
     });
 

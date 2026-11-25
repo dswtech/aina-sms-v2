@@ -78,6 +78,8 @@ Bobot forecast belum ditetapkan. Nilai final harus diputuskan Product Owner bers
 | Coaching comment | Arahan Supervisor kepada Sales yang terkait dengan transaksi tertentu. |
 | System event | Catatan otomatis, misalnya perubahan tahap atau penugasan Sales. |
 | Comment revision | Versi sebelumnya dari komentar yang diedit dalam jendela koreksi. |
+| Percakapan coaching | Satu transaksi yang mempunyai komentar; statusnya Perlu dibalas, Menunggu, atau Selesai. |
+| Giliran | Pihak (Sales atau Supervisor) yang tidak menulis komentar terakhir. |
 | In-app notification | Pemberitahuan di dalam aplikasi yang mempunyai status belum dibaca atau sudah dibaca. |
 
 Conversation coaching hanya dibaca oleh Sales terkait, Supervisor terkait, dan Admin untuk audit. Branch Manager tidak membaca isi coaching.

@@ -17,7 +17,6 @@ import {
     SidebarMenuSubItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 import { isNavigationItemActive } from '@/lib/navigation';
 
@@ -90,7 +89,6 @@ function NavigationGroup({
 }
 
 export function NavMain({ items }: { items: NavItem[] }) {
-    const { isCurrentUrl } = useCurrentUrl();
     const { url } = usePage();
 
     return (
@@ -109,7 +107,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild
-                                isActive={isCurrentUrl(item.href)}
+                                isActive={isNavigationItemActive(item, url)}
                                 tooltip={{ children: item.title }}
                                 className="h-10 data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
                             >

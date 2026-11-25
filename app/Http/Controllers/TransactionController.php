@@ -126,6 +126,7 @@ class TransactionController extends Controller
             'region_code' => ['nullable', 'string', 'max:16'],
             'district_code' => ['nullable', 'string', 'max:16'],
             'supervisor_id' => ['nullable', 'integer'],
+            'transaction' => ['nullable', 'uuid'],
             'closing_month' => ['nullable', 'string', 'regex:/^(missing|\d{4}-(0[1-9]|1[0-2]))$/'],
         ]);
 
@@ -192,6 +193,10 @@ class TransactionController extends Controller
             $query->where('sales_id', $salesId);
         }
 
+        if (! empty($validated['transaction'])) {
+            $query->where('public_id', $validated['transaction']);
+        }
+
         // Same set as the dashboard warning: open transactions not yet in any forecast month.
         if (($validated['closing_month'] ?? null) === 'missing') {
             $query->whereNull('expected_closing_month')->whereNotIn('current_stage', PipelineStage::closedValues());
@@ -221,6 +226,7 @@ class TransactionController extends Controller
             'customer_name' => $validated['customer_name'] ?? null,
             'region_code' => $validated['region_code'] ?? null, 'district_code' => $validated['district_code'] ?? null,
             'closing_month' => $validated['closing_month'] ?? null,
+            'transaction' => $validated['transaction'] ?? null,
         ]];
     }
 
@@ -436,19 +442,23 @@ class TransactionController extends Controller
         ];
     }
 
-    /** Older comment or activity pages for the detail modal, newest first. */
+    /** Older pages for the detail modal (one kind) and the Coaching page (all kinds), newest first. */
     public function feed(Request $request, DealTransaction $transaction, TransactionTimeline $timeline): JsonResponse
     {
         /** @var User $actor */
         $actor = $request->user();
         $validated = $request->validate([
-            'kind' => ['required', 'in:comments,activities'],
+            'kind' => ['required', 'in:comments,activities,all'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
 
         return response()->json($timeline->paginate(
             $transaction, $actor, (int) ($validated['page'] ?? 1),
-            kinds: [$validated['kind'] === 'comments' ? 'comment' : 'activity'], newestFirst: true,
+            kinds: match ($validated['kind']) {
+                'comments' => ['comment'],
+                'activities' => ['activity'],
+                default => ['stage', 'activity', 'comment'],
+            }, newestFirst: true,
         ));
     }
 

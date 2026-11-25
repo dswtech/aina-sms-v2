@@ -2,9 +2,9 @@
 
 ## Cakupan G01
 
-Penulisan dan koreksi komentar dibatasi ke Sales pemilik transaksi dan Supervisor tim yang berhak. Admin hanya membaca untuk audit; Branch Manager tidak memperoleh halaman coaching. Reply hanya satu tingkat, dengan parent pada transaksi yang sama. Stage snapshot berasal dari server saat komentar dibuat dan tidak berubah ketika tahap transaksi atau isi komentar berubah.
+Penulisan dan koreksi komentar dibatasi ke Sales pemilik transaksi dan Supervisor tim yang berhak. Komentar ditutup saat transaksi DO atau Lost (PRD CVS-16); pemberitahuan yang sudah terjadwal tetap dikirim. Admin hanya membaca untuk audit; Branch Manager tidak memperoleh halaman coaching. Reply hanya satu tingkat, dengan parent pada transaksi yang sama. Stage snapshot berasal dari server saat komentar dibuat dan tidak berubah ketika tahap transaksi atau isi komentar berubah.
 
-Notifikasi ditujukan ke Sales pemilik transaksi dan Supervisor aktif pada tim Sales tersebut, selain penulis. Admin, Branch Manager, Sales lain, tim/dealer asing dan akun nonaktif tidak menjadi penerima. Hak penerima diperiksa ulang saat job email berjalan. Halaman `/transactions/{transaction}/coaching` hanya mengirim transaksi dan conversation yang diotorisasi, tanpa payload Customer, sehingga tetap dapat dipakai pemilik transaksi resmi setelah assignment Customer berubah.
+Notifikasi ditujukan ke Sales pemilik transaksi dan Supervisor aktif pada tim Sales tersebut, selain penulis. Admin, Branch Manager, Sales lain, tim/dealer asing dan akun nonaktif tidak menjadi penerima. Hak penerima diperiksa ulang saat job email berjalan. Halaman `/transactions/{transaction}/coaching` hanya mengirim transaksi dan conversation yang diotorisasi, dan dari Customer hanya namanya (tanpa kontak, alamat, atau catatan), sehingga tetap dapat dipakai pemilik transaksi resmi setelah assignment Customer berubah.
 
 ## Persiapan deployment
 

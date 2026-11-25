@@ -3,11 +3,20 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.71 |
+| Versi | v1.72 |
 | Diperbarui | 25 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 25 November 2026 — halaman Coaching
+
+- Branch `feat/coaching-inbox` menambah menu Coaching dua panel ([CVS-15, CVS-16](PRD.md), [desain](../superpowers/specs/2026-11-25-coaching-inbox-design.md)). `/coaching` dan `/transactions/{transaction}/coaching` memakai satu halaman; tautan notifikasi, email dan Beranda tidak berubah. Filter `transaction` ditambahkan pada daftar Transaksi dan ekspor CSV. Manual 1.5.0. Tanpa package baru: `shadcn add bubble` mencoba menambah package npm `cn`; dibatalkan dan diganti `@/lib/utils`.
+- Migration `2026_11_25_110000_add_coaching_closed_at_to_deal_transactions_table` sudah dijalankan di database lokal atas perintah pemilik (25 November 2026), belum di production. Saat rilis, jalankan sebelum kode baru aktif; tanpa kolom itu halaman Coaching error.
+- Form estimasi closing kini terbuka otomatis hanya untuk SPK yang estimasinya kosong atau lewat; tahap lain tetap dapat dibuka manual.
+- Bukti: `composer ci:check` lulus (756 tes, 753 lulus, 3 skip), 345 tes terkait lulus pada PostgreSQL 16 sekali pakai, skrip browser terisolasi lulus, dan tampilan diperiksa pada 390/768/1440px terang dan gelap dengan data demo sekali pakai.
+- DO dan Lost menutup percakapan dan komentar (izin `create`); penerima notifikasi memakai izin `participate` supaya komentar terakhir sebelum transaksi tutup tetap sampai.
+- Di luar cakupan: realtime, badge angka di menu, filter per Sales, pencarian isi chat. "Komentar belum dibaca" di Beranda tetap memakai notifikasi 3 hari.
 
 ## Pembaruan 25 November 2026 — hapus transaksi ganda
 

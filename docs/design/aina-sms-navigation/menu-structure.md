@@ -6,7 +6,8 @@
 - Mobile menampilkan maksimal empat tujuan primer; tujuan lain berada dalam sheet **Lainnya**.
 - Notifikasi dapat dibuka dari header dan memiliki halaman khusus.
 - Profil dan keluar akun berada dalam menu akun.
-- Coaching, riwayat tahap, dan audit hanya muncul di detail transaksi, bukan sebagai menu utama.
+- Riwayat tahap dan audit hanya muncul di detail transaksi, bukan sebagai menu utama.
+- Coaching adalah menu Sales, Supervisor, dan Admin setelah Transaksi (keputusan pemilik, 25 November 2026; CVS-15). Di mobile berada di Lainnya. Komentar tetap tersedia di detail transaksi.
 - Role selector hanya tersedia pada prototipe untuk review dan tidak menjadi UI produksi.
 
 ## Sales

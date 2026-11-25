@@ -105,7 +105,7 @@ class DevelopmentReportingSeeder extends Seeder
                         });
                     })->get();
                 foreach ($recipients as $recipient) {
-                    if (! $recipient->can('create', [DealComment::class, $deal]) || $recipient->notifications()
+                    if (! $recipient->can('participate', [DealComment::class, $deal]) || $recipient->notifications()
                         ->where('type', DealCommentCreated::class)->whereJsonContains('data', ['comment_id' => $comment->id])->exists()) {
                         continue;
                     }

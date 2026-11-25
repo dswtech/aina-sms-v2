@@ -280,9 +280,15 @@ async function acceptanceFlow(page) {
         await page.setViewportSize({ width: 1440, height: 900 });
 
         await open(`/transactions/${publicId}/coaching`);
-        await page.locator('#coaching-body').fill('Komentar acceptance');
-        await page.getByRole('button', { name: 'Kirim Komentar' }).click();
-        await page.getByText('Komentar acceptance').first().waitFor();
+        await page.locator('#detail-comment-body').fill('Komentar acceptance');
+        await page.getByRole('button', { name: 'Kirim komentar' }).click();
+        await page.locator('[data-slot="bubble-content"]', { hasText: 'Komentar acceptance' }).waitFor();
+        // The message answers nobody yet, so it waits for the other side in the conversation list.
+        await page.getByRole('link', { name: /^Menunggu/ }).click();
+        await page.locator('a[aria-current="true"]', { hasText: 'Komentar acceptance' }).waitFor();
+        await page.getByRole('link', { name: 'Lihat transaksi' }).click();
+        await page.getByRole('status').filter({ hasText: 'Hanya transaksi' }).waitFor();
+        checks.push('coaching list and transaction link');
 
         let detail = await json(`/transactions/${publicId}`);
         assert(detail.progress_at === P0, `Comment/follow-up/activity changed progress_at: ${P0} -> ${detail.progress_at}`);

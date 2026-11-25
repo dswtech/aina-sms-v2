@@ -544,7 +544,11 @@ class CustomerController extends Controller
 
             // One instant for the deal and its history row, so progress_at equals the event time.
             $at = now();
-            $locked->forceFill(['current_stage' => PipelineStage::Spk, 'last_activity_at' => $at, 'progress_at' => $at])->save();
+            $locked->forceFill([
+                'current_stage' => PipelineStage::Spk, 'last_activity_at' => $at, 'progress_at' => $at,
+                // Reopen only the coaching that this DO closed.
+                'coaching_closed_at' => $locked->coaching_closed_at?->equalTo($original->created_at) ? null : $locked->coaching_closed_at,
+            ])->save();
             $locked->stageHistories()->create([
                 'from_stage' => PipelineStage::Do,
                 'to_stage' => PipelineStage::Spk,

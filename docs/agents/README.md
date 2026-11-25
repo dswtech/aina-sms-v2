@@ -13,6 +13,8 @@ Dokumen dalam folder ini disusun untuk agent dan engineer yang tidak ikut dalam 
 
 | File | Jenis | Fungsi |
 |---|---|---|
+| [../superpowers/specs/2026-11-25-coaching-inbox-design.md](../superpowers/specs/2026-11-25-coaching-inbox-design.md) | Desain | Halaman Coaching dua panel: daftar percakapan menurut giliran, status selesai oleh Supervisor, bubble chat, pembiayaan, pencarian, dan tautan transaksi; disetujui 25 November 2026. |
+| [../superpowers/plans/2026-11-25-coaching-inbox.md](../superpowers/plans/2026-11-25-coaching-inbox.md) | Rencana | Lima task: status percakapan, daftar, filter satu transaksi, tampilan, dokumen. |
 | [adr/ADR-012-soft-delete-transactions.md](adr/ADR-012-soft-delete-transactions.md) | ADR | Transaksi ganda bulan berjalan dihapus Admin/Supervisor dengan soft delete, alasan wajib dan audit (PIP-09). |
 | [adr/ADR-011-read-only-impersonation.md](adr/ADR-011-read-only-impersonation.md) | ADR | Admin dapat "login sebagai" pengguna aktif non-Admin di dealernya, hanya lihat; tulis dan export ditolak middleware, audit mulai/selesai, angka target management tetap tampil (IAM-09). |
 | [../superpowers/specs/2026-11-24-login-sebagai-design.md](../superpowers/specs/2026-11-24-login-sebagai-design.md) | Desain | Desain "login sebagai" read-only; disetujui 24 November 2026. |

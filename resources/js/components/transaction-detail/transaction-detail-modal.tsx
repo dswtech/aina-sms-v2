@@ -556,6 +556,13 @@ function DetailView({
                                     }}
                                 />
                             )}
+                        {activeMode === 'comments' &&
+                            ['do', 'lost'].includes(detail.current_stage) && (
+                                <p className="border-t bg-muted p-3 text-xs">
+                                    Transaksi sudah {detail.stage_label}.
+                                    Komentar ditutup.
+                                </p>
+                            )}
                         {activeMode === 'comments' && detail.can_comment && (
                             <CommentComposer
                                 key={composerKey(editing, replyTo)}
