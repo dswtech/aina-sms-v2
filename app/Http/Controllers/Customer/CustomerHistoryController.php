@@ -26,8 +26,9 @@ class CustomerHistoryController extends Controller
             'activity_page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'timeline_page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
         ]);
+        $closed = PipelineStage::closedValues();
         $deals = $customer->transactions()->visibleTo($actor)
-            ->orderByRaw('CASE WHEN current_stage IN (?, ?, ?) THEN 1 ELSE 0 END', PipelineStage::closedValues())
+            ->orderByRaw('CASE WHEN current_stage IN ('.implode(', ', array_fill(0, count($closed), '?')).') THEN 1 ELSE 0 END', $closed)
             ->orderByDesc('id')->get();
         $selected = isset($validated['transaction']) ? $deals->firstWhere('public_id', $validated['transaction']) : $deals->first();
         abort_if(isset($validated['transaction']) && $selected === null, 403);
