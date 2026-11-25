@@ -45,8 +45,7 @@ class TeamPerformance
                     ->where('created_at', '>=', $start)->where('created_at', '<', $end),
                 'stageHistories as has_do_history' => fn ($query) => $query->realizedDo(),
             ]);
-        $operationalDeals = $isBranchManager ? collect() : $dealsQuery->with('sales:id,name,username')->get();
-        $deals = $isBranchManager ? $dealsQuery->toBase()->get() : $operationalDeals;
+        $deals = $isBranchManager ? $dealsQuery->toBase()->get() : $dealsQuery->with('sales:id,name,username')->get();
         $dealsByTeam = $deals->groupBy('team_id');
         $dealsBySales = $deals->groupBy('sales_id');
         $memberships = TeamMembership::query()->whereIn('team_id', $teamIds)->whereNull('ended_at')
@@ -150,10 +149,10 @@ class TeamPerformance
         if ($isBranchManager) {
             $stagnantCount = DealTransaction::query()->visibleInReportsTo($actor)->stagnant()->count();
         } else {
-            $stagnant = $operationalDeals->filter(fn (DealTransaction $deal): bool => $deal->is_stagnant);
+            // Same scope as the transaction list the count links to.
+            $stagnant = DealTransaction::query()->visibleTo($actor)->stagnant()->get();
             $stagnantCount = $stagnant->count();
-            $priorities['stagnant'] = $stagnant->filter(fn (DealTransaction $deal): bool => $visibleIds->has($deal->id))
-                ->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
+            $priorities['stagnant'] = $stagnant->sortBy('last_activity_at')->take(5)->map(fn (DealTransaction $deal): array => $this->priority($deal))->values()->all();
             if (! $historical) {
                 // SPK without a usable estimate come first so they get one; same set as the Transaksi closing filter.
                 $needsEstimate = DealTransaction::query()->visibleTo($actor)->needsClosingEstimate()->pluck('id')->flip();

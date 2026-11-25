@@ -199,3 +199,21 @@ it('reconciles filtered CSV to screen totals and never accepts caller supplied d
     expect($source)->toBe(['walk_in', '2', '100', '1', '2', '100'])
         ->and($csv)->not->toContain('foreign_dealer', 'other_team', 'JANGAN_KIRIM_CATATAN', $f['customer']->phone);
 });
+
+it('counts stagnant deals with the scope of the list it links to after a sales transfer', function () {
+    $this->travelTo(Carbon::parse('2026-11-20 05:00:00', 'UTC'));
+    $f = g03Team(Dealer::factory()->create());
+    $other = g03Team($f['dealer']);
+    $deal = g03Deal($f, 'walk_in', '2026-11-01 00:00:00', '2026-11-02 00:00:00', PipelineStage::Prospect);
+    $deal->update(['last_activity_at' => '2026-11-02 00:00:00']);
+    $f['sales']->activeTeamMemberships()->update(['ended_at' => now()]);
+    TeamMembership::create(['team_id' => $other['team']->id, 'user_id' => $f['sales']->id, 'role' => 'sales', 'started_at' => now()]);
+
+    foreach ([[$f['supervisor'], 0], [$other['supervisor'], 1]] as [$actor, $count]) {
+        $this->actingAs($actor)->get('/dashboard?period=2026-11')->assertInertia(fn (Assert $p) => $p
+            ->where('dashboard.priorityTotals.stagnant', $count)->where('dashboard.stagnantCount', $count)
+            ->has('dashboard.priorities.stagnant', $count));
+        $this->get('/transactions?tab=stagnant&date_from=&date_to=')->assertInertia(fn (Assert $p) => $p
+            ->has('transactions.data', $count));
+    }
+});
