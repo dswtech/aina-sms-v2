@@ -146,6 +146,7 @@ async function customerHistory(page) {
                       },
                       conversations: {
                           data: [],
+                          current_page: 1,
                           prev_page_url: null,
                           next_page_url: null,
                       },

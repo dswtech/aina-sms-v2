@@ -522,6 +522,7 @@ async function accessibility(page) {
                             commented_at: '2026-11-01T00:00:00Z',
                         },
                     ],
+                    current_page: 1,
                     prev_page_url: null,
                     next_page_url: null,
                 },

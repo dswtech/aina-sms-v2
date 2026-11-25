@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { MessagesSquare, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Conversation } from '@/components/coaching/conversation';
 import type {
     ConversationSummary,
@@ -27,6 +27,7 @@ type Row = ConversationSummary & {
 type Props = {
     conversations: {
         data: Row[];
+        current_page: number;
         prev_page_url: string | null;
         next_page_url: string | null;
     };
@@ -72,30 +73,41 @@ export default function Coaching({
     const here = transaction
         ? `/transactions/${transaction.public_id}/coaching`
         : '/coaching';
-    const href = (path: string, query: { tab?: Status; search?: string }) =>
-        `${path}?${new URLSearchParams({ tab: query.tab ?? tab, ...(query.search ? { search: query.search } : {}) })}`;
+    const href = (
+        path: string,
+        query: { tab?: Status; search?: string; page?: number },
+    ) =>
+        `${path}?${new URLSearchParams({
+            tab: query.tab ?? tab,
+            ...(query.search ? { search: query.search } : {}),
+            ...(query.page && query.page > 1
+                ? { page: String(query.page) }
+                : {}),
+        })}`;
 
-    // Back/Forward changes the applied search while the page state is preserved; follow it.
-    useEffect(() => setTerm(search), [search]);
-    // Only typing starts a search; the URL parts are read when it fires.
+    // A slow answer to this page's own search must not overwrite newer typing; Back and tabs do reset it.
+    const sentSearch = useRef(search);
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => {
-        if (term.trim() === search) return;
-        const timer = setTimeout(
-            () =>
-                router.get(
-                    href(here, { search: term.trim() }),
-                    {},
-                    {
-                        preserveState: true,
-                        preserveScroll: true,
-                        replace: true,
-                    },
-                ),
-            300,
-        );
+        if (search === sentSearch.current) return;
+        sentSearch.current = search;
+        setTerm(search);
+    }, [search]);
+    // `here` restarts the timer, so a pending search never reopens the previous conversation.
+    useEffect(() => {
+        const next = term.trim();
+        if (next === sentSearch.current) return;
+        searchTimer.current = setTimeout(() => {
+            sentSearch.current = next;
+            router.get(
+                href(here, { search: next }),
+                {},
+                { preserveState: true, preserveScroll: true, replace: true },
+            );
+        }, 300);
 
-        return () => clearTimeout(timer);
-    }, [term]);
+        return () => clearTimeout(searchTimer.current);
+    }, [term, here]);
 
     return (
         <>
@@ -153,6 +165,11 @@ export default function Coaching({
                                     <Link
                                         key={key}
                                         href={href(here, { tab: key })}
+                                        onClick={() => {
+                                            clearTimeout(searchTimer.current);
+                                            sentSearch.current = '';
+                                            setTerm('');
+                                        }}
                                         preserveState
                                         preserveScroll
                                         aria-current={
@@ -206,8 +223,17 @@ export default function Coaching({
                                             <Link
                                                 href={href(
                                                     `/transactions/${row.public_id}/coaching`,
-                                                    { search },
+                                                    {
+                                                        search,
+                                                        page: conversations.current_page,
+                                                    },
                                                 )}
+                                                // A pending search must not cancel this visit; it resumes after it.
+                                                onClick={() =>
+                                                    clearTimeout(
+                                                        searchTimer.current,
+                                                    )
+                                                }
                                                 preserveState
                                                 preserveScroll
                                                 aria-current={
