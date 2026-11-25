@@ -11,10 +11,12 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\UsernameReservations;
 use App\Support\AuditRecorder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -88,6 +90,12 @@ class TeamController extends Controller
         $before = ['name' => $team->name, 'is_active' => $team->is_active];
 
         DB::transaction(function () use ($before, $request, $team, $usernames, $validated, $wasActive): void {
+            // Serializes with placements, which lock the same team row.
+            Team::query()->whereKey($team->id)->lockForUpdate()->sole();
+            if ($wasActive && ! $request->boolean('is_active', true) && $team->activeMemberships()
+                ->whereHas('user', fn (Builder $user) => $user->where('role', UserRole::Sales)->where('is_active', true))->exists()) {
+                throw ValidationException::withMessages(['is_active' => 'Pindahkan semua Sales aktif ke tim lain sebelum menonaktifkan tim ini.']);
+            }
             $team->update($validated);
             $action = array_key_exists('is_active', $validated) && $wasActive !== $team->is_active
                 ? ($team->is_active ? 'team.reactivated' : 'team.deactivated')

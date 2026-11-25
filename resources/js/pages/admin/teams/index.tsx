@@ -146,7 +146,7 @@ function TeamCard({ team }: { team: Team }) {
                     </DialogContent>
                 </Dialog>
                 <Form action={`/teams/${team.id}`} method="patch">
-                    {({ processing }) => (
+                    {({ processing, errors }) => (
                         <>
                             <input
                                 type="hidden"
@@ -159,12 +159,16 @@ function TeamCard({ team }: { team: Team }) {
                                 disabled={processing}
                                 title={
                                     team.is_active
-                                        ? 'Semua penempatan aktif akan ditutup dan riwayat dipertahankan.'
+                                        ? 'Pindahkan Sales aktif dulu. Penempatan lain akan ditutup dan riwayat dipertahankan.'
                                         : undefined
                                 }
                             >
                                 {team.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                             </Button>
+                            <InputError
+                                className="mt-2"
+                                message={errors.is_active}
+                            />
                         </>
                     )}
                 </Form>
@@ -214,22 +218,25 @@ function PlacementEditor({ person, teams }: { person: Person; teams: Team[] }) {
                     </>
                 )}
             </Form>
-            <Form action={`/team-memberships/${person.id}`} method="delete">
-                {({ processing }) => (
-                    <Button
-                        type="submit"
-                        variant="ghost"
-                        disabled={processing || person.team_id === null}
-                        title={
-                            person.team_id === null
-                                ? 'Pengguna belum mempunyai penempatan aktif.'
-                                : 'Tutup penempatan aktif tanpa menghapus riwayat.'
-                        }
-                    >
-                        Lepaskan
-                    </Button>
-                )}
-            </Form>
+            {/* Sales always keep a team; they are moved, never released. */}
+            {person.role === 'supervisor' && (
+                <Form action={`/team-memberships/${person.id}`} method="delete">
+                    {({ processing }) => (
+                        <Button
+                            type="submit"
+                            variant="ghost"
+                            disabled={processing || person.team_id === null}
+                            title={
+                                person.team_id === null
+                                    ? 'Pengguna belum mempunyai penempatan aktif.'
+                                    : 'Tutup penempatan aktif tanpa menghapus riwayat.'
+                            }
+                        >
+                            Lepaskan
+                        </Button>
+                    )}
+                </Form>
+            )}
         </div>
     );
 }

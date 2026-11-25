@@ -363,7 +363,7 @@ Semua skenario memakai data sintetis bersama. Jika langkah tidak dapat dilakukan
 
 ### A03
 
-**Tim dan penempatan — Admin.** Prasyarat: T1/T2, V1/V2, S1/S2/S3; fixture histori aktif/berakhir. Langkah: buat/rename tim uji, tempatkan dan pindahkan Sales serta Supervisor, akhiri membership, nonaktifkan tim, coba assignment baru dan akses dari sesi lama. Hasil: penempatan aktif berubah, histori/penulis lama tidak hilang, tim nonaktif tidak menerima transaksi baru, akses segera mengikuti organisasi. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
+**Tim dan penempatan — Admin.** Prasyarat: T1/T2, V1/V2, S1/S2/S3; fixture histori aktif/berakhir. Langkah: buat/rename tim uji, tempatkan dan pindahkan Sales serta Supervisor, pastikan Sales tidak dapat dilepas dan tim dengan Sales aktif tidak dapat dinonaktifkan, akhiri membership Supervisor, pindahkan semua Sales lalu nonaktifkan tim, coba assignment baru dan akses dari sesi lama. Hasil: penempatan aktif berubah, histori/penulis lama tidak hilang, tim nonaktif tidak menerima transaksi baru, akses segera mengikuti organisasi. **Hasil aktual/bukti: Belum dijalankan; pelaksana/waktu/commit/temuan: —.**
 
 ### A04
 

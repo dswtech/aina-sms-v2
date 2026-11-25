@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTeamMembershipRequest;
 use App\Models\Team;
@@ -11,6 +12,7 @@ use App\Support\AuditRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TeamMembershipController extends Controller
 {
@@ -64,6 +66,9 @@ class TeamMembershipController extends Controller
 
         DB::transaction(function () use ($request, $user): void {
             $lockedUser = User::query()->whereKey($user->id)->lockForUpdate()->sole();
+            if ($lockedUser->role === UserRole::Sales) {
+                throw ValidationException::withMessages(['user' => 'Sales harus selalu mempunyai tim. Pindahkan ke tim lain.']);
+            }
             $membership = $lockedUser->activeTeamMemberships()->lockForUpdate()->first();
 
             if ($membership === null) {

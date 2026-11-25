@@ -44,8 +44,8 @@ it('creates renames and deactivates a team while closing active memberships', fu
     $this->actingAs($admin)->patch(route('teams.update', $team), ['name' => 'Tim Andalan'])->assertRedirect();
     expect($team->fresh()->name)->toBe('Tim Andalan');
 
-    $sales = User::factory()->role(UserRole::Sales)->create(['dealer_id' => $dealer->id]);
-    $membership = TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $sales->id]);
+    $supervisor = User::factory()->role(UserRole::Supervisor)->create(['dealer_id' => $dealer->id]);
+    $membership = TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $supervisor->id, 'role' => UserRole::Supervisor]);
     $invitation = Invitation::factory()->create([
         'dealer_id' => $dealer->id,
         'team_id' => $team->id,
@@ -63,7 +63,52 @@ it('creates renames and deactivates a team while closing active memberships', fu
         ->and(AuditLog::query()->where('action', 'team.deactivated')->exists())->toBeTrue();
 });
 
-it('assigns reassigns and closes membership while preserving history', function () {
+it('refuses to deactivate a team that still has active sales', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->role(UserRole::Admin)->create(['dealer_id' => $dealer->id]);
+    $team = Team::factory()->create(['dealer_id' => $dealer->id]);
+    $sales = User::factory()->role(UserRole::Sales)->create(['dealer_id' => $dealer->id]);
+    $membership = TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $sales->id]);
+    $invitation = Invitation::factory()->create([
+        'dealer_id' => $dealer->id, 'team_id' => $team->id, 'invited_by_id' => $admin->id, 'role' => UserRole::Sales,
+    ]);
+
+    $this->actingAs($admin)->patch(route('teams.update', $team), ['name' => 'Nama Lain', 'is_active' => false])
+        ->assertSessionHasErrors('is_active');
+
+    expect($team->fresh()->is_active)->toBeTrue()
+        ->and($team->fresh()->name)->toBe($team->name)
+        ->and($membership->fresh()->ended_at)->toBeNull()
+        ->and($invitation->fresh()->revoked_at)->toBeNull()
+        ->and(AuditLog::query()->exists())->toBeFalse();
+
+    // Renaming stays possible, and a deactivated account no longer holds the team open.
+    $this->patch(route('teams.update', $team), ['name' => 'Nama Lain'])->assertSessionHasNoErrors();
+    $sales->update(['is_active' => false]);
+    $this->patch(route('teams.update', $team), ['is_active' => false])->assertSessionHasNoErrors();
+    expect($team->fresh()->is_active)->toBeFalse();
+});
+
+it('refuses to release a sales from their team but still releases a supervisor', function () {
+    $dealer = Dealer::factory()->create();
+    $admin = User::factory()->role(UserRole::Admin)->create(['dealer_id' => $dealer->id]);
+    $team = Team::factory()->create(['dealer_id' => $dealer->id]);
+    $sales = User::factory()->role(UserRole::Sales)->create(['dealer_id' => $dealer->id]);
+    $supervisor = User::factory()->role(UserRole::Supervisor)->create(['dealer_id' => $dealer->id]);
+    foreach ([$sales, $supervisor] as $user) {
+        TeamMembership::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => $user->role]);
+    }
+
+    $this->actingAs($admin)->delete(route('team-memberships.destroy', $sales))->assertSessionHasErrors('user');
+    expect($sales->activeTeamMemberships()->exists())->toBeTrue()
+        ->and(AuditLog::query()->where('action', 'membership.ended')->exists())->toBeFalse();
+
+    $this->delete(route('team-memberships.destroy', $supervisor))->assertSessionHasNoErrors();
+    expect($supervisor->activeTeamMemberships()->exists())->toBeFalse()
+        ->and(AuditLog::query()->where('action', 'membership.ended')->exists())->toBeTrue();
+});
+
+it('assigns and reassigns membership while preserving history', function () {
     $dealer = Dealer::factory()->create();
     $admin = User::factory()->role(UserRole::Admin)->create(['dealer_id' => $dealer->id]);
     $firstTeam = Team::factory()->create(['dealer_id' => $dealer->id]);
@@ -86,12 +131,7 @@ it('assigns reassigns and closes membership while preserving history', function 
         ->and($sales->activeTeamMemberships()->sole()->team_id)->toBe($secondTeam->id)
         ->and($sales->teamMemberships()->count())->toBe(2);
 
-    $this->actingAs($admin)->delete(route('team-memberships.destroy', $sales))->assertRedirect();
-
-    expect($sales->activeTeamMemberships()->exists())->toBeFalse()
-        ->and($sales->teamMemberships()->count())->toBe(2)
-        ->and(AuditLog::query()->where('action', 'membership.reassigned')->exists())->toBeTrue()
-        ->and(AuditLog::query()->where('action', 'membership.ended')->exists())->toBeTrue();
+    expect(AuditLog::query()->where('action', 'membership.reassigned')->exists())->toBeTrue();
 });
 
 it('rejects inactive teams foreign records invalid roles and non-admin actors', function () {
