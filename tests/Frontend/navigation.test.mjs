@@ -109,3 +109,23 @@ test('calendar is offered to sales and supervisors only', () => {
         }
     }
 });
+
+test('coaching is offered to the roles that may read it and stays active on an open conversation', () => {
+    for (const [role, expected] of [
+        ['sales', true],
+        ['supervisor', true],
+        ['branch_manager', false],
+        ['admin', true],
+    ]) {
+        const item = getNavigation(role).find((nav) => nav.key === 'coaching');
+        assert.equal(!!item, expected);
+        if (expected) {
+            for (const [url, active] of [
+                ['/coaching?tab=done', true],
+                ['/transactions/abc/coaching', true],
+                ['/transactions', false],
+            ])
+                assert.equal(isNavigationItemActive(item, url), active);
+        }
+    }
+});

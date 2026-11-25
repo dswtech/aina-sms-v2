@@ -644,7 +644,7 @@ class DevelopmentDemoSeeder extends Seeder
             ])->saveQuietly();
 
             // Every status of the Coaching page has examples: the reply leaves the turn with the Supervisor.
-            if ($seeded % 3 === 1) {
+            if (intdiv($seeded, 3) % 3 === 1) {
                 $followedAt = $this->clamp($repliedAt->copy()->addMinutes(30), $repliedAt, now());
                 DealComment::create([
                     'deal_transaction_id' => $deal->id,
@@ -655,7 +655,7 @@ class DevelopmentDemoSeeder extends Seeder
                 ])->forceFill(['created_at' => $followedAt, 'updated_at' => $followedAt])->saveQuietly();
             }
 
-            if ($seeded % 4 === 3 || $deal->current_stage->isClosed()) {
+            if (intdiv($seeded, 3) % 4 === 3 || $deal->current_stage->isClosed()) {
                 $deal->timestamps = false;
                 $deal->updateQuietly(['coaching_closed_at' => $repliedAt]);
             }

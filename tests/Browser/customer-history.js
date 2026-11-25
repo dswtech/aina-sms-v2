@@ -130,12 +130,32 @@ async function customerHistory(page) {
                           public_id: 'qa-deal-1',
                           vehicle_model: 'Coaching Model QA',
                           stage_label: 'Lead',
+                          customer_name: 'Pelanggan QA',
+                          sales_name: 'Sales QA',
+                          financing: {
+                              type: 'cash',
+                              leasing_id: null,
+                              other_name: null,
+                          },
+                          expected_closing_month: null,
+                          closed: false,
+                          last_comment_id: 9,
+                          can_update: false,
                           can_comment: true,
+                          can_close: false,
                       },
+                      conversations: {
+                          data: [],
+                          prev_page_url: null,
+                          next_page_url: null,
+                      },
+                      counts: { supervisor: 0, sales: 0 },
+                      tab: 'sales',
+                      search: '',
                       timeline: pager(
                           [
                               {
-                                  key: 'comment-9',
+                                  key: `comment-${10 - coachingPage}`,
                                   kind: 'comment',
                                   occurred_at: time,
                                   actor_name: 'Supervisor QA',
@@ -164,7 +184,7 @@ async function customerHistory(page) {
         const request = route.request(),
             url = new URL(request.url());
         if (url.pathname.endsWith('/coaching'))
-            coachingPage = Number(url.searchParams.get('timeline_page') || 1);
+            coachingPage = 1;
         if (request.method() !== 'GET') {
             submissions.push({
                 url: url.pathname,
@@ -363,6 +383,10 @@ async function customerHistory(page) {
                     ),
                 }),
             });
+        }
+        if (url.pathname.endsWith('/feed')) {
+            coachingPage = Number(url.searchParams.get('page') || 1);
+            return route.fulfill({ json: fixture().props.timeline });
         }
         if (
             url.pathname.endsWith('/coaching') &&
@@ -584,12 +608,12 @@ async function customerHistory(page) {
         await page.getByRole('button', { name: 'Balas', exact: true }).click();
         assert(
             await page
-                .getByLabel('Balas komentar', { exact: true })
+                .getByLabel('Balas Supervisor QA', { exact: true })
                 .evaluate((el) => el === document.activeElement),
             'Reply must focus coaching form',
         );
         await page.getByRole('button', { name: 'Batal', exact: true }).click();
-        await page.getByRole('button', { name: 'Timeline berikutnya' }).click();
+        await page.getByRole('button', { name: 'Muat sebelumnya' }).click();
         await page.getByText('Coaching halaman 2', { exact: true }).waitFor();
         assert(errors.length === 0, errors.join('; '));
         return {

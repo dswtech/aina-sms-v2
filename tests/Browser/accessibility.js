@@ -495,8 +495,39 @@ async function accessibility(page) {
             },
         };
         if (component === 'transactions/coaching') {
-            fixture.props.timeline = timelineFor({
-                active_deal: props.transaction,
+            const summary = {
+                public_id: props.transaction.public_id,
+                customer_name: 'Pelanggan QA',
+                vehicle_model: props.transaction.vehicle_model,
+                sales_name: 'Sales QA',
+                stage_label: props.transaction.stage_label,
+                financing: { type: 'cash', leasing_id: null, other_name: null },
+            };
+            Object.assign(fixture.props, {
+                timeline: timelineFor({ active_deal: props.transaction }),
+                transaction: {
+                    ...props.transaction,
+                    ...summary,
+                    closed: false,
+                    last_comment_id: 1,
+                    can_close: false,
+                },
+                conversations: {
+                    data: [
+                        {
+                            ...summary,
+                            status: 'sales',
+                            author_name: 'Supervisor QA',
+                            excerpt: 'Komentar QA',
+                            commented_at: '2026-11-01T00:00:00Z',
+                        },
+                    ],
+                    prev_page_url: null,
+                    next_page_url: null,
+                },
+                counts: { supervisor: 0, sales: 1 },
+                tab: 'sales',
+                search: '',
             });
         }
         mutationErrors = {};
@@ -1550,7 +1581,7 @@ async function accessibility(page) {
                 assert(
                     (await page
                         .getByRole('button', {
-                            name: 'Kirim Komentar',
+                            name: 'Kirim komentar',
                             exact: true,
                         })
                         .count()) === (role === 'sales' ? 1 : 0),
@@ -1561,7 +1592,7 @@ async function accessibility(page) {
                         .getByRole('button', { name: 'Balas', exact: true })
                         .click();
                     const input = page.getByRole('textbox', {
-                        name: 'Balas komentar',
+                        name: /^Balas /,
                     });
                     assert(
                         await input.evaluate(
@@ -1570,10 +1601,12 @@ async function accessibility(page) {
                         'Reply must focus the composer',
                     );
                     await input.fill('Balasan sintetis');
-                    mutationErrors = { body: 'Pesan uji tidak valid' };
+                    mutationErrors = {
+                        transactionComment: { body: 'Pesan uji tidak valid' },
+                    };
                     await page
                         .getByRole('button', {
-                            name: 'Kirim Komentar',
+                            name: 'Kirim komentar',
                             exact: true,
                         })
                         .click();
@@ -1588,7 +1621,7 @@ async function accessibility(page) {
                     mutationErrors = {};
                     await page
                         .getByRole('button', {
-                            name: 'Kirim Komentar',
+                            name: 'Kirim komentar',
                             exact: true,
                         })
                         .click();

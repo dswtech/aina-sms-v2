@@ -97,7 +97,7 @@ class DealCommentController extends Controller
             $this->authorize('closeCoaching', $deal);
             // Closing from a stale screen would bury a reply the Supervisor has not seen.
             if ($closed && (int) $deal->comments()->max('id') !== (int) $validated['last_comment_id']) {
-                throw ValidationException::withMessages(['last_comment_id' => 'Ada komentar baru. Muat ulang sebelum menandai selesai.']);
+                throw ValidationException::withMessages(['last_comment_id' => 'Ada komentar baru. Baca dulu sebelum menandai selesai.']);
             }
             $deal->update(['coaching_closed_at' => $closed ? now() : null]);
             if ($deal->customer !== null) {

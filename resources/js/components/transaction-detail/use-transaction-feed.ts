@@ -6,14 +6,14 @@ type FeedState = 'idle' | 'loading' | 'error';
 type Action = 'first' | 'reload' | 'earlier';
 
 /**
- * Comments or activities of one transaction. The server pages newest first;
+ * Comments, activities or all events of one transaction. The server pages newest first;
  * `events` reads oldest to newest and "load earlier" prepends the next page.
  * With no `initial` page the first page is fetched once `enabled` turns true.
  * `reload` refreshes every page already shown; `retry` repeats the action that failed.
  */
 export function useTransactionFeed(
     publicId: string,
-    kind: 'comments' | 'activities',
+    kind: 'comments' | 'activities' | 'all',
     initial: HistoryPage<TimelineEvent> | null,
     enabled: boolean,
 ) {

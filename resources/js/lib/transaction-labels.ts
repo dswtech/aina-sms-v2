@@ -75,7 +75,7 @@ const INSURANCE_LABELS: Record<string, string> = {
 };
 /** `main` is the type and leasing; `detail` the credit terms, shown on a second line where there is room. */
 export const financingParts = (
-    t: RowDetail,
+    t: Pick<RowDetail, 'financing'>,
 ): { main: string; detail: string } => {
     if (t.financing.type === 'cash') return { main: 'Cash', detail: '' };
     if (t.financing.type !== 'credit')

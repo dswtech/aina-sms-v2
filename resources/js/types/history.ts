@@ -11,6 +11,8 @@ export type TimelineComment = {
     id: number;
     body: string;
     author_name: string | null;
+    author_role?: string | null;
+    is_mine?: boolean;
     created_at: string | null;
     edited_at: string | null;
     stage_at_creation?: string | null;

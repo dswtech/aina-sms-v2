@@ -84,7 +84,8 @@ type FilterQuery = Record<
     | 'region_code'
     | 'district_code'
     | 'source_channel'
-    | 'closing_month',
+    | 'closing_month'
+    | 'transaction',
     string | null
 >;
 
@@ -105,6 +106,7 @@ type Props = {
         district_code?: string | null;
         source_channel?: string | null;
         closing_month?: string | null;
+        transaction?: string | null;
     };
     sourceOptions?: string[];
     supervisorOptions?: { id: number; name: string }[];
@@ -154,7 +156,9 @@ export default function TransactionsIndex({
     const [search, setSearch] = useState(filters.search);
     // A dashboard link opens on the results; filtering here keeps the panel as it was.
     const [arrivedFiltered] = useState(
-        filters.stage !== '' || !!filters.closing_month,
+        filters.stage !== '' ||
+            !!filters.closing_month ||
+            !!filters.transaction,
     );
     const [stage, setStage] = useState(filters.stage);
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
@@ -218,8 +222,9 @@ export default function TransactionsIndex({
         region_code: regionCode || null,
         district_code: regionCode ? districtCode || null : null,
         source_channel: source === 'digital_ad' ? sourceChannel || null : null,
-        // Set by a dashboard link; tabs and Terapkan narrow it, Reset clears it.
+        // Set by a dashboard or Coaching link; tabs and Terapkan narrow it, Reset clears it.
         closing_month: filters.closing_month ?? null,
+        transaction: filters.transaction ?? null,
     };
     const failedQuery =
         typeof failedVisit?.target === 'string' ? null : failedVisit?.target;
@@ -360,6 +365,7 @@ export default function TransactionsIndex({
             district_code: null,
             source_channel: null,
             closing_month: null,
+            transaction: null,
             ...next,
         });
     };
@@ -411,6 +417,22 @@ export default function TransactionsIndex({
                     </div>
                 </div>
 
+                {filters.transaction && (
+                    <p
+                        role="status"
+                        className="mt-6 flex flex-wrap items-center gap-x-3 rounded-lg border bg-muted px-4 py-2 text-sm"
+                    >
+                        {transactions.data[0]
+                            ? `Hanya transaksi ${[transactions.data[0].customer?.name, transactions.data[0].vehicle_model].filter(Boolean).join(' · ')}.`
+                            : 'Transaksi yang dituju tidak ada pada filter ini.'}
+                        <Link
+                            href="/transactions"
+                            className="inline-flex min-h-11 items-center font-medium text-primary hover:underline"
+                        >
+                            Tampilkan semua transaksi
+                        </Link>
+                    </p>
+                )}
                 {filters.closing_month && (
                     <p
                         role="status"
@@ -431,7 +453,7 @@ export default function TransactionsIndex({
                     className="mt-6"
                     title="Filter transaksi"
                     collapseOnMobile={arrivedFiltered}
-                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.closing_month, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
+                    summary={`${[filters.search, filters.stage, filters.sales_id, filters.date_from, filters.date_to, filters.source, filters.customer_name, filters.supervisor_id, filters.region_code, filters.district_code, filters.source_channel, filters.closing_month, filters.transaction, filters.tab !== 'all' ? filters.tab : null].filter(Boolean).length} filter aktif`}
                 >
                     <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4`}>
                         <div>

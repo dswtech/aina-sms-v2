@@ -6,6 +6,7 @@ import {
     Gauge,
     Handshake,
     Landmark,
+    MessagesSquare,
     Network,
     Settings2,
     Target,
@@ -19,6 +20,7 @@ type NavKey =
     | 'home'
     | 'customers'
     | 'transactions'
+    | 'coaching'
     | 'calendar'
     | 'targets'
     | 'team-performance'
@@ -38,6 +40,12 @@ const shared = {
         title: 'Transaksi',
         href: '/transactions',
         icon: Handshake,
+    },
+    coaching: {
+        key: 'coaching',
+        title: 'Coaching',
+        href: '/coaching',
+        icon: MessagesSquare,
     },
     calendar: {
         key: 'calendar',
@@ -142,6 +150,7 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.home,
         customerItem('sales'),
         shared.transactions,
+        shared.coaching,
         shared.calendar,
         shared.notifications,
     ],
@@ -149,6 +158,7 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.home,
         customerItem('supervisor'),
         shared.transactions,
+        shared.coaching,
         shared.calendar,
         shared.targetsWithPlans,
         analyticsWithTargets,
@@ -165,6 +175,7 @@ const navigationByRole: Record<UserRole, AppNavItem[]> = {
         shared.home,
         customerItem('admin'),
         shared.transactions,
+        shared.coaching,
         shared.users,
         shared.teams,
         shared.targets,
@@ -225,6 +236,9 @@ export function isNavigationItemActive(
             current.pathname === target.pathname ||
             current.pathname.startsWith(`${target.pathname}/`)
         );
+    // An open conversation lives under its transaction.
+    if (target.pathname === '/coaching')
+        return current.pathname.endsWith('/coaching');
     return current.pathname === target.pathname;
 }
 
