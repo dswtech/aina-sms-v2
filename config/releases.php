@@ -4,6 +4,19 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.9.0',
+        'date' => '2026-11-25',
+        'notify' => true,
+        'summary' => 'Versi baru: transaksi ganda atau salah input bulan ini kini bisa dihapus Supervisor dan Admin.',
+        'items' => [
+            'Supervisor dan Admin bisa menghapus transaksi ganda atau salah input lewat tombol Hapus di detail transaksi, dengan alasan wajib. Hanya untuk transaksi yang dibuat bulan ini.',
+            'Transaksi yang dihapus hilang dari daftar dan laporan, dan tidak bisa dikembalikan dari aplikasi. Pelanggan beserta catatannya tetap ada.',
+            'Riwayat Pelanggan yang sebelumnya gagal dibuka sudah diperbaiki.',
+            'Jumlah transaksi stagnan di Beranda Supervisor kini sama dengan daftarnya, juga setelah Sales pindah tim.',
+            'Sales kini selalu punya tim: Admin memindahkan Sales ke tim lain, dan tim baru bisa dinonaktifkan setelah Sales aktifnya dipindahkan.',
+        ],
+    ],
+    [
         'version' => '1.8.0',
         'date' => '2026-11-25',
         'notify' => true,
