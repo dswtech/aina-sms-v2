@@ -80,6 +80,7 @@ class TransactionTimeline
             $parent = $parent?->deal_transaction_id === $comment->deal_transaction_id ? $parent : null;
             $serialized = [
                 'id' => $comment->id, 'body' => $comment->body, 'author_name' => $comment->author?->name,
+                'author_role' => $comment->author?->role->value, 'is_mine' => $comment->user_id === $actor->id,
                 'created_at' => $comment->created_at?->toIso8601String(), 'edited_at' => $comment->edited_at?->toIso8601String(),
                 'stage_at_creation' => $comment->stage_at_creation?->value,
                 'stage_at_creation_label' => $comment->stage_at_creation?->label(),
