@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.69 |
-| Diperbarui | 24 November 2026 |
+| Versi | v1.70 |
+| Diperbarui | 25 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 25 November 2026 — Sales selalu mempunyai tim
+
+- Branch `fix/sales-always-in-team` menolak "Lepaskan" untuk Sales dan menolak menonaktifkan tim yang masih mempunyai Sales aktif ([ORG-02 dan ORG-03](PRD.md#72-organization--team-org)). Tanpa migration dan package baru.
+- Akun Sales nonaktif tidak menahan penonaktifan tim. Bila diaktifkan lagi sesudahnya, akun itu tanpa tim sampai Admin menempatkannya; sampai saat itu transaksi terbukanya tidak terlihat Supervisor.
+- Belum: Sales tanpa tim di production belum diperiksa dan PostgreSQL belum dicoba.
 
 ## Pembaruan 24 November 2026 — peta FOA dan batang porsi PMA di Mapping Area
 
