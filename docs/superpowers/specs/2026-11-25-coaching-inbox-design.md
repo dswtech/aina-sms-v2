@@ -33,7 +33,7 @@ Usulan saya (koreksi bila tidak cocok):
 
 - Satu transaksi = satu percakapan; status selesai dipakai bersama. Komentar baru dari siapa pun membukanya lagi.
 - Giliran dihitung dari penulis komentar terakhir: Sales → giliran Supervisor; selain itu → giliran Sales. Balasan Supervisor lain di tim yang sama sudah dihitung.
-- Masuk tahap DO otomatis menandai selesai (keputusan pengguna sesudah implementasi, 25 November 2026); Batalkan DO membuka lagi percakapan yang ditutup DO itu. Lost tidak otomatis selesai. Transaksi yang sudah DO/Lost saat rilis di-backfill selesai.
+- Masuk tahap DO otomatis menandai selesai (keputusan pengguna sesudah implementasi, 25 November 2026); Batalkan DO membuka lagi percakapan yang ditutup DO itu. Lost juga otomatis selesai, dan komentar ditutup pada DO maupun Lost (keputusan pengguna, 25 November 2026). Transaksi yang sudah DO/Lost saat rilis di-backfill selesai.
 - Tombol Selesai ditolak bila ada komentar lebih baru dari yang terlihat di layar Supervisor.
 - Akses mengikuti `DealTransaction::visibleTo()`: Sales transaksinya, Supervisor timnya, Admin baca saja, Branch Manager 403. "Login sebagai" otomatis hanya baca (middleware yang ada).
 - Perubahan tahap dan aktivitas tetap tampil (CVS-01) sebagai baris kecil di tengah, seperti pesan sistem WhatsApp.
@@ -87,7 +87,7 @@ Detail:
 - Label tab: giliran sendiri "Perlu dibalas", giliran lain "Menunggu Sales/Supervisor". Admin: "Menunggu Supervisor", "Menunggu Sales". Angka pada dua tab aktif saja.
 - Urutan: komentar terbaru di atas. Tab awal: giliran sendiri (Admin: Supervisor); bila datang dari tautan notifikasi, tab mengikuti status percakapan itu.
 - Kosong: "Pilih percakapan" di kanan. Di daftar: "Belum ada percakapan. Mulai dari komentar di detail transaksi."
-- Percakapan dengan status selesai tetap menerima komentar.
+- Percakapan yang ditandai selesai tetap menerima komentar selama transaksinya belum DO atau Lost.
 
 ## Implementasi
 

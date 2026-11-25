@@ -8,6 +8,7 @@ use App\Models\DealTransaction;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Notifications\DealCommentCreated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -278,8 +279,39 @@ it('closes the conversation when the deal reaches DO and reopens it when that DO
     expect($quiet->fresh()->coaching_closed_at)->toBeNull();
 });
 
-it('keeps the conversation open when the deal is lost', function () {
-    coachingSays($this->deal, $this->supervisor, 'Kenapa lost?');
+it('closes the conversation when the deal is lost', function () {
+    coachingSays($this->deal, $this->supervisor, 'Masih bisa?');
     $this->deal->transitionTo(PipelineStage::Lost, $this->sales, null, ['lost_reason' => 'price_budget']);
-    expect($this->deal->fresh()->coaching_closed_at)->toBeNull();
+    expect($this->deal->fresh()->coaching_closed_at)->not->toBeNull()
+        ->and(coachingNames($this->sales, '?tab=done'))->toBe(['Budi Santoso']);
+});
+
+it('locks the conversation once the deal is DO or Lost and unlocks it when DO is cancelled', function (string $stage) {
+    $own = coachingSays($this->deal, $this->sales, 'Sebelum');
+    $this->deal->update(['coaching_closed_at' => now(), 'current_stage' => $stage]);
+
+    foreach ([$this->sales, $this->supervisor] as $actor) {
+        $this->actingAs($actor)->postJson(route('deals.comments.store', $this->deal), ['body' => 'Sesudah'])
+            ->assertUnprocessable()->assertJsonValidationErrors('body');
+        $this->get(route('transactions.coaching', $this->deal))->assertInertia(fn (Assert $page) => $page
+            ->where('transaction.can_comment', false)->where('transaction.can_close', false)->where('transaction.stage_closed', true)
+            ->has('timeline.data', 1)->where('timeline.data.0.comment.can_edit', false));
+    }
+    $this->actingAs($this->sales)->patchJson(route('comments.update', $own), ['body' => 'Koreksi'])->assertForbidden();
+    $this->actingAs($this->supervisor)->patchJson(route('transactions.coaching.update', $this->deal), ['closed' => false])->assertForbidden();
+    $this->actingAs($this->otherSales)->postJson(route('deals.comments.store', $this->deal), ['body' => 'Bukan pihak'])->assertForbidden();
+    expect($this->deal->comments()->count())->toBe(1)
+        ->and($this->deal->fresh()->coaching_closed_at)->not->toBeNull()
+        ->and(DB::table('notifications')->count())->toBe(0);
+
+    $this->deal->update(['current_stage' => 'spk', 'coaching_closed_at' => null]);
+    $this->actingAs($this->sales)->post(route('deals.comments.store', $this->deal), ['body' => 'Lanjut'])->assertRedirect()->assertSessionHasNoErrors();
+    expect($this->deal->comments()->count())->toBe(2);
+})->with(['do', 'lost']);
+
+it('still emails a comment that was sent just before the deal closed', function () {
+    $comment = coachingSays($this->deal, $this->supervisor, 'Terakhir');
+    $notification = new DealCommentCreated($this->deal->id, $this->deal->public_id, $comment, $this->supervisor->id, 'prospect');
+    $this->deal->update(['current_stage' => 'do']);
+    expect($notification->shouldSend($this->sales, 'mail'))->toBeTrue();
 });

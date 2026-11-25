@@ -42,10 +42,10 @@ class DealTransactionPolicy
             && $deal->currentDoEvent()?->created_at->setTimezone('Asia/Jakarta')->format('Y-m') === now('Asia/Jakarta')->format('Y-m');
     }
 
-    /** Only the side that gives direction decides it was followed up. */
+    /** Only the side that gives direction decides it was followed up; DO and Lost end it for good. */
     public function closeCoaching(User $actor, DealTransaction $deal): bool
     {
-        return $actor->role === UserRole::Supervisor && $this->view($actor, $deal);
+        return $actor->role === UserRole::Supervisor && $this->update($actor, $deal);
     }
 
     public function delete(User $actor, DealTransaction $deal): bool

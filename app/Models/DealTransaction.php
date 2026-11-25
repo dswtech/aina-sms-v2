@@ -344,8 +344,8 @@ class DealTransaction extends Model
                 $this->lost_notes = $options['lost_notes'] ?? null;
             }
 
-            // DO settles the coaching; Lost may still be discussed. The shared instant lets a cancelled DO reopen it.
-            if ($toStage === PipelineStage::Do && $this->coaching_closed_at === null && $this->comments()->exists()) {
+            // A closed deal settles its coaching. The shared instant lets a cancelled DO reopen it.
+            if ($toStage->isClosed() && $this->coaching_closed_at === null && $this->comments()->exists()) {
                 $this->coaching_closed_at = $at;
             }
 

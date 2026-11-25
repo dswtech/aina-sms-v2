@@ -294,7 +294,7 @@ class TeamPerformance
         $total = 0;
         foreach (app(VisibleCoachingNotifications::class)->forUser($actor) as $notification) {
             $comment = DealComment::query()->with(['deal.customer', 'author'])->whereKey($notification->data['comment_id'] ?? 0)->first();
-            if ($comment === null || ! $actor->can('create', [DealComment::class, $comment->deal])) {
+            if ($comment === null || ! $actor->can('participate', [DealComment::class, $comment->deal])) {
                 continue;
             }
             if (++$total > 5) {

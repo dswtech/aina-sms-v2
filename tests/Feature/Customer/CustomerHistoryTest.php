@@ -197,6 +197,8 @@ it('keeps supervisor history and revision reads inside the currently assigned te
 
 it('audits actual consecutive edits with original bodies editors and edit timestamps', function () {
     $this->travelTo(now()->startOfMinute());
+    // Comments on a closed deal are locked.
+    $this->deal->update(['current_stage' => PipelineStage::Spk]);
     $comment = $this->deal->comments()->create(['user_id' => $this->sales->id, 'body' => 'Original']);
     $this->actingAs($this->sales)->patch(route('comments.update', $comment), ['body' => 'Second'])->assertRedirect();
     $firstAt = now()->toIso8601String();

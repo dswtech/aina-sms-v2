@@ -75,6 +75,7 @@ class DealCommentController extends Controller
                 ...$this->summary($transaction, $leasings),
                 'expected_closing_month' => $transaction->expected_closing_month?->format('Y-m'),
                 'closed' => $transaction->coaching_closed_at !== null,
+                'stage_closed' => $transaction->current_stage->isClosed(),
                 'last_comment_id' => $transaction->comments()->max('id'),
                 'can_update' => $actor->can('update', $transaction),
                 'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
@@ -163,7 +164,10 @@ class DealCommentController extends Controller
 
         DB::transaction(function () use ($actor, $transaction, $validated): void {
             $deal = DealTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
-            $this->authorize('create', [DealComment::class, $deal]);
+            $this->authorize('participate', [DealComment::class, $deal]);
+            if ($deal->current_stage->isClosed()) {
+                throw ValidationException::withMessages(['body' => 'Transaksi sudah '.$deal->current_stage->label().'. Komentar ditutup.']);
+            }
 
             if (! empty($validated['parent_id']) && ! $deal->comments()
                 ->whereKey($validated['parent_id'])->whereNull('parent_id')->exists()) {
@@ -193,7 +197,7 @@ class DealCommentController extends Controller
                             ->whereHas('activeTeamMemberships', fn ($memberships) => $memberships
                                 ->where('role', UserRole::Supervisor)->whereIn('team_id', $teamIds));
                     });
-                })->get()->filter(fn (User $recipient): bool => $recipient->can('create', [DealComment::class, $deal]));
+                })->get()->filter(fn (User $recipient): bool => $recipient->can('participate', [DealComment::class, $deal]));
 
             $notification = new DealCommentCreated($deal->id, $deal->public_id, $comment->id, $actor->id, $deal->current_stage->value);
             Notification::sendNow($recipients, $notification, ['database']);

@@ -18,7 +18,7 @@ class StoreDealCommentRequest extends FormRequest
         $deal = $this->route('transaction');
 
         return $deal instanceof DealTransaction
-            && ($this->user()?->can('create', [DealComment::class, $deal]) ?? false);
+            && ($this->user()?->can('participate', [DealComment::class, $deal]) ?? false);
     }
 
     /**

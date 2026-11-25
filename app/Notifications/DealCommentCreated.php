@@ -32,7 +32,7 @@ class DealCommentCreated extends Notification
 
         return $notifiable instanceof User && $notifiable->is_active
             && $notifiable->id !== $this->authorId && $deal !== null
-            && $notifiable->can('create', [DealComment::class, $deal]);
+            && $notifiable->can('participate', [DealComment::class, $deal]);
     }
 
     /** @return array<string, string|int> */

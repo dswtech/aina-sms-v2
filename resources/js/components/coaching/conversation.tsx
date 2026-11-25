@@ -39,6 +39,7 @@ export type ConversationSummary = {
 export type OpenConversation = ConversationSummary & {
     expected_closing_month: string | null;
     closed: boolean;
+    stage_closed: boolean;
     last_comment_id: number | null;
     can_update: boolean;
     can_comment: boolean;
@@ -304,12 +305,12 @@ export function Conversation({
                     </ol>
                 </div>
             </div>
-            {transaction.closed && (
+            {(transaction.closed || transaction.stage_closed) && (
                 <p className="flex items-center gap-2 border-t bg-muted px-4 py-2 text-sm">
                     <Check aria-hidden className="size-4 shrink-0" />
-                    Percakapan selesai.
-                    {transaction.can_comment &&
-                        ' Komentar baru akan membukanya lagi.'}
+                    {transaction.stage_closed
+                        ? `Transaksi sudah ${transaction.stage_label}. Komentar ditutup.`
+                        : `Percakapan selesai.${transaction.can_comment ? ' Komentar baru akan membukanya lagi.' : ''}`}
                 </p>
             )}
             {transaction.can_comment ? (
@@ -339,10 +340,12 @@ export function Conversation({
                     />
                 </>
             ) : (
-                <p className="flex items-center gap-2 border-t bg-muted px-4 py-3 text-sm">
-                    <Eye aria-hidden className="size-4 shrink-0" />
-                    Mode baca untuk audit.
-                </p>
+                !transaction.stage_closed && (
+                    <p className="flex items-center gap-2 border-t bg-muted px-4 py-3 text-sm">
+                        <Eye aria-hidden className="size-4 shrink-0" />
+                        Mode baca untuk audit.
+                    </p>
+                )
             )}
         </section>
     );
