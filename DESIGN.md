@@ -43,6 +43,7 @@ Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; 
 - Status memakai tint pucat dengan teks gelap; warna bukan satu-satunya pembeda.
 - Badge tahap memakai satu komponen bersama: Lead slate, Prospect sky, Hot Prospect amber, SPK violet, DO indigo, dan Lost rose. Tema gelap memakai tint gelap dengan teks terang; nama tahap selalu ditampilkan dan pasangan teks/latar harus memenuhi 4,5:1.
 - Lost pada tema gelap memakai burgundy redup: latar `#30252c`, border `#60434d`, teks `#dfb7c2`; saturasi latar/border rendah agar tidak menyala di tabel gelap, dengan kontras teks sekitar 8,19:1. Palet Lost tema terang tetap.
+- Coaching: dua panel bila lebar halaman (container, bukan viewport) minimal 672px, selain itu daftar lalu percakapan. Bubble memakai komponen shadcn `ui/bubble`: milik sendiri `default` di kanan, pihak lain `muted` di kiri dengan nama dan peran. Bubble beruntun dari penulis yang sama digabung, tanggal menjadi pemisah hari Jakarta, dan perubahan tahap atau aktivitas menjadi garis dengan teks di tengah. Form estimasi closing terbuka otomatis hanya untuk SPK yang estimasinya kosong atau lewat.
 - Satu tombol primary per layar. Shadow hanya pada dialog/sheet yang mengambang.
 - Ikon berupa SVG outline konsisten; tidak memakai emoji.
 

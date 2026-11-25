@@ -238,6 +238,8 @@ Undangan kedaluwarsa atau sudah digunakan harus ditolak. Tidak ada registrasi ma
 | CVS-12 | **Supervisor menerima notifikasi in-app saat Sales timnya mengubah tahap transaksi.** Isinya hanya tahap lama dan baru, tanpa data pelanggan. | M |
 | CVS-13 | **Sales menerima notifikasi per transaksi yang baru menjadi stagnan; Supervisor menerima satu ringkasan harian berisi jumlahnya.** | M |
 | CVS-14 | **Semua pengguna menerima notifikasi in-app saat versi baru dirilis dan dapat membuka halaman Riwayat Rilis.** Versi aplikasi yang berjalan tampil di menu pengguna; isi rilis berbahasa awam. | M |
+| CVS-15 | **Halaman Coaching mendaftar semua percakapan yang boleh dibaca pengguna beserta transaksinya.** Percakapan adalah transaksi yang mempunyai komentar. Giliran dihitung dari penulis komentar terakhir: komentar Sales menunggu Supervisor, selain itu menunggu Sales; tidak ada batas umur. Daftar dan percakapan menampilkan pelanggan, kendaraan, tahap, Sales, pembiayaan, serta tautan ke transaksi itu. Pencarian mencocokkan nama pelanggan dan kendaraan di semua status. Admin hanya membaca; Branch Manager tidak mempunyai akses. | M |
+| CVS-16 | **Supervisor tim menandai percakapan selesai atau membukanya lagi; status dipakai bersama.** Komentar baru dari siapa pun membuka percakapan selesai. Penandaan ditolak bila ada komentar yang belum terlihat oleh Supervisor. DO dan Lost tidak otomatis menutup percakapan; hanya transaksi yang sudah DO atau Lost saat fitur ini dirilis dimulai sebagai selesai. Penandaan tercatat di audit tanpa isi komentar. | M |
 
 ### 7.6 CSV Import (`IMP`)
 
