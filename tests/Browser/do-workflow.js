@@ -84,5 +84,55 @@ async function doWorkflow(page) {
     )
         throw new Error('Same-month DO cannot be cancelled');
 
-    return { doChecklist: true, noDelivery: true, cancellation: true };
+    // Deleting a duplicate, whatever its stage: SPK by Admin on a phone, DO by the Supervisor on desktop.
+    const remove = async (scenario) => {
+        await visit(scenario);
+        await page
+            .getByRole('button', { name: 'Detail', exact: true })
+            .filter({ visible: true })
+            .click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('button', { name: 'Hapus', exact: true }).click();
+        const form = dialog.getByRole('form', { name: 'Hapus transaksi' });
+        const confirm = form.getByRole('button', {
+            name: 'Hapus transaksi',
+            exact: true,
+        });
+        if (await confirm.isEnabled())
+            throw new Error('A transaction can be deleted without a reason');
+        await form
+            .getByRole('textbox', { name: 'Alasan penghapusan' })
+            .fill('Double input sintetis.');
+        const overflow = await dialog.evaluate(
+            (element) => element.scrollWidth - element.clientWidth,
+        );
+        if (overflow > 1)
+            throw new Error(`Delete form overflows by ${overflow}px`);
+        await confirm.click();
+        await dialog.waitFor({ state: 'hidden' });
+        await page
+            .getByRole('button', { name: 'Detail', exact: true })
+            .filter({ visible: true })
+            .waitFor({ state: 'hidden' });
+        // The row and its button are gone, so focus must land on the page heading.
+        await page.waitForFunction(
+            () =>
+                document.activeElement?.tagName === 'H1' &&
+                document.activeElement.textContent === 'Transaksi',
+        );
+        await page.reload();
+        if (await page.getByText(`G11 DO ${scenario}`).count())
+            throw new Error('A deleted transaction is still listed');
+    };
+    await remove('Cancel');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login('g11.spv');
+    await remove('Ship');
+
+    return {
+        doChecklist: true,
+        noDelivery: true,
+        cancellation: true,
+        deletion: true,
+    };
 }

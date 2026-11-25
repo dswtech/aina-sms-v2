@@ -38,6 +38,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('transactions/{transaction}/cancel-do', [CustomerController::class, 'cancelDo'])
         ->middleware('role:admin')->name('transactions.cancel-do');
+    Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])
+        ->middleware('role:supervisor,admin')->name('transactions.destroy');
 
     Route::middleware('role:sales,supervisor,admin')->group(function () {
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');

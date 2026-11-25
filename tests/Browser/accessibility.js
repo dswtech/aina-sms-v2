@@ -224,6 +224,7 @@ async function accessibility(page) {
         progress_at: null,
         customer_profile: null,
         can_edit_metadata: true,
+        can_delete: false,
         can_edit_customer: true,
         can_assign_customer: false,
         can_update: true,

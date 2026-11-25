@@ -8,6 +8,7 @@ use App\Models\DealTransaction;
 use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -35,6 +36,23 @@ it('lists all readable transactions and selects an older closed transaction expl
     $this->getJson($this->url.'?transaction='.$this->deal->public_id)->assertOk()
         ->assertJsonPath('selected_transaction.public_id', $this->deal->public_id)
         ->assertJsonPath('selected_transaction.is_closed', true);
+});
+
+it('lists open transactions before closed ones with one binding per placeholder', function () {
+    $this->deal->update(['current_stage' => PipelineStage::Lead]);
+    $closed = collect(PipelineStage::closedValues())->map(fn (string $stage): DealTransaction => DealTransaction::create([
+        'dealer_id' => $this->dealer->id, 'customer_id' => $this->customer->id,
+        'sales_id' => $this->sales->id, 'vehicle_model' => 'Model '.$stage, 'current_stage' => $stage,
+    ]));
+
+    DB::enableQueryLog();
+    $response = $this->actingAs($this->sales)->getJson($this->url)->assertOk();
+    expect($response->json('transactions.*.id'))->toBe([$this->deal->id, ...$closed->pluck('id')->reverse()]);
+
+    // SQLite binds NULL to a missing parameter; PostgreSQL rejects the query (SQLSTATE 08P01).
+    $mismatched = collect(DB::getQueryLog())
+        ->filter(fn (array $query): bool => substr_count($query['query'], '?') !== count($query['bindings']));
+    expect($mismatched->pluck('query')->all())->toBe([]);
 });
 
 it('paginates all relationship activities and excludes activities of unreadable transactions', function () {

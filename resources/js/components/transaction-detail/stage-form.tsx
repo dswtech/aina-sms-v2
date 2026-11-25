@@ -20,7 +20,7 @@ import {
 import { stageDirection } from '@/lib/transaction-detail';
 import type { TransactionDetailData } from '@/types/history';
 
-export type StageAction = 'cancel' | null;
+export type StageAction = 'cancel' | 'delete' | null;
 
 type Option = { value: string; label: string };
 
@@ -43,6 +43,7 @@ const selectClass = 'mt-2';
 
 const titles = {
     cancel: 'Batalkan DO',
+    delete: 'Hapus transaksi',
     stage: 'Ubah tahap',
 };
 
@@ -130,6 +131,11 @@ export function StageForm({
                 { reason: notes.trim(), do_event_id: detail.do_event_id },
                 options,
             );
+
+            return;
+        }
+        if (action === 'delete') {
+            router.delete(url, { ...options, data: { reason: notes.trim() } });
 
             return;
         }
@@ -227,10 +233,12 @@ export function StageForm({
                         </div>
                     </>
                 )}
-                {action === 'cancel' ? (
+                {action ? (
                     <div className="space-y-1">
                         <Label htmlFor="stage-cancel-reason">
-                            Alasan pembatalan
+                            {action === 'delete'
+                                ? 'Alasan penghapusan'
+                                : 'Alasan pembatalan'}
                         </Label>
                         <Input
                             id="stage-cancel-reason"
@@ -240,27 +248,24 @@ export function StageForm({
                             onChange={(event) => setNotes(event.target.value)}
                         />
                         <p className="text-sm text-muted-foreground">
-                            Transaksi kembali ke SPK dan DO ini dikeluarkan dari
-                            realisasi.
+                            {action === 'delete'
+                                ? 'Transaksi hilang dari daftar, laporan dan export, dan tidak dapat dipulihkan dari aplikasi. Alasan tercatat di audit.'
+                                : 'Transaksi kembali ke SPK dan DO ini dikeluarkan dari realisasi.'}
                         </p>
                     </div>
                 ) : (
-                    !action && (
-                        <div>
-                            <Label htmlFor="stage-notes">
-                                {backward ? 'Catatan alasan mundur' : 'Catatan'}
-                            </Label>
-                            <Input
-                                id="stage-notes"
-                                required={backward}
-                                value={notes}
-                                onChange={(event) =>
-                                    setNotes(event.target.value)
-                                }
-                                className="mt-2 min-h-11"
-                            />
-                        </div>
-                    )
+                    <div>
+                        <Label htmlFor="stage-notes">
+                            {backward ? 'Catatan alasan mundur' : 'Catatan'}
+                        </Label>
+                        <Input
+                            id="stage-notes"
+                            required={backward}
+                            value={notes}
+                            onChange={(event) => setNotes(event.target.value)}
+                            className="mt-2 min-h-11"
+                        />
+                    </div>
                 )}
                 {!action && profileFields.length > 0 && (
                     <div className="space-y-3 rounded-lg border p-3">
@@ -387,8 +392,12 @@ export function StageForm({
                 )}
                 {networkError ? (
                     <p role="alert" className="text-sm text-destructive">
-                        Koneksi terputus saat menyimpan tahap. Draft tetap
-                        tersedia. Periksa status transaksi sebelum mencoba lagi.
+                        Koneksi terputus saat{' '}
+                        {action === 'delete'
+                            ? 'menghapus transaksi'
+                            : 'menyimpan tahap'}
+                        . Draft tetap tersedia. Periksa status transaksi sebelum
+                        mencoba lagi.
                     </p>
                 ) : (
                     messages.length > 0 && (
@@ -408,13 +417,11 @@ export function StageForm({
                     </Button>
                     <Button
                         type="submit"
-                        variant={
-                            action === 'cancel' ? 'destructive' : 'default'
-                        }
+                        variant={action ? 'destructive' : 'default'}
                         className="min-h-11"
                         disabled={
                             saving ||
-                            (action === 'cancel' && !notes.trim()) ||
+                            (action !== null && !notes.trim()) ||
                             (backward && !notes.trim()) ||
                             (!action &&
                                 toStage === 'do' &&

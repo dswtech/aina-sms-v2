@@ -3,11 +3,18 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.70 |
+| Versi | v1.71 |
 | Diperbarui | 25 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 25 November 2026 — hapus transaksi ganda
+
+- Branch `feat/delete-duplicate-transactions` menambah tombol Hapus di detail transaksi untuk Admin dan Supervisor ([PIP-09](PRD.md), [ADR 012](adr/ADR-012-soft-delete-transactions.md)) dan manual 1.4.0. Tanpa package baru.
+- Migration `2026_11_25_100000_add_deleted_at_to_deal_transactions_table` belum dijalankan ke database non-test. Saat rilis, jalankan sebelum kode baru aktif; tanpa kolom itu halaman transaksi dan laporan error.
+- Branch yang sama memperbaiki Riwayat Pelanggan (`CustomerHistoryController`) yang error 500 di PostgreSQL: tiga `?` untuk dua tahap tertutup sejak Delivery dihapus. SQLite mengisi NULL diam-diam, sehingga CI tetap hijau.
+- Bukti: `composer ci:check` lulus (736 tes, 733 lulus, 3 skip) dan 27 skrip browser terisolasi lulus (sebelum perbaikan Riwayat Pelanggan). PostgreSQL 16 sekali pakai: hanya `SalesCalendarTest` gagal pada suite penuh karena ID ditulis mati di test, sama seperti `main` (`cbd4b2a`).
 
 ## Pembaruan 25 November 2026 — Sales selalu mempunyai tim
 

@@ -41,4 +41,12 @@ class DealTransactionPolicy
             && $this->view($actor, $deal)
             && $deal->currentDoEvent()?->created_at->setTimezone('Asia/Jakarta')->format('Y-m') === now('Asia/Jakarta')->format('Y-m');
     }
+
+    public function delete(User $actor, DealTransaction $deal): bool
+    {
+        // Everything counted for a deal created this month is also in this month, so closed months keep their figures.
+        return in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true)
+            && $deal->created_at->setTimezone('Asia/Jakarta')->format('Y-m') === now('Asia/Jakarta')->format('Y-m')
+            && $this->view($actor, $deal);
+    }
 }

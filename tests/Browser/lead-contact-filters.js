@@ -88,7 +88,7 @@ async function leadContactFilters(page) {
                     sales: { name: 'Sales QA', username: 'qa-sales' }, supervisors: [], area,
                     financing: { type: null, leasing_id: null, other_name: null },
                     deal_id: 1, progress_at: null, customer_profile: null,
-                    can_edit_metadata: false, can_edit_customer: true, can_assign_customer: false,
+                    can_edit_metadata: false, can_delete: false, can_edit_customer: true, can_assign_customer: false,
                     can_update: false, can_record_do: false, can_cancel_do: false,
                     do_event_id: null, stage_event_id: null, can_comment: false, days_in_stage: 1,
                     stages: page1([]), comments: page1([]),

@@ -240,6 +240,7 @@ async function customerHistory(page) {
                         other_name: null,
                     },
                     can_edit_metadata: true,
+                    can_delete: false,
                     can_edit_customer: true,
                     can_assign_customer: false,
                     can_update: true,
