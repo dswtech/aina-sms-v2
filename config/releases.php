@@ -4,6 +4,20 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.10.0',
+        'date' => '2026-11-25',
+        'notify' => true,
+        'summary' => 'Versi baru: menu Coaching mengumpulkan semua percakapan transaksi, lengkap dengan mana yang perlu dibalas.',
+        'items' => [
+            'Menu baru Coaching untuk Sales dan Supervisor: semua percakapan transaksi di satu tempat dengan tampilan chat, dibagi menjadi Perlu dibalas, Menunggu, dan Selesai. Admin bisa membacanya.',
+            'Percakapan yang belum dibalas tetap terdaftar, tidak hilang setelah beberapa hari.',
+            'Di setiap percakapan terlihat pelanggan, kendaraan, tahap, cash atau kredit beserta leasing, dan estimasi closing. Tombol Lihat transaksi membuka transaksi itu saja.',
+            'Percakapan bisa dicari dengan nama pelanggan atau kendaraan.',
+            'Supervisor menandai percakapan selesai. Komentar baru membukanya lagi selama transaksi masih aktif.',
+            'Saat transaksi masuk DO atau Lost, percakapan otomatis selesai dan tidak bisa dikomentari lagi. Bila DO dibatalkan, percakapan terbuka lagi.',
+        ],
+    ],
+    [
         'version' => '1.9.0',
         'date' => '2026-11-25',
         'notify' => true,
