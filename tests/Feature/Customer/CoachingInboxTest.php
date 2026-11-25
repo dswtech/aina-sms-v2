@@ -245,3 +245,41 @@ it('starts finished deals with comments as closed when the column is added', fun
         ->and($quiet->fresh()->coaching_closed_at)->toBeNull()
         ->and($this->deal->fresh()->coaching_closed_at)->toBeNull();
 });
+
+it('closes the conversation when the deal reaches DO and reopens it when that DO is cancelled', function () {
+    $do = ['po_confirmed' => true, 'dp_confirmed' => true, 'unit_confirmed' => true, 'vehicle_ownership' => 'first_buyer'];
+    $reach = function (DealTransaction $deal) use ($do): void {
+        $deal->forceFill(['current_stage' => 'spk'])->save();
+        $deal->transitionTo(PipelineStage::Do, $this->sales, null, $do);
+    };
+    $cancel = fn (DealTransaction $deal) => $this->actingAs($this->admin)->post(route('transactions.cancel-do', $deal), [
+        'reason' => 'Salah input', 'do_event_id' => $deal->fresh()->currentDoEvent()->id,
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    coachingSays($this->deal, $this->sales, 'Siap DO');
+    $reach($this->deal);
+    expect($this->deal->fresh()->coaching_closed_at)->not->toBeNull()
+        ->and(coachingNames($this->supervisor, '?tab=done'))->toBe(['Budi Santoso']);
+    $cancel($this->deal);
+    expect($this->deal->fresh()->coaching_closed_at)->toBeNull()
+        ->and(coachingNames($this->supervisor))->toBe(['Budi Santoso']);
+
+    // A conversation the Supervisor closed before DO stays closed, and one reopened after DO is untouched.
+    $closed = coachingDeal($this->sales, 'Sudah Selesai', 'Rush', ['coaching_closed_at' => now()->subDay()]);
+    coachingSays($closed, $this->supervisor, 'Beres');
+    $before = $closed->fresh()->coaching_closed_at;
+    $reach($closed);
+    expect($closed->fresh()->coaching_closed_at->equalTo($before))->toBeTrue();
+    $cancel($closed);
+    expect($closed->fresh()->coaching_closed_at->equalTo($before))->toBeTrue();
+
+    $quiet = coachingDeal($this->sales, 'Tanpa Komentar', 'Rush');
+    $reach($quiet);
+    expect($quiet->fresh()->coaching_closed_at)->toBeNull();
+});
+
+it('keeps the conversation open when the deal is lost', function () {
+    coachingSays($this->deal, $this->supervisor, 'Kenapa lost?');
+    $this->deal->transitionTo(PipelineStage::Lost, $this->sales, null, ['lost_reason' => 'price_budget']);
+    expect($this->deal->fresh()->coaching_closed_at)->toBeNull();
+});

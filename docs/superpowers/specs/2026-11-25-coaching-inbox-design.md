@@ -33,7 +33,7 @@ Usulan saya (koreksi bila tidak cocok):
 
 - Satu transaksi = satu percakapan; status selesai dipakai bersama. Komentar baru dari siapa pun membukanya lagi.
 - Giliran dihitung dari penulis komentar terakhir: Sales → giliran Supervisor; selain itu → giliran Sales. Balasan Supervisor lain di tim yang sama sudah dihitung.
-- DO/Lost tidak otomatis selesai. Pengecualian: transaksi yang sudah DO/Lost saat rilis di-backfill selesai.
+- Masuk tahap DO otomatis menandai selesai (keputusan pengguna sesudah implementasi, 25 November 2026); Batalkan DO membuka lagi percakapan yang ditutup DO itu. Lost tidak otomatis selesai. Transaksi yang sudah DO/Lost saat rilis di-backfill selesai.
 - Tombol Selesai ditolak bila ada komentar lebih baru dari yang terlihat di layar Supervisor.
 - Akses mengikuti `DealTransaction::visibleTo()`: Sales transaksinya, Supervisor timnya, Admin baca saja, Branch Manager 403. "Login sebagai" otomatis hanya baca (middleware yang ada).
 - Perubahan tahap dan aktivitas tetap tampil (CVS-01) sebagai baris kecil di tengah, seperti pesan sistem WhatsApp.
