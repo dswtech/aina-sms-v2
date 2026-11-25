@@ -16,7 +16,8 @@ class DealCommentPolicy
 
     public function view(User $actor, DealComment $comment): bool
     {
-        return app(DealTransactionPolicy::class)->view($actor, $comment->deal);
+        // The deal is null once its transaction is deleted.
+        return $comment->deal !== null && app(DealTransactionPolicy::class)->view($actor, $comment->deal);
     }
 
     public function create(User $actor, DealTransaction $deal): bool
@@ -27,7 +28,7 @@ class DealCommentPolicy
 
     public function update(User $actor, DealComment $comment): bool
     {
-        return $comment->canEdit($actor)
+        return $comment->deal !== null && $comment->canEdit($actor)
             && $this->create($actor, $comment->deal);
     }
 

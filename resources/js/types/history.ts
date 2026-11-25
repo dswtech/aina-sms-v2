@@ -132,6 +132,7 @@ export type TransactionDetailData = {
     can_update: boolean;
     can_record_do: boolean;
     can_cancel_do: boolean;
+    can_delete: boolean;
     do_event_id: number | null;
     stage_event_id: number | null;
     can_comment: boolean;

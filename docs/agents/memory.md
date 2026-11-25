@@ -3,11 +3,17 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.70 |
+| Versi | v1.71 |
 | Diperbarui | 25 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 25 November 2026 — hapus transaksi ganda
+
+- Branch `feat/delete-duplicate-transactions` menambah tombol Hapus di detail transaksi untuk Admin dan Supervisor ([PIP-09](PRD.md), [ADR 012](adr/ADR-012-soft-delete-transactions.md)) dan manual 1.4.0. Tanpa package baru.
+- Migration `2026_11_25_100000_add_deleted_at_to_deal_transactions_table` belum dijalankan ke database non-test. Saat rilis, jalankan sebelum kode baru aktif; tanpa kolom itu halaman transaksi dan laporan error.
+- Bukti: `composer ci:check` lulus (735 tes, 732 lulus, 3 skip), 27 skrip browser terisolasi lulus. Di PostgreSQL 16 sekali pakai fitur ini lulus kecuali tes yang membuka Riwayat Pelanggan: `CustomerHistoryController.php:30` memakai tiga `?` untuk dua nilai dan error di PostgreSQL. Bug itu sudah ada di `main` (`cbd4b2a`) dan tidak diubah di branch ini.
 
 ## Pembaruan 25 November 2026 — Sales selalu mempunyai tim
 

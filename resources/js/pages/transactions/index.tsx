@@ -1033,6 +1033,12 @@ export default function TransactionsIndex({
                     target={detailTarget}
                     intent={detailIntent}
                     onClose={() => setDetailTarget(null)}
+                    onCloseAutoFocus={(event) => {
+                        // Deleting removes the row, and the button that opened the modal with it.
+                        if (actionTriggerRef.current?.isConnected) return;
+                        event.preventDefault();
+                        headingRef.current?.focus();
+                    }}
                     regions={regions ?? []}
                     districts={districts ?? []}
                     leasings={leasings ?? []}

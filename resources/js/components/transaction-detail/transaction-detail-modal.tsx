@@ -9,6 +9,7 @@ import {
     MessageCircle,
     MessageSquare,
     Phone,
+    Trash2,
     User,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -58,7 +59,7 @@ type Props = {
     lostReasons: { value: string; label: string }[];
     vehicleOptions: VehicleOption[];
     assignableSales: { id: number; name: string }[];
-    /** Opens straight into the stage form (Ubah tahap, Batalkan DO). */
+    /** Opens straight into the stage form (Ubah tahap, Batalkan DO, Hapus). */
     intent?: { action: StageAction; mode?: Mode } | null;
     /** Lets a page send focus back to the control that opened the modal. */
     onCloseAutoFocus?: (event: Event) => void;
@@ -129,8 +130,9 @@ function DetailView({
     assignableSales,
     intent,
     onSaved,
+    onClose,
     refreshFailed,
-}: Omit<Props, 'target' | 'onClose'> & {
+}: Omit<Props, 'target'> & {
     detail: TransactionDetailData;
     onSaved: () => void;
     refreshFailed: boolean;
@@ -226,6 +228,8 @@ function DetailView({
         pickMode('stage');
     };
     const afterStage = () => {
+        // A deleted transaction has no detail left to reload.
+        if (formAction === 'delete') return onClose();
         onSaved();
         setStageAction(null);
         pickMode('comments');
@@ -319,6 +323,18 @@ function DetailView({
                             Batalkan DO
                         </Button>
                     )}
+                    {detail.can_delete && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="min-h-9 text-destructive"
+                            onClick={() => openStage('delete')}
+                        >
+                            <Trash2 aria-hidden className="size-4" />
+                            Hapus
+                        </Button>
+                    )}
                     {hasCustomer &&
                         phone &&
                         contactButton('phone', 'Telepon', `tel:${phone}`)}
@@ -408,7 +424,9 @@ function DetailView({
                             id="detail-feed-title"
                             className="px-3 py-2 text-sm font-medium"
                         >
-                            {modeTitles[activeMode]}
+                            {activeMode === 'stage' && formAction === 'delete'
+                                ? 'Hapus transaksi'
+                                : modeTitles[activeMode]}
                         </h2>
                         {activeMode === 'stage' && (
                             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
@@ -749,6 +767,7 @@ export function TransactionDetailModal({
                         assignableSales={assignableSales}
                         intent={intent}
                         onSaved={() => void load(true)}
+                        onClose={onClose}
                         refreshFailed={refreshFailed}
                     />
                 ) : (

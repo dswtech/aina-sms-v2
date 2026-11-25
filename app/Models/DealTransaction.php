@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -64,6 +65,8 @@ use InvalidArgumentException;
 ])]
 class DealTransaction extends Model
 {
+    use SoftDeletes;
+
     protected $attributes = [
         'current_stage' => 'lead',
         'source' => 'walk_in',

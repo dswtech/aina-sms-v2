@@ -79,6 +79,32 @@ class TransactionController extends Controller
         return back();
     }
 
+    public function destroy(Request $request, DealTransaction $transaction): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        DB::transaction(function () use ($request, $transaction, $actor): void {
+            $locked = DealTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            $this->authorize('delete', $locked);
+            $validated = $request->validate(['reason' => ['required', 'string', 'max:2000']]);
+
+            $locked->followUps()->where('status', 'pending')->update([
+                'status' => 'cancelled',
+                'cancel_reason' => 'Transaksi dihapus',
+                'updated_at' => now(),
+            ]);
+            AuditRecorder::record($actor, 'transaction.deleted', $locked->customer, $locked->getAttributes(), context: [
+                'transaction_public_id' => $locked->public_id,
+                'reason' => $validated['reason'],
+            ]);
+            $locked->delete();
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Transaksi dihapus.']);
+
+        return back();
+    }
+
     /**
      * Single filter definition shared by the list and the CSV export.
      *
@@ -380,6 +406,7 @@ class TransactionController extends Controller
             ],
             // Area and financing are editable until DO; DO locks them, a cancelled DO returns to SPK.
             'can_edit_metadata' => $actor->can('update', $transaction),
+            'can_delete' => $actor->can('delete', $transaction),
             'can_comment' => $actor->can('create', [DealComment::class, $transaction]),
             'days_in_stage' => $transaction->current_stage->isClosed() ? null : $this->daysInStage($transaction),
             ...$this->detailFeeds($transaction, $actor),
