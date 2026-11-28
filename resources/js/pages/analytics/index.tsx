@@ -1,8 +1,17 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
-import { Download, Printer } from 'lucide-react';
+import { ArrowUpRight, Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import type { KeyboardEvent, RefObject } from 'react';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { StageBadge } from '@/components/stage-badge';
 import {
@@ -14,6 +23,7 @@ import {
     ShareDonut,
     SourceFlow,
     sourcePalette,
+    stageColors,
     StageBars,
     StageSummary,
 } from '@/components/analytics-charts';
@@ -60,6 +70,7 @@ type DrilldownRow = {
     stage_label: string;
     sales_name: string | null;
     created_at: string;
+    progress_at: string | null;
 };
 
 type Analytics = {
@@ -98,6 +109,11 @@ function formatCategory(value: string): string {
 
 const TOP_MODELS = 9;
 
+// Same formula as the server's source conversion (DO ÷ lead), so both tabs read alike.
+function conversionOf(row: { do: number; total: number }): number {
+    return row.total ? Math.round((row.do / row.total) * 1000) / 10 : 0;
+}
+
 function sourceChartRows(rows: SourceRow[]): ChartRow[] {
     return rows.map((row, index) => ({
         ...row,
@@ -113,7 +129,7 @@ function modelChartRows(rows: ModelRow[]): ChartRow[] {
         ...row,
         key: row.model,
         label: row.model,
-        color: '',
+        color: stageColors.do,
     }));
     const rest = chartRows.slice(TOP_MODELS);
     if (rest.length < 2) return chartRows;
@@ -124,7 +140,7 @@ function modelChartRows(rows: ModelRow[]): ChartRow[] {
         {
             key: OTHER_ROW_KEY,
             label: `Lainnya (${rest.length} model)`,
-            color: '',
+            color: stageColors.do,
             total: rest.reduce((sum, row) => sum + row.total, 0),
             spk: rest.reduce((sum, row) => sum + row.spk, 0),
             do: rest.reduce((sum, row) => sum + row.do, 0),
@@ -166,6 +182,56 @@ export default function AnalyticsIndex({ analytics }: Props) {
         message: string;
     } | null>(null);
     const retryQuery = failure?.query;
+    const { url, props } = usePage();
+    // Analisis is open to Supervisor, Branch Manager and Admin; of those, BM cannot open Transaksi.
+    const canOpenTransactions = ['supervisor', 'admin'].includes(
+        props.auth.user.role,
+    );
+    const [view, setView] = useState<AnalyticsDimension>(() =>
+        new URLSearchParams(url.split('?')[1] ?? '').get('view') === 'model'
+            ? 'model'
+            : 'source',
+    );
+    const [sheetOpen, setSheetOpen] = useState(
+        analytics.dimension !== null && analytics.value !== null,
+    );
+    const isMobile = useIsMobile();
+    // Separate hooks: the React Compiler caches object literals, which would skip a hook inside one.
+    const sourceTabRef = useRef<HTMLButtonElement>(null);
+    const modelTabRef = useRef<HTMLButtonElement>(null);
+    const tabRefs = { source: sourceTabRef, model: modelTabRef };
+
+    // Tabs only change what is shown, so update the URL client-side without a server round trip.
+    function selectView(next: AnalyticsDimension) {
+        setView(next);
+        const params = new URLSearchParams(
+            window.location.search.replace(/^\?/, ''),
+        );
+        if (next === 'source') params.delete('view');
+        else params.set('view', next);
+        const query = params.toString();
+        router.replace({
+            url: `${window.location.pathname}${query ? `?${query}` : ''}`,
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+
+    function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
+            return;
+        event.preventDefault();
+        const next =
+            event.key === 'Home'
+                ? 'source'
+                : event.key === 'End'
+                  ? 'model'
+                  : view === 'source'
+                    ? 'model'
+                    : 'source';
+        selectView(next);
+        tabRefs[next].current?.focus();
+    }
 
     function visitAnalytics(
         changes: Partial<AnalyticsQuery>,
@@ -190,6 +256,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                 mode: next.mode,
                 dimension: next.dimension ?? undefined,
                 value: next.value ?? undefined,
+                view: view === 'model' ? 'model' : undefined,
             },
             {
                 preserveState: true,
@@ -220,14 +287,23 @@ export default function AnalyticsIndex({ analytics }: Props) {
         );
     }
 
+    // The sheet opens at once and fills when the server answers, so every trigger behaves the same.
+    // The server reload re-renders the page, so Radix loses the opener; remember it ourselves.
+    const returnFocus = useRef<HTMLElement | null>(null);
     function openDrilldown(dimension: AnalyticsDimension, value: string) {
+        if (!sheetOpen && document.activeElement instanceof HTMLElement)
+            returnFocus.current = document.activeElement;
+        setSheetOpen(true);
         visitAnalytics({ dimension, value });
     }
 
-    // Chart clicks land far from the Drilldown list, so move focus (and the view) there.
-    const drilldownRef = useRef<HTMLHeadingElement>(null);
+    function closeDrilldown() {
+        setSheetOpen(false);
+        visitAnalytics({ dimension: null, value: null });
+    }
+
     const drilldownFrom = (dimension: AnalyticsDimension) => (row: ChartRow) =>
-        visitAnalytics({ dimension, value: row.key }, drilldownRef);
+        openDrilldown(dimension, row.key);
 
     const exportQuery = new URLSearchParams({
         period: analytics.period,
@@ -399,36 +475,63 @@ export default function AnalyticsIndex({ analytics }: Props) {
                     )}
                 </aside>
 
-                <nav
+                <div
+                    role="tablist"
                     aria-label="Bagian analisis"
                     className="mt-8 flex gap-1 border-b print:hidden"
                 >
-                    <a
-                        href="#analisis-sumber"
-                        className="flex min-h-11 items-center border-b-2 border-primary px-4 text-sm font-semibold text-primary"
-                    >
-                        Analisis Sumber
-                    </a>
-                    <a
-                        href="#analisis-model"
-                        className="flex min-h-11 items-center border-b-2 border-transparent px-4 text-sm font-semibold text-muted-foreground hover:text-foreground"
-                    >
-                        Analisis Model
-                    </a>
-                </nav>
+                    {(['source', 'model'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            ref={tabRefs[tab]}
+                            type="button"
+                            role="tab"
+                            id={`tab-${tab}`}
+                            aria-selected={view === tab}
+                            aria-controls={
+                                tab === 'source'
+                                    ? 'analisis-sumber'
+                                    : 'analisis-model'
+                            }
+                            tabIndex={view === tab ? 0 : -1}
+                            onClick={() => selectView(tab)}
+                            onKeyDown={onTabKeyDown}
+                            className={cn(
+                                '-mb-px flex min-h-11 items-center border-b-2 px-4 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                view === tab
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            {tab === 'source'
+                                ? 'Analisis Sumber'
+                                : 'Analisis Model'}
+                        </button>
+                    ))}
+                </div>
 
                 <div
                     aria-busy={isLoading}
                     className={isLoading ? 'opacity-60' : ''}
                 >
-                    <section id="analisis-sumber" className="scroll-mt-24 pt-8">
+                    {/* The inactive panel stays in print so the PDF keeps both tables. */}
+                    <section
+                        id="analisis-sumber"
+                        role="tabpanel"
+                        aria-labelledby="tab-source"
+                        className={cn(
+                            'pt-6 print:block print:pt-8',
+                            view !== 'source' && 'hidden',
+                        )}
+                    >
                         <div>
-                            <h2 className="text-xl font-semibold">
+                            <h2 className="sr-only text-xl font-semibold print:not-sr-only">
                                 Analisis Sumber
                             </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Kontribusi sumber lead dan progresnya menuju SPK
-                                serta DO.
+                            <p className="text-sm text-muted-foreground print:mt-1">
+                                {acquisition
+                                    ? 'Kontribusi sumber lead dan progresnya menuju SPK serta DO.'
+                                    : 'Kejadian SPK dan DO pada periode ini, dikelompokkan per sumber.'}
                             </p>
                         </div>
 
@@ -557,12 +660,20 @@ export default function AnalyticsIndex({ analytics }: Props) {
                         />
                     </section>
 
-                    <section id="analisis-model" className="scroll-mt-24 pt-12">
+                    <section
+                        id="analisis-model"
+                        role="tabpanel"
+                        aria-labelledby="tab-model"
+                        className={cn(
+                            'pt-6 print:block print:pt-12',
+                            view !== 'model' && 'hidden',
+                        )}
+                    >
                         <div>
-                            <h2 className="text-xl font-semibold">
+                            <h2 className="sr-only text-xl font-semibold print:not-sr-only">
                                 Analisis Model
                             </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground print:mt-1">
                                 Sebaran model kendaraan dan pencapaian tahap
                                 untuk filter yang sama.
                             </p>
@@ -587,6 +698,20 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                             : eventSegments
                                     }
                                     unit={acquisition ? 'lead' : 'kejadian'}
+                                    onSelect={drilldownFrom('model')}
+                                />
+                            </ChartPanel>
+                        )}
+
+                        {modelRows.length > 0 && acquisition && (
+                            <ChartPanel
+                                id="model-conversion-title"
+                                title="Conversion per model (DO ÷ lead)"
+                                description="Garis putus-putus = rata-rata semua model. Perhatikan angka DO/lead: model dengan sedikit lead mudah tampak tinggi."
+                                className="mt-4"
+                            >
+                                <ConversionBars
+                                    rows={modelRows}
                                     onSelect={drilldownFrom('model')}
                                 />
                             </ChartPanel>
@@ -619,6 +744,14 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                                 value={row.spk}
                                             />
                                             <Metric label="DO" value={row.do} />
+                                            {acquisition && (
+                                                <Metric
+                                                    label="Conversion"
+                                                    value={formatPercentage(
+                                                        conversionOf(row),
+                                                    )}
+                                                />
+                                            )}
                                         </dl>
                                         <Button
                                             type="button"
@@ -640,48 +773,100 @@ export default function AnalyticsIndex({ analytics }: Props) {
 
                         <ModelTable
                             rows={analytics.models}
+                            mode={analytics.mode}
                             onDrilldown={(value) =>
                                 openDrilldown('model', value)
                             }
                         />
                     </section>
+                </div>
 
-                    <section className="pt-12 print:hidden">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <h2
-                                ref={drilldownRef}
-                                tabIndex={-1}
-                                className="scroll-mt-24 text-xl font-semibold"
-                            >
+                <Sheet
+                    open={sheetOpen}
+                    onOpenChange={(open) => !open && closeDrilldown()}
+                >
+                    <SheetContent
+                        side={isMobile ? 'bottom' : 'right'}
+                        onCloseAutoFocus={(event) => {
+                            event.preventDefault();
+                            const opener = returnFocus.current;
+                            // Chart marks are not focusable; fall back to the active tab.
+                            (opener?.isConnected && opener !== document.body
+                                ? opener
+                                : tabRefs[view].current
+                            )?.focus();
+                        }}
+                        className={cn(
+                            'gap-0 overflow-y-auto print:hidden',
+                            isMobile
+                                ? 'max-h-[85vh] rounded-t-2xl'
+                                : 'w-full sm:max-w-xl',
+                        )}
+                    >
+                        <SheetHeader className="border-b pr-14">
+                            <SheetTitle>
                                 Drilldown
-                            </h2>
+                                {hasSelection &&
+                                    ` · ${analytics.dimension === 'source' ? formatCategory(analytics.value ?? '') : analytics.value}`}
+                            </SheetTitle>
+                            <SheetDescription>
+                                {hasSelection && !isLoading
+                                    ? `${analytics.drilldown.length} transaksi · ${formatMonthRange(analytics.period, analytics.to)}. `
+                                    : ''}
+                                Hanya field transaksi tersanitasi; tanpa kontak
+                                pelanggan, catatan, atau coaching.
+                            </SheetDescription>
                             {hasSelection && (
-                                <Badge variant="secondary">
-                                    {analytics.dimension === 'source'
-                                        ? 'Sumber'
-                                        : 'Model'}
-                                    : {formatCategory(analytics.value ?? '')}
-                                </Badge>
+                                <DrilldownSwitcher
+                                    dimension={analytics.dimension!}
+                                    value={analytics.value!}
+                                    options={
+                                        analytics.dimension === 'source'
+                                            ? analytics.sources.map((row) => ({
+                                                  value: row.source,
+                                                  label: formatCategory(
+                                                      row.source,
+                                                  ),
+                                              }))
+                                            : analytics.models.map((row) => ({
+                                                  value: row.model,
+                                                  label: row.model,
+                                              }))
+                                    }
+                                    disabled={isLoading}
+                                    onChange={(value) =>
+                                        openDrilldown(
+                                            analytics.dimension!,
+                                            value,
+                                        )
+                                    }
+                                />
+                            )}
+                        </SheetHeader>
+                        <div
+                            className={cn('p-4', isLoading && 'opacity-60')}
+                            aria-busy={isLoading}
+                        >
+                            {!hasSelection ||
+                            (isLoading && analytics.drilldown.length === 0) ? (
+                                <p
+                                    role="status"
+                                    className="py-10 text-center text-sm text-muted-foreground"
+                                >
+                                    Memuat transaksi…
+                                </p>
+                            ) : analytics.drilldown.length === 0 ? (
+                                <EmptyState description="Tidak ada transaksi yang cocok dengan drilldown dan filter saat ini." />
+                            ) : (
+                                <DrilldownList
+                                    rows={analytics.drilldown}
+                                    dimension={analytics.dimension!}
+                                    canOpen={canOpenTransactions}
+                                />
                             )}
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Hanya field transaksi tersanitasi yang ditampilkan;
-                            tanpa kontak pelanggan, catatan, atau coaching.
-                        </p>
-
-                        {!hasSelection ? (
-                            <div className="mt-5">
-                                <EmptyState description="Pilih Drilldown pada salah satu sumber atau model untuk melihat transaksi pembentuk angka." />
-                            </div>
-                        ) : analytics.drilldown.length === 0 ? (
-                            <div className="mt-5">
-                                <EmptyState description="Tidak ada transaksi yang cocok dengan drilldown dan filter saat ini." />
-                            </div>
-                        ) : (
-                            <DrilldownList rows={analytics.drilldown} />
-                        )}
-                    </section>
-                </div>
+                    </SheetContent>
+                </Sheet>
             </div>
         </>
     );
@@ -779,11 +964,15 @@ function SourceTable({
 
 function ModelTable({
     rows,
+    mode,
     onDrilldown,
 }: {
     rows: ModelRow[];
+    mode: AnalyticsMode;
     onDrilldown: (value: string) => void;
 }) {
+    const acquisition = mode === 'acquisition';
+
     return (
         <div className="mt-5 hidden overflow-hidden rounded-xl border lg:block print:block">
             <table className="w-full text-sm">
@@ -794,6 +983,9 @@ function ModelTable({
                         <th className="px-4 py-3 text-right">Porsi</th>
                         <th className="px-4 py-3 text-right">SPK</th>
                         <th className="px-4 py-3 text-right">DO</th>
+                        {acquisition && (
+                            <th className="px-4 py-3 text-right">Conversion</th>
+                        )}
                         <th className="px-4 py-3 text-right print:hidden">
                             Aksi
                         </th>
@@ -803,7 +995,7 @@ function ModelTable({
                     {rows.length === 0 ? (
                         <tr>
                             <td
-                                colSpan={6}
+                                colSpan={acquisition ? 7 : 6}
                                 className="px-4 py-10 text-center text-muted-foreground"
                             >
                                 Belum ada transaksi berdasarkan model untuk
@@ -828,6 +1020,11 @@ function ModelTable({
                                 <td className="px-4 py-3 text-right tabular-nums">
                                     {row.do}
                                 </td>
+                                {acquisition && (
+                                    <td className="px-4 py-3 text-right tabular-nums">
+                                        {formatPercentage(conversionOf(row))}
+                                    </td>
+                                )}
                                 <td className="table-actions px-4 py-3 text-right print:hidden">
                                     <Button
                                         type="button"
@@ -847,91 +1044,128 @@ function ModelTable({
     );
 }
 
-function DrilldownList({ rows }: { rows: DrilldownRow[] }) {
+function DrilldownSwitcher({
+    dimension,
+    value,
+    options,
+    disabled,
+    onChange,
+}: {
+    dimension: AnalyticsDimension;
+    value: string;
+    options: { value: string; label: string }[];
+    disabled: boolean;
+    onChange: (value: string) => void;
+}) {
     return (
-        <>
-            <div className="mt-5 space-y-3 lg:hidden print:hidden">
-                {rows.map((row) => (
-                    <article
-                        key={row.public_id}
-                        className="striped-row rounded-xl border p-5"
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <h3 className="font-semibold">
-                                    {row.vehicle_model}
-                                </h3>
-                                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                                    {row.public_id}
-                                </p>
-                            </div>
-                            <StageBadge stage={row.stage}>
-                                {row.stage_label}
-                            </StageBadge>
-                        </div>
-                        <dl className="mt-5 grid grid-cols-2 gap-4">
-                            <Metric
-                                label="Sumber"
-                                value={formatCategory(row.source)}
-                            />
-                            <Metric
-                                label="Sales"
-                                value={row.sales_name ?? 'Belum ditugaskan'}
-                            />
-                            <Metric
-                                label="Dibuat"
-                                value={dateFormatter.format(
-                                    new Date(row.created_at),
-                                )}
-                            />
-                        </dl>
-                    </article>
-                ))}
-            </div>
+        <div className="mt-3 space-y-2">
+            <Label htmlFor="drilldown-switch">
+                {dimension === 'source' ? 'Ganti sumber' : 'Ganti model'}
+            </Label>
+            <Select value={value} disabled={disabled} onValueChange={onChange}>
+                <SelectTrigger
+                    id="drilldown-switch"
+                    className="min-h-11 w-full"
+                >
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    );
+}
 
-            <div className="mt-5 hidden overflow-hidden rounded-xl border lg:block print:block">
-                <table className="w-full text-sm">
-                    <thead className="bg-muted/50 text-left text-xs tracking-wide text-muted-foreground uppercase print:bg-white print:text-black">
-                        <tr>
-                            <th className="px-4 py-3">ID publik</th>
-                            <th className="px-4 py-3">Model</th>
-                            <th className="px-4 py-3">Sumber</th>
-                            <th className="px-4 py-3">Tahap</th>
-                            <th className="px-4 py-3">Sales</th>
-                            <th className="px-4 py-3">Dibuat</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                        {rows.map((row) => (
-                            <tr key={row.public_id} className="striped-row">
-                                <td className="px-4 py-3 font-mono text-xs">
-                                    {row.public_id}
-                                </td>
-                                <td className="px-4 py-3 font-medium">
-                                    {row.vehicle_model}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {formatCategory(row.source)}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <StageBadge stage={row.stage}>
-                                        {row.stage_label}
-                                    </StageBadge>
-                                </td>
-                                <td className="px-4 py-3">
-                                    {row.sales_name ?? 'Belum ditugaskan'}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {dateFormatter.format(
-                                        new Date(row.created_at),
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </>
+const DAY_MS = 86_400_000;
+
+// Open deals show how long they have sat in their stage; closed ones show when they closed.
+function stageAge(row: DrilldownRow): string {
+    const since = new Date(row.progress_at ?? row.created_at);
+    if (row.stage === 'do' || row.stage === 'lost')
+        return `${row.stage_label} ${dateFormatter.format(since)}`;
+    const days = Math.max(
+        0,
+        Math.floor((Date.now() - since.getTime()) / DAY_MS),
+    );
+    return days === 0 ? 'Pindah tahap hari ini' : `${days} hari di tahap ini`;
+}
+
+// The selected dimension is already in the sheet title, so each row shows the other one.
+function DrilldownList({
+    rows,
+    dimension,
+    canOpen,
+}: {
+    rows: DrilldownRow[];
+    dimension: AnalyticsDimension;
+    canOpen: boolean;
+}) {
+    return (
+        <ul className="divide-y overflow-hidden rounded-xl border">
+            {rows.map((row) => {
+                const content = (
+                    <>
+                        <p className="flex min-w-0 items-center gap-1 font-semibold">
+                            <span className="truncate">
+                                {dimension === 'source'
+                                    ? row.vehicle_model
+                                    : formatCategory(row.source)}
+                            </span>
+                            {canOpen && (
+                                <>
+                                    <ArrowUpRight
+                                        aria-hidden="true"
+                                        className="size-3.5 shrink-0 text-muted-foreground"
+                                    />
+                                    <span className="sr-only">
+                                        (buka transaksi di tab baru)
+                                    </span>
+                                </>
+                            )}
+                        </p>
+                        <StageBadge stage={row.stage}>
+                            {row.stage_label}
+                        </StageBadge>
+                        <p className="col-span-2 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                            <span>{row.sales_name ?? 'Belum ditugaskan'}</span>
+                            <span>
+                                Masuk{' '}
+                                {dateFormatter.format(new Date(row.created_at))}
+                            </span>
+                            <span className="font-medium text-foreground">
+                                {stageAge(row)}
+                            </span>
+                        </p>
+                    </>
+                );
+                const layout =
+                    'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 px-4 py-3 text-sm';
+                return (
+                    <li key={row.public_id} className="striped-row">
+                        {canOpen ? (
+                            <a
+                                href={`/transactions?transaction=${row.public_id}&date_from=&date_to=`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                    layout,
+                                    'outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                                )}
+                            >
+                                {content}
+                            </a>
+                        ) : (
+                            <div className={layout}>{content}</div>
+                        )}
+                    </li>
+                );
+            })}
+        </ul>
     );
 }
 

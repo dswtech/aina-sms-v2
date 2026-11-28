@@ -353,13 +353,16 @@ export function ShareDonut({
     onSelect?: (row: ChartRow) => void;
 }) {
     const total = rows.reduce((sum, row) => sum + row.total, 0);
-    const radius = 80;
-    const circumference = 2 * Math.PI * radius;
+    const radius = 90;
+    const point = (turn: number) => {
+        const angle = turn * 2 * Math.PI - Math.PI / 2;
+        return `${100 + radius * Math.cos(angle)} ${100 + radius * Math.sin(angle)}`;
+    };
     let preceding = 0;
 
     return (
         <>
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-2">
                 <svg
                     viewBox="0 0 200 200"
                     className="size-48"
@@ -372,46 +375,45 @@ export function ShareDonut({
                         .join('. ')}
                 >
                     {rows.map((row) => {
-                        const length = (row.total / total) * circumference;
-                        const offset = preceding;
-                        preceding += length;
-                        return (
+                        const from = preceding / total;
+                        preceding += row.total;
+                        const to = preceding / total;
+                        const title = (
+                            <title>{`${row.label}: ${row.total} ${unit} (${pct(row.total, total)})${hint(row, onSelect)}`}</title>
+                        );
+                        // A single 100% slice cannot be drawn as an arc, so it is a plain circle.
+                        return to - from >= 1 ? (
                             <circle
                                 key={row.key}
                                 cx="100"
                                 cy="100"
                                 r={radius}
-                                fill="none"
-                                stroke={row.color}
-                                strokeWidth="28"
-                                strokeDasharray={`${Math.max(length - (rows.length > 1 ? 2 : 0), 0)} ${circumference}`}
-                                strokeDashoffset={-offset}
-                                transform="rotate(-90 100 100)"
+                                fill={row.color}
                                 {...clickable(row, onSelect)}
                             >
-                                <title>{`${row.label}: ${row.total} ${unit} (${pct(row.total, total)})${hint(row, onSelect)}`}</title>
+                                {title}
                             </circle>
+                        ) : (
+                            <path
+                                key={row.key}
+                                d={`M100 100 L${point(from)} A${radius} ${radius} 0 ${to - from > 0.5 ? 1 : 0} 1 ${point(to)} Z`}
+                                fill={row.color}
+                                stroke="var(--card)"
+                                strokeWidth={1.5}
+                                strokeLinejoin="round"
+                                {...clickable(row, onSelect)}
+                            >
+                                {title}
+                            </path>
                         );
                     })}
-                    <text
-                        x="100"
-                        y="98"
-                        textAnchor="middle"
-                        fill="currentColor"
-                        className="text-3xl font-semibold tabular-nums"
-                    >
-                        {numberFormatter.format(total)}
-                    </text>
-                    <text
-                        x="100"
-                        y="120"
-                        textAnchor="middle"
-                        fill="var(--muted-foreground)"
-                        className="text-xs"
-                    >
-                        {unit}
-                    </text>
                 </svg>
+                <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground tabular-nums">
+                        {numberFormatter.format(total)}
+                    </span>{' '}
+                    {unit}
+                </p>
             </div>
             <dl className="mt-5 space-y-2.5">
                 {rows.map((row) => (
@@ -632,8 +634,11 @@ export function StageBars({
     const sums = rows.map((row) =>
         segments.reduce((sum, segment) => sum + segment.value(row), 0),
     );
-    const max = Math.max(1, ...sums);
-    const scale = (width - left - right) / max;
+    // The merged "Lainnya" row would otherwise set the scale and shrink every named row.
+    const named = sums.filter((_, i) => rows[i].key !== OTHER_ROW_KEY);
+    const max = Math.max(1, ...(named.length ? named : sums));
+    const plotWidth = width - left - right;
+    const scale = plotWidth / max;
     const plotHeight = rows.length * rowHeight;
 
     return (
@@ -680,16 +685,25 @@ export function StageBars({
                                 {segments.map((segment) => {
                                     const value = segment.value(row);
                                     const start = x;
-                                    x += value * scale;
+                                    x = Math.min(
+                                        x + value * scale,
+                                        left + plotWidth,
+                                    );
                                     return (
-                                        value > 0 && (
+                                        value > 0 &&
+                                        x > start && (
                                             <rect
                                                 key={segment.key}
                                                 x={start}
                                                 y={y + 8}
-                                                width={value * scale}
+                                                width={x - start}
                                                 height={22}
                                                 fill={segment.color}
+                                                fillOpacity={
+                                                    row.key === OTHER_ROW_KEY
+                                                        ? 0.45
+                                                        : undefined
+                                                }
                                             >
                                                 <title>{`${row.label} · ${segment.label}: ${value}${hint(row, onSelect)}`}</title>
                                             </rect>
