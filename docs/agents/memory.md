@@ -3,11 +3,19 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.73 |
-| Diperbarui | 25 November 2026 |
+| Versi | v1.74 |
+| Diperbarui | 28 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 28 November 2026 — audit kode dan masa simpan data
+
+- Branch `refactor/audit-cleanup` dari audit seluruh repo. Pencarian nomor telepon (awalan 0, penuh atau sebagian) kini satu aturan lewat `PhoneNormalizer::searchDigits` di halaman Pelanggan, Transaksi dan pencarian pelanggan form transaksi.
+- Dihapus: halaman `welcome` dan `module-status`, 11 file frontend yatim (termasuk `lib/area-preview.ts`), lima method model tak terpakai, font Instrument Sans, 15 package npm (13 `@radix-ui/react-*` diganti `radix-ui`, `@tabler/icons-react` diganti `lucide-react`, `concurrently`) atas persetujuan pemilik. Ekspor PNG kini memakai Inter.
+- Duplikasi disatukan: filter tab Buku Pelanggan, dan `TransactionMasters::formOptions`/`assignableSales` untuk tiga halaman.
+- Masa simpan baru ([IMP-04, CVS-17, keputusan 6](PRD.md)): `data:prune` harian 01:15 WIB menghapus file CSV impor > 30 hari dan notifikasi > 90 hari (kecuali intent email coaching pending/queued). Tanpa migration. Penghapusan pertama di production tidak dapat dibalik; restart `aina-scheduler` setelah deploy.
+- Bukti: `composer ci:check` lulus (761 tes, 758 lulus, 3 skip) dan suite browser terisolasi lulus (`transactions-financing-roles.js` timeout dua kali lalu lulus tiga kali berturut-turut tanpa perubahan). Belum: PostgreSQL untuk `data:prune`.
 
 ## Pembaruan 25 November 2026 — halaman Coaching
 
