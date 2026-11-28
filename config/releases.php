@@ -4,6 +4,18 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.11.0',
+        'date' => '2026-11-28',
+        'notify' => true,
+        'summary' => 'Versi baru: pencarian pelanggan dengan nomor HP kini lebih mudah, cukup ketik sebagian nomor yang diawali 0.',
+        'items' => [
+            'Pencarian di Buku Pelanggan dan daftar Transaksi menemukan pelanggan dari nomor HP yang diketik dengan awalan 0, lengkap maupun sebagian (misalnya 0812 3456).',
+            'File CSV yang diunggah untuk impor dihapus otomatis setelah 30 hari. Riwayat impor tetap tersimpan.',
+            'Notifikasi yang lebih lama dari 90 hari dihapus otomatis.',
+            'Perapian di balik layar supaya halaman sedikit lebih ringan.',
+        ],
+    ],
+    [
         'version' => '1.10.0',
         'date' => '2026-11-25',
         'notify' => true,
