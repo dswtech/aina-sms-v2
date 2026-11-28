@@ -4,6 +4,20 @@
 // (see docs/operations/release-log.md). `version` has no leading "v".
 return [
     [
+        'version' => '1.12.0',
+        'date' => '2026-11-28',
+        'notify' => true,
+        'summary' => 'Versi baru: halaman Analisis Sumber & Model kini memakai tab, dan rincian transaksi terbuka di panel samping.',
+        'items' => [
+            'Analisis Sumber dan Analisis Model kini tab sungguhan, jadi halamannya jauh lebih pendek dan tab yang dipilih tetap terbuka saat filter diganti.',
+            'Rincian transaksi (drilldown) terbuka di panel samping tanpa menggulir ke bawah. Sumber atau model lain bisa dipilih langsung dari panel.',
+            'Setiap transaksi di rincian menampilkan Sales, tanggal masuk, dan sudah berapa hari di tahap sekarang. Supervisor dan Admin bisa membukanya di tab baru.',
+            'Analisis Model kini punya grafik dan kolom conversion per model, seperti Analisis Sumber.',
+            'Model yang digabung menjadi Lainnya tidak lagi membuat batang model lain terlihat pendek.',
+            'Porsi sumber kini ditampilkan sebagai grafik lingkaran penuh.',
+        ],
+    ],
+    [
         'version' => '1.11.0',
         'date' => '2026-11-28',
         'notify' => true,
