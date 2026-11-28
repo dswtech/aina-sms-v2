@@ -141,6 +141,17 @@ it('searches name, model and source regardless of letter case', function () {
     expect($names('budi'))->toBe(['Avanza Veloz'])->and($names('AVANZA'))->toBe(['Avanza Veloz'])->and($names('WALK'))->toBe(['Avanza Veloz']);
 });
 
+it('finds a customer by phone typed with a leading 0, in full or in part', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    listDeal($dealer, $sales, 'Creta', '2026-11-03 03:00:00')->customer->update(['phone' => '081234567890']);
+    listDeal($dealer, $sales, 'Stargazer', '2026-11-03 03:00:00')->customer->update(['phone' => '085700001111']);
+    $models = fn (string $q) => collect($this->actingAs($sales)->get('/transactions?date_from=&date_to=&search='.urlencode($q))
+        ->viewData('page')['props']['transactions']['data'])->pluck('vehicle_model')->all();
+
+    expect($models('081234567890'))->toBe(['Creta'])->and($models('0812 3456'))->toBe(['Creta']);
+});
+
 it('ignores sales and supervisor filters the actor may not use', function () {
     $dealer = Dealer::factory()->create();
     $mine = User::factory()->sales()->create(['dealer_id' => $dealer->id]);

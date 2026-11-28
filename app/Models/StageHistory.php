@@ -41,11 +41,6 @@ class StageHistory extends Model
 {
     public $timestamps = false;
 
-    public function hasDoChecklist(): bool
-    {
-        return $this->po_confirmed && $this->dp_confirmed && $this->unit_confirmed;
-    }
-
     /** @param Builder<StageHistory> $query */
     public function scopeNotReversed(Builder $query): void
     {
@@ -63,14 +58,6 @@ class StageHistory extends Model
             ->where('dp_confirmed', true)
             ->where('unit_confirmed', true)
             ->notReversed();
-    }
-
-    /** @param Builder<StageHistory> $query */
-    public function scopeReportableAchievement(Builder $query): void
-    {
-        $query->whereNull('reverses_stage_history_id')
-            ->where(fn ($history) => $history->where('to_stage', '<>', PipelineStage::Do)
-                ->orWhere(fn ($do) => $do->realizedDo()));
     }
 
     /**

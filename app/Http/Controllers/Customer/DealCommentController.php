@@ -201,9 +201,11 @@ class DealCommentController extends Controller
 
             $notification = new DealCommentCreated($deal->id, $deal->public_id, $comment->id, $actor->id, $deal->current_stage->value);
             Notification::sendNow($recipients, $notification, ['database']);
-            DB::afterCommit(function () use ($comment): void {
+            DB::afterCommit(function () use ($comment, $recipients): void {
                 $queueEmail = app(QueueCoachingEmail::class);
+                // The recipients' rows only (notifiable index), not every coaching notification ever sent.
                 DatabaseNotification::query()->where('type', DealCommentCreated::class)
+                    ->where('notifiable_type', (new User)->getMorphClass())->whereIn('notifiable_id', $recipients->modelKeys())
                     ->whereJsonContains('data', ['comment_id' => $comment->id])->get()
                     ->each(fn (DatabaseNotification $record) => $queueEmail($record->id));
             });

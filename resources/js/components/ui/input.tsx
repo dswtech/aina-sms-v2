@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { XIcon } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -89,7 +89,7 @@ function Input({
                     onClick={clear}
                     className="absolute right-0 bottom-0 flex size-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none xl:pointer-fine:size-9"
                 >
-                    <IconX className="size-4" aria-hidden="true" />
+                    <XIcon className="size-4" aria-hidden="true" />
                 </button>
             )}
         </div>

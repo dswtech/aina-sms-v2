@@ -1,4 +1,4 @@
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {

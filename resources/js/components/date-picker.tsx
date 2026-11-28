@@ -1,10 +1,10 @@
 import {
-    IconCalendar,
-    IconChevronDown,
-    IconChevronLeft,
-    IconChevronRight,
-    IconX,
-} from '@tabler/icons-react';
+    CalendarIcon,
+    ChevronDownIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    XIcon,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { useState } from 'react';
@@ -41,7 +41,7 @@ function ClearButton({
             onClick={onClear}
             className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none xl:pointer-fine:w-9"
         >
-            <IconX className="size-4" aria-hidden="true" />
+            <XIcon className="size-4" aria-hidden="true" />
         </button>
     );
 }
@@ -90,7 +90,7 @@ export function DatePicker({
                                 {placeholder}
                             </span>
                         )}
-                        {!value && <IconChevronDown aria-hidden="true" />}
+                        {!value && <ChevronDownIcon aria-hidden="true" />}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -155,7 +155,7 @@ export function DateRangePicker({
                             (from || to) && 'pr-12',
                         )}
                     >
-                        <IconCalendar aria-hidden="true" />
+                        <CalendarIcon aria-hidden="true" />
                         {from ? (
                             <span className="truncate">
                                 {label(from)}
@@ -244,7 +244,7 @@ export function MonthPicker({
                             value && 'pr-12',
                         )}
                     >
-                        <IconCalendar aria-hidden="true" />
+                        <CalendarIcon aria-hidden="true" />
                         {value ? (
                             <span className="capitalize">
                                 {format(parseISO(`${value}-01`), 'MMMM yyyy', {
@@ -271,7 +271,7 @@ export function MonthPicker({
                             aria-label="Tahun sebelumnya"
                             onClick={() => setYear(year - 1)}
                         >
-                            <IconChevronLeft aria-hidden="true" />
+                            <ChevronLeftIcon aria-hidden="true" />
                         </Button>
                         <span
                             className="text-sm font-medium"
@@ -286,7 +286,7 @@ export function MonthPicker({
                             aria-label="Tahun berikutnya"
                             onClick={() => setYear(year + 1)}
                         >
-                            <IconChevronRight aria-hidden="true" />
+                            <ChevronRightIcon aria-hidden="true" />
                         </Button>
                     </div>
                     <div className="grid grid-cols-3 gap-1">

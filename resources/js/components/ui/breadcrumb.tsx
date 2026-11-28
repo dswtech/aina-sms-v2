@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
-import { IconChevronRight, IconDots } from "@tabler/icons-react"
+import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -82,7 +82,7 @@ function BreadcrumbSeparator({
       {...props}
     >
       {children ?? (
-        <IconChevronRight />
+        <ChevronRightIcon />
       )}
     </li>
   )
@@ -103,7 +103,7 @@ function BreadcrumbEllipsis({
       )}
       {...props}
     >
-      <IconDots
+      <MoreHorizontalIcon
       />
       <span className="sr-only">More</span>
     </span>

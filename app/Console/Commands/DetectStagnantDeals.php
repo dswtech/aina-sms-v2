@@ -9,6 +9,7 @@ use App\Notifications\StagnantDealsSummary;
 use App\Services\DealAudience;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Notification;
 
@@ -31,10 +32,14 @@ class DetectStagnantDeals extends Command
         /** @var array<int, array{user: User, count: int}> $summaries */
         $summaries = [];
 
-        DealTransaction::query()->stagnant()->with('sales')->each(function (DealTransaction $deal) use ($audience, $earliestActivity, $known, &$summaries): void {
+        // Older deals turned stagnant before the window and were notified then; skip them in SQL.
+        $recent = fn (Builder $q) => $q->where('last_activity_at', '>=', $earliestActivity)
+            ->orWhere(fn (Builder $q) => $q->whereNull('last_activity_at')->where('created_at', '>=', $earliestActivity));
+
+        DealTransaction::query()->stagnant()->where($recent)->with('sales')->each(function (DealTransaction $deal) use ($audience, $known, &$summaries): void {
             $activityAt = $deal->last_activity_at ?? $deal->created_at;
             $sales = $deal->sales;
-            if ($activityAt->lessThan($earliestActivity) || $sales === null || ! $sales->is_active
+            if ($sales === null || ! $sales->is_active
                 || $known->has($deal->id.'|'.$activityAt->toISOString())) {
                 return;
             }

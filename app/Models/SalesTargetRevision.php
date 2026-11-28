@@ -21,10 +21,4 @@ class SalesTargetRevision extends Model
     {
         return $this->belongsTo(SalesTarget::class, 'sales_target_id');
     }
-
-    /** @return BelongsTo<User, $this> */
-    public function changedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'changed_by_id');
-    }
 }
