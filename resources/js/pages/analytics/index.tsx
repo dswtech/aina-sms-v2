@@ -183,8 +183,8 @@ export default function AnalyticsIndex({ analytics }: Props) {
     } | null>(null);
     const retryQuery = failure?.query;
     const { url, props } = usePage();
-    // Branch Manager reads aggregates only; the Transaksi page is not open to that role.
-    const canOpenTransactions = ['sales', 'supervisor', 'admin'].includes(
+    // Analisis is open to Supervisor, Branch Manager and Admin; of those, BM cannot open Transaksi.
+    const canOpenTransactions = ['supervisor', 'admin'].includes(
         props.auth.user.role,
     );
     const [view, setView] = useState<AnalyticsDimension>(() =>
