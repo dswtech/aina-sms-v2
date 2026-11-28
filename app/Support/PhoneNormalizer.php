@@ -48,6 +48,21 @@ class PhoneNormalizer
     }
 
     /**
+     * Digits to match against stored +62... phones, or null when the text is not phone-like or too short.
+     * Only phone-looking text counts: "Avanza 2024" must not match numbers containing 2024.
+     */
+    public static function searchDigits(string $term): ?string
+    {
+        if (! preg_match('/^[\d\s+\-()]+$/', $term)) {
+            return null;
+        }
+        $digits = preg_replace('/\D/', '', $term) ?? '';
+        $digits = str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits;
+
+        return strlen($digits) >= 4 ? $digits : null;
+    }
+
+    /**
      * Checks if a phone number is valid.
      */
     public static function isValid(?string $phone): bool

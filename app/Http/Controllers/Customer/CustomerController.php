@@ -22,7 +22,6 @@ use App\Models\Team;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Services\CreateLeadTransaction;
-use App\Services\CustomerDuplicateDetector;
 use App\Services\TransactionMasters;
 use App\Support\AuditRecorder;
 use App\Support\PhoneNormalizer;
@@ -47,96 +46,40 @@ class CustomerController extends Controller
         $search = $request->input('search');
         $tab = $request->input('tab', 'all');
 
-        $baseQuery = Customer::query()->visibleTo($actor);
         $todayStart = CarbonImmutable::now('Asia/Jakarta')->startOfDay()->utc();
         $tomorrowStart = $todayStart->setTimezone('Asia/Jakarta')->addDay()->utc();
+        $open = fn (Builder $q) => $q->whereNotIn('current_stage', PipelineStage::closedValues());
+        $bought = fn (Builder $q) => $q->where('current_stage', PipelineStage::Do->value);
 
-        // Precalculate counts for tab badges
-        $counts = [
-            'all' => (clone $baseQuery)->count(),
-            'follow_up_today' => (clone $baseQuery)->whereHas('followUps', function (Builder $q) use ($todayStart, $tomorrowStart): void {
-                $q->where('status', 'pending')
-                    ->where('scheduled_at', '>=', $todayStart)->where('scheduled_at', '<', $tomorrowStart);
-            })->count(),
-            'overdue' => (clone $baseQuery)->whereHas('followUps', function (Builder $q) use ($todayStart): void {
-                $q->where('status', 'pending')
-                    ->where('scheduled_at', '<', $todayStart);
-            })->count(),
-            'uncontacted' => (clone $baseQuery)->whereNull('last_contact_at')->count(),
-            'stagnant' => (clone $baseQuery)->whereHas('transactions', function (Builder $q) use ($actor): void {
-                $q->visibleTo($actor)->stagnant();
-            })->count(),
-            'active' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->count(),
-            'purchased' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            })->count(),
-            'inactive' => (clone $baseQuery)->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->where(function (Builder $q): void {
-                $q->whereNull('last_contact_at')
-                    ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
-            })->count(),
-            'repeat_order' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            })->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->count(),
-            'referral' => (clone $baseQuery)->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            })->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->where('opt_out', false)->count(),
+        // One definition per tab, shared by the badge counts and the list.
+        $tabs = [
+            'all' => fn (Builder $q) => $q,
+            'follow_up_today' => fn (Builder $q) => $q->whereHas('followUps', fn (Builder $f) => $f->where('status', 'pending')
+                ->where('scheduled_at', '>=', $todayStart)->where('scheduled_at', '<', $tomorrowStart)),
+            'overdue' => fn (Builder $q) => $q->whereHas('followUps', fn (Builder $f) => $f->where('status', 'pending')
+                ->where('scheduled_at', '<', $todayStart)),
+            'uncontacted' => fn (Builder $q) => $q->whereNull('last_contact_at'),
+            'stagnant' => fn (Builder $q) => $q->whereIn('id', DealTransaction::query()->visibleTo($actor)->stagnant()->select('customer_id')),
+            'active' => fn (Builder $q) => $q->whereHas('transactions', $open),
+            'purchased' => fn (Builder $q) => $q->whereHas('transactions', $bought),
+            'inactive' => fn (Builder $q) => $q->whereDoesntHave('transactions', $open)
+                ->where(fn (Builder $c) => $c->whereNull('last_contact_at')->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30))),
+            'repeat_order' => fn (Builder $q) => $q->whereHas('transactions', $bought)->whereDoesntHave('transactions', $open),
+            'referral' => fn (Builder $q) => $q->whereHas('transactions', $bought)->whereDoesntHave('transactions', $open)->where('opt_out', false),
         ];
+        $counts = array_map(fn (\Closure $filter): int => $filter(Customer::query()->visibleTo($actor))->count(), $tabs);
 
         $query = Customer::query()->visibleTo($actor);
 
         if (! empty($search)) {
-            $normalizedSearch = PhoneNormalizer::normalize($search) ?? $search;
-            $query->where(function (Builder $q) use ($search, $normalizedSearch): void {
+            $digits = PhoneNormalizer::searchDigits($search);
+            $query->where(function (Builder $q) use ($search, $digits): void {
                 $q->whereLike('name', "%{$search}%")
-                    ->orWhereLike('phone', "%{$normalizedSearch}%");
+                    ->when($digits !== null, fn (Builder $q) => $q->orWhere('phone', 'like', "%{$digits}%"));
             });
         }
 
-        match ($tab) {
-            'follow_up_today' => $query->whereHas('followUps', function (Builder $q) use ($todayStart, $tomorrowStart): void {
-                $q->where('status', 'pending')
-                    ->where('scheduled_at', '>=', $todayStart)->where('scheduled_at', '<', $tomorrowStart);
-            }),
-            'overdue' => $query->whereHas('followUps', function (Builder $q) use ($todayStart): void {
-                $q->where('status', 'pending')
-                    ->where('scheduled_at', '<', $todayStart);
-            }),
-            'uncontacted' => $query->whereNull('last_contact_at'),
-            'stagnant' => $query->whereHas('transactions', function (Builder $q) use ($actor): void {
-                $q->visibleTo($actor)->stagnant();
-            }),
-            'active' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            }),
-            'purchased' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            }),
-            'inactive' => $query->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->where(function (Builder $q): void {
-                $q->whereNull('last_contact_at')
-                    ->orWhere('last_contact_at', '<=', CarbonImmutable::now()->subDays(30));
-            }),
-            'repeat_order' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            })->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            }),
-            'referral' => $query->whereHas('transactions', function (Builder $q): void {
-                $q->where('current_stage', PipelineStage::Do->value);
-            })->whereDoesntHave('transactions', function (Builder $q): void {
-                $q->whereNotIn('current_stage', PipelineStage::closedValues());
-            })->where('opt_out', false),
-            default => null,
-        };
+        ($tabs[is_string($tab) ? $tab : 'all'] ?? $tabs['all'])($query);
 
         $sort = $request->string('sort')->toString();
         $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
@@ -198,40 +141,8 @@ class CustomerController extends Controller
                 ];
             });
 
-        $assignableSales = [];
-        if (in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true)) {
-            $salesQuery = User::query()
-                ->where('dealer_id', $actor->dealer_id)
-                ->where('is_active', true)
-                ->where('role', UserRole::Sales);
-
-            if ($actor->role === UserRole::Supervisor) {
-                $teamIds = Team::query()->visibleTo($actor)->select('id');
-                $salesQuery->whereHas('activeTeamMemberships', function (Builder $q) use ($teamIds): void {
-                    $q->whereIn('team_id', $teamIds)->whereNull('ended_at');
-                });
-            }
-
-            $assignableSales = $salesQuery
-                ->select(['id', 'public_id', 'name'])
-                ->orderBy('name')
-                ->get()
-                ->map(fn (User $user): array => [
-                    'id' => $user->id,
-                    'public_id' => $user->public_id,
-                    'name' => $user->name,
-                ])
-                ->all();
-        }
-
         return Inertia::render('customers/index', [
-            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
-            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
-            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
-            // For the shared transaction detail modal (stage form, financing picker).
-            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'stages' => array_map(fn (PipelineStage $stage): array => ['value' => $stage->value, 'label' => $stage->label()], PipelineStage::cases()),
-            'lostReasons' => array_map(fn (LostReason $reason): array => ['value' => $reason->value, 'label' => $reason->label()], LostReason::cases()),
+            ...TransactionMasters::formOptions($actor),
             'duplicateLead' => $request->session()->has('duplicate_lead_phone') ? [
                 'phone' => $request->session()->get('duplicate_lead_phone'),
                 'customers' => Customer::query()->visibleTo($actor)
@@ -246,16 +157,13 @@ class CustomerController extends Controller
                 'direction' => $direction,
             ],
             'counts' => $counts,
-            'assignableSales' => $assignableSales,
         ]);
     }
 
-    public function store(StoreCustomerLeadRequest $request, CustomerDuplicateDetector $detector): RedirectResponse
+    public function store(StoreCustomerLeadRequest $request): RedirectResponse
     {
         /** @var User $actor */
         $actor = $request->user();
-        $dealerId = (int) $actor->dealer_id;
-
         $validated = $request->validated();
         try {
             $customer = app(CreateLeadTransaction::class)->createCustomerLead($actor, $validated);

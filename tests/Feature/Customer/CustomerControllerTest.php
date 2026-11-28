@@ -63,6 +63,20 @@ it('filters customers by search query (name or phone)', function () {
         );
 });
 
+it('finds a customer by part of the phone typed with a leading 0', function () {
+    $dealer = Dealer::factory()->create();
+    $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);
+    Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => 'Hendra Gunawan', 'phone' => '081211112222'])->assignTo($sales);
+    Customer::factory()->create(['dealer_id' => $dealer->id, 'name' => 'Bambang Wijaya', 'phone' => '081399998888'])->assignTo($sales);
+
+    $this->actingAs($sales)
+        ->get(route('customers.index', ['search' => '0813 9999']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('customers.data', 1)
+            ->where('customers.data.0.name', 'Bambang Wijaya')
+        );
+});
+
 it('creates a new lead with customer, transaction, and initial assignment in one transaction', function () {
     $dealer = Dealer::factory()->create();
     $sales = User::factory()->sales()->create(['dealer_id' => $dealer->id]);

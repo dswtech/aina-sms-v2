@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\PipelineStage;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -77,14 +76,6 @@ class DealComment extends Model
 
         return $this->created_at !== null
             && $this->created_at->greaterThan(now()->subMinutes(5));
-    }
-
-    /**
-     * @param  Builder<DealComment>  $query
-     */
-    public function scopeForDeal(Builder $query, DealTransaction $deal): void
-    {
-        $query->where('deal_transaction_id', $deal->id);
     }
 
     protected function casts(): array

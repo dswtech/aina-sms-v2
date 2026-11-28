@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\UserRole;
 use App\Enums\VehicleOwnership;
@@ -20,6 +19,7 @@ use App\Services\TransactionMasters;
 use App\Services\TransactionMetadata;
 use App\Services\TransactionTimeline;
 use App\Support\AuditRecorder;
+use App\Support\PhoneNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -174,10 +174,11 @@ class TransactionController extends Controller
         }
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->whereHas('customer', function ($customerQuery) use ($search): void {
+            $digits = PhoneNormalizer::searchDigits($search);
+            $query->where(function ($builder) use ($search, $digits): void {
+                $builder->whereHas('customer', function ($customerQuery) use ($search, $digits): void {
                     $customerQuery->whereLike('name', "%{$search}%")
-                        ->orWhereLike('phone', "%{$search}%");
+                        ->when($digits !== null, fn ($q) => $q->orWhere('phone', 'like', "%{$digits}%"));
                 })->orWhereLike('vehicle_model', "%{$search}%")
                     ->orWhereLike('vehicle_color', "%{$search}%")
                     ->orWhereLike('source', "%{$search}%");
@@ -478,12 +479,8 @@ class TransactionController extends Controller
         }
 
         return Inertia::render('transactions/create', [
-            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
-            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
-            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
-            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            ...TransactionMasters::formOptions($actor),
             'sources' => array_map(fn (string $value, string $label): array => compact('value', 'label'), array_keys(self::SOURCES), self::SOURCES),
-            'assignableSales' => $this->assignableSales($actor),
             'preselected' => $preselected,
             'supervisors' => $teamId === null ? [] : $this->supervisorsByTeam([(int) $teamId])[$teamId] ?? [],
         ]);
@@ -520,12 +517,9 @@ class TransactionController extends Controller
             ->with('activeAssignment.sales:id,name')->orderBy('name')->orderBy('id');
         if ($term !== '') {
             $like = '%'.addcslashes(mb_strtolower($term), '%_\\').'%';
-            // Phones are stored as +62...; a typed 0812... becomes 62812... A partial number needs 4+ digits.
-            // Only phone-looking text searches phones: "Avanza 2024" must not match numbers containing 2024.
-            $digits = preg_match('/^[\d\s+\-()]+$/', $term) ? (preg_replace('/\D/', '', $term) ?? '') : '';
-            $digits = str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits;
+            $digits = PhoneNormalizer::searchDigits($term);
             $query->where(fn ($q) => $q->whereRaw("lower(name) like ? escape '\\'", [$like])
-                ->when(strlen($digits) >= 4, fn ($q) => $q->orWhere('phone', 'like', '%'.$digits.'%')));
+                ->when($digits !== null, fn ($q) => $q->orWhere('phone', 'like', '%'.$digits.'%')));
         }
         $page = $query->paginate(5, ['id', 'public_id', 'name', 'phone', 'social_media_account']);
 
@@ -533,28 +527,6 @@ class TransactionController extends Controller
             'data' => $page->getCollection()->map(fn (Customer $c): array => $this->customerCard($c))->all(),
             'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(),
         ]);
-    }
-
-    /** @return array<int, array{id: int, name: string, username: string|null}> */
-    private function assignableSales(User $actor): array
-    {
-        if (! in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true)) {
-            return [];
-        }
-        $salesQuery = User::query()
-            ->where('dealer_id', $actor->dealer_id)
-            ->where('is_active', true)
-            ->where('role', UserRole::Sales);
-
-        if ($actor->role === UserRole::Supervisor) {
-            $teamIds = Team::query()->visibleTo($actor)->select('id');
-            $salesQuery->whereHas('activeTeamMemberships', function ($query) use ($teamIds): void {
-                $query->whereIn('team_id', $teamIds)->whereNull('ended_at');
-            });
-        }
-
-        return $salesQuery->select(['id', 'name', 'username'])->orderBy('name')->get()
-            ->map(fn (User $user): array => ['id' => $user->id, 'name' => $user->name, 'username' => $user->username])->all();
     }
 
     public function index(Request $request): Response
@@ -569,14 +541,11 @@ class TransactionController extends Controller
         $leasingNames = $this->leasingNames($paginated->items());
         $transactions = $paginated->through(fn (DealTransaction $transaction): array => $this->row($transaction, $actor, $regions, $districts, $supervisors, $leasingNames));
 
-        $assignableSales = $this->assignableSales($actor);
-
         return Inertia::render('transactions/index', [
+            ...TransactionMasters::formOptions($actor),
             'transactions' => $transactions,
-            'vehicleOptions' => TransactionMasters::vehicleOptions($actor->dealer_id),
             'sourceOptions' => DealTransaction::query()->visibleTo($actor)->select('source')->distinct()->orderBy('source')->pluck('source')->all(),
             'filters' => $filters,
-            'assignableSales' => $assignableSales,
             // Admin picks from every Supervisor (Branch Manager cannot open this page); a Supervisor only sees themself, locked.
             'supervisorOptions' => match ($actor->role) {
                 UserRole::Admin => User::query()->where('dealer_id', $actor->dealer_id)->where('is_active', true)->where('role', UserRole::Supervisor)
@@ -585,17 +554,6 @@ class TransactionController extends Controller
                 default => [],
             },
             'supervisorLocked' => $actor->role === UserRole::Supervisor,
-            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
-            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
-            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'stages' => array_map(fn (PipelineStage $stage): array => [
-                'value' => $stage->value,
-                'label' => $stage->label(),
-            ], PipelineStage::cases()),
-            'lostReasons' => array_map(fn (LostReason $reason): array => [
-                'value' => $reason->value,
-                'label' => $reason->label(),
-            ], LostReason::cases()),
         ]);
     }
 }

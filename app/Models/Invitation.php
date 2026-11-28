@@ -62,12 +62,6 @@ class Invitation extends Model
         return $this->belongsTo(Team::class);
     }
 
-    /** @return BelongsTo<User, $this> */
-    public function invitedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'invited_by_id');
-    }
-
     /** @param Builder<Invitation> $query */
     public function scopeVisibleTo(Builder $query, User $actor): void
     {

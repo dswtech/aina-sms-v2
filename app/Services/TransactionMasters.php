@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\LostReason;
+use App\Enums\PipelineStage;
 use App\Enums\UserRole;
 use App\Models\Dealer;
+use App\Models\Team;
 use App\Models\User;
 use App\Support\AuditRecorder;
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -197,6 +201,43 @@ final class TransactionMasters
             ->groupBy('type')
             ->map(fn ($rows, $type): array => ['type' => $type, 'models' => $rows->map(fn ($r): array => ['name' => $r->name, 'price_min' => $r->price_min, 'price_max' => $r->price_max])->all()])
             ->values()->all();
+    }
+
+    /**
+     * Masters for the lead form and the shared transaction detail modal (stage form, financing picker).
+     *
+     * @return array<string, mixed>
+     */
+    public static function formOptions(User $actor): array
+    {
+        return [
+            'vehicleOptions' => self::vehicleOptions($actor->dealer_id),
+            'regions' => DB::table('area_regions')->orderBy('name')->get(['code', 'name']),
+            'districts' => DB::table('area_districts')->orderBy('name')->get(['code', 'region_code', 'name']),
+            'leasings' => DB::table('leasing_companies')->where('dealer_id', $actor->dealer_id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'stages' => array_map(fn (PipelineStage $stage): array => ['value' => $stage->value, 'label' => $stage->label()], PipelineStage::cases()),
+            'lostReasons' => array_map(fn (LostReason $reason): array => ['value' => $reason->value, 'label' => $reason->label()], LostReason::cases()),
+            'assignableSales' => self::assignableSales($actor),
+        ];
+    }
+
+    /**
+     * Active Sales an Admin (whole dealer) or Supervisor (own teams) may assign a customer to.
+     *
+     * @return array<int, array{id: int, public_id: string, name: string, username: string|null}>
+     */
+    public static function assignableSales(User $actor): array
+    {
+        if (! in_array($actor->role, [UserRole::Admin, UserRole::Supervisor], true)) {
+            return [];
+        }
+
+        return User::query()->where('dealer_id', $actor->dealer_id)->where('is_active', true)->where('role', UserRole::Sales)
+            ->when($actor->role === UserRole::Supervisor, fn (Builder $q) => $q->whereHas('activeTeamMemberships', fn (Builder $m) => $m
+                ->whereIn('team_id', Team::query()->visibleTo($actor)->select('id'))->whereNull('ended_at')))
+            ->orderBy('name')->get(['id', 'public_id', 'name', 'username'])
+            ->map(fn (User $user): array => ['id' => $user->id, 'public_id' => $user->public_id, 'name' => $user->name, 'username' => $user->username])
+            ->all();
     }
 
     /** @param array<string, mixed> $data */

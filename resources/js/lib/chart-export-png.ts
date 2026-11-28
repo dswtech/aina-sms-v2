@@ -16,7 +16,7 @@ const secondary = '#526175';
 const blue = '#1769e0';
 const pale = '#e9f0f8';
 const font = (size: number, weight = 400) =>
-    `${weight} ${size}px "Instrument Sans", system-ui, sans-serif`;
+    `${weight} ${size}px "Inter Variable", system-ui, sans-serif`;
 const numbers = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
 
 function drawMap(
