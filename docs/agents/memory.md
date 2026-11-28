@@ -3,11 +3,21 @@
 | Item | Keterangan |
 |---|---|
 | Dokumen | Keadaan proyek dan handoff agent |
-| Versi | v1.74 |
+| Versi | v1.75 |
 | Diperbarui | 28 November 2026 |
 | Status | Aktif |
 
 Memory bukan sumber requirement. Bila isi memory bertentangan dengan PRD atau ADR, ikuti PRD/ADR dan perbaiki memory.
+
+## Pembaruan 28 November 2026 — Analisis Sumber & Model (v1.12.0)
+
+- Merged lewat PR #187 (`a302f01`), dirilis sebagai v1.12.0 lewat PR #188 (`f911e0b`). Hasil critique halaman Analisis: navigasi "Analisis Sumber / Analisis Model" yang tampak tab tetapi hanya anchor diganti tab sungguhan (`?view=model`, pindah di sisi klien, kedua panel tetap tercetak). Aturan visual di [DESIGN.md](../../DESIGN.md) bagian Components.
+- Drilldown pindah ke Sheet (kanan di desktop, bawah di bawah 768px) dengan pilihan ganti sumber/model; menutup Sheet menghapus `dimension`/`value` dan mengembalikan fokus ke pemicu. Baris drilldown tanpa ID publik: Sales, tanggal masuk, dan umur di tahap dari `progress_at` (prop baru `analytics.drilldown.*.progress_at`) atau tanggal DO/Lost. Supervisor dan Admin membuka `/transactions?transaction=…` di tab baru; Branch Manager tanpa tautan karena tidak punya akses Transaksi.
+- Analisis Model mendapat ConversionBars dan kolom Conversion (DO ÷ lead, dihitung di frontend; CSV tidak berubah). Baris "Lainnya" tidak menentukan skala `StageBars`. Porsi sumber menjadi pie penuh. Overlay `ui/sheet.tsx` disembunyikan saat print untuk semua Sheet.
+- React Compiler aktif: hook di dalam object literal (`{ a: useRef() }`) ter-cache dan memicu React error #300 saat render ulang; deklarasikan hook terpisah.
+- DESIGN.md disusun ulang ke judul standar (Overview, Colors, Typography, Layout, Shapes, Components, Do's and Don'ts) tanpa mengubah isi; tidak dipadatkan (`design-compact`) karena dokumen proyek merujuknya sebagai aturan visual kanonik.
+- Rilis v1.12.0, 28 November 2026: backup production (`aina-20261128-220114.dump`), tanpa migration, deploy sukses, 17 pengguna diberi tahu. Sesudahnya: tidak ada migration tertunda, `aina-queue` dan `aina-scheduler` aktif, `/up` dan `/login` 200. Tampilan setelah login di production belum dilihat di browser.
+- Bukti: `pnpm run check`, Pest analitik dan ekspor, serta skrip browser `analytics-recovery`, `analytics-chart-drilldown`, `analytics-export`, `accessibility`, `narrow-viewport-reflow` lulus; CI PR dan `main` hijau. Fixture `accessibility` dan `analytics-export` dimuat tanpa pilihan drilldown karena Sheet modal menutupi halaman.
 
 ## Pembaruan 28 November 2026 — audit kode dan masa simpan data
 
