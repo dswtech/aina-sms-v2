@@ -95,7 +95,7 @@ class AnalyticsController extends Controller
 
         $query = DealTransaction::query()
             ->visibleInReportsTo($actor)
-            ->select(['id', 'public_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'created_at'])
+            ->select(['id', 'public_id', 'sales_id', 'vehicle_model', 'source', 'current_stage', 'created_at', 'progress_at'])
             ->with('sales:id,name');
         foreach ([PipelineStage::Spk, PipelineStage::Do] as $stage) {
             $query->withExists(['stageHistories as reached_'.$stage->value => function (Builder $history) use ($stage, $achievement, $inPeriod): void {
@@ -161,6 +161,8 @@ class AnalyticsController extends Controller
                 'stage_label' => $deal->current_stage->label(),
                 'sales_name' => $deal->sales?->name,
                 'created_at' => $deal->created_at->toIso8601String(),
+                // Last stage change, so the drilldown can show how long a deal has sat where it is.
+                'progress_at' => $deal->progress_at?->toIso8601String(),
             ])->values()->all();
 
         return [

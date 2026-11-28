@@ -1,6 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { FilterPanel } from '@/components/filter-panel';
-import { Download, Printer } from 'lucide-react';
+import { ArrowUpRight, Download, Printer } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { KeyboardEvent, RefObject } from 'react';
 import {
@@ -70,6 +70,7 @@ type DrilldownRow = {
     stage_label: string;
     sales_name: string | null;
     created_at: string;
+    progress_at: string | null;
 };
 
 type Analytics = {
@@ -181,7 +182,11 @@ export default function AnalyticsIndex({ analytics }: Props) {
         message: string;
     } | null>(null);
     const retryQuery = failure?.query;
-    const { url } = usePage();
+    const { url, props } = usePage();
+    // Branch Manager reads aggregates only; the Transaksi page is not open to that role.
+    const canOpenTransactions = ['sales', 'supervisor', 'admin'].includes(
+        props.auth.user.role,
+    );
     const [view, setView] = useState<AnalyticsDimension>(() =>
         new URLSearchParams(url.split('?')[1] ?? '').get('view') === 'model'
             ? 'model'
@@ -856,6 +861,7 @@ export default function AnalyticsIndex({ analytics }: Props) {
                                 <DrilldownList
                                     rows={analytics.drilldown}
                                     dimension={analytics.dimension!}
+                                    canOpen={canOpenTransactions}
                                 />
                             )}
                         </div>
@@ -1075,36 +1081,90 @@ function DrilldownSwitcher({
     );
 }
 
+const DAY_MS = 86_400_000;
+
+// Open deals show how long they have sat in their stage; closed ones show when they closed.
+function stageAge(row: DrilldownRow): string {
+    const since = new Date(row.progress_at ?? row.created_at);
+    if (row.stage === 'do' || row.stage === 'lost')
+        return `${row.stage_label} ${dateFormatter.format(since)}`;
+    const days = Math.max(
+        0,
+        Math.floor((Date.now() - since.getTime()) / DAY_MS),
+    );
+    return days === 0 ? 'Pindah tahap hari ini' : `${days} hari di tahap ini`;
+}
+
 // The selected dimension is already in the sheet title, so each row shows the other one.
 function DrilldownList({
     rows,
     dimension,
+    canOpen,
 }: {
     rows: DrilldownRow[];
     dimension: AnalyticsDimension;
+    canOpen: boolean;
 }) {
     return (
         <ul className="divide-y overflow-hidden rounded-xl border">
-            {rows.map((row) => (
-                <li
-                    key={row.public_id}
-                    className="striped-row grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 px-4 py-3 text-sm"
-                >
-                    <p className="truncate font-semibold">
-                        {dimension === 'source'
-                            ? row.vehicle_model
-                            : formatCategory(row.source)}
-                    </p>
-                    <StageBadge stage={row.stage}>{row.stage_label}</StageBadge>
-                    <p className="col-span-2 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                        <span className="font-mono">{row.public_id}</span>
-                        <span>{row.sales_name ?? 'Belum ditugaskan'}</span>
-                        <span>
-                            {dateFormatter.format(new Date(row.created_at))}
-                        </span>
-                    </p>
-                </li>
-            ))}
+            {rows.map((row) => {
+                const content = (
+                    <>
+                        <p className="flex min-w-0 items-center gap-1 font-semibold">
+                            <span className="truncate">
+                                {dimension === 'source'
+                                    ? row.vehicle_model
+                                    : formatCategory(row.source)}
+                            </span>
+                            {canOpen && (
+                                <>
+                                    <ArrowUpRight
+                                        aria-hidden="true"
+                                        className="size-3.5 shrink-0 text-muted-foreground"
+                                    />
+                                    <span className="sr-only">
+                                        (buka transaksi di tab baru)
+                                    </span>
+                                </>
+                            )}
+                        </p>
+                        <StageBadge stage={row.stage}>
+                            {row.stage_label}
+                        </StageBadge>
+                        <p className="col-span-2 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                            <span>{row.sales_name ?? 'Belum ditugaskan'}</span>
+                            <span>
+                                Masuk{' '}
+                                {dateFormatter.format(new Date(row.created_at))}
+                            </span>
+                            <span className="font-medium text-foreground">
+                                {stageAge(row)}
+                            </span>
+                        </p>
+                    </>
+                );
+                const layout =
+                    'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 px-4 py-3 text-sm';
+                return (
+                    <li key={row.public_id} className="striped-row">
+                        {canOpen ? (
+                            <a
+                                href={`/transactions?transaction=${row.public_id}&date_from=&date_to=`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                    layout,
+                                    'outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                                )}
+                            >
+                                {content}
+                            </a>
+                        ) : (
+                            <div className={layout}>{content}</div>
+                        )}
+                    </li>
+                );
+            })}
         </ul>
     );
 }

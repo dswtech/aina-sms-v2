@@ -86,6 +86,7 @@ it('hides conversion in achievement mode and sanitizes drilldown', function () {
             ->where('analytics.sources.0.spk', 1)
             ->where('analytics.models.0.spk', 1)
             ->has('analytics.drilldown', 1)
+            ->where('analytics.drilldown.0.progress_at', fn ($value) => is_string($value))
             ->missing('analytics.drilldown.0.phone')
             ->missing('analytics.drilldown.0.address')
             ->missing('analytics.drilldown.0.notes')
