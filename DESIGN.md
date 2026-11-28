@@ -2,19 +2,11 @@
 
 > Keputusan struktur kanonik berada di [`docs/design/aina-sms-navigation/direction-approved.md`](docs/design/aina-sms-navigation/direction-approved.md). Requirement produk tetap mengikuti PRD dan ADR.
 
-## Karakter
+## Overview
 
 Ruang kerja operasional yang tenang dan sigap. Informasi penting dibedakan melalui urutan, ukuran, dan satu warna aksen; bukan melalui dekorasi.
 
-## Struktur
-
-- Desktop: sidebar berlabel sekitar 228px dan lembar kerja putih; sidebar memakai surface abu sangat muda (`--sidebar`).
-- Halaman data (Dashboard, Target, Transaksi, Pelanggan, Analisis, Admin pengguna dan tim) memakai batas konten 1536px (`max-w-screen-2xl`); form dan pengaturan tetap sempit (5xl/6xl).
-- Tablet (768–1023px): sidebar dibuka sebagai rail ikon saat halaman dimuat (`app-shell.tsx`), tombol sidebar tetap dapat membukanya; navigasi dan konten mempertahankan urutan desktop. Di dashboard, daftar prioritas 2 kolom dan KPI 3 kolom mulai `md`. Link teks di baris data memakai target 44px pada pointer kasar (`pointer-coarse:min-h-11`).
-- Mobile: empat tujuan utama termasuk “Lainnya”; detail transaksi menjadi full-screen sheet.
-- Sales dan Supervisor memulai dari dashboard yang dibuka dengan Prioritas tindak lanjut, lalu KPI dan analitik. Branch Manager memulai dari KPI dan kinerja lintas tim.
-
-## Token visual
+## Colors
 
 Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; nilai di bawah adalah tema terang.
 
@@ -24,10 +16,26 @@ Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; 
 - Accent/action (`--primary`) dipilih pengguna lewat menu akun (`use-color.tsx`): Oranye default (`#c2410c` terang, `#fb923c` gelap), atau Biru, Hijau, Ungu, Merah, Teal. Komponen tidak boleh menulis warna aksen langsung; selalu turunkan dari `--primary`/`--accent`.
 - Forecast (`--forecast`, `bg-forecast`): campuran 50% `--primary` dengan `--card`, sehingga mengikuti aksen dan tema.
 - Negative (`--destructive`): `oklch(0.52 0.22 27.325)` pada tema terang, agar teks di atas tint 10%-nya memenuhi AA 4,5:1.
+
+## Typography
+
 - Font: Inter Variable; scale utama 12/14/16/24px.
+
+## Layout
+
+- Desktop: sidebar berlabel sekitar 228px dan lembar kerja putih; sidebar memakai surface abu sangat muda (`--sidebar`).
+- Halaman data (Dashboard, Target, Transaksi, Pelanggan, Analisis, Admin pengguna dan tim) memakai batas konten 1536px (`max-w-screen-2xl`); form dan pengaturan tetap sempit (5xl/6xl).
+- Tablet (768–1023px): sidebar dibuka sebagai rail ikon saat halaman dimuat (`app-shell.tsx`), tombol sidebar tetap dapat membukanya; navigasi dan konten mempertahankan urutan desktop. Di dashboard, daftar prioritas 2 kolom dan KPI 3 kolom mulai `md`. Link teks di baris data memakai target 44px pada pointer kasar (`pointer-coarse:min-h-11`).
+- Mobile: empat tujuan utama termasuk “Lainnya”; detail transaksi menjadi full-screen sheet.
+- Sales dan Supervisor memulai dari dashboard yang dibuka dengan Prioritas tindak lanjut, lalu KPI dan analitik. Branch Manager memulai dari KPI dan kinerja lintas tim.
+
+## Shapes
+
 - Radius: 8px untuk kontrol, 12px untuk panel, 14px untuk dialog.
 
-## Komponen
+## Components
+
+### Umum
 
 - Navigasi aktif memakai perubahan surface dan warna teks, tanpa sidebar gelap.
 - KPI berada dalam satu strip terbagi, tanpa ikon atau sparkline.
@@ -46,8 +54,7 @@ Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; 
 - Coaching: dua panel bila lebar halaman (container, bukan viewport) minimal 672px, selain itu daftar lalu percakapan. Bubble memakai komponen shadcn `resources/js/components/ui/bubble.tsx`: milik sendiri `default` di kanan, pihak lain `muted` di kiri dengan nama dan peran. Bubble beruntun dari penulis yang sama digabung, tanggal menjadi pemisah hari Jakarta, dan perubahan tahap atau aktivitas menjadi garis dengan teks di tengah. Form estimasi closing terbuka otomatis hanya untuk SPK yang estimasinya kosong atau lewat.
 - Satu tombol primary per layar. Shadow hanya pada dialog/sheet yang mengambang.
 - Ikon berupa SVG outline konsisten; tidak memakai emoji.
-
-## Interaksi dan aksesibilitas
+- Analisis Sumber & Model memakai tab sungguhan (`role="tablist"`, panah kiri/kanan) yang tersimpan di URL (`?view=model`) tanpa memuat ulang data; kedua panel tetap tercetak. Drilldown membuka Sheet (kanan di desktop, bawah di bawah 768px) dari chart, tabel, maupun kartu, dengan pilihan "Ganti sumber/model" di dalamnya; menutup Sheet menghapus pilihan dan mengembalikan fokus ke pemicu. Baris gabungan "Lainnya" pada batang model tidak menentukan skala: batangnya dipotong dan dipudarkan, angka aslinya tetap tertulis.
 
 ### Dashboard analitik
 
@@ -61,7 +68,7 @@ Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; 
 - Ranking awal menampilkan lima Sales menurut realisasi, forecast, lalu nama; tombol 44px membuka seluruh Sales. Semua angka lama tetap tersedia dalam disclosure rincian yang dapat dibuka dengan keyboard. Distribusi enam tahap tidak dilabeli sebagai conversion funnel.
 - Kontributor forecast menampilkan perbandingan nilai rupiah berbobot. Judul daftar stagnan menampilkan "N dari total" bila total lebih besar dari item yang terlihat. Hak akses serta arti periode tetap mengikuti PRD dan server.
 
-### Pola umum
+### Interaksi dan aksesibilitas
 
 - Target sentuh minimum 44×44px.
 - Focus ring (`--ring`) terlihat dan tidak tertutup sticky navigation.
@@ -70,6 +77,6 @@ Tema "Mira" (shadcn, PR #158). Token kanonik berada di `resources/css/app.css`; 
 - `prefers-reduced-motion` menghapus perpindahan non-esensial.
 - Tidak ada horizontal page scroll pada 390px, 768px, atau 1440px.
 
-## Larangan
+## Do's and Don'ts
 
 Tidak memakai gradient, glass, glow, emoji, sidebar gelap pada canvas terang, ikon dalam kotak berwarna untuk KPI, atau data yang tampak nyata tanpa label “Data contoh”.
