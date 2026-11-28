@@ -12,9 +12,16 @@ async function accessibility(page) {
                 await button.click();
                 return;
             }
-            const shown = await popover.locator('button[data-month]').first().getAttribute('data-month');
+            const shown = await popover
+                .locator('button[data-month]')
+                .first()
+                .getAttribute('data-month');
             await popover
-                .getByRole('button', { name: month < shown ? 'Tahun sebelumnya' : 'Tahun berikutnya', exact: true })
+                .getByRole('button', {
+                    name:
+                        month < shown ? 'Tahun sebelumnya' : 'Tahun berikutnya',
+                    exact: true,
+                })
                 .click();
         }
         throw new Error(`Month picker never showed ${month}`);
@@ -73,7 +80,8 @@ async function accessibility(page) {
                 },
             ],
         },
-        next_follow_up: null, follow_up_history: [],
+        next_follow_up: null,
+        follow_up_history: [],
         stage_history: Array.from({ length: 15 }, () => ({
             from_stage: null,
             from_stage_label: null,
@@ -201,7 +209,8 @@ async function accessibility(page) {
             opt_out: false,
             last_contact_at: null,
             assigned_sales: { id: 1, name: user.name },
-            next_follow_up: null, follow_up_history: [],
+            next_follow_up: null,
+            follow_up_history: [],
             area: {
                 region_code: null,
                 region_name: null,
@@ -993,7 +1002,9 @@ async function accessibility(page) {
             'Password error is not associated with its field',
         );
         mutationErrors = {};
-        await dialog.getByRole('button', { name: 'Batal', exact: true }).click();
+        await dialog
+            .getByRole('button', { name: 'Batal', exact: true })
+            .click();
         await dialog.waitFor({ state: 'hidden' });
     });
     await test('one main landmark and no page overflow at three widths', async () => {
@@ -1332,8 +1343,9 @@ async function accessibility(page) {
                     analytics: {
                         period: '2026-11',
                         mode: 'acquisition',
-                        dimension: 'source',
-                        value: 'walk_in',
+                        // No selection: a drilldown opens a modal sheet that would cover the page under test.
+                        dimension: null,
+                        value: null,
                         sources: three((id) => ({
                             source: `source_${id}`,
                             total: 3,
@@ -1362,7 +1374,7 @@ async function accessibility(page) {
                         })),
                     },
                 },
-                9,
+                3, // Only the active Sumber tab is visible; Model sits in a hidden tab panel.
             ],
             [
                 'admin/users/index',
@@ -1456,7 +1468,7 @@ async function accessibility(page) {
                     if (width >= 768) {
                         const actionCounts = {
                             'transactions/index': 6,
-                            'analytics/index': width >= 1024 ? 6 : 0,
+                            'analytics/index': width >= 1024 ? 3 : 0,
                             'admin/users/index': 4,
                         };
                         await checkTableActions(actionCounts[component] ?? 0);
@@ -1737,7 +1749,10 @@ async function accessibility(page) {
                 .locator('input[type="password"]')
                 .boundingBox();
             const toggleSize = await page
-                .getByRole('button', { name: 'Tampilkan password', exact: true })
+                .getByRole('button', {
+                    name: 'Tampilkan password',
+                    exact: true,
+                })
                 .boundingBox();
             assert(
                 Math.abs(passwordSize.height - toggleSize.height) <= 0.5,
@@ -2068,7 +2083,9 @@ async function accessibility(page) {
                 lastMutation.data.expected_closing_month === '2026-12',
             'Wrong closing-month update',
         );
-        await page.getByRole('button', { name: 'Hapus bulan', exact: true }).click();
+        await page
+            .getByRole('button', { name: 'Hapus bulan', exact: true })
+            .click();
         await page
             .getByRole('button', { name: 'Simpan estimasi closing' })
             .press('Enter');

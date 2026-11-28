@@ -14,10 +14,7 @@ async function analyticsChartDrilldown(page) {
     await page.waitForURL('**/dashboard');
     await page.goto(`${origin}/analytics`);
 
-    const drilldownHeading = page.getByRole('heading', {
-        name: 'Drilldown',
-        exact: true,
-    });
+    const sheet = page.getByRole('dialog');
     const checked = [];
     async function expectDrilldown(click, dimension, label) {
         await click();
@@ -26,19 +23,14 @@ async function analyticsChartDrilldown(page) {
                 url.searchParams.get('dimension') === dimension &&
                 !!url.searchParams.get('value'),
         );
-        await page.waitForFunction(
-            () => document.activeElement?.textContent?.trim() === 'Drilldown',
-        );
-        if (!(await drilldownHeading.isVisible()))
-            throw new Error(`${label} did not bring Drilldown into view`);
-        const rows = await page
-            .locator('section')
-            .filter({ has: drilldownHeading })
-            .locator('tbody tr')
-            .count();
+        await sheet.getByRole('heading', { name: /^Drilldown · / }).waitFor();
+        await sheet.locator('li').first().waitFor();
+        const rows = await sheet.locator('li').count();
         if (rows === 0) throw new Error(`${label} opened an empty drilldown`);
+        await page.keyboard.press('Escape');
+        await sheet.waitFor({ state: 'detached' });
+        await page.waitForURL((url) => !url.searchParams.has('dimension'));
         checked.push(`${label}: ${rows} rows`);
-        await page.evaluate(() => window.scrollTo(0, 0));
     }
 
     const clickableIn = (title) =>
@@ -65,6 +57,8 @@ async function analyticsChartDrilldown(page) {
         'source',
         'donut legend button',
     );
+    await page.getByRole('tab', { name: 'Analisis Model' }).click();
+    await page.waitForURL((url) => url.searchParams.get('view') === 'model');
     await expectDrilldown(
         () => clickableIn('model-stage-title').click(),
         'model',

@@ -87,8 +87,9 @@ async function analyticsExport(page) {
                                 period: '2026-11',
                                 to: '2026-11',
                                 mode,
-                                dimension: 'source',
-                                value: 'walk_in',
+                                // A selection opens the modal drilldown sheet over the page; this test covers print and export.
+                                dimension: null,
+                                value: null,
                                 sources,
                                 models,
                                 drilldown: [
@@ -181,13 +182,13 @@ async function analyticsExport(page) {
                                 .locator('td')
                                 .allTextContents();
                             assert(
-                                values[3].trim() === '2' && values.length === (section === 'sumber' && mode === 'acquisition' ? 6 : 5),
+                                values[3].trim() === '2' &&
+                                    values.length ===
+                                        (mode === 'acquisition' ? 6 : 5),
                                 'Print must show the DO total without a Delivery column',
                             );
-                            if (
-                                section === 'sumber' &&
-                                mode === 'acquisition'
-                            ) {
+                            // Both tabs print; Model now carries the same DO ÷ lead conversion as Sumber.
+                            if (mode === 'acquisition') {
                                 assert(
                                     values[4].replace(/\s/g, '') === '50%',
                                     'Print conversion must use DO / total',
